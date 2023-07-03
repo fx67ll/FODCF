@@ -5,7 +5,7 @@ function resolve(dir) {
   return path.join(__dirname, dir);
 }
 
-const CompressionPlugin = require('compression-webpack-plugin');
+// const CompressionPlugin = require('compression-webpack-plugin');
 
 const name = process.env.VUE_APP_TITLE || "fx67ll's 管理系统"; // 网页标题
 
@@ -61,15 +61,15 @@ module.exports = {
         '@': resolve('src'),
       },
     },
-    plugins: [
-      new CompressionPlugin({
-        cache: false, // 不启用文件缓存
-        test: /\.(js|css|html)?$/i, // 压缩文件格式
-        filename: '[path].gz[query]', // 压缩后的文件名
-        algorithm: 'gzip', // 使用gzip压缩
-        minRatio: 0.8, // 压缩率小于1才会压缩
-      }),
-    ],
+    // plugins: [
+    //   new CompressionPlugin({
+    //     cache: false, // 不启用文件缓存
+    //     test: /\.(js|css|html)?$/i, // 压缩文件格式
+    //     filename: '[path].gz[query]', // 压缩后的文件名
+    //     algorithm: 'gzip', // 使用gzip压缩
+    //     minRatio: 0.8, // 压缩率小于1才会压缩
+    //   }),
+    // ],
   },
   chainWebpack(config) {
     config.plugins.delete('preload'); // TODO: need test
