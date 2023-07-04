@@ -6,6 +6,9 @@ Vue.use(Router);
 /* Layout */
 import Layout from '@/layout';
 
+/* Cookies */
+import Cookies from 'js-cookie';
+
 /**
  * Note: 路由配置项
  *
@@ -89,6 +92,14 @@ export const constantRoutes = [
     ],
   },
 ];
+
+if (Cookies.get('username') === 'user') {
+  constantRoutes.forEach((item, key) => {
+    if (item.path === '/user') {
+      constantRoutes.splice(key, 1);
+    }
+  });
+}
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [

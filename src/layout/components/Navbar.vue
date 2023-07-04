@@ -35,7 +35,7 @@
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
-          <router-link to="/user/profile">
+          <router-link to="/user/profile" v-if="!isUser">
             <el-dropdown-item>个人中心</el-dropdown-item>
           </router-link>
           <el-dropdown-item @click.native="setting = true">
@@ -61,6 +61,8 @@ import Search from "@/components/HeaderSearch";
 import fx67llGit from "@/components/fx67ll/Git";
 import fx67llDoc from "@/components/fx67ll/Doc";
 
+import Cookies from "js-cookie";
+
 export default {
   components: {
     Breadcrumb,
@@ -71,6 +73,18 @@ export default {
     Search,
     fx67llGit,
     fx67llDoc,
+  },
+  data() {
+    return {
+      isUser: false,
+    };
+  },
+  mounted() {
+    if (Cookies.get("username") === "user") {
+      this.isUser = true;
+    } else {
+      this.isUser = false;
+    }
   },
   computed: {
     ...mapGetters(["sidebar", "avatar", "device"]),
