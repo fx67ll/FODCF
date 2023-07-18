@@ -7,9 +7,11 @@
           v-model="loginForm.username"
           type="text"
           auto-complete="off"
-          placeholder="账号"
+          placeholder="请输入账号"
+          clearable
         >
-          <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" />
+          <!-- <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" /> -->
+          <i class="el-icon-user el-input__icon" slot="prefix" />
         </el-input>
       </el-form-item>
       <el-form-item prop="password">
@@ -17,29 +19,33 @@
           v-model="loginForm.password"
           type="password"
           auto-complete="off"
-          placeholder="密码"
+          placeholder="请输入密码"
           @keyup.enter.native="handleLogin"
+          clearable
         >
-          <svg-icon
+          <!-- <svg-icon
             slot="prefix"
             icon-class="password"
             class="el-input__icon input-icon"
-          />
+          /> -->
+          <i class="el-icon-lock el-input__icon" slot="prefix" />
         </el-input>
       </el-form-item>
       <el-form-item prop="code" v-if="captchaEnabled">
         <el-input
           v-model="loginForm.code"
           auto-complete="off"
-          placeholder="验证码"
+          placeholder="请输入验证码"
           style="width: 68%"
           @keyup.enter.native="handleLogin"
+          clearable
         >
-          <svg-icon
+          <!-- <svg-icon
             slot="prefix"
             icon-class="validCode"
             class="el-input__icon input-icon"
-          />
+          /> -->
+          <i class="el-icon-key el-input__icon" slot="prefix" />
         </el-input>
         <div class="login-code">
           <img :src="codeUrl" @click="getCode" class="login-code-img" v-if="codeUrl" />
@@ -296,5 +302,13 @@ export default {
 
 .login-code-text {
   color: #f37370;
+}
+
+.el-input__prefix {
+  top: 1px !important;
+}
+
+.el-input--prefix .el-input__inner {
+  padding-left: 32px !important;
 }
 </style>
