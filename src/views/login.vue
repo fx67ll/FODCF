@@ -57,7 +57,7 @@
         <!-- <router-link class="link-type" :to="'/register'" v-if="register"
           >还没有账号？立即注册</router-link
         > -->
-        <span @click="touristLogin">还没有账号？游客登录</span>
+        <span class="login-setting-tip" @click="touristLogin">还没有账号？游客登录</span>
       </div>
       <el-form-item style="width: 100%">
         <el-button
@@ -93,7 +93,7 @@ export default {
       loginForm: {
         username: "",
         password: "",
-        rememberMe: false,
+        rememberMe: true,
         code: "",
         uuid: "",
       },
@@ -146,7 +146,7 @@ export default {
         title: "游客登录提示",
         dangerouslyUseHTMLString: true,
         message:
-          "</br> 暂不支持游客注册，请使用既定账号访问 </br></br> 账号：user / 密码：123456",
+          "</br> 暂不支持游客注册，请使用既定账号访问 </br></br> 账号：user / 密码：123456 </br></br> 已为您自动填充游客账号密码 (*^▽^*)",
         duration: 9999,
       });
       this.loginForm.username = "user";
@@ -274,6 +274,14 @@ export default {
   font-size: 14px;
   margin-bottom: 20px;
   span {
+    color: #1890ff;
+    cursor: pointer;
+
+    &:hover {
+      color: #707070;
+    }
+  }
+  .login-setting-tip {
     color: #2ecc71;
     cursor: pointer;
 
