@@ -57,3 +57,11 @@ export function getCodeImg() {
     timeout: 20000,
   });
 }
+
+// 获取随机马赛克头像
+export function getAvatar() {
+  return request({
+    url: '/getRandomAvatarByBase64',
+    method: 'get',
+  });
+}

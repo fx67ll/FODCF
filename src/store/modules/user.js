@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/login';
+import { login, logout, getInfo, getAvatar } from '@/api/login';
 import { getToken, setToken, removeToken } from '@/utils/auth';
 
 const user = {
@@ -54,8 +54,24 @@ const user = {
         getInfo()
           .then(res => {
             const user = res.user;
-            const avatar =
-              user.avatar == '' || user.avatar == null ? process.env.VUE_APP_LOGO_URL : process.env.VUE_APP_BASE_API + user.avatar;
+
+            // 如果没有设置头像，每次登录显示不同的随机马赛克头像，否则显示用户自定义头像
+            // todo 后期再用户中心里添加一个配置，允许用户生成一个随机的马赛克头像并保存为自己的头像
+            if (!user?.avatar) {
+              getAvatar().then(res => {
+                let avatar;
+                if (res?.avatar) {
+                  avatar = 'data:image/gif;base64,' + res.avatar;
+                } else {
+                  avatar = user.avatar == '' || user.avatar == null ? process.env.VUE_APP_LOGO_URL : process.env.VUE_APP_BASE_API + user.avatar;
+                }
+                commit('SET_AVATAR', avatar);
+              });
+            } else {
+              const avatar = user.avatar == '' || user.avatar == null ? process.env.VUE_APP_LOGO_URL : process.env.VUE_APP_BASE_API + user.avatar;
+              commit('SET_AVATAR', avatar);
+            }
+
             if (res.roles && res.roles.length > 0) {
               // 验证返回的roles是否是一个非空数组
               commit('SET_ROLES', res.roles);
@@ -64,7 +80,7 @@ const user = {
               commit('SET_ROLES', ['ROLE_DEFAULT']);
             }
             commit('SET_NAME', user.userName);
-            commit('SET_AVATAR', avatar);
+
             resolve(res);
           })
           .catch(error => {
