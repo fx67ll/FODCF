@@ -61,7 +61,7 @@ export function getCodeImg() {
 // 获取随机马赛克头像
 export function getAvatar() {
   return request({
-    url: '/getRandomAvatarByBase64',
+    url: '/getRandomAvatarByBase64?avatarBlockNum=5&avatarPadding=50',
     method: 'get',
   });
 }

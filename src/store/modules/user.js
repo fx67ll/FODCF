@@ -58,7 +58,7 @@ const user = {
             // 如果没有设置头像，每次登录显示不同的随机马赛克头像，否则显示用户自定义头像
             // todo 后期再用户中心里添加一个配置，允许用户生成一个随机的马赛克头像并保存为自己的头像
             if (!user?.avatar) {
-              getAvatar().then(res => {
+              getAvatar('fx67ll').then(res => {
                 let avatar;
                 if (res?.avatar) {
                   avatar = 'data:image/gif;base64,' + res.avatar;
