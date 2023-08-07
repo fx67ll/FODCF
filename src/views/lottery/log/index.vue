@@ -39,7 +39,7 @@
           clearable
         >
           <el-option
-            v-for="dict in dict.type.fx67ll_lottory_type"
+            v-for="dict in dict.type.fx67ll_lottery_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -144,7 +144,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['lottory:log:add']"
+          v-hasPermi="['lottery:log:add']"
           >新增</el-button
         >
       </el-col>
@@ -156,7 +156,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['lottory:log:edit']"
+          v-hasPermi="['lottery:log:edit']"
           >修改</el-button
         >
       </el-col>
@@ -168,7 +168,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['lottory:log:remove']"
+          v-hasPermi="['lottery:log:remove']"
           >删除</el-button
         >
       </el-col>
@@ -179,7 +179,7 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['lottory:log:export']"
+          v-hasPermi="['lottery:log:export']"
           >导出</el-button
         >
       </el-col>
@@ -192,7 +192,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="号码日志主键" align="center" prop="lottoryId" />
+      <el-table-column label="号码日志主键" align="center" prop="lotteryId" />
       <el-table-column
         label="当日购买号码"
         align="center"
@@ -214,7 +214,7 @@
       <el-table-column label="彩票类型" align="center" prop="numberType">
         <template slot-scope="scope">
           <dict-tag
-            :options="dict.type.fx67ll_lottory_type"
+            :options="dict.type.fx67ll_lottery_type"
             :value="scope.row.numberType"
           />
         </template>
@@ -253,7 +253,7 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['lottory:log:edit']"
+            v-hasPermi="['lottery:log:edit']"
             >修改</el-button
           >
           <el-button
@@ -261,7 +261,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['lottory:log:remove']"
+            v-hasPermi="['lottery:log:remove']"
             >删除</el-button
           >
         </template>
@@ -291,7 +291,7 @@
         <el-form-item label="彩票类型" prop="numberType">
           <el-select v-model="form.numberType" placeholder="请选择当日购买的彩票类型">
             <el-option
-              v-for="dict in dict.type.fx67ll_lottory_type"
+              v-for="dict in dict.type.fx67ll_lottery_type"
               :key="dict.value"
               :label="dict.label"
               :value="parseInt(dict.value)"
@@ -338,11 +338,11 @@
 </template>
 
 <script>
-import { listLog, getLog, delLog, addLog, updateLog } from "@/api/lottory/log";
+import { listLog, getLog, delLog, addLog, updateLog } from "@/api/lottery/log";
 
 export default {
   name: "Log",
-  dicts: ["fx67ll_lottory_type", "sys_yes_no", "sys_week_type"],
+  dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
       // 遮罩层
@@ -431,7 +431,7 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        lottoryId: null,
+        lotteryId: null,
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
@@ -461,7 +461,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map((item) => item.lottoryId);
+      this.ids = selection.map((item) => item.lotteryId);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
@@ -474,8 +474,8 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const lottoryId = row.lottoryId || this.ids;
-      getLog(lottoryId).then((response) => {
+      const lotteryId = row.lotteryId || this.ids;
+      getLog(lotteryId).then((response) => {
         this.form = response.data;
         this.open = true;
         this.title = "修改每日号码记录";
@@ -485,7 +485,7 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          if (this.form.lottoryId != null) {
+          if (this.form.lotteryId != null) {
             updateLog(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
@@ -503,11 +503,11 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const lottoryIds = row.lottoryId || this.ids;
+      const lotteryIds = row.lotteryId || this.ids;
       this.$modal
-        .confirm('是否确认删除每日号码记录编号为"' + lottoryIds + '"的数据项？')
+        .confirm('是否确认删除每日号码记录编号为"' + lotteryIds + '"的数据项？')
         .then(function () {
-          return delLog(lottoryIds);
+          return delLog(lotteryIds);
         })
         .then(() => {
           this.getList();
@@ -518,7 +518,7 @@ export default {
     /** 导出按钮操作 */
     handleExport() {
       this.download(
-        "lottory/log/export",
+        "lottery/log/export",
         {
           ...this.queryParams,
         },

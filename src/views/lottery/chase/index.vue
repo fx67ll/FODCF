@@ -23,7 +23,7 @@
           clearable
         >
           <el-option
-            v-for="dict in dict.type.fx67ll_lottory_type"
+            v-for="dict in dict.type.fx67ll_lottery_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -118,7 +118,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['lottory:chase:add']"
+          v-hasPermi="['lottery:chase:add']"
           >新增</el-button
         >
       </el-col>
@@ -130,7 +130,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['lottory:chase:edit']"
+          v-hasPermi="['lottery:chase:edit']"
           >修改</el-button
         >
       </el-col>
@@ -142,7 +142,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['lottory:chase:remove']"
+          v-hasPermi="['lottery:chase:remove']"
           >删除</el-button
         >
       </el-col>
@@ -153,7 +153,7 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['lottory:chase:export']"
+          v-hasPermi="['lottery:chase:export']"
           >导出</el-button
         >
       </el-col>
@@ -171,7 +171,7 @@
       <el-table-column label="彩票类型" align="center" prop="numberType">
         <template slot-scope="scope">
           <dict-tag
-            :options="dict.type.fx67ll_lottory_type"
+            :options="dict.type.fx67ll_lottery_type"
             :value="scope.row.numberType"
           />
         </template>
@@ -201,7 +201,7 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['lottory:chase:edit']"
+            v-hasPermi="['lottery:chase:edit']"
             >修改</el-button
           >
           <el-button
@@ -209,7 +209,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['lottory:chase:remove']"
+            v-hasPermi="['lottery:chase:remove']"
             >删除</el-button
           >
         </template>
@@ -233,7 +233,7 @@
         <el-form-item label="彩票类型" prop="numberType">
           <el-select v-model="form.numberType" placeholder="请选择固定追号的彩票类型">
             <el-option
-              v-for="dict in dict.type.fx67ll_lottory_type"
+              v-for="dict in dict.type.fx67ll_lottery_type"
               :key="dict.value"
               :label="dict.label"
               :value="parseInt(dict.value)"
@@ -279,11 +279,11 @@ import {
   delChase,
   addChase,
   updateChase,
-} from "@/api/lottory/chase";
+} from "@/api/lottery/chase";
 
 export default {
   name: "Chase",
-  dicts: ["fx67ll_lottory_type", "sys_yes_no", "sys_week_type"],
+  dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
       // 遮罩层
@@ -456,7 +456,7 @@ export default {
     /** 导出按钮操作 */
     handleExport() {
       this.download(
-        "lottory/chase/export",
+        "lottery/chase/export",
         {
           ...this.queryParams,
         },

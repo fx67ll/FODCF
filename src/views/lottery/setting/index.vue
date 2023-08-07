@@ -72,7 +72,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['lottory:setting:add']"
+          v-hasPermi="['lottery:setting:add']"
           >新增</el-button
         >
       </el-col>
@@ -84,7 +84,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['lottory:setting:edit']"
+          v-hasPermi="['lottery:setting:edit']"
           >修改</el-button
         >
       </el-col>
@@ -96,7 +96,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['lottory:setting:remove']"
+          v-hasPermi="['lottery:setting:remove']"
           >删除</el-button
         >
       </el-col>
@@ -107,7 +107,7 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['lottory:setting:export']"
+          v-hasPermi="['lottery:setting:export']"
           >导出</el-button
         >
       </el-col>
@@ -125,7 +125,7 @@
       <el-table-column
         label="个人彩票生成配置"
         align="center"
-        prop="lottorySetting"
+        prop="lotterySetting"
         width="300"
       />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
@@ -147,7 +147,7 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['lottory:setting:edit']"
+            v-hasPermi="['lottery:setting:edit']"
             >修改</el-button
           >
           <el-button
@@ -155,7 +155,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['lottory:setting:remove']"
+            v-hasPermi="['lottery:setting:remove']"
             >删除</el-button
           >
         </template>
@@ -173,8 +173,8 @@
     <!-- 添加或修改固定追号配置对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="生成配置" prop="lottorySetting">
-          <el-input v-model="form.lottorySetting" placeholder="请输入个人彩票生成配置" />
+        <el-form-item label="生成配置" prop="lotterySetting">
+          <el-input v-model="form.lotterySetting" placeholder="请输入个人彩票生成配置" />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select v-model="form.delFlag" placeholder="请选择删除标志">
@@ -202,7 +202,7 @@ import {
   delSetting,
   addSetting,
   updateSetting,
-} from "@/api/lottory/setting";
+} from "@/api/lottery/setting";
 
 export default {
   name: "Setting",
@@ -245,7 +245,7 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        lottorySetting: [
+        lotterySetting: [
           { required: true, message: "个人彩票生成配置不能为空", trigger: "blur" },
         ],
       },
@@ -283,7 +283,7 @@ export default {
       this.form = {
         settingId: null,
         userId: null,
-        lottorySetting: null,
+        lotterySetting: null,
         delFlag: null,
         createBy: null,
         createTime: null,
@@ -363,7 +363,7 @@ export default {
     /** 导出按钮操作 */
     handleExport() {
       this.download(
-        "lottory/setting/export",
+        "lottery/setting/export",
         {
           ...this.queryParams,
         },
