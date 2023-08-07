@@ -192,7 +192,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="号码日志主键" align="center" prop="lotteryId" />
+      <el-table-column label="号码日志主键" align="center" prop="lotteryId" width="120" />
       <el-table-column
         label="当日购买号码"
         align="center"
@@ -278,7 +278,7 @@
 
     <!-- 添加或修改每日号码记录对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="购买号码" prop="recordNumber">
           <el-input v-model="form.recordNumber" placeholder="请输入当日购买号码" />
         </el-form-item>
@@ -308,7 +308,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="是否有追加购买" prop="hasMorePurchases">
+        <el-form-item label="是否有追加" prop="hasMorePurchases">
           <el-select v-model="form.hasMorePurchases" placeholder="请选择是否有追加购买">
             <el-option
               v-for="dict in dict.type.sys_yes_no"
