@@ -1,11 +1,11 @@
-import { login, logout, getInfo, getAvatar } from '@/api/login';
-import { getToken, setToken, removeToken } from '@/utils/auth';
+import { login, logout, getInfo, getAvatar } from "@/api/login";
+import { getToken, setToken, removeToken } from "@/utils/auth";
 
 const user = {
   state: {
     token: getToken(),
-    name: '',
-    avatar: '',
+    name: "",
+    avatar: "",
     roles: [],
     permissions: [],
   },
@@ -37,12 +37,12 @@ const user = {
       const uuid = userInfo.uuid;
       return new Promise((resolve, reject) => {
         login(username, password, code, uuid)
-          .then(res => {
+          .then((res) => {
             setToken(res.token);
-            commit('SET_TOKEN', res.token);
+            commit("SET_TOKEN", res.token);
             resolve();
           })
-          .catch(error => {
+          .catch((error) => {
             reject(error);
           });
       });
@@ -52,38 +52,46 @@ const user = {
     GetInfo({ commit, state }) {
       return new Promise((resolve, reject) => {
         getInfo()
-          .then(res => {
+          .then((res) => {
             const user = res.user;
+
+            console.log(process.env);
 
             // 如果没有设置头像，每次登录显示不同的随机马赛克头像，否则显示用户自定义头像
             // todo 后期再用户中心里添加一个配置，允许用户生成一个随机的马赛克头像并保存为自己的头像
-            if (!user?.avatar) {
-              getAvatar('fx67ll').then(res => {
+            if (!user?.avatar || process.env.NODE_ENV === "development") {
+              getAvatar("fx67ll").then((res) => {
                 let avatar;
                 if (res?.avatar) {
-                  avatar = 'data:image/gif;base64,' + res.avatar;
+                  avatar = "data:image/gif;base64," + res.avatar;
                 } else {
-                  avatar = user.avatar == '' || user.avatar == null ? process.env.VUE_APP_LOGO_URL : process.env.VUE_APP_BASE_API + user.avatar;
+                  avatar =
+                    user.avatar == "" || user.avatar == null
+                      ? process.env.VUE_APP_LOGO_URL
+                      : process.env.VUE_APP_BASE_API + user.avatar;
                 }
-                commit('SET_AVATAR', avatar);
+                commit("SET_AVATAR", avatar);
               });
             } else {
-              const avatar = user.avatar == '' || user.avatar == null ? process.env.VUE_APP_LOGO_URL : process.env.VUE_APP_BASE_API + user.avatar;
-              commit('SET_AVATAR', avatar);
+              const avatar =
+                user.avatar == "" || user.avatar == null
+                  ? process.env.VUE_APP_LOGO_URL
+                  : process.env.VUE_APP_BASE_API + user.avatar;
+              commit("SET_AVATAR", avatar);
             }
 
             if (res.roles && res.roles.length > 0) {
               // 验证返回的roles是否是一个非空数组
-              commit('SET_ROLES', res.roles);
-              commit('SET_PERMISSIONS', res.permissions);
+              commit("SET_ROLES", res.roles);
+              commit("SET_PERMISSIONS", res.permissions);
             } else {
-              commit('SET_ROLES', ['ROLE_DEFAULT']);
+              commit("SET_ROLES", ["ROLE_DEFAULT"]);
             }
-            commit('SET_NAME', user.userName);
+            commit("SET_NAME", user.userName);
 
             resolve(res);
           })
-          .catch(error => {
+          .catch((error) => {
             reject(error);
           });
       });
@@ -94,13 +102,13 @@ const user = {
       return new Promise((resolve, reject) => {
         logout(state.token)
           .then(() => {
-            commit('SET_TOKEN', '');
-            commit('SET_ROLES', []);
-            commit('SET_PERMISSIONS', []);
+            commit("SET_TOKEN", "");
+            commit("SET_ROLES", []);
+            commit("SET_PERMISSIONS", []);
             removeToken();
             resolve();
           })
-          .catch(error => {
+          .catch((error) => {
             reject(error);
           });
       });
@@ -108,8 +116,8 @@ const user = {
 
     // 前端 登出
     FedLogOut({ commit }) {
-      return new Promise(resolve => {
-        commit('SET_TOKEN', '');
+      return new Promise((resolve) => {
+        commit("SET_TOKEN", "");
         removeToken();
         resolve();
       });
