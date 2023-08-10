@@ -14,17 +14,17 @@
       <template v-if="device !== 'mobile'">
         <search id="header-search" class="right-menu-item" />
 
-        <!-- <el-tooltip content="源码地址" effect="dark" placement="bottom">
+        <!-- <el-tooltip content="源码地址" placement="bottom">
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <!-- <el-tooltip content="文档地址" effect="dark" placement="bottom">
+        <!-- <el-tooltip content="文档地址" placement="bottom">
           <fx67ll-doc id="fx67ll-doc" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
-        <!-- <el-tooltip content="布局大小" effect="dark" placement="bottom">
+        <!-- <el-tooltip content="布局大小" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip> -->
       </template>
