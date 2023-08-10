@@ -1,11 +1,11 @@
 <template>
   <div>
     <el-dialog
-      :close-on-click-modal="false"
       v-bind="$attrs"
+      v-on="$listeners"
       width="500px"
       :modal-append-to-body="false"
-      v-on="$listeners"
+      :close-on-click-modal="false"
       @open="onOpen"
       @close="onClose"
     >

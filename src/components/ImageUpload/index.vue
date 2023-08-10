@@ -33,9 +33,9 @@
     </div>
 
     <el-dialog
-      close-on-click-modal="false"
-      :visible.sync="dialogVisible"
       title="预览"
+      :visible.sync="dialogVisible"
+      :close-on-click-modal="false"
       width="800"
       append-to-body
     >

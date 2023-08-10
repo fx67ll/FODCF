@@ -1,8 +1,9 @@
 <template>
   <!-- 导入表 -->
-  <el-dialog :close-on-click-modal="false"
+  <el-dialog
     title="导入表"
     :visible.sync="visible"
+    :close-on-click-modal="false"
     width="800px"
     top="5vh"
     append-to-body

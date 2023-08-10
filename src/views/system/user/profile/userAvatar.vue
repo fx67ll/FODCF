@@ -3,9 +3,10 @@
     <div class="user-info-head" @click="editCropper()">
       <img v-bind:src="options.img" title="点击上传头像" class="img-circle img-lg" />
     </div>
-    <el-dialog :close-on-click-modal="false"
+    <el-dialog
       :title="title"
       :visible.sync="open"
+      :close-on-click-modal="false"
       width="800px"
       append-to-body
       @opened="modalOpened"

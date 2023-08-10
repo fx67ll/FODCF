@@ -183,9 +183,9 @@
     />
     <!-- 预览界面 -->
     <el-dialog
-      :close-on-click-modal="false"
       :title="preview.title"
       :visible.sync="preview.open"
+      :close-on-click-modal="false"
       width="80%"
       top="5vh"
       append-to-body

@@ -206,9 +206,9 @@
 
     <!-- 添加或修改定时任务对话框 -->
     <el-dialog
-      :close-on-click-modal="false"
       :title="title"
       :visible.sync="open"
+      :close-on-click-modal="false"
       width="800px"
       append-to-body
     >
@@ -297,9 +297,9 @@
     </el-dialog>
 
     <el-dialog
-      :close-on-click-modal="false"
       title="Cron表达式生成器"
       :visible.sync="openCron"
+      :close-on-click-modal="false"
       append-to-body
       destroy-on-close
       class="scrollbar"
@@ -313,9 +313,9 @@
 
     <!-- 任务日志详细 -->
     <el-dialog
-      :close-on-click-modal="false"
       title="任务详细"
       :visible.sync="openView"
+      :close-on-click-modal="false"
       width="700px"
       append-to-body
     >

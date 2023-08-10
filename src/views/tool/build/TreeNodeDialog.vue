@@ -1,10 +1,10 @@
 <template>
   <div>
     <el-dialog
-      :close-on-click-modal="false"
       v-bind="$attrs"
-      :modal-append-to-body="false"
       v-on="$listeners"
+      :modal-append-to-body="false"
+      :close-on-click-modal="false"
       @open="onOpen"
       @close="onClose"
     >
