@@ -166,9 +166,9 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="固定追号主键" align="center" prop="chaseId" width="120" />
+      <!-- <el-table-column label="固定追号主键" align="center" prop="chaseId" width="120" /> -->
       <el-table-column label="每日固定追号" align="center" prop="chaseNumber" />
-      <el-table-column label="彩票类型" align="center" prop="numberType">
+      <el-table-column label="彩票类型" align="center" prop="numberType" width="90">
         <template slot-scope="scope">
           <dict-tag
             :options="dict.type.fx67ll_lottery_type"
@@ -176,25 +176,31 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="追号类型" align="center" prop="weekType">
+      <el-table-column label="追号类型" align="center" prop="weekType" width="90">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
         </template>
       </el-table-column>
-      <el-table-column label="排序" align="center" prop="sort" width="80" />
+      <el-table-column label="排序" align="center" prop="sort" width="120" sortable />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+        width="140"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -225,13 +231,24 @@
     />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="500px"
+      style="top: 110px"
+      append-to-body
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="固定追号" prop="chaseNumber">
           <el-input v-model="form.chaseNumber" placeholder="请输入每日固定追号" />
         </el-form-item>
         <el-form-item label="彩票类型" prop="numberType">
-          <el-select v-model="form.numberType" placeholder="请选择固定追号的彩票类型">
+          <el-select
+            v-model="form.numberType"
+            style="width: 100%"
+            placeholder="请选择固定追号的彩票类型"
+          >
             <el-option
               v-for="dict in dict.type.fx67ll_lottery_type"
               :key="dict.value"
@@ -241,7 +258,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="追号类型" prop="weekType">
-          <el-select v-model="form.weekType" placeholder="请选择星期几的固定追号">
+          <el-select
+            v-model="form.weekType"
+            style="width: 100%"
+            placeholder="请选择星期几的固定追号"
+          >
             <el-option
               v-for="dict in dict.type.sys_week_type"
               :key="dict.value"
@@ -253,8 +274,12 @@
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="form.sort" :min="1" placeholder="请输入排序" />
         </el-form-item>
-        <el-form-item label="删除标志" prop="delFlag">
-          <el-select v-model="form.delFlag" placeholder="请选择删除标志">
+        <!-- <el-form-item label="删除标志" prop="delFlag">
+          <el-select
+            v-model="form.delFlag"
+            style="width: 100%"
+            placeholder="请选择删除标志"
+          >
             <el-option
               v-for="dict in dict.type.sys_yes_no"
               :key="dict.value"
@@ -262,7 +287,7 @@
               :value="dict.value"
             ></el-option>
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -358,7 +383,7 @@ export default {
         this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
       }
       listChase(this.queryParams).then((response) => {
-        this.chaseList = response.rows;
+        this.chaseList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
         this.loading = false;
       });
@@ -443,7 +468,7 @@ export default {
     handleDelete(row) {
       const chaseIds = row.chaseId || this.ids;
       this.$modal
-        .confirm('是否确认删除固定追号配置编号为"' + chaseIds + '"的数据项？')
+        .confirm("删除后数据无法恢复，请确认是否删除该数据项？")
         .then(function () {
           return delChase(chaseIds);
         })
