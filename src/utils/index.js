@@ -370,6 +370,32 @@ export function camelCase(str) {
   return str.replace(/_[a-z]/g, str1 => str1.substr(-1).toUpperCase());
 }
 
+// 判断是否是字符串数字
 export function isNumberStr(str) {
   return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str);
+}
+
+// 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
+export function formatObjectArrayNullProperty(arr) {
+  // 创建一个新的数组，用于存储处理后的对象
+  var newArr = [];
+  // 遍历原数组中的每个对象
+  for (var i = 0; i < arr.length; i++) {
+    var newObj = {};
+    // 遍历当前对象的属性
+    for (var key in arr[i]) {
+      // 检查属性值是否为 null
+      if (arr[i].hasOwnProperty(key) && !arr[i][key]) {
+        // 将属性值为 null 的属性设置为 '-'
+        newObj[key] = '-';
+      } else {
+        // 其他情况下，保持原有属性值不变
+        newObj[key] = arr[i][key];
+      }
+    }
+    // 将处理后的对象添加到新数组中
+    newArr.push(newObj);
+  }
+  // 返回处理后的新数组
+  return newArr;
 }
