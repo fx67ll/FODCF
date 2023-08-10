@@ -32,6 +32,16 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="是否中奖" prop="isWin">
+        <el-select v-model="queryParams.isWin" placeholder="请选择是否中奖" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_yes_no"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="彩票类型" prop="numberType">
         <el-select
           v-model="queryParams.numberType"
@@ -56,7 +66,7 @@
           />
         </el-select>
       </el-form-item>
-      <!-- <el-form-item label="是否追加" prop="hasMorePurchases">
+      <el-form-item label="是否追加" prop="hasMorePurchases">
         <el-select
           v-model="queryParams.hasMorePurchases"
           placeholder="请选择是否有追加购买"
@@ -69,7 +79,7 @@
             :value="dict.value"
           />
         </el-select>
-      </el-form-item> -->
+      </el-form-item>
       <!-- <el-form-item label="删除标志" prop="delFlag">
         <el-select v-model="queryParams.delFlag" placeholder="请选择删除标志" clearable>
           <el-option
@@ -192,26 +202,34 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="号码日志主键" align="center" prop="lotteryId" width="120" />
+      <!-- <el-table-column label="号码日志主键" align="center" prop="lotteryId" width="120" /> -->
       <el-table-column
         label="当日购买号码"
         align="center"
         prop="recordNumber"
-        width="120"
+        width="200"
       />
       <el-table-column
         label="当日固定追号"
         align="center"
         prop="chaseNumber"
-        width="120"
+        width="150"
       />
       <el-table-column
         label="当日中奖号码"
         align="center"
         prop="winningNumber"
-        width="120"
+        width="150"
       />
-      <el-table-column label="彩票类型" align="center" prop="numberType">
+      <el-table-column label="是否中奖" align="center" prop="isWin" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
+        </template>
+      </el-table-column>
+      <el-table-column label="中奖金额" align="center" prop="winningPrice" width="150">
+        <template slot-scope="scope"> ￥{{ scope.row.winningPrice }} </template>
+      </el-table-column>
+      <el-table-column label="彩票类型" align="center" prop="numberType" width="80">
         <template slot-scope="scope">
           <dict-tag
             :options="dict.type.fx67ll_lottery_type"
@@ -219,17 +237,19 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="追号类型" align="center" prop="weekType">
+      <el-table-column label="追号类型" align="center" prop="weekType" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
         </template>
       </el-table-column>
-      <el-table-column
-        label="是否有追加购买"
-        align="center"
-        prop="hasMorePurchases"
-        width="150"
-      >
+      <el-table-column align="center" prop="hasMorePurchases" width="180">
+        <!-- eslint-disable-next-line -->
+        <template slot="header" slot-scope="scope">
+          是否有追加购买行为
+          <el-tooltip class="item" :content="hasAppendBuyingTip" placement="top">
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+        </template>
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
         </template>
@@ -237,16 +257,22 @@
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} </span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+        width="140"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -277,19 +303,30 @@
     />
 
     <!-- 添加或修改每日号码记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="500px"
+      style="top: 90px"
+      append-to-body
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="购买号码" prop="recordNumber">
           <el-input v-model="form.recordNumber" placeholder="请输入当日购买号码" />
         </el-form-item>
-        <el-form-item label="固定追号" prop="chaseNumber">
+        <!-- <el-form-item label="固定追号" prop="chaseNumber">
           <el-input v-model="form.chaseNumber" placeholder="请输入当日固定追号" />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="中奖号码" prop="winningNumber">
           <el-input v-model="form.winningNumber" placeholder="请输入当日中奖号码" />
         </el-form-item>
         <el-form-item label="彩票类型" prop="numberType">
-          <el-select v-model="form.numberType" placeholder="请选择当日购买的彩票类型">
+          <el-select
+            v-model="form.numberType"
+            style="width: 100%"
+            placeholder="请选择当日购买的彩票类型"
+          >
             <el-option
               v-for="dict in dict.type.fx67ll_lottery_type"
               :key="dict.value"
@@ -299,7 +336,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="追号类型" prop="weekType">
-          <el-select v-model="form.weekType" placeholder="请选择星期几">
+          <el-select
+            v-model="form.weekType"
+            style="width: 100%"
+            placeholder="请选择星期几"
+          >
             <el-option
               v-for="dict in dict.type.sys_week_type"
               :key="dict.value"
@@ -309,7 +350,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="是否有追加" prop="hasMorePurchases">
-          <el-select v-model="form.hasMorePurchases" placeholder="请选择是否有追加购买">
+          <el-select
+            v-model="form.hasMorePurchases"
+            style="width: calc(100% - 22px); margin-right: 8px"
+            placeholder="请选择是否有追加购买"
+          >
             <el-option
               v-for="dict in dict.type.sys_yes_no"
               :key="dict.value"
@@ -317,9 +362,16 @@
               :value="dict.value"
             ></el-option>
           </el-select>
+          <el-tooltip class="item" :content="hasAppendBuyingTip" placement="top-end">
+            <i class="el-icon-question"></i>
+          </el-tooltip>
         </el-form-item>
-        <el-form-item label="删除标志" prop="delFlag">
-          <el-select v-model="form.delFlag" placeholder="请选择删除标志">
+        <!-- <el-form-item label="删除标志" prop="delFlag">
+          <el-select
+            v-model="form.delFlag"
+            style="width: 100%"
+            placeholder="请选择删除标志"
+          >
             <el-option
               v-for="dict in dict.type.sys_yes_no"
               :key="dict.value"
@@ -327,7 +379,7 @@
               :value="dict.value"
             ></el-option>
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -399,6 +451,9 @@ export default {
           { required: true, message: "是否有追加购买不能为空", trigger: "change" },
         ],
       },
+      // 是否有追加购买的提示
+      hasAppendBuyingTip:
+        "当日第一次购买之后是否有追加购买的行为，包括同一个号码的追加，或者另外购买其他的号码",
     };
   },
   created() {
@@ -418,7 +473,7 @@ export default {
         this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
       }
       listLog(this.queryParams).then((response) => {
-        this.logList = response.rows;
+        this.logList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
         this.loading = false;
       });
@@ -505,7 +560,7 @@ export default {
     handleDelete(row) {
       const lotteryIds = row.lotteryId || this.ids;
       this.$modal
-        .confirm('是否确认删除每日号码记录编号为"' + lotteryIds + '"的数据项？')
+        .confirm("删除后数据无法恢复，请确认是否删除该数据项？")
         .then(function () {
           return delLog(lotteryIds);
         })
