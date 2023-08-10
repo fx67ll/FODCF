@@ -120,27 +120,28 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="生成配置主键" align="center" prop="settingId" width="120" />
+      <!-- <el-table-column label="生成配置主键" align="center" prop="settingId" width="120" /> -->
       <!-- <el-table-column label="用户ID" align="center" prop="userId" /> -->
-      <el-table-column
-        label="个人彩票生成配置"
-        align="center"
-        prop="lotterySetting"
-        width="300"
-      />
+      <el-table-column label="个人彩票生成配置" align="center" prop="lotterySetting" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+        width="140"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -171,10 +172,22 @@
     />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="800px"
+      style="top: 100px"
+      append-to-body
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="生成配置" prop="lotterySetting">
-          <el-input v-model="form.lotterySetting" placeholder="请输入个人彩票生成配置" />
+          <el-input
+            v-model="form.lotterySetting"
+            type="textarea"
+            :rows="10"
+            placeholder="请输入个人彩票生成配置"
+          />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select v-model="form.delFlag" placeholder="请选择删除标志">
@@ -268,7 +281,7 @@ export default {
         this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
       }
       listSetting(this.queryParams).then((response) => {
-        this.settingList = response.rows;
+        this.settingList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
         this.loading = false;
       });
@@ -350,7 +363,7 @@ export default {
     handleDelete(row) {
       const settingIds = row.settingId || this.ids;
       this.$modal
-        .confirm('是否确认删除固定追号配置编号为"' + settingIds + '"的数据项？')
+        .confirm("删除后数据无法恢复，请确认是否删除该数据项？")
         .then(function () {
           return delSetting(settingIds);
         })
