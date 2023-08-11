@@ -56,7 +56,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="追号类型" prop="weekType">
+      <el-form-item label="彩票周期" prop="weekType">
         <el-select v-model="queryParams.weekType" placeholder="请选择星期几" clearable>
           <el-option
             v-for="dict in dict.type.sys_week_type"
@@ -229,7 +229,7 @@
       <el-table-column label="中奖金额" align="center" prop="winningPrice" width="150">
         <template slot-scope="scope"> ￥{{ scope.row.winningPrice }} </template>
       </el-table-column>
-      <el-table-column label="彩票类型" align="center" prop="numberType" width="80">
+      <el-table-column label="彩票类型" align="center" prop="numberType" width="100">
         <template slot-scope="scope">
           <dict-tag
             :options="dict.type.fx67ll_lottery_type"
@@ -237,7 +237,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="追号类型" align="center" prop="weekType" width="80">
+      <el-table-column label="彩票周期" align="center" prop="weekType" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
         </template>
@@ -335,7 +335,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="追号类型" prop="weekType">
+        <!-- <el-form-item label="彩票周期" prop="weekType">
           <el-select
             v-model="form.weekType"
             style="width: 100%"
@@ -348,7 +348,7 @@
               :value="parseInt(dict.value)"
             ></el-option>
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="是否有追加" prop="hasMorePurchases">
           <el-select
             v-model="form.hasMorePurchases"
