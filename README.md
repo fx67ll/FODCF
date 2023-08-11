@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.2.2.20230811  
+* 优化追号配置使用界面    
+
 ## 0.2.1.20230810  
 * 优化彩票管理使用界面  
 
