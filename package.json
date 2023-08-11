@@ -35,7 +35,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/fx67ll/FODCF"
   },
   "dependencies": {
     "@riophae/vue-treeselect": "0.4.0",
