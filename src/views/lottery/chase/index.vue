@@ -30,7 +30,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="追号类型" prop="weekType">
+      <el-form-item label="追号周期" prop="weekType">
         <el-select
           v-model="queryParams.weekType"
           placeholder="请选择星期几的固定追号"
@@ -176,7 +176,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="追号类型" align="center" prop="weekType" width="90">
+      <el-table-column label="追号周期" align="center" prop="weekType" width="90">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
         </template>
@@ -248,6 +248,7 @@
             v-model="form.numberType"
             style="width: 100%"
             placeholder="请选择固定追号的彩票类型"
+            @change="handleNumberTypeChange"
           >
             <el-option
               v-for="dict in dict.type.fx67ll_lottery_type"
@@ -257,14 +258,14 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="追号类型" prop="weekType">
+        <el-form-item label="追号周期" prop="weekType" v-if="form.numberType">
           <el-select
             v-model="form.weekType"
             style="width: 100%"
             placeholder="请选择星期几的固定追号"
           >
             <el-option
-              v-for="dict in dict.type.sys_week_type"
+              v-for="dict in noUsingWeekList"
               :key="dict.value"
               :label="dict.label"
               :value="parseInt(dict.value)"
@@ -364,6 +365,7 @@ export default {
         ],
         sort: [{ required: true, message: "排序不能为空", trigger: "blur" }],
       },
+      noUsingWeekList: [],
     };
   },
   created() {
@@ -428,8 +430,48 @@ export default {
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
+    // 提取已经使用的追号周期
+    getUsingWeekList(record) {
+      this.noUsingWeekList = [];
+      const enumWeekList = [...this.dict.type.sys_week_type];
+      let dataList = [...this.chaseList] || [];
+      if (dataList && dataList.length > 0 && record && record?.weekType) {
+        dataList = dataList.filter(
+          (item) => item?.weekType?.toString() !== record?.weekType?.toString()
+        );
+      }
+      if (dataList.length > 0) {
+        dataList.forEach((obj) => {
+          enumWeekList.forEach((item, index) => {
+            if (obj?.weekType?.toString() === item?.value?.toString()) {
+              enumWeekList.splice(index, 1);
+            }
+          });
+        });
+      }
+      if (enumWeekList && enumWeekList.length > 0) {
+        this.noUsingWeekList = enumWeekList;
+      }
+    },
+    // 根据彩票类型动态修改可配置的追号周期
+    handleNumberTypeChange(val) {
+      this.getUsingWeekList();
+      if (val === 1) {
+        this.noUsingWeekList = this.noUsingWeekList.filter((item) => {
+          const val = item?.value?.toString();
+          return val !== "2" && val !== "4" && val !== "7";
+        });
+      }
+      if (val === 2) {
+        this.noUsingWeekList = this.noUsingWeekList.filter((item) => {
+          const val = item?.value?.toString();
+          return val !== "1" && val !== "3" && val !== "6";
+        });
+      }
+    },
     /** 新增按钮操作 */
     handleAdd() {
+      this.getUsingWeekList();
       this.reset();
       this.open = true;
       this.title = "添加固定追号配置";
@@ -439,6 +481,7 @@ export default {
       this.reset();
       const chaseId = row.chaseId || this.ids;
       getChase(chaseId).then((response) => {
+        this.getUsingWeekList(response.data);
         this.form = response.data;
         this.open = true;
         this.title = "修改固定追号配置";
