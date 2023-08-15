@@ -177,7 +177,7 @@
       :visible.sync="open"
       :close-on-click-modal="false"
       width="800px"
-      style="top: 100px"
+      style="top: 30px"
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -185,7 +185,9 @@
           <el-input
             v-model="form.lotterySetting"
             type="textarea"
-            :rows="10"
+            :rows="18"
+            :maxlength="19999"
+            show-word-limit
             placeholder="请输入个人彩票生成配置"
           />
         </el-form-item>
