@@ -241,7 +241,11 @@
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="固定追号" prop="chaseNumber">
-          <el-input v-model="form.chaseNumber" placeholder="请输入每日固定追号" />
+          <el-input
+            v-model="form.chaseNumber"
+            placeholder="请输入每日固定追号"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="彩票类型" prop="numberType">
           <el-select
