@@ -42,6 +42,14 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="中奖金额" prop="winningPrice">
+        <el-input
+          v-model="queryParams.winningPrice"
+          placeholder="请输入中奖金额"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="彩票类型" prop="numberType">
         <el-select
           v-model="queryParams.numberType"
@@ -308,18 +316,53 @@
       :visible.sync="open"
       :close-on-click-modal="false"
       width="500px"
-      style="top: 90px"
+      style="top: 40px"
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="购买号码" prop="recordNumber">
-          <el-input v-model="form.recordNumber" placeholder="请输入当日购买号码" />
+          <el-input
+            v-model="form.recordNumber"
+            placeholder="请输入当日购买号码"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="固定追号" prop="chaseNumber">
-          <el-input v-model="form.chaseNumber" placeholder="请输入当日固定追号" />
+          <el-input
+            v-model="form.chaseNumber"
+            placeholder="请输入当日固定追号"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="中奖号码" prop="winningNumber">
-          <el-input v-model="form.winningNumber" placeholder="请输入当日中奖号码" />
+          <el-input
+            v-model="form.winningNumber"
+            placeholder="请输入当日中奖号码"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="是否中奖" prop="isWin">
+          <el-select
+            v-model="form.isWin"
+            style="width: 100%"
+            placeholder="请选择是否中奖"
+            clearable
+          >
+            <el-option
+              v-for="dict in dict.type.sys_yes_no"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          label="中奖金额"
+          prop="winningPrice"
+          clearable
+          v-if="form.isWin === 'Y'"
+        >
+          <el-input v-model="form.winningPrice" placeholder="请输入中奖金额" />
         </el-form-item>
         <el-form-item label="彩票类型" prop="numberType">
           <el-select
@@ -426,6 +469,8 @@ export default {
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
+        isWin: null,
+        winningPrice: null,
         numberType: null,
         weekType: null,
         hasMorePurchases: null,
@@ -490,6 +535,8 @@ export default {
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
+        isWin: null,
+        winningPrice: null,
         numberType: null,
         weekType: null,
         hasMorePurchases: null,
