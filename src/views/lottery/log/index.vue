@@ -315,9 +315,9 @@
         <el-form-item label="购买号码" prop="recordNumber">
           <el-input v-model="form.recordNumber" placeholder="请输入当日购买号码" />
         </el-form-item>
-        <!-- <el-form-item label="固定追号" prop="chaseNumber">
+        <el-form-item label="固定追号" prop="chaseNumber">
           <el-input v-model="form.chaseNumber" placeholder="请输入当日固定追号" />
-        </el-form-item> -->
+        </el-form-item>
         <el-form-item label="中奖号码" prop="winningNumber">
           <el-input v-model="form.winningNumber" placeholder="请输入当日中奖号码" />
         </el-form-item>
