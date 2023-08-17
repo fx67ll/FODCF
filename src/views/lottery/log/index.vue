@@ -378,7 +378,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <!-- <el-form-item label="彩票周期" prop="weekType">
+        <el-form-item label="彩票周期" prop="weekType">
           <el-select
             v-model="form.weekType"
             style="width: 100%"
@@ -391,7 +391,7 @@
               :value="parseInt(dict.value)"
             ></el-option>
           </el-select>
-        </el-form-item> -->
+        </el-form-item>
         <el-form-item label="是否有追加" prop="hasMorePurchases">
           <el-select
             v-model="form.hasMorePurchases"
