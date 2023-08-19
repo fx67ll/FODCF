@@ -53,7 +53,7 @@ const user = {
       return new Promise((resolve, reject) => {
         getInfo()
           .then((res) => {
-            const user = res.user;
+            const user = res?.user || {};
             // 如果没有设置头像，每次登录显示不同的随机马赛克头像，否则显示用户自定义头像
             // todo 后期再用户中心里添加一个配置，允许用户生成一个随机的马赛克头像并保存为自己的头像
             if (!user?.avatar || process.env.NODE_ENV === "development") {
@@ -63,7 +63,7 @@ const user = {
                   avatar = "data:image/gif;base64," + res.avatar;
                 } else {
                   avatar =
-                    user.avatar == "" || user.avatar == null
+                    !user && !user?.avatar
                       ? process.env.VUE_APP_LOGO_URL
                       : process.env.VUE_APP_BASE_API + user.avatar;
                 }
@@ -71,7 +71,7 @@ const user = {
               });
             } else {
               const avatar =
-                user.avatar == "" || user.avatar == null
+                !user && !user?.avatar
                   ? process.env.VUE_APP_LOGO_URL
                   : process.env.VUE_APP_BASE_API + user.avatar;
               commit("SET_AVATAR", avatar);
