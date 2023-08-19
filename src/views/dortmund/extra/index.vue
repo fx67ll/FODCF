@@ -34,6 +34,22 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="当前本金" prop="seedMoney">
+        <el-input
+          v-model="queryParams.seedMoney"
+          placeholder="请输入当前投入本金"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="目标金额" prop="targetMoney">
+        <el-input
+          v-model="queryParams.targetMoney"
+          placeholder="请输入目标金额"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="创建者" prop="createBy">
         <el-input
           v-model="queryParams.createBy"
@@ -52,14 +68,6 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
         ></el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新者" prop="updateBy">
-        <el-input
-          v-model="queryParams.updateBy"
-          placeholder="请输入记录更新者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
       </el-form-item>
       <el-form-item label="更新时间">
         <el-date-picker
@@ -136,13 +144,54 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="外快总金额" align="center" prop="extraMoney" width="150" />
+      <el-table-column label="外快总金额" align="center" prop="extraMoney" width="130" />
       <el-table-column label="是否盈利" align="center" prop="isWin" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
         </template>
       </el-table-column>
-      <el-table-column label="外快盈亏金额" align="center" prop="winMoney" width="150" />
+      <el-table-column
+        label="本次外快盈亏金额"
+        align="center"
+        prop="winMoney"
+        width="130"
+      >
+        <template slot-scope="scope">
+          <span
+            style="color: #ff5a5f"
+            v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney) > 0"
+            >-{{ scope.row.winMoney }}</span
+          >
+          <span
+            style="color: #999999"
+            v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney) === 0"
+            >{{ scope.row.winMoney }}</span
+          >
+          <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'"
+            >+{{ scope.row.winMoney }}</span
+          >
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="历史总盈亏金额"
+        align="center"
+        prop="currentMoney"
+        width="130"
+      >
+        <template slot-scope="scope">
+          <span style="color: #ff5a5f" v-if="scope.row.currentMoney < 0">{{
+            scope.row.currentMoney.replace(/\.?0+$/, "")
+          }}</span>
+          <span style="color: #999999" v-if="parseInt(scope.row.currentMoney) === 0">{{
+            scope.row.currentMoney.replace(/\.?0+$/, "")
+          }}</span>
+          <span style="color: #2ecc71" v-if="scope.row.currentMoney > 0">{{
+            scope.row.currentMoney.replace(/\.?0+$/, "")
+          }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="130" />
+      <el-table-column label="目标金额" align="center" prop="targetMoney" width="130" />
       <el-table-column label="备注" align="center" prop="extraRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
@@ -190,8 +239,9 @@
     <el-dialog
       :title="title"
       :visible.sync="open"
+      :close-on-click-modal="false"
       width="500px"
-      style="top: 100px"
+      style="top: 40px"
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -214,6 +264,12 @@
         </el-form-item>
         <el-form-item label="盈亏金额" prop="winMoney">
           <el-input v-model="form.winMoney" placeholder="请输入外快盈亏金额" />
+        </el-form-item>
+        <el-form-item label="当前本金" prop="seedMoney">
+          <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" />
+        </el-form-item>
+        <el-form-item label="目标金额" prop="targetMoney">
+          <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
         </el-form-item>
         <el-form-item label="备注" prop="extraRemark">
           <el-input
@@ -277,6 +333,8 @@ export default {
         extraMoney: null,
         isWin: null,
         winMoney: null,
+        seedMoney: null,
+        targetMoney: null,
         extraRemark: null,
         delFlag: null,
         userId: null,
@@ -294,6 +352,8 @@ export default {
         ],
         isWin: [{ required: true, message: "是否盈利不能为空", trigger: "change" }],
         winMoney: [{ required: true, message: "外快盈亏金额不能为空", trigger: "blur" }],
+        seedMoney: [{ required: true, message: "当前投入本金不能为空", trigger: "blur" }],
+        targetMoney: [{ required: true, message: "目标金额不能为空", trigger: "blur" }],
       },
     };
   },
@@ -314,10 +374,25 @@ export default {
         this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
       }
       listExtra(this.queryParams).then((response) => {
-        this.extraList = this.formatObjectArrayNullProperty(response.rows);
+        this.extraList = this.countCurrentMoney(
+          this.formatObjectArrayNullProperty(response.rows)
+        );
         this.total = response.total;
         this.loading = false;
       });
+    },
+    countCurrentMoney(list) {
+      const listResult = [];
+      list.forEach((item) => {
+        const objTmp = {
+          ...item,
+          currentMoney: (
+            parseFloat(item.extraMoney) - parseFloat(item.seedMoney)
+          ).toFixed(2),
+        };
+        listResult.push(objTmp);
+      });
+      return listResult;
     },
     // 取消按钮
     cancel() {
@@ -331,6 +406,8 @@ export default {
         extraMoney: null,
         isWin: null,
         winMoney: null,
+        seedMoney: null,
+        targetMoney: null,
         extraRemark: null,
         delFlag: null,
         userId: null,
