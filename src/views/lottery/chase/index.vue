@@ -369,6 +369,7 @@ export default {
         ],
         sort: [{ required: true, message: "排序不能为空", trigger: "blur" }],
       },
+      // 顶部表格查询的周期下拉
       noUsingWeekList: [],
     };
   },

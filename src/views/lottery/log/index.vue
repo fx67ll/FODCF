@@ -369,6 +369,7 @@
             v-model="form.numberType"
             style="width: 100%"
             placeholder="请选择当日购买的彩票类型"
+            @change="handleNumberTypeChange"
           >
             <el-option
               v-for="dict in dict.type.fx67ll_lottery_type"
@@ -378,14 +379,14 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="彩票周期" prop="weekType">
+        <el-form-item label="彩票周期" prop="weekType" v-if="form.numberType">
           <el-select
             v-model="form.weekType"
             style="width: 100%"
             placeholder="请选择星期几"
           >
             <el-option
-              v-for="dict in dict.type.sys_week_type"
+              v-for="dict in dynamicWeekList"
               :key="dict.value"
               :label="dict.label"
               :value="parseInt(dict.value)"
@@ -499,6 +500,8 @@ export default {
       // 是否有追加购买的提示
       hasAppendBuyingTip:
         "当日第一次购买之后是否有追加购买的行为，包括同一个号码的追加，或者另外购买其他的号码",
+      // 顶部表格查询的周期下拉
+      dynamicWeekList: [],
     };
   },
   created() {
@@ -566,6 +569,22 @@ export default {
       this.ids = selection.map((item) => item.lotteryId);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
+    },
+    // 根据彩票类型动态修改可配置的追号周期
+    handleNumberTypeChange(val) {
+      const enumWeekList = [...this.dict.type.sys_week_type];
+      if (val === 1) {
+        this.dynamicWeekList = enumWeekList.filter((item) => {
+          const val = item?.value?.toString();
+          return val !== "2" && val !== "4" && val !== "7";
+        });
+      }
+      if (val === 2) {
+        this.dynamicWeekList = enumWeekList.filter((item) => {
+          const val = item?.value?.toString();
+          return val !== "1" && val !== "3" && val !== "6";
+        });
+      }
     },
     /** 新增按钮操作 */
     handleAdd() {
