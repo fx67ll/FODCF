@@ -459,15 +459,15 @@ export default {
       }
     },
     // 根据彩票类型动态修改可配置的追号周期
-    handleNumberTypeChange(val) {
-      this.getUsingWeekList();
-      if (val === 1) {
+    handleNumberTypeChange(type, record) {
+      this.getUsingWeekList(record);
+      if (type?.toString() === "1") {
         this.noUsingWeekList = this.noUsingWeekList.filter((item) => {
           const val = item?.value?.toString();
           return val !== "2" && val !== "4" && val !== "7";
         });
       }
-      if (val === 2) {
+      if (type?.toString() === "2") {
         this.noUsingWeekList = this.noUsingWeekList.filter((item) => {
           const val = item?.value?.toString();
           return val !== "1" && val !== "3" && val !== "6";
@@ -486,7 +486,7 @@ export default {
       this.reset();
       const chaseId = row.chaseId || this.ids;
       getChase(chaseId).then((response) => {
-        this.getUsingWeekList(response.data);
+        this.handleNumberTypeChange(response?.data?.numberType, response?.data);
         this.form = response.data;
         this.open = true;
         this.title = "修改固定追号配置";

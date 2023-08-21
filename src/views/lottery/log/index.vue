@@ -571,15 +571,15 @@ export default {
       this.multiple = !selection.length;
     },
     // 根据彩票类型动态修改可配置的追号周期
-    handleNumberTypeChange(val) {
+    handleNumberTypeChange(type) {
       const enumWeekList = [...this.dict.type.sys_week_type];
-      if (val === 1) {
+      if (type?.toString() === "1") {
         this.dynamicWeekList = enumWeekList.filter((item) => {
           const val = item?.value?.toString();
           return val !== "2" && val !== "4" && val !== "7";
         });
       }
-      if (val === 2) {
+      if (type?.toString() === "2") {
         this.dynamicWeekList = enumWeekList.filter((item) => {
           const val = item?.value?.toString();
           return val !== "1" && val !== "3" && val !== "6";
@@ -597,6 +597,7 @@ export default {
       this.reset();
       const lotteryId = row.lotteryId || this.ids;
       getLog(lotteryId).then((response) => {
+        this.handleNumberTypeChange(response?.data?.numberType);
         this.form = response.data;
         this.open = true;
         this.title = "修改每日号码记录";
