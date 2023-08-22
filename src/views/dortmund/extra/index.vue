@@ -159,17 +159,17 @@
         <template slot-scope="scope">
           <span
             style="color: #ff5a5f"
-            v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney || 0) > 0"
-            >-{{ scope.row.winMoney }}</span
+            v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney) < 0"
+            >{{ scope.row.winMoney }}</span
           >
           <span
             style="color: #999999"
             v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney || 0) === 0"
             >{{ scope.row.winMoney }}</span
           >
-          <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'"
-            >+{{ scope.row.winMoney }}</span
-          >
+          <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'">{{
+            scope.row.winMoney
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column
