@@ -197,6 +197,9 @@ export default {
     this.getCryptoSaltKey();
   },
   methods: {
+    isThatKey() {
+      return this.form.secretKey === "cryptoSaltKey";
+    },
     getCryptoSaltKey() {
       listKey({ secretKey: "cryptoSaltKey" }).then((res) => {
         if (res && res?.rows && res?.rows.length > 0) {
@@ -209,7 +212,9 @@ export default {
       list.forEach((item) => {
         resList.push({
           ...item,
-          secretValue: decryptString(item?.secretValue, this.cryptoSaltKey),
+          secretValue: this.isThatKey()
+            ? item?.secretValue
+            : decryptString(item?.secretValue, this.cryptoSaltKey),
           secretValueEncrypt: item?.secretValue,
         });
       });
@@ -265,8 +270,10 @@ export default {
       const secretId = row.secretId || this.ids;
       getKey(secretId).then((response) => {
         this.form = response.data;
-        this.form.secretValue = decryptString(this.form.secretValue, this.cryptoSaltKey);
-        this.open = true;
+        (this.form.secretValue = this.isThatKey()
+          ? this.form.secretValueEncrypt
+          : decryptString(this.form.secretValue, this.cryptoSaltKey)),
+          (this.open = true);
         this.title = "修改秘钥配置";
       });
     },
@@ -274,10 +281,12 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          this.form.secretValue = encryptString(
-            this.form.secretValue,
-            this.cryptoSaltKey
-          );
+          if (!this.isThatKey()) {
+            this.form.secretValue = encryptString(
+              this.form.secretValue,
+              this.cryptoSaltKey
+            );
+          }
           if (this.form.secretId != null) {
             updateKey(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
