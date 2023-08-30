@@ -124,7 +124,7 @@
       :visible.sync="open"
       :close-on-click-modal="false"
       width="500px"
-      style="top: 150px"
+      style="top: 140px"
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -193,30 +193,15 @@ export default {
     };
   },
   created() {
-    this.getList();
-    this.getCryptoSaltKey();
+    this.qryCryptoSaltKey();
   },
   methods: {
-    isThatKey() {
-      return this.form.secretKey === "cryptoSaltKey";
-    },
-    getCryptoSaltKey() {
+    qryCryptoSaltKey() {
       listKey({ secretKey: "cryptoSaltKey" }).then((res) => {
         if (res && res?.rows && res?.rows.length > 0) {
           this.cryptoSaltKey = res.rows[0].secretValue;
+          this.getList();
         }
-      });
-    },
-    formatListData(list) {
-      const resList = [];
-      list.forEach((item) => {
-        resList.push({
-          ...item,
-          secretValue: this.isThatKey()
-            ? item?.secretValue
-            : decryptString(item?.secretValue, this.cryptoSaltKey),
-          secretValueEncrypt: item?.secretValue,
-        });
       });
     },
     /** 查询秘钥配置列表 */
@@ -269,11 +254,14 @@ export default {
       this.reset();
       const secretId = row.secretId || this.ids;
       getKey(secretId).then((response) => {
-        this.form = response.data;
-        (this.form.secretValue = this.isThatKey()
-          ? this.form.secretValueEncrypt
-          : decryptString(this.form.secretValue, this.cryptoSaltKey)),
-          (this.open = true);
+        this.form = response?.data;
+        if (response?.data?.secretKey !== "cryptoSaltKey") {
+          this.form.secretValue = decryptString(
+            response?.data?.secretValue,
+            this.cryptoSaltKey
+          );
+        }
+        this.open = true;
         this.title = "修改秘钥配置";
       });
     },
@@ -281,7 +269,7 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          if (!this.isThatKey()) {
+          if (this.form.secretKey !== "cryptoSaltKey") {
             this.form.secretValue = encryptString(
               this.form.secretValue,
               this.cryptoSaltKey
