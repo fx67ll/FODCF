@@ -217,7 +217,7 @@ import {
   delSetting,
   addSetting,
   updateSetting,
-} from "@/api/lottery/setting";
+} from "@/api/fx67ll/lottery/setting";
 
 export default {
   name: "Setting",

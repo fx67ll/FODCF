@@ -309,7 +309,7 @@ import {
   delChase,
   addChase,
   updateChase,
-} from "@/api/lottery/chase";
+} from "@/api/fx67ll/lottery/chase";
 
 export default {
   name: "Chase",

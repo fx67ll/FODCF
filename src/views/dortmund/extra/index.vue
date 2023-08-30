@@ -299,7 +299,7 @@ import {
   delExtra,
   addExtra,
   updateExtra,
-} from "@/api/dortmund/extra";
+} from "@/api/fx67ll/dortmund/extra";
 
 export default {
   name: "Extra",

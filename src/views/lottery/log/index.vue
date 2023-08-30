@@ -434,7 +434,7 @@
 </template>
 
 <script>
-import { listLog, getLog, delLog, addLog, updateLog } from "@/api/lottery/log";
+import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/lottery/log";
 
 export default {
   name: "Log",
