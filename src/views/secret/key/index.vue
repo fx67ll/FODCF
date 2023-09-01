@@ -91,7 +91,21 @@
       />
       <!-- <el-table-column label="秘钥主键" align="center" prop="secretId" /> -->
       <el-table-column label="秘钥键" align="center" prop="secretKey" width="120" />
-      <el-table-column label="秘钥值" align="center" prop="secretValue" />
+      <el-table-column label="秘钥值" align="center" prop="secretValueEncrypt">
+        <template slot-scope="scope">
+          <el-tooltip
+            effect="dark"
+            :content="scope.row.secretValue"
+            placement="bottom"
+            v-if="scope.row.secretKey === 'cryptoSaltKey'"
+          >
+            <span>{{ scope.row.secretValueEncrypt }}</span>
+          </el-tooltip>
+          <span v-if="scope.row.secretKey !== 'cryptoSaltKey'">{{
+            scope.row.secretValue
+          }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         label="操作"
         align="center"
@@ -223,11 +237,21 @@ export default {
         }
       });
     },
+    encryptSecretKeyList(datalist) {
+      const formatList = [];
+      datalist.forEach((item) => {
+        formatList.push({
+          ...item,
+          secretValueEncrypt: encryptString(item?.secretValue, this.cryptoSaltKey),
+        });
+      });
+      return formatList;
+    },
     /** 查询秘钥配置列表 */
     getList() {
       this.loading = true;
       listKey(this.queryParams).then((response) => {
-        this.keyList = response.rows;
+        this.keyList = this.encryptSecretKeyList(response.rows);
         this.total = response.total;
         this.loading = false;
       });
