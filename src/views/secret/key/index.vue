@@ -79,7 +79,16 @@
       :data="keyList"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column
+        type="selection"
+        width="55"
+        align="center"
+        :selectable="
+          (record) => {
+            return record.secretKey !== 'cryptoSaltKey';
+          }
+        "
+      />
       <!-- <el-table-column label="秘钥主键" align="center" prop="secretId" /> -->
       <el-table-column label="秘钥键" align="center" prop="secretKey" width="120" />
       <el-table-column label="秘钥值" align="center" prop="secretValue" />
@@ -93,9 +102,18 @@
           <el-button
             size="mini"
             type="text"
+            icon="el-icon-lock"
+            v-if="scope.row.secretKey === 'cryptoSaltKey'"
+            disabled
+            >禁止操作</el-button
+          >
+          <el-button
+            size="mini"
+            type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['secret:key:edit']"
+            v-if="scope.row.secretKey !== 'cryptoSaltKey'"
             >修改</el-button
           >
           <el-button
@@ -104,6 +122,7 @@
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['secret:key:remove']"
+            v-if="scope.row.secretKey !== 'cryptoSaltKey'"
             >删除</el-button
           >
         </template>
