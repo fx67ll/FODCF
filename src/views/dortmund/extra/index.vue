@@ -42,6 +42,15 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+
+      <el-form-item label="落单金额" prop="saveMoney">
+        <el-input
+          v-model="queryParams.saveMoney"
+          placeholder="请输入已经落单为安的盈利金额"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="目标金额" prop="targetMoney">
         <el-input
           v-model="queryParams.targetMoney"
@@ -193,6 +202,12 @@
         </template>
       </el-table-column>
       <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="130" />
+      <el-table-column
+        label="已经落单为安的盈利金额"
+        align="center"
+        prop="saveMoney"
+        width="130"
+      />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="130" />
       <el-table-column label="备注" align="center" prop="extraRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
@@ -270,6 +285,9 @@
         <el-form-item label="当前本金" prop="seedMoney">
           <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" />
         </el-form-item>
+        <el-form-item label="落单金额" prop="saveMoney">
+          <el-input v-model="form.saveMoney" placeholder="请输入已经落单为安的盈利金额" />
+        </el-form-item>
         <el-form-item label="目标金额" prop="targetMoney">
           <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
         </el-form-item>
@@ -336,6 +354,7 @@ export default {
         isWin: null,
         winMoney: null,
         seedMoney: null,
+        saveMoney: null,
         targetMoney: null,
         extraRemark: null,
         delFlag: null,
@@ -355,6 +374,9 @@ export default {
         isWin: [{ required: true, message: "是否盈利不能为空", trigger: "change" }],
         winMoney: [{ required: true, message: "外快盈亏金额不能为空", trigger: "blur" }],
         seedMoney: [{ required: true, message: "当前投入本金不能为空", trigger: "blur" }],
+        saveMoney: [
+          { required: true, message: "已经落单为安的盈利金额不能为空", trigger: "blur" },
+        ],
         targetMoney: [{ required: true, message: "目标金额不能为空", trigger: "blur" }],
       },
     };
