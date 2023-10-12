@@ -1,6 +1,6 @@
 {
   "name": "vip.fx67ll",
-  "version": "0.2.8",
+  "version": "0.2.10",
   "description": "fx67ll's 管理系统",
   "author": "fx67ll",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "clipboard": "2.0.8",
     "core-js": "3.25.3",
     "crypto-js": "^4.1.1",
-    "echarts": "5.4.0",
+    "echarts": "^5.4.0",
     "element-ui": "2.15.12",
     "file-saver": "2.0.5",
     "fuse.js": "6.4.3",
