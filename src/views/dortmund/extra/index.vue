@@ -144,6 +144,16 @@
           >导出</el-button
         >
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-data-line"
+          size="mini"
+          @click="handleOpenDataAnalysis"
+          >查看外快盈亏历史数据走势图</el-button
+        >
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -313,10 +323,28 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 添加或修改外快盈亏记录对话框 -->
+    <el-dialog
+      title="外快盈亏历史数据走势图"
+      :visible.sync="historyDataAnalysisOpen"
+      :close-on-click-modal="false"
+      :show-close="true"
+      :fullscreen="true"
+      :destroy-on-close="true"
+      v-loading="historyDataChartLoading"
+      append-to-body
+    >
+      <div id="historyDataAnalysisContainer"></div>
+      <!-- <div slot="footer" class="dialog-footer">
+        <el-button @click="handleCloseDataAnalysis">关闭</el-button>
+      </div> -->
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import * as echarts from "echarts";
 import {
   listExtra,
   getExtra,
@@ -385,23 +413,317 @@ export default {
         ],
         targetMoney: [{ required: true, message: "目标金额不能为空", trigger: "blur" }],
       },
+      // 外快盈亏历史数据走势图弹窗相关参数
+      historyDataAnalysisOpen: false,
+      historyDataChartLoading: false,
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    // 打开外快盈亏历史数据走势图弹窗
+    handleOpenDataAnalysis() {
+      const self = this;
+      this.historyDataAnalysisOpen = true;
+      this.historyDataChartLoading = true;
+      setTimeout(() => {
+        self.setChartDomHeight();
+        self.formatHistoiryListData();
+      }, 518);
+      setTimeout(() => {
+        self.historyDataChartLoading = false;
+      }, 5918);
+    },
+    // 关闭外快盈亏历史数据走势图弹窗
+    handleCloseDataAnalysis() {
+      this.historyDataAnalysisOpen = false;
+    },
+    // 动态赋值图表高度
+    setChartDomHeight() {
+      const domHeight = window.innerHeight - 114;
+      document.getElementById("historyDataAnalysisContainer").style.height =
+        domHeight + "px";
+    },
+    // 组装历史数据
+    formatHistoiryListData() {
+      const self = this;
+      listExtra({
+        pageNum: 1,
+        pageSize: 999999999,
+      }).then((response) => {
+        const hisListData = response?.rows;
+        const chartListData = [];
+        hisListData.forEach((item) => {
+          const lastMoney = parseFloat(
+            (
+              parseFloat(item?.extraMoney || 0) -
+              parseFloat(item?.seedMoney || 0) -
+              parseFloat(item?.winMoney || 0)
+            ).toFixed(2)
+          );
+          const nowMoney = parseFloat(
+            (
+              parseFloat(item?.extraMoney || 0) - parseFloat(item?.seedMoney || 0)
+            ).toFixed(2)
+          );
+          const highMoney = lastMoney > nowMoney ? lastMoney : nowMoney;
+          const lowMoney = lastMoney < nowMoney ? lastMoney : nowMoney;
+          chartListData.push([
+            item?.createTime,
+            lastMoney,
+            nowMoney,
+            lowMoney,
+            highMoney,
+          ]);
+        });
+        self.initDataAnalysisChart(chartListData);
+        self.historyDataChartLoading = false;
+      });
+    },
+    // 初始化外快盈亏历史数据走势图
+    initDataAnalysisChart(kChartData) {
+      var chartDom = document.getElementById("historyDataAnalysisContainer");
+      var myChart = echarts.init(chartDom);
+      var option;
+
+      const upColor = "#ec0000";
+      const upBorderColor = "#8A0000";
+      const downColor = "#00da3c";
+      const downBorderColor = "#008F28";
+
+      // Each item: open，close，lowest，highest
+      const data0 = splitData(kChartData);
+
+      function splitData(rawData) {
+        const categoryData = [];
+        const values = [];
+        for (var i = 0; i < rawData.length; i++) {
+          categoryData.push(rawData[i].splice(0, 1)[0]);
+          values.push(rawData[i]);
+        }
+        return {
+          categoryData: categoryData,
+          values: values,
+        };
+      }
+
+      function calculateMA(dayCount) {
+        var result = [];
+        for (var i = 0, len = data0.values.length; i < len; i++) {
+          if (i < dayCount) {
+            result.push("-");
+            continue;
+          }
+          var sum = 0;
+          for (var j = 0; j < dayCount; j++) {
+            sum += +data0.values[i - j][1];
+          }
+          result.push(parseFloat((sum / dayCount).toFixed(2)));
+        }
+        return result;
+      }
+
+      option = {
+        // title: {
+        //   text: "上证指数",
+        //   left: 0,
+        // },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {
+            type: "cross",
+          },
+        },
+        legend: {
+          // data: ["日K", "MA5", "MA10", "MA20", "MA30"],
+          data: ["外快盈亏", "MA5", "MA10", "MA20", "MA30"],
+        },
+        grid: {
+          left: "10%",
+          right: "10%",
+          bottom: "15%",
+        },
+        xAxis: {
+          type: "category",
+          data: data0.categoryData,
+          boundaryGap: false,
+          axisLine: { onZero: false },
+          splitLine: { show: false },
+          min: "dataMin",
+          max: "dataMax",
+        },
+        yAxis: {
+          scale: true,
+          splitArea: {
+            show: true,
+          },
+        },
+        dataZoom: [
+          {
+            type: "inside",
+            start: 0,
+            end: 100,
+          },
+          {
+            show: true,
+            type: "slider",
+            top: "90%",
+            start: 0,
+            end: 100,
+          },
+        ],
+        series: [
+          {
+            name: "外快盈亏",
+            type: "candlestick",
+            data: data0.values,
+            itemStyle: {
+              color: upColor,
+              color0: downColor,
+              borderColor: upBorderColor,
+              borderColor0: downBorderColor,
+            },
+            markPoint: {
+              label: {
+                formatter: function (param) {
+                  return param != null ? Math.round(param.value) + "" : "";
+                },
+              },
+              data: [
+                // // 自定义标记点
+                // {
+                //   name: "Mark",
+                //   coord: ["2023-09-18 02:02:58", 3649.9],
+                //   value: 3649.9,
+                //   itemStyle: {
+                //     color: "rgb(41,60,85)",
+                //   },
+                // },
+                // 最高标记点
+                {
+                  name: "highest value",
+                  type: "max",
+                  valueDim: "highest",
+                },
+                // 最低标记点
+                {
+                  name: "lowest value",
+                  type: "min",
+                  valueDim: "lowest",
+                },
+                // // 平均标记点
+                // {
+                //   name: "average value on close",
+                //   type: "average",
+                //   valueDim: "close",
+                // },
+              ],
+              tooltip: {
+                formatter: function (param) {
+                  return param.name + "<br>" + (param.data.coord || "");
+                },
+              },
+            },
+            markLine: {
+              symbol: ["none", "none"],
+              data: [
+                [
+                  {
+                    name: "from lowest to highest",
+                    type: "min",
+                    valueDim: "lowest",
+                    symbol: "circle",
+                    symbolSize: 10,
+                    label: {
+                      show: false,
+                    },
+                    emphasis: {
+                      label: {
+                        show: false,
+                      },
+                    },
+                  },
+                  {
+                    type: "max",
+                    valueDim: "highest",
+                    symbol: "circle",
+                    symbolSize: 10,
+                    label: {
+                      show: false,
+                    },
+                    emphasis: {
+                      label: {
+                        show: false,
+                      },
+                    },
+                  },
+                ],
+                {
+                  name: "min line on close",
+                  type: "min",
+                  valueDim: "close",
+                },
+                {
+                  name: "max line on close",
+                  type: "max",
+                  valueDim: "close",
+                },
+              ],
+            },
+          },
+          {
+            name: "MA5",
+            type: "line",
+            data: calculateMA(5),
+            smooth: true,
+            lineStyle: {
+              opacity: 0.5,
+            },
+          },
+          {
+            name: "MA10",
+            type: "line",
+            data: calculateMA(10),
+            smooth: true,
+            lineStyle: {
+              opacity: 0.5,
+            },
+          },
+          {
+            name: "MA20",
+            type: "line",
+            data: calculateMA(20),
+            smooth: true,
+            lineStyle: {
+              opacity: 0.5,
+            },
+          },
+          {
+            name: "MA30",
+            type: "line",
+            data: calculateMA(30),
+            smooth: true,
+            lineStyle: {
+              opacity: 0.5,
+            },
+          },
+        ],
+      };
+
+      option && myChart.setOption(option);
+    },
     /** 查询外快盈亏记录列表 */
     getList() {
       this.loading = true;
       this.queryParams.params = {};
       if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
-        this.queryParams.params["beginCreateTime"] = this.daterangeCreateTime[0];
-        this.queryParams.params["endCreateTime"] = this.daterangeCreateTime[1];
+        this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
+        this.queryParams.endCreateTime = this.daterangeCreateTime[1];
       }
       if (null != this.daterangeUpdateTime && "" != this.daterangeUpdateTime) {
-        this.queryParams.params["beginUpdateTime"] = this.daterangeUpdateTime[0];
-        this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
+        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
+        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
       listExtra(this.queryParams).then((response) => {
         this.extraList = this.countCurrentMoney(
