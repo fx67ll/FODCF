@@ -163,8 +163,20 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="外快总金额" align="center" prop="extraMoney" width="130" />
-      <el-table-column label="是否盈利" align="center" prop="isWin" width="100">
+      <el-table-column
+        label="外快总金额"
+        align="center"
+        prop="extraMoney"
+        fixed="left"
+        width="130"
+      />
+      <el-table-column
+        label="是否盈利"
+        align="center"
+        prop="isWin"
+        fixed="left"
+        width="100"
+      >
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
         </template>
@@ -173,6 +185,7 @@
         label="本次外快盈亏金额"
         align="center"
         prop="winMoney"
+        fixed="left"
         width="130"
       >
         <template slot-scope="scope">
@@ -220,16 +233,22 @@
       />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="130" />
       <el-table-column label="备注" align="center" prop="extraRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        fixed="right"
+        width="180"
+      >
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -265,6 +284,7 @@
       :total="total"
       :page.sync="queryParams.pageNum"
       :limit.sync="queryParams.pageSize"
+      :page-sizes="[5, 10, 23, 50, 100]"
       @pagination="getList"
     />
 
@@ -383,7 +403,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 5,
         extraMoney: null,
         isWin: null,
         winMoney: null,

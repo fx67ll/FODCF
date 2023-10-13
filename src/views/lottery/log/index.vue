@@ -215,12 +215,14 @@
         label="当日购买号码"
         align="center"
         prop="recordNumber"
+        fixed="left"
         width="200"
       />
       <el-table-column
         label="当日固定追号"
         align="center"
         prop="chaseNumber"
+        fixed="left"
         width="150"
       />
       <el-table-column
@@ -262,16 +264,28 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} </span>
-        </template>
-      </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        label="记录创建者"
+        align="center"
+        prop="createBy"
+        fixed="right"
+        width="120"
+      />
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        fixed="right"
+        width="180"
+      >
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} </span>
         </template>
       </el-table-column>
       <el-table-column
@@ -307,6 +321,7 @@
       :total="total"
       :page.sync="queryParams.pageNum"
       :limit.sync="queryParams.pageSize"
+      :page-sizes="[5, 10, 23, 50, 100]"
       @pagination="getList"
     />
 
@@ -607,6 +622,7 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
+          this.form.winningPrice = this.form.isWin === "Y" ? this.form.winningPrice : 0;
           if (this.form.lotteryId != null) {
             updateLog(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
