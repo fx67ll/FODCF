@@ -733,10 +733,17 @@ export default {
 
       option && myChart.setOption(option);
     },
+    // 重置时间段查询
+    clearDateQueryParams() {
+      this.queryParams.beginCreateTime = null;
+      this.queryParams.endCreateTime = null;
+      this.queryParams.beginUpdateTime = null;
+      this.queryParams.endUpdateTime = null;
+    },
     /** 查询外快盈亏记录列表 */
     getList() {
       this.loading = true;
-      this.queryParams.params = {};
+      this.clearDateQueryParams();
       if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
         this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
         this.queryParams.endCreateTime = this.daterangeCreateTime[1];

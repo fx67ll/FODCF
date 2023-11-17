@@ -270,17 +270,24 @@ export default {
     this.getList();
   },
   methods: {
+    // 重置时间段查询
+    clearDateQueryParams() {
+      this.queryParams.beginCreateTime = null;
+      this.queryParams.endCreateTime = null;
+      this.queryParams.beginUpdateTime = null;
+      this.queryParams.endUpdateTime = null;
+    },
     /** 查询固定追号配置列表 */
     getList() {
       this.loading = true;
-      this.queryParams.params = {};
+      this.clearDateQueryParams();
       if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
-        this.queryParams.params["beginCreateTime"] = this.daterangeCreateTime[0];
-        this.queryParams.params["endCreateTime"] = this.daterangeCreateTime[1];
+        this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
+        this.queryParams.endCreateTime = this.daterangeCreateTime[1];
       }
       if (null != this.daterangeUpdateTime && "" != this.daterangeUpdateTime) {
-        this.queryParams.params["beginUpdateTime"] = this.daterangeUpdateTime[0];
-        this.queryParams.params["endUpdateTime"] = this.daterangeUpdateTime[1];
+        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
+        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
       listSetting(this.queryParams).then((response) => {
         this.settingList = this.formatObjectArrayNullProperty(response.rows);
