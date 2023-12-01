@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.2.14.20231201
+* 优化打卡记录管理界面  
+
 ## 0.2.13.20231118
 * 新增打卡记录管理界面  
 
