@@ -147,13 +147,13 @@
       <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
