@@ -36,6 +36,25 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item> -->
+      <el-form-item label="打卡人" prop="updateBy">
+        <el-input
+          v-model="queryParams.updateBy"
+          placeholder="请输入打卡人"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="打卡时间">
+        <el-date-picker
+          v-model="daterangeUpdateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+        ></el-date-picker>
+      </el-form-item>
       <el-form-item label="创建者" prop="createBy">
         <el-input
           v-model="queryParams.createBy"
@@ -47,25 +66,6 @@
       <el-form-item label="创建时间">
         <el-date-picker
           v-model="daterangeCreateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
-      </el-form-item>
-      <!-- <el-form-item label="记录更新者" prop="updateBy">
-        <el-input
-          v-model="queryParams.updateBy"
-          placeholder="请输入记录更新者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item> -->
-      <el-form-item label="更新时间">
-        <el-date-picker
-          v-model="daterangeUpdateTime"
           style="width: 240px"
           value-format="yyyy-MM-dd"
           type="daterange"
@@ -144,16 +144,17 @@
           <dict-tag :options="dict.type.fx67ll_punch_type" :value="scope.row.punchType" />
         </template>
       </el-table-column>
+      <el-table-column label="打卡人" align="center" prop="updateBy" />
+      <el-table-column label="打卡时间" align="center" prop="updateTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="打卡记录备注" align="center" prop="punchRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -191,7 +192,7 @@
       :title="title"
       :visible.sync="open"
       width="500px"
-      style="top: 200px"
+      style="top: 130px"
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
@@ -208,6 +209,23 @@
               :value="dict.value"
             ></el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item label="打卡时间" prop="updateTime">
+          <el-date-picker
+            v-model="form.updateTime"
+            type="datetime"
+            style="width: 100%"
+            placeholder="请选择日期打卡时间"
+          >
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item label="打卡备注" prop="punchRemark">
+          <el-input
+            v-model="form.punchRemark"
+            type="textarea"
+            placeholder="请输入打卡备注"
+            :autosize="{ minRows: 4 }"
+          />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select v-model="form.delFlag" placeholder="请选择删除标志">
@@ -232,6 +250,7 @@
 </template>
 
 <script>
+import moment from "moment";
 import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/punch/log";
 
 export default {
@@ -266,6 +285,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         punchType: null,
+        punchRemark: null,
         delFlag: null,
         userId: null,
         createBy: null,
@@ -278,6 +298,7 @@ export default {
       // 表单校验
       rules: {
         punchType: [{ required: true, message: "打卡类型不能为空", trigger: "change" }],
+        updateTime: [{ required: true, message: "打卡时间不能为空", trigger: "change" }],
       },
     };
   },
@@ -325,7 +346,7 @@ export default {
         createBy: null,
         createTime: null,
         updateBy: null,
-        updateTime: null,
+        updateTime: moment(),
       };
       this.resetForm("form");
     },
@@ -367,6 +388,9 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
+          this.form.updateTime = moment(this.form.updateTime).format(
+            "yyyy-MM-DD HH:mm:ss"
+          );
           if (this.form.punchId != null) {
             updateLog(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
