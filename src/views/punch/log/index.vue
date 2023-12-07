@@ -141,7 +141,14 @@
       <!-- <el-table-column label="打卡记录主键" align="center" prop="punchId" /> -->
       <el-table-column label="打卡类型" align="center" prop="punchType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.fx67ll_punch_type" :value="scope.row.punchType" />
+          <!-- <dict-tag :options="dict.type.fx67ll_punch_type" :value="scope.row.punchType" /> -->
+          <span style="color: #2ecc71" v-if="scope.row.punchType === '1'">上班打卡</span>
+          <span style="color: #ff5a5f" v-if="scope.row.punchType === '2'">下班打卡</span>
+          <span
+            style="color: #999999"
+            v-if="scope.row.punchType !== '1' && scope.row.punchType !== '2'"
+            >{{ scope.row.winMoney }}</span
+          >
         </template>
       </el-table-column>
       <el-table-column label="打卡人" align="center" prop="updateBy" />
