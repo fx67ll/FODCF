@@ -129,6 +129,16 @@
           >导出</el-button
         >
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-data-line"
+          size="mini"
+          @click="handleLogTotalOpen"
+          >查看月度工时统计</el-button
+        >
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -253,12 +263,87 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 查看工时统计数据的弹窗 -->
+    <el-dialog
+      title="月度工时统计"
+      :visible.sync="logTotalOpen"
+      width="800px"
+      style="top: 130px"
+      append-to-body
+    >
+      <div id="logTotalContainer">
+        <el-table v-loading="logTotalLoading" :data="logTotalList">
+          <el-table-column label="打卡人" align="center" prop="punchUser" />
+          <el-table-column label="统计月份" align="center" prop="punchMonth" />
+          <el-table-column
+            label="当月总工时 (小时)"
+            align="center"
+            prop="totalWorkHours"
+            width="140"
+          >
+            <template slot-scope="scope">
+              {{ scope.row.totalWorkHours.toFixed(2) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="当月已打卡天数"
+            align="center"
+            prop="totalPunchDays"
+            width="140"
+          />
+          <el-table-column label="当月缺卡天数" align="center" prop="totalWorkDays">
+            <template slot-scope="scope">
+              <span
+                style="color: #2ecc71"
+                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays === 0"
+                >0
+              </span>
+              <span
+                style="color: #ff5a5f"
+                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays > 0"
+                >{{ scope.row.totalPunchDays - scope.row.totalWorkDays }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="当月日均工时 (小时)"
+            align="center"
+            prop="workHoursPerDay"
+            width="140"
+          >
+            <template slot-scope="scope">
+              <span
+                style="color: #2ecc71"
+                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8.5"
+                >{{ scope.row.workHoursPerDay.toFixed(2) }}
+              </span>
+              <span
+                style="color: #ff5a5f"
+                v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
+                >{{ scope.row.workHoursPerDay.toFixed(2) }}
+              </span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="handleLogTotalClose">关闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import moment from "moment";
-import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/punch/log";
+import {
+  listLog,
+  getLog,
+  delLog,
+  addLog,
+  updateLog,
+  listTotal,
+} from "@/api/fx67ll/punch/log";
 
 export default {
   name: "Log",
@@ -307,12 +392,38 @@ export default {
         punchType: [{ required: true, message: "打卡类型不能为空", trigger: "change" }],
         updateTime: [{ required: true, message: "打卡时间不能为空", trigger: "change" }],
       },
+      // 工时统计相关参数
+      logTotalOpen: false,
+      logTotalList: [],
+      logTotalLoading: false,
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    // 查询打卡记录列表
+    getWorkTotalTime() {
+      const self = this;
+      self.logTotalLoading = true;
+      const paramsTmp = {
+        pageNum: 1,
+        pageSize: 999999999,
+      };
+      listTotal(paramsTmp).then((response) => {
+        self.logTotalList = self.formatObjectArrayNullProperty(response.rows);
+        self.logTotalLoading = false;
+      });
+    },
+    // 打开工时统计弹窗
+    handleLogTotalOpen() {
+      this.getWorkTotalTime();
+      this.logTotalOpen = true;
+    },
+    // 关闭工时统计弹窗
+    handleLogTotalClose() {
+      this.logTotalOpen = false;
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;

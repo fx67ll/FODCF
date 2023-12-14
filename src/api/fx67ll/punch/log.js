@@ -17,6 +17,15 @@ export function getLog(punchId) {
   });
 }
 
+// 查询打卡工时统计
+export function listTotal(query) {
+  return request({
+    url: "/punch/log/getWorkTotalTime",
+    method: "get",
+    params: query,
+  });
+}
+
 // 新增打卡记录
 export function addLog(data) {
   return request({
