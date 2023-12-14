@@ -344,7 +344,7 @@
       </div>
     </el-dialog>
 
-    <!-- 添加或修改外快盈亏记录对话框 -->
+    <!-- 查看外快盈亏历史数据走势图的弹窗 -->
     <el-dialog
       title="外快盈亏历史数据走势图"
       :visible.sync="historyDataAnalysisOpen"
