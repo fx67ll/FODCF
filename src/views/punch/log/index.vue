@@ -136,6 +136,7 @@
           icon="el-icon-data-line"
           size="mini"
           @click="handleLogTotalOpen"
+          v-hasPermi="['punch:log:total']"
           >查看月度工时统计</el-button
         >
       </el-col>
