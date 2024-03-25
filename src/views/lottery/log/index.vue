@@ -8,10 +8,18 @@
       v-show="showSearch"
       label-width="68px"
     >
+      <el-form-item label="彩票期号" prop="dateCode">
+        <el-input
+          v-model="queryParams.dateCode"
+          placeholder="请输入查询的彩票期号"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="购买号码" prop="recordNumber">
         <el-input
           v-model="queryParams.recordNumber"
-          placeholder="请输入当日购买号码"
+          placeholder="请输入查询的购买号码"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -19,7 +27,7 @@
       <el-form-item label="固定追号" prop="chaseNumber">
         <el-input
           v-model="queryParams.chaseNumber"
-          placeholder="请输入当日固定追号"
+          placeholder="请输入查询的固定追号"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -27,7 +35,7 @@
       <el-form-item label="中奖号码" prop="winningNumber">
         <el-input
           v-model="queryParams.winningNumber"
-          placeholder="请输入当日中奖号码"
+          placeholder="请输入查询的中奖号码"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -45,7 +53,7 @@
       <el-form-item label="中奖金额" prop="winningPrice">
         <el-input
           v-model="queryParams.winningPrice"
-          placeholder="请输入中奖金额"
+          placeholder="请输入查询的中奖金额"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -53,7 +61,7 @@
       <el-form-item label="彩票类型" prop="numberType">
         <el-select
           v-model="queryParams.numberType"
-          placeholder="请选择当日购买的彩票类型"
+          placeholder="请选择查询的彩票类型"
           clearable
         >
           <el-option
@@ -65,7 +73,11 @@
         </el-select>
       </el-form-item>
       <el-form-item label="彩票周期" prop="weekType">
-        <el-select v-model="queryParams.weekType" placeholder="请选择星期几" clearable>
+        <el-select
+          v-model="queryParams.weekType"
+          placeholder="请选择查询的星期几"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_week_type"
             :key="dict.value"
@@ -109,7 +121,7 @@
       <el-form-item label="创建者" prop="createBy">
         <el-input
           v-model="queryParams.createBy"
-          placeholder="请输入记录创建者"
+          placeholder="请输入查询的记录创建者"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -211,6 +223,13 @@
     >
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="号码日志主键" align="center" prop="lotteryId" width="120" /> -->
+      <el-table-column
+        label="彩票期号"
+        align="center"
+        prop="dateCode"
+        fixed="left"
+        width="100"
+      />
       <el-table-column
         label="当日购买号码"
         align="center"
@@ -335,6 +354,9 @@
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="彩票期号" prop="dateCode">
+          <el-input v-model="form.dateCode" placeholder="请输入当日购买号码" clearable />
+        </el-form-item>
         <el-form-item label="购买号码" prop="recordNumber">
           <el-input
             v-model="form.recordNumber"
@@ -482,6 +504,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        dateCode: null,
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
@@ -557,6 +580,7 @@ export default {
     reset() {
       this.form = {
         lotteryId: null,
+        dateCode: null,
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
