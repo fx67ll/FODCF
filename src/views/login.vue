@@ -284,9 +284,21 @@ export default {
   .login-setting-tip {
     color: #2ecc71;
     cursor: pointer;
+    top: 0px;
+    position: relative;
+    animation: jumpUrl 0.4s linear infinite alternate;
 
     &:hover {
-      color: #707070;
+      color: #ef8e81;
+    }
+  }
+  @keyframes jumpUrl {
+    from {
+      top: -4px;
+    }
+
+    to {
+      top: 4px;
     }
   }
 }
