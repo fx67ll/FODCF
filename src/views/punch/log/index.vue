@@ -158,7 +158,7 @@
           <span
             style="color: #999999"
             v-if="scope.row.punchType !== '1' && scope.row.punchType !== '2'"
-            >{{ scope.row.winMoney }}</span
+            >-</span
           >
         </template>
       </el-table-column>
@@ -284,7 +284,7 @@
             width="140"
           >
             <template slot-scope="scope">
-              {{ scope.row.totalWorkHours.toFixed(2) }}
+              {{ scope.row.totalWorkHours.toFixed(2) || 0 }}
             </template>
           </el-table-column>
           <el-table-column
@@ -297,13 +297,17 @@
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
+                class="lost-log-btn"
                 v-if="scope.row.totalPunchDays - scope.row.totalWorkDays === 0"
+                @click="handleOpenLostLogDialog(scope.row)"
                 >0
               </span>
               <span
                 style="color: #ff5a5f"
+                class="lost-log-btn"
                 v-if="scope.row.totalPunchDays - scope.row.totalWorkDays > 0"
-                >{{ scope.row.totalPunchDays - scope.row.totalWorkDays }}
+                @click="handleOpenLostLogDialog(scope.row)"
+                >{{ scope.row.totalPunchDays - scope.row.totalWorkDays || 0 }}
               </span>
             </template>
           </el-table-column>
@@ -317,12 +321,12 @@
               <span
                 style="color: #2ecc71"
                 v-if="scope.row.workHoursPerDay.toFixed(2) >= 8.5"
-                >{{ scope.row.workHoursPerDay.toFixed(2) }}
+                >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
               <span
-                style="color: #ff5a5f"
+                style="color: #d3d3d3"
                 v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
-                >{{ scope.row.workHoursPerDay.toFixed(2) }}
+                >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
             </template>
           </el-table-column>
@@ -330,6 +334,43 @@
       </div>
       <div slot="footer" class="dialog-footer">
         <el-button @click="handleLogTotalClose">关闭</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 查看缺卡记录数据的弹窗 -->
+    <el-dialog
+      title="缺卡记录"
+      :visible.sync="lostLogOpen"
+      width="600px"
+      style="top: 180px"
+      append-to-body
+    >
+      <div id="logTotalContainer">
+        <el-table v-loading="lostLogLoading" :data="lostLogList">
+          <el-table-column label="缺卡人" align="center" prop="punchUser" />
+          <el-table-column label="缺卡日期" align="center" prop="punchDay" />
+          <el-table-column label="缺卡类型" align="center" prop="lostPunchType">
+            <template slot-scope="scope">
+              <span style="color: #2ecc71" v-if="scope.row.lostPunchType === '上班缺卡'"
+                >上班缺卡</span
+              >
+              <span style="color: #ff5a5f" v-if="scope.row.lostPunchType === '下班缺卡'"
+                >下班缺卡</span
+              >
+              <span
+                style="color: #999999"
+                v-if="
+                  scope.row.lostPunchType !== '上班缺卡' &&
+                  scope.row.lostPunchType !== '下班缺卡'
+                "
+                >-</span
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="handleLostLogClose">关闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -344,6 +385,7 @@ import {
   addLog,
   updateLog,
   listTotal,
+  getPunchLostLog,
 } from "@/api/fx67ll/punch/log";
 
 export default {
@@ -397,13 +439,45 @@ export default {
       logTotalOpen: false,
       logTotalList: [],
       logTotalLoading: false,
+      // 缺卡记录相关参数
+      lostLogOpen: false,
+      lostLogList: [],
+      lostLogLoading: false,
     };
   },
   created() {
     this.getList();
   },
   methods: {
-    // 查询打卡记录列表
+    // 查询缺卡记录列表
+    getPunchLostLog(record) {
+      const self = this;
+      self.lostLogLoading = true;
+      const paramsTmp = {
+        pageNum: 1,
+        pageSize: 999999999,
+        updateBy: record?.punchUser,
+        punchMonth: record?.punchMonth,
+      };
+      getPunchLostLog(paramsTmp).then((response) => {
+        self.lostLogList = self.formatObjectArrayNullProperty(response.rows, true);
+        self.lostLogLoading = false;
+      });
+    },
+    // 打开缺卡记录弹窗
+    handleOpenLostLogDialog(record) {
+      if (record?.punchUser && record?.punchMonth) {
+        this.getPunchLostLog(record);
+        this.lostLogOpen = true;
+      } else {
+        this.$modal.msgSuccess("数据异常，请联系管理员！");
+      }
+    },
+    // 关闭工时统计弹窗
+    handleLostLogClose() {
+      this.lostLogOpen = false;
+    },
+    // 查询打卡工时统计
     getWorkTotalTime() {
       const self = this;
       self.logTotalLoading = true;
@@ -412,7 +486,7 @@ export default {
         pageSize: 999999999,
       };
       listTotal(paramsTmp).then((response) => {
-        self.logTotalList = self.formatObjectArrayNullProperty(response.rows);
+        self.logTotalList = self.formatObjectArrayNullProperty(response.rows, true);
         self.logTotalLoading = false;
       });
     },
@@ -553,3 +627,7 @@ export default {
   },
 };
 </script>
+
+<style lang="less" scoped="scoped">
+@import "@/views/punch/log/index.less";
+</style>
