@@ -213,6 +213,17 @@
           >导出</el-button
         >
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-data-line"
+          size="mini"
+          @click="handleLogTotalOpen"
+          v-hasPermi="['punch:log:total']"
+          >查看历史号码中奖金额统计</el-button
+        >
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -467,11 +478,64 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 查看历史号码中奖金额统计的弹窗 -->
+    <el-dialog
+      title="历史号码中奖金额统计"
+      :visible.sync="logTotalOpen"
+      width="800px"
+      style="top: 130px"
+      append-to-body
+    >
+      <div id="logTotalContainer">
+        <el-table v-loading="logTotalLoading" :data="logTotalList">
+          <el-table-column label="统计类型" align="center" prop="lotteryType" />
+          <el-table-column label="总计购买注数" align="center" prop="totalTickets" />
+          <el-table-column label="总计花费金额" align="center" prop="totalTickets">
+            <template slot-scope="scope">
+              <span>{{ `￥${scope.row.totalTickets * 2}` }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="中奖注数" align="center" prop="winningTickets">
+            <template slot-scope="scope">
+              <span style="color: #2ecc71">{{ scope.row.winningTickets }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="中奖金额" align="center" prop="totalWinningAmount">
+            <template slot-scope="scope">
+              <span style="color: #ff5a5f">{{
+                `￥${scope.row.totalWinningAmount}`
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="回血比例" align="center" prop="totalWinningAmount">
+            <template slot-scope="scope">
+              <span>{{
+                `${(
+                  (scope.row.totalWinningAmount / (scope.row.totalTickets * 2)) *
+                  100
+                ).toFixed(2)}%`
+              }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="handleLogTotalClose">关闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/lottery/log";
+import {
+  listLog,
+  getLog,
+  delLog,
+  addLog,
+  updateLog,
+  listTotalReward,
+} from "@/api/fx67ll/lottery/log";
 
 export default {
   name: "Log",
@@ -540,12 +604,34 @@ export default {
         "当日第一次购买之后是否有追加购买的行为，包括同一个号码的追加，或者另外购买其他的号码",
       // 顶部表格查询的周期下拉
       dynamicWeekList: [],
+      // 历史号码中奖金额统计相关参数
+      logTotalOpen: false,
+      logTotalList: [],
+      logTotalLoading: false,
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    // 查询历史号码中奖金额统计
+    getTotalReward() {
+      const self = this;
+      self.logTotalLoading = true;
+      listTotalReward().then((response) => {
+        self.logTotalList = self.formatObjectArrayNullProperty(response.rows, true);
+        self.logTotalLoading = false;
+      });
+    },
+    // 打开历史号码中奖金额统计弹窗
+    handleLogTotalOpen() {
+      this.getTotalReward();
+      this.logTotalOpen = true;
+    },
+    // 关闭历史号码中奖金额统计弹窗
+    handleLogTotalClose() {
+      this.logTotalOpen = false;
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
