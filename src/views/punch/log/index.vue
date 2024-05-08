@@ -473,7 +473,7 @@ export default {
         this.$modal.msgSuccess("数据异常，请联系管理员！");
       }
     },
-    // 关闭工时统计弹窗
+    // 关闭缺卡记录弹窗
     handleLostLogClose() {
       this.lostLogOpen = false;
     },
