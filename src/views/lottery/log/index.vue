@@ -490,13 +490,32 @@
       <div id="logTotalContainer">
         <el-table v-loading="logTotalLoading" :data="logTotalList">
           <el-table-column label="统计类型" align="center" prop="lotteryType" />
-          <el-table-column label="总计购买注数" align="center" prop="totalTickets" />
-          <el-table-column label="总计花费金额" align="center" prop="totalTickets">
+          <!-- <el-table-column
+            label="总购买期数 / 注数"
+            width="150"
+            align="center"
+            prop="totalTickets"
+          >
             <template slot-scope="scope">
-              <span>{{ `￥${scope.row.totalTickets * 2}` }}</span>
+              <span>{{ `${scope.row.totalTickets} / ${scope.row.totalNumbers}` }}</span>
+            </template>
+          </el-table-column> -->
+          <el-table-column label="总购买期数" align="center" prop="totalTickets">
+            <template slot-scope="scope">
+              <span style="color: #e6a23c">{{ scope.row.totalTickets }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="中奖注数" align="center" prop="winningTickets">
+          <el-table-column label="总购买注数" align="center" prop="totalNumbers">
+            <template slot-scope="scope">
+              <span style="color: #409eff">{{ scope.row.totalNumbers }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="总花费金额" align="center" prop="totalNumbers">
+            <template slot-scope="scope">
+              <span style="color: #909399">{{ `￥${scope.row.totalNumbers * 2}` }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="中奖期数" align="center" prop="winningTickets">
             <template slot-scope="scope">
               <span style="color: #2ecc71">{{ scope.row.winningTickets }}</span>
             </template>
@@ -512,7 +531,7 @@
             <template slot-scope="scope">
               <span>{{
                 `${(
-                  (scope.row.totalWinningAmount / (scope.row.totalTickets * 2)) *
+                  (scope.row.totalWinningAmount / (scope.row.totalNumbers * 2)) *
                   100
                 ).toFixed(2)}%`
               }}</span>
