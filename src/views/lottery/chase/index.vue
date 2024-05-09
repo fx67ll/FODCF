@@ -117,10 +117,18 @@
           plain
           icon="el-icon-plus"
           size="mini"
+          :disabled="checkCanBeAdd"
           @click="handleAdd"
           v-hasPermi="['lottery:chase:add']"
-          >新增</el-button
-        >
+          >新增
+          <el-tooltip
+            content="所有周期规则已配置完毕，请修改已有配置，或删除部分配置后再做新增操作，星期五暂时不允许配置~"
+            placement="top"
+            v-if="checkCanBeAdd"
+          >
+            <i class="el-icon-question" v-if="checkCanBeAdd" />
+          </el-tooltip>
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -167,7 +175,12 @@
     >
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="固定追号主键" align="center" prop="chaseId" width="120" /> -->
-      <el-table-column label="每日固定追号" align="center" prop="chaseNumber" />
+      <el-table-column
+        label="每日固定追号"
+        width="120"
+        align="center"
+        prop="chaseNumber"
+      />
       <el-table-column label="彩票类型" align="center" prop="numberType" width="90">
         <template slot-scope="scope">
           <dict-tag
@@ -373,6 +386,15 @@ export default {
       noUsingWeekList: [],
     };
   },
+  computed: {
+    checkCanBeAdd() {
+      const remainWeekList = this.getUsingWeekList();
+      if (remainWeekList && remainWeekList?.length > 0) {
+        return false;
+      }
+      return true;
+    },
+  },
   created() {
     this.getList();
   },
@@ -445,7 +467,10 @@ export default {
     // 提取已经使用的追号周期
     getUsingWeekList(record) {
       this.noUsingWeekList = [];
-      const enumWeekList = [...this.dict.type.sys_week_type];
+      // 暂时不允许配置星期五
+      const enumWeekList = [...this.dict.type.sys_week_type].filter(
+        (dictItem) => dictItem?.value !== "5"
+      );
       let dataList = [...this.chaseList] || [];
       if (dataList && dataList.length > 0 && record && record?.weekType) {
         dataList = dataList.filter(
@@ -464,6 +489,7 @@ export default {
       if (enumWeekList && enumWeekList.length > 0) {
         this.noUsingWeekList = enumWeekList;
       }
+      return enumWeekList;
     },
     // 根据彩票类型动态修改可配置的追号周期
     handleNumberTypeChange(type, record) {
