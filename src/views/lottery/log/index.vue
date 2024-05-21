@@ -323,9 +323,17 @@
         align="center"
         class-name="small-padding fixed-width"
         fixed="right"
-        width="140"
+        width="250"
       >
         <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-coordinate"
+            @click="handleQueryReward(scope.row)"
+            v-hasPermi="['lottery:log:queryReward']"
+            >查询中奖信息</el-button
+          >
           <el-button
             size="mini"
             type="text"
@@ -500,19 +508,20 @@
               <span>{{ `${scope.row.totalTickets} / ${scope.row.totalNumbers}` }}</span>
             </template>
           </el-table-column> -->
-          <el-table-column label="总购买期数" align="center" prop="totalTickets">
+          <!-- <el-table-column label="总购买期数" align="center" prop="totalTickets">
             <template slot-scope="scope">
-              <span style="color: #e6a23c">{{ scope.row.totalTickets }}</span>
+              <span style="color: #909399">{{ scope.row.totalTickets }}</span>
             </template>
-          </el-table-column>
+          </el-table-column> -->
+          <el-table-column label="总购买期数" align="center" prop="totalTickets" />
           <el-table-column label="总购买注数" align="center" prop="totalNumbers">
             <template slot-scope="scope">
-              <span style="color: #409eff">{{ scope.row.totalNumbers }}</span>
+              <span style="color: #e6a23c">{{ scope.row.totalNumbers }}</span>
             </template>
           </el-table-column>
           <el-table-column label="总花费金额" align="center" prop="totalNumbers">
             <template slot-scope="scope">
-              <span style="color: #909399">{{ `￥${scope.row.totalNumbers * 2}` }}</span>
+              <span style="color: #409eff">{{ `￥${scope.row.totalNumbers * 2}` }}</span>
             </template>
           </el-table-column>
           <el-table-column label="中奖期数" align="center" prop="winningTickets">
@@ -798,6 +807,10 @@ export default {
         },
         `log_${new Date().getTime()}.xlsx`
       );
+    },
+    /** 查询中奖信息 */
+    handleQueryReward(row) {
+      this.$modal.msgWarning("功能开发中...");
     },
   },
 };
