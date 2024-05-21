@@ -396,7 +396,7 @@ export function isNumberStr(str) {
 }
 
 // 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
-export function formatObjectArrayNullProperty(arr, isUseNumZero = false) {
+export function formatObjectArrayNullProperty(arr, formatConfig = {}) {
   // 创建一个新的数组，用于存储处理后的对象
   var newArr = [];
   // 遍历原数组中的每个对象
@@ -407,7 +407,8 @@ export function formatObjectArrayNullProperty(arr, isUseNumZero = false) {
       // 检查属性值是否为 null
       if (arr[i].hasOwnProperty(key) && !arr[i][key]) {
         // 将属性值为 null 的属性设置为 '-'
-        newObj[key] = isUseNumZero ? 0 : "-";
+        const isNeedNumZero = formatConfig?.isNeedNumZero || false;
+        newObj[key] = isNeedNumZero ? 0 : "-";
       } else {
         // 其他情况下，保持原有属性值不变
         newObj[key] = arr[i][key];
