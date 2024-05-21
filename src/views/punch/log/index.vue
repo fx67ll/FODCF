@@ -271,7 +271,7 @@
       title="月度工时统计"
       :visible.sync="logTotalOpen"
       :close-on-click-modal="false"
-      width="800px"
+      width="930px"
       style="top: 130px"
       append-to-body
     >
@@ -287,12 +287,11 @@
           >
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月总工时 (小时)</span>
-              <el-tooltip
-                :style="{ cursor: 'pointer' }"
-                effect="dark"
-                content="若您没有缺卡记录，但是当月总工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
-                placement="top"
-              >
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+                <div slot="content">
+                  若您有正常的打卡记录并且没有缺卡记录，但是当月总工时仍为0，<br />
+                  则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间。
+                </div>
                 <i class="el-icon-question"></i>
               </el-tooltip>
             </template>
@@ -318,7 +317,7 @@
             label="当月缺卡天数"
             align="center"
             prop="totalWorkDays"
-            width="110"
+            width="100"
           >
             <template slot-scope="scope">
               <span
@@ -341,28 +340,70 @@
             label="当月日均工时 (小时)"
             align="center"
             prop="workHoursPerDay"
-            width="180"
+            width="170"
           >
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月日均工时 (小时)</span>
-              <el-tooltip
-                :style="{ cursor: 'pointer' }"
-                effect="dark"
-                content="当月日均工时 = 当月总工时 / 正常打卡天数。若您有正常的打卡记录，但是当月日均工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
-                placement="top"
-              >
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+                <div slot="content">
+                  当月日均工时 = 当月总工时 / 正常打卡天数。<br /><br />
+                  若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
+                  则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间。
+                </div>
                 <i class="el-icon-question"></i>
               </el-tooltip>
             </template>
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
-                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8"
+                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8.5"
                 >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
-              <span style="color: #ff5a5f" v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
+              <span
+                style="color: #ff5a5f"
+                v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
                 >{{
                   scope.row.workHoursPerDay > 0 ? scope.row.workHoursPerDay.toFixed(2) : 0
+                }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="当月净日均工时 (小时)"
+            align="center"
+            prop="workHoursPerDay"
+            width="175"
+          >
+            <template slot="header">
+              <span :style="{ paddingRight: '4px' }">当月净日均工时 (小时)</span>
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+                <div slot="content">
+                  当月日均工时 = 当月净日均工时 / 所有打卡天数。<br /><br />
+                  若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
+                  则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间。
+                </div>
+                <i class="el-icon-question"></i>
+              </el-tooltip>
+            </template>
+            <template slot-scope="scope">
+              <span
+                style="color: #2ecc71"
+                v-if="
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) >= 8.5
+                "
+                >{{
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) || 0
+                }}
+              </span>
+              <span
+                style="color: #ff5a5f"
+                v-if="
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) < 8.5
+                "
+                >{{
+                  scope.row.totalWorkHours / scope.row.totalPunchDays > 0
+                    ? (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2)
+                    : 0
                 }}
               </span>
             </template>
