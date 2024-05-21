@@ -491,6 +491,7 @@
     <el-dialog
       title="历史号码中奖金额统计"
       :visible.sync="logTotalOpen"
+      :close-on-click-modal="false"
       width="800px"
       style="top: 130px"
       append-to-body

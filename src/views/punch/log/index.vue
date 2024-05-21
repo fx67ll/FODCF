@@ -209,6 +209,7 @@
     <el-dialog
       :title="title"
       :visible.sync="open"
+      :close-on-click-modal="false"
       width="500px"
       style="top: 130px"
       append-to-body
@@ -269,6 +270,7 @@
     <el-dialog
       title="月度工时统计"
       :visible.sync="logTotalOpen"
+      :close-on-click-modal="false"
       width="800px"
       style="top: 130px"
       append-to-body
@@ -288,7 +290,7 @@
               <el-tooltip
                 :style="{ cursor: 'pointer' }"
                 effect="dark"
-                content="若您没有缺卡天数，但是当月总工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
+                content="若您没有缺卡记录，但是当月总工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
                 placement="top"
               >
                 <i class="el-icon-question"></i>
@@ -346,7 +348,7 @@
               <el-tooltip
                 :style="{ cursor: 'pointer' }"
                 effect="dark"
-                content="若您有正常的打卡记录，但是当月日均工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
+                content="当月日均工时 = 当月总工时 / 正常打卡天数。若您有正常的打卡记录，但是当月日均工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
                 placement="top"
               >
                 <i class="el-icon-question"></i>
@@ -355,12 +357,10 @@
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
-                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8.5"
+                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8"
                 >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
-              <span
-                style="color: #d3d3d3"
-                v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
+              <span style="color: #ff5a5f" v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
                 >{{
                   scope.row.workHoursPerDay > 0 ? scope.row.workHoursPerDay.toFixed(2) : 0
                 }}
@@ -378,6 +378,7 @@
     <el-dialog
       title="缺卡记录"
       :visible.sync="lostLogOpen"
+      :close-on-click-modal="false"
       width="600px"
       style="top: 180px"
       append-to-body
@@ -424,6 +425,7 @@ import {
   listTotal,
   getPunchLostLog,
 } from "@/api/fx67ll/punch/log";
+import { getUserProfile } from "@/api/system/user";
 
 export default {
   name: "Log",
@@ -480,12 +482,21 @@ export default {
       lostLogOpen: false,
       lostLogList: [],
       lostLogLoading: false,
+      // 用户信息
+      userName: null,
     };
   },
   created() {
     this.getList();
+    this.getUser();
   },
   methods: {
+    // 查询用户信息
+    getUser() {
+      getUserProfile().then((response) => {
+        this.userName = response?.data?.userName || null;
+      });
+    },
     // 查询缺卡记录列表
     getPunchLostLog(record) {
       const self = this;
@@ -521,6 +532,7 @@ export default {
       const paramsTmp = {
         pageNum: 1,
         pageSize: 999999999,
+        updateBy: self.userName,
       };
       listTotal(paramsTmp).then((response) => {
         self.logTotalList = self.formatObjectArrayNullProperty(response.rows, {
