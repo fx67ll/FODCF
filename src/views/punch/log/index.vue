@@ -281,19 +281,43 @@
             label="当月总工时 (小时)"
             align="center"
             prop="totalWorkHours"
-            width="140"
+            width="160"
           >
+            <template slot="header">
+              <span :style="{ paddingRight: '4px' }">当月总工时 (小时)</span>
+              <el-tooltip
+                :style="{ cursor: 'pointer' }"
+                effect="dark"
+                content="若您没有缺卡天数，但是当月总工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
+                placement="top"
+              >
+                <i class="el-icon-question"></i>
+              </el-tooltip>
+            </template>
             <template slot-scope="scope">
-              {{ scope.row.totalWorkHours.toFixed(2) || 0 }}
+              <span style="color: #e6a23c"
+                >{{
+                  scope.row.totalWorkHours > 0 ? scope.row.totalWorkHours.toFixed(2) : 0
+                }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column
             label="当月已打卡天数"
             align="center"
             prop="totalPunchDays"
-            width="140"
-          />
-          <el-table-column label="当月缺卡天数" align="center" prop="totalWorkDays">
+            width="120"
+          >
+            <template slot-scope="scope">
+              <span style="color: #409eff">{{ scope.row.totalPunchDays }} </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="当月缺卡天数"
+            align="center"
+            prop="totalWorkDays"
+            width="110"
+          >
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
@@ -315,8 +339,19 @@
             label="当月日均工时 (小时)"
             align="center"
             prop="workHoursPerDay"
-            width="140"
+            width="180"
           >
+            <template slot="header">
+              <span :style="{ paddingRight: '4px' }">当月日均工时 (小时)</span>
+              <el-tooltip
+                :style="{ cursor: 'pointer' }"
+                effect="dark"
+                content="若您有正常的打卡记录，但是当月日均工时仍为0，则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间"
+                placement="top"
+              >
+                <i class="el-icon-question"></i>
+              </el-tooltip>
+            </template>
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
@@ -326,7 +361,9 @@
               <span
                 style="color: #d3d3d3"
                 v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
-                >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
+                >{{
+                  scope.row.workHoursPerDay > 0 ? scope.row.workHoursPerDay.toFixed(2) : 0
+                }}
               </span>
             </template>
           </el-table-column>
@@ -460,7 +497,7 @@ export default {
         punchMonth: record?.punchMonth,
       };
       getPunchLostLog(paramsTmp).then((response) => {
-        self.lostLogList = self.formatObjectArrayNullProperty(response.rows, true);
+        self.lostLogList = self.formatObjectArrayNullProperty(response.rows);
         self.lostLogLoading = false;
       });
     },
@@ -486,7 +523,9 @@ export default {
         pageSize: 999999999,
       };
       listTotal(paramsTmp).then((response) => {
-        self.logTotalList = self.formatObjectArrayNullProperty(response.rows, true);
+        self.logTotalList = self.formatObjectArrayNullProperty(response.rows, {
+          isNeedNumZero: true,
+        });
         self.logTotalLoading = false;
       });
     },
