@@ -356,12 +356,10 @@
             <template slot-scope="scope">
               <span
                 style="color: #2ecc71"
-                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8.5"
+                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8"
                 >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
-              <span
-                style="color: #ff5a5f"
-                v-if="scope.row.workHoursPerDay.toFixed(2) < 8.5"
+              <span style="color: #ff5a5f" v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
                 >{{
                   scope.row.workHoursPerDay > 0 ? scope.row.workHoursPerDay.toFixed(2) : 0
                 }}
@@ -389,7 +387,7 @@
               <span
                 style="color: #2ecc71"
                 v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) >= 8.5
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) >= 8
                 "
                 >{{
                   (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) || 0
@@ -398,7 +396,7 @@
               <span
                 style="color: #ff5a5f"
                 v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) < 8.5
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) < 8
                 "
                 >{{
                   scope.row.totalWorkHours / scope.row.totalPunchDays > 0
