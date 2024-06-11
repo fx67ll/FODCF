@@ -239,7 +239,7 @@
         align="center"
         prop="dateCode"
         fixed="left"
-        width="100"
+        width="90"
       />
       <el-table-column
         label="当日购买号码"
@@ -252,7 +252,6 @@
         label="当日固定追号"
         align="center"
         prop="chaseNumber"
-        fixed="left"
         width="150"
       />
       <el-table-column
@@ -294,8 +293,8 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
@@ -305,14 +304,14 @@
         align="center"
         prop="createBy"
         fixed="right"
-        width="120"
+        width="100"
       />
       <el-table-column
         label="记录创建时间"
         align="center"
         prop="createTime"
         fixed="right"
-        width="180"
+        width="160"
       >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} </span>
@@ -323,13 +322,14 @@
         align="center"
         class-name="small-padding fixed-width"
         fixed="right"
-        width="250"
+        width="220"
       >
         <template slot-scope="scope">
           <el-button
             size="mini"
             type="text"
             icon="el-icon-coordinate"
+            :loading="qryRewardLoading"
             @click="handleQueryReward(scope.row)"
             v-hasPermi="['lottery:log:queryReward']"
             >查询中奖信息</el-button
@@ -338,6 +338,7 @@
             size="mini"
             type="text"
             icon="el-icon-edit"
+            :disabled="qryRewardLoading"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['lottery:log:edit']"
             >修改</el-button
@@ -346,6 +347,7 @@
             size="mini"
             type="text"
             icon="el-icon-delete"
+            :disabled="qryRewardLoading"
             @click="handleDelete(scope.row)"
             v-hasPermi="['lottery:log:remove']"
             >删除</el-button
@@ -566,6 +568,12 @@ import {
   listTotalReward,
 } from "@/api/fx67ll/lottery/log";
 
+// 中奖查询相关
+import { getSecretConfig } from "@/api/fx67ll/secret/key";
+import { decryptString, checkLotteryResult } from "@/utils/index";
+import { getCryptoSaltKey } from "@@/neverUploadToGithub";
+import axios from "axios";
+
 export default {
   name: "Log",
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
@@ -637,6 +645,8 @@ export default {
       logTotalOpen: false,
       logTotalList: [],
       logTotalLoading: false,
+      // 中奖信息查询加载
+      qryRewardLoading: false,
     };
   },
   created() {
@@ -811,7 +821,258 @@ export default {
     },
     /** 查询中奖信息 */
     handleQueryReward(row) {
-      this.$modal.msgWarning("功能开发中...");
+      this.checkRecordData(row);
+    },
+    // 查询中奖信息前确认是否有彩票期号
+    checkRecordData(record) {
+      const self = this;
+      if (record?.numberType !== 1 && record?.numberType !== 2) {
+        this.$modal.msgError("数据异常，请联系管理员！");
+        return;
+      }
+      if (record?.winningNumber && record?.winningNumber !== "-") {
+        self
+          .$confirm("您已查询过开奖信息，是否需要再次查询", "提示", {
+            confirmButtonText: "需要",
+            cancelButtonText: "不需要",
+            type: "warning",
+          })
+          .then(() => {
+            self.qryRewardQueryConfig(
+              record?.dateCode,
+              record?.numberType,
+              record?.lotteryId
+            );
+          })
+          .catch(() => {});
+      } else if (record?.dateCode) {
+        this.qryRewardQueryConfig(
+          record?.dateCode,
+          record?.numberType,
+          record?.lotteryId
+        );
+      } else {
+        this.$modal.msgWarning("查询失败！请补充完整期号！");
+      }
+    },
+    // 查询外部网站所需要的配置
+    qryRewardQueryConfig(logDateCode, logNumType, logNumId) {
+      const self = this;
+      if (logDateCode && logNumType && logNumId) {
+        this.qryRewardLoading = true;
+        getSecretConfig({ secretKey: "qryLotteryRewardAppId" })
+          .then((res) => {
+            if (res && res?.rows && res?.rows.length > 0 && res?.code === 200) {
+              const qryLotteryRewardAppId = decryptString(
+                res.rows[0].secretValue,
+                getCryptoSaltKey()
+              );
+              getSecretConfig({ secretKey: "qryLotteryRewardAppSecret" })
+                .then((res) => {
+                  if (res && res?.rows && res?.rows.length > 0 && res?.code === 200) {
+                    const qryLotteryRewardAppSecret = decryptString(
+                      res.rows[0].secretValue,
+                      getCryptoSaltKey()
+                    );
+                    self.queryLotteryRewardInfo(
+                      qryLotteryRewardAppId,
+                      qryLotteryRewardAppSecret,
+                      logDateCode,
+                      logNumType,
+                      logNumId
+                    );
+                  } else {
+                    self.$modal.msgWarning("查询中奖信息查询接口配置项AppSecret失败！");
+                  }
+                })
+                .catch((error) => {
+                  console.error("查询中奖信息查询接口配置项AppSecret异常：" + error);
+                  self.qryRewardLoading = false;
+                });
+            } else {
+              self.$modal.msgWarning("查询中奖信息查询接口配置项AppId失败！");
+            }
+          })
+          .catch((error) => {
+            console.error("查询中奖信息查询接口配置项AppId异常：" + error);
+            self.qryRewardLoading = false;
+          });
+      } else {
+        self.$modal.msgWarning("缺少必要查询条件，请联系管理员！");
+      }
+    },
+    // 通过第三方站点查询开奖号码
+    queryLotteryRewardInfo(appId, appSecret, dCode, nType, lid) {
+      const self = this;
+      axios
+        .get("https://www.mxnzp.com/api/lottery/common/aim_lottery", {
+          params: {
+            app_id: appId,
+            app_secret: appSecret,
+            expect: dCode,
+            code: nType === 1 ? "cjdlt" : "ssq",
+          },
+        })
+        .then((res) => {
+          // 外部接口返回示例
+          // const egObj = {
+          //   openCode: "05,26,33,35,15+09+01",
+          //   code: "cjdlt",
+          //   expect: "2024032",
+          //   name: "超级大乐透",
+          //   time: "2024-03-23 21:26:16",
+          // };
+          if (res && res?.data?.code === 1) {
+            const resData = res?.data?.data || {};
+            if (resData?.openCode) {
+              self.formatWinningNumber(resData.openCode, nType, lid);
+            } else {
+              self.$modal.msgWarning("外部接口异常，请联系管理员！");
+              self.qryRewardLoading = false;
+            }
+          } else if (res?.data?.code === 10027) {
+            self.$modal.msgWarning("暂未开奖，请晚些时候再查询！");
+            self.qryRewardLoading = false;
+          } else {
+            self.$modal.msgWarning(
+              `第三方站点开奖号码查询失败！报错信息：${res?.data?.msg}`
+            );
+            self.qryRewardLoading = false;
+          }
+        })
+        .catch((error) => {
+          self.qryRewardLoading = false;
+          self.$modal.msgWarning(
+            `开奖号码查询出现异常，请联系管理员！报错信息：${error}`
+          );
+        });
+    },
+    // 格式化中奖号码，原格式为逗号+加号拼接，转换成我的逗号+横杠来拼接
+    formatWinningNumber(winNum, nType, lid) {
+      // 将第一个匹配的加号替换为减号，第二个匹配的加号替换为逗号
+      const originalString = winNum.replace(/\+/, "-").replace(/\+/, ",");
+      // 以 - 分割字符串为两部分
+      const splitByDash = originalString.split("-");
+      // 以逗号分割第一个数组并从小到大排序
+      const firstArray = splitByDash[0]
+        .split(",")
+        .map(Number)
+        .sort((a, b) => a - b);
+      // 以逗号分割第二个数组并从小到大排序
+      const secondArray = splitByDash[1]
+        .split(",")
+        .map(Number)
+        .sort((a, b) => a - b);
+      // 将两个数组分别通过逗号组合成新的字符串
+      const firstString = firstArray.join(",");
+      const secondString = secondArray.join(",");
+      // 将两个字符串通过-连接
+      const resultString = firstString + "-" + secondString;
+      // 保存结果字符串
+      this.saveWinningNumber(resultString, nType, lid);
+    },
+    // 保存中奖号码
+    saveWinningNumber(winNum, nType, lid) {
+      const self = this;
+      const saveParams = {
+        lotteryId: lid,
+        winningNumber: winNum,
+      };
+      updateLog(saveParams)
+        .then((res) => {
+          if (res?.code === 200) {
+            self.checkIsGetReward(winNum, nType, lid);
+          } else {
+            self.$modal.msgWarning("开奖号码保存失败！");
+          }
+        })
+        .finally(() => {
+          self.qryRewardLoading = false;
+        });
+    },
+    // 查询号码详情并检查是否中奖
+    checkIsGetReward(winNum, numTp, logId) {
+      const self = this;
+      getLog(logId)
+        .then((res) => {
+          if (res?.code === 200) {
+            if (res?.data) {
+              const recordNumStrList = res?.data?.recordNumber?.split("/") || [];
+              const chaseNumStrList = res?.data?.chaseNumber?.split("/") || [];
+              let totalRewardCount = 0;
+              let totalRewardPrize = 0;
+              recordNumStrList.forEach((item) => {
+                const resultTmp = checkLotteryResult(numTp, item, winNum);
+                if (resultTmp?.prizeLevel > 0) {
+                  totalRewardCount = totalRewardCount + 1;
+                  totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
+                }
+              });
+              chaseNumStrList.forEach((item) => {
+                const resultTmp = checkLotteryResult(numTp, item, winNum);
+                if (resultTmp?.prizeLevel > 0) {
+                  totalRewardCount = totalRewardCount + 1;
+                  totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
+                }
+              });
+              if (totalRewardCount > 0) {
+                const numTypeText = numTp === 1 ? "大乐透" : numTp === 2 ? "双色球" : "";
+                self
+                  .$confirm("", "恭喜您中奖了！", {
+                    confirmButtonText: "保存",
+                    cancelButtonText: "取消",
+                    // type: "success",
+                    dangerouslyUseHTMLString: true, // 允许使用 HTML 字符串
+                    message: `
+                                <p>本期所购 <strong>${numTypeText}</strong> 中共计 <strong>${totalRewardCount}</strong> 注号码中奖</p>
+                                <p>初步预计奖金 <strong>￥${totalRewardPrize}</strong></p>
+                                <p>是否需要为您记录中奖信息？</p>
+                              `,
+                  })
+                  .then(() => {
+                    self.saveRewardInfo(logId, "Y", totalRewardPrize);
+                  })
+                  .catch(() => {
+                    self.getList();
+                  });
+              } else {
+                self.$modal.alertSuccess("开奖号码保存成功！本期未中奖！");
+                self.getList();
+              }
+            } else {
+              self.$modal.msgError(
+                "开奖号码保存成功，但是未查询到本期购买记录！请联系管理员！"
+              );
+              self.getList();
+            }
+          } else {
+            self.$modal.msgError(
+              "开奖号码保存成功，但是未查询到本期购买记录！请联系管理员！"
+            );
+            self.getList();
+          }
+        })
+        .catch((error) => {
+          console.error("查询历史号码详情接口异常：" + error);
+          self.getList();
+        });
+    },
+    // 保存中奖信息
+    saveRewardInfo(lotteryId, isWin, winningPrice) {
+      const self = this;
+      const saveParams = {
+        lotteryId,
+        isWin,
+        winningPrice,
+      };
+      updateLog(saveParams).then((res) => {
+        if (res?.code === 200) {
+          self.$modal.msgSuccess("中奖信息保存成功！");
+          self.getList();
+        } else {
+          self.$modal.msgWarning("中奖信息保存失败！");
+        }
+      });
     },
   },
 };
