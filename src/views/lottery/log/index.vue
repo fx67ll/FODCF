@@ -239,26 +239,39 @@
         align="center"
         prop="dateCode"
         fixed="left"
-        width="90"
+        width="100"
       />
       <el-table-column
         label="当日购买号码"
         align="center"
         prop="recordNumber"
         fixed="left"
-        width="200"
-      />
-      <el-table-column
-        label="当日固定追号"
-        align="center"
-        prop="chaseNumber"
-        width="150"
-      />
+        width="160"
+      >
+        <template slot-scope="scope">
+          <span v-if="scope.row.recordNumber === '-'">{{ scope.row.recordNumber }}</span>
+          <div v-if="scope.row.recordNumberList.length > 0">
+            <div v-for="(num, index) in scope.row.recordNumberList" :key="index">
+              <div>{{ num }}</div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="当日固定追号" align="center" prop="chaseNumber" width="160">
+        <template slot-scope="scope">
+          <span v-if="scope.row.chaseNumber === '-'">{{ scope.row.chaseNumber }}</span>
+          <div v-if="scope.row.chaseNumberList.length > 0">
+            <div v-for="(num, index) in scope.row.chaseNumberList" :key="index">
+              <div>{{ num }}</div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column
         label="当日中奖号码"
         align="center"
         prop="winningNumber"
-        width="150"
+        width="160"
       />
       <el-table-column label="是否中奖" align="center" prop="isWin" width="80">
         <template slot-scope="scope">
@@ -266,7 +279,9 @@
         </template>
       </el-table-column>
       <el-table-column label="中奖金额" align="center" prop="winningPrice" width="150">
-        <template slot-scope="scope"> ￥{{ scope.row.winningPrice }} </template>
+        <template slot-scope="scope">
+          {{ scope.row.winningPrice === "-" ? "" : "￥" }}{{ scope.row.winningPrice }}
+        </template>
       </el-table-column>
       <el-table-column label="彩票类型" align="center" prop="numberType" width="100">
         <template slot-scope="scope">
@@ -330,7 +345,7 @@
             type="text"
             icon="el-icon-coordinate"
             :loading="qryRewardLoading"
-            @click="handleQueryReward(scope.row)"
+            @click="handleQueryRewardDubounce(scope.row)"
             v-hasPermi="['lottery:log:queryReward']"
             >查询中奖信息</el-button
           >
@@ -568,11 +583,13 @@ import {
   listTotalReward,
 } from "@/api/fx67ll/lottery/log";
 
-// 中奖查询相关
+// 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { decryptString, checkLotteryResult } from "@/utils/index";
+import { decryptString, checkLotteryResult, debounce } from "@/utils/index";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
+
 import axios from "axios";
+import _ from "underscore";
 
 export default {
   name: "Log",
@@ -691,7 +708,12 @@ export default {
         this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
       listLog(this.queryParams).then((response) => {
-        this.logList = this.formatObjectArrayNullProperty(response.rows);
+        const logRows = response.rows.map((item) => {
+          item.recordNumberList = item?.recordNumber ? item.recordNumber?.split("/") : [];
+          item.chaseNumberList = item?.chaseNumber ? item.chaseNumber?.split("/") : [];
+          return item;
+        });
+        this.logList = this.formatObjectArrayNullProperty(logRows);
         this.total = response.total;
         this.loading = false;
       });
@@ -820,9 +842,9 @@ export default {
       );
     },
     /** 查询中奖信息 */
-    handleQueryReward(row) {
+    handleQueryRewardDubounce: _.debounce(function (row) {
       this.checkRecordData(row);
-    },
+    }, 233),
     // 查询中奖信息前确认是否有彩票期号
     checkRecordData(record) {
       const self = this;
@@ -833,8 +855,8 @@ export default {
       if (record?.winningNumber && record?.winningNumber !== "-") {
         self
           .$confirm("您已查询过开奖信息，是否需要再次查询", "提示", {
-            confirmButtonText: "需要",
-            cancelButtonText: "不需要",
+            confirmButtonText: "确认",
+            cancelButtonText: "取消",
             type: "warning",
           })
           .then(() => {
