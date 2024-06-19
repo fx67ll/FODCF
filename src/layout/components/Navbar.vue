@@ -18,9 +18,9 @@
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <!-- <el-tooltip content="文档地址" placement="bottom">
+        <el-tooltip content="fx67ll's H5 App - https://fx67ll.vip" placement="bottom">
           <fx67ll-doc id="fx67ll-doc" class="right-menu-item hover-effect" />
-        </el-tooltip> -->
+        </el-tooltip>
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 

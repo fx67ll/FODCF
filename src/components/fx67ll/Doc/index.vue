@@ -1,6 +1,6 @@
 <template>
   <div>
-    <svg-icon icon-class="question" @click="goto" />
+    <svg-icon icon-class="phone" @click="goto" />
   </div>
 </template>
 
@@ -9,7 +9,7 @@ export default {
   name: "fx67llDoc",
   data() {
     return {
-      url: "https://vue-ui.fx67ll.com/",
+      url: "https://fx67ll.vip/",
     };
   },
   methods: {
