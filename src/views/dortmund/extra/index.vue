@@ -297,9 +297,19 @@
       style="top: 40px"
       append-to-body
     >
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form
+        ref="form"
+        :model="form"
+        :rules="rules"
+        v-loading="formLoading"
+        label-width="80px"
+      >
         <el-form-item label="总金额" prop="extraMoney">
-          <el-input v-model="form.extraMoney" placeholder="请输入当前外快总金额" />
+          <el-input
+            v-model="form.extraMoney"
+            placeholder="请输入当前外快总金额"
+            @input="handleExtraMoneyChangeDubounce"
+          />
         </el-form-item>
         <el-form-item label="是否盈利" prop="isWin">
           <el-select
@@ -319,7 +329,11 @@
           <el-input v-model="form.winMoney" placeholder="请输入外快盈亏金额" />
         </el-form-item>
         <el-form-item label="当前本金" prop="seedMoney">
-          <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" />
+          <el-input
+            v-model="form.seedMoney"
+            placeholder="请输入当前投入本金"
+            @input="handleSeedMoneyChangeDubounce"
+          />
         </el-form-item>
         <el-form-item label="落袋金额" prop="saveMoney">
           <el-input v-model="form.saveMoney" placeholder="请输入已经落袋为安的盈利金额" />
@@ -364,7 +378,6 @@
 </template>
 
 <script>
-import * as echarts from "echarts";
 import {
   listExtra,
   getExtra,
@@ -372,6 +385,9 @@ import {
   addExtra,
   updateExtra,
 } from "@/api/fx67ll/dortmund/extra";
+
+import * as echarts from "echarts";
+import _ from "underscore";
 
 export default {
   name: "Extra",
@@ -420,6 +436,10 @@ export default {
       },
       // 表单参数
       form: {},
+      // 表单遮罩层
+      formLoading: false,
+      // 是否是新增
+      isAdd: false,
       // 表单校验
       rules: {
         extraMoney: [
@@ -436,6 +456,11 @@ export default {
       // 外快盈亏历史数据走势图弹窗相关参数
       historyDataAnalysisOpen: false,
       historyDataChartLoading: false,
+      // 上一次外快数据
+      preExtraData: {
+        extraMoney: "0",
+        seedMoney: "0",
+      },
     };
   },
   created() {
@@ -815,14 +840,92 @@ export default {
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
+    // 外快总额监听防抖
+    handleExtraMoneyChangeDubounce: _.debounce(function (val) {
+      if (this.isAdd) {
+        this.handleExtraMoneyChange(val);
+      }
+    }, 444),
+    // 外快总额监听
+    handleExtraMoneyChange(val) {
+      const seedMoney = this.form?.seedMoney;
+      const preExtraMoney = this.preExtraData?.extraMoney || "0";
+      const preSeedMoney = this.preExtraData?.seedMoney || "0";
+      if (val && seedMoney && preExtraMoney && preSeedMoney) {
+        this.handleWinMoneyCount(val, seedMoney, preExtraMoney, preSeedMoney);
+      }
+    },
+    // 本金监听防抖
+    handleSeedMoneyChangeDubounce: _.debounce(function (val) {
+      if (this.isAdd) {
+        this.handleSeedMoneyChange(val);
+      }
+    }, 444),
+    // 本金监听
+    handleSeedMoneyChange(val) {
+      const extraMoney = this.form?.extraMoney;
+      const preExtraMoney = this.preExtraData?.extraMoney || "0";
+      const preSeedMoney = this.preExtraData?.seedMoney || "0";
+      if (val && extraMoney && preExtraMoney && preSeedMoney) {
+        this.handleWinMoneyCount(extraMoney, val, preExtraMoney, preSeedMoney);
+      }
+    },
+    // 计算当前表单各类金额
+    handleWinMoneyCount(extraMoney, seedMoney, preExtraMoney, preSeedMoney) {
+      const nowWinMoney = (
+        parseFloat(extraMoney) -
+        parseFloat(seedMoney) -
+        (parseFloat(preExtraMoney) - parseFloat(preSeedMoney))
+      ).toFixed(2);
+      this.form.isWin = nowWinMoney > 0 ? "Y" : "N";
+      this.form.winMoney = nowWinMoney;
+    },
+    // 查询上一次外快
+    getPreExtraMoney() {
+      const self = this;
+      const queryParams = {
+        pageNum: 1,
+        pageSize: 1,
+      };
+      this.formLoading = true;
+      listExtra(queryParams)
+        .then((res) => {
+          if (res?.code === 200) {
+            if (res?.rows && res?.rows?.length > 0) {
+              self.preExtraData = res.rows[0];
+              self.form.seedMoney = res.rows[0]?.seedMoney;
+              self.form.saveMoney = res.rows[0]?.saveMoney;
+              self.form.targetMoney = res.rows[0]?.targetMoney;
+            } else {
+              uni.showToast({
+                title: "暂无历史外快盈亏记录数据！",
+                icon: "none",
+                duration: 1998,
+              });
+            }
+          } else {
+            uni.showToast({
+              title: "查询外快盈亏记录失败！",
+              icon: "none",
+              duration: 1998,
+            });
+          }
+        })
+        .finally(() => {
+          self.formLoading = false;
+        });
+    },
     /** 新增按钮操作 */
     handleAdd() {
+      this.isAdd = true;
       this.reset();
+      this.getPreExtraMoney();
       this.open = true;
       this.title = "添加外快盈亏记录";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
+      this.isAdd = false;
       this.reset();
       const extraId = row.extraId || this.ids;
       getExtra(extraId).then((response) => {
