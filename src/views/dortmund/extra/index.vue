@@ -849,10 +849,8 @@ export default {
     // 外快总额监听
     handleExtraMoneyChange(val) {
       const seedMoney = this.form?.seedMoney;
-      const preExtraMoney = this.preExtraData?.extraMoney || "0";
-      const preSeedMoney = this.preExtraData?.seedMoney || "0";
-      if (val && seedMoney && preExtraMoney && preSeedMoney) {
-        this.handleWinMoneyCount(val, seedMoney, preExtraMoney, preSeedMoney);
+      if (val && seedMoney) {
+        this.handleWinMoneyCount(val, seedMoney);
       }
     },
     // 本金监听防抖
@@ -864,14 +862,14 @@ export default {
     // 本金监听
     handleSeedMoneyChange(val) {
       const extraMoney = this.form?.extraMoney;
-      const preExtraMoney = this.preExtraData?.extraMoney || "0";
-      const preSeedMoney = this.preExtraData?.seedMoney || "0";
-      if (val && extraMoney && preExtraMoney && preSeedMoney) {
-        this.handleWinMoneyCount(extraMoney, val, preExtraMoney, preSeedMoney);
+      if (val && extraMoney) {
+        this.handleWinMoneyCount(extraMoney, val);
       }
     },
     // 计算当前表单各类金额
-    handleWinMoneyCount(extraMoney, seedMoney, preExtraMoney, preSeedMoney) {
+    handleWinMoneyCount(extraMoney, seedMoney) {
+      const preExtraMoney = this.preExtraData?.extraMoney || "0";
+      const preSeedMoney = this.preExtraData?.seedMoney || "0";
       const nowWinMoney = (
         parseFloat(extraMoney) -
         parseFloat(seedMoney) -
@@ -892,10 +890,13 @@ export default {
         .then((res) => {
           if (res?.code === 200) {
             if (res?.rows && res?.rows?.length > 0) {
-              self.preExtraData = res.rows[0];
-              self.form.seedMoney = res.rows[0]?.seedMoney;
-              self.form.saveMoney = res.rows[0]?.saveMoney;
-              self.form.targetMoney = res.rows[0]?.targetMoney;
+              self.preExtraData = res.rows[0] || {
+                extraMoney: "0",
+                seedMoney: "0",
+              };
+              self.form.seedMoney = res.rows[0]?.seedMoney || "0";
+              self.form.saveMoney = res.rows[0]?.saveMoney || "0";
+              self.form.targetMoney = res.rows[0]?.targetMoney || "0";
             } else {
               uni.showToast({
                 title: "暂无历史外快盈亏记录数据！",
