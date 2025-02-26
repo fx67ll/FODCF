@@ -778,6 +778,15 @@ export default {
           return val !== "1" && val !== "3" && val !== "6";
         });
       }
+      if (["3", "4"].includes(type?.toString())) {
+        this.dynamicWeekList = enumWeekList;
+      }
+      if (type?.toString() === "5") {
+        this.dynamicWeekList = enumWeekList.filter((item) => {
+          const val = item?.value?.toString();
+          return val !== "1" && val !== "3" && val !== "4" && val !== "6";
+        });
+      }
     },
     /** 新增按钮操作 */
     handleAdd() {
@@ -926,13 +935,20 @@ export default {
     // 通过第三方站点查询开奖号码
     queryLotteryRewardInfo(appId, appSecret, dCode, nType, lid) {
       const self = this;
+      const lotteryTypeMap = {
+        1: "cjdlt",
+        2: "ssq",
+        3: "pl3",
+        4: "pl5",
+        5: "qxc",
+      };
       axios
         .get("https://www.mxnzp.com/api/lottery/common/aim_lottery", {
           params: {
             app_id: appId,
             app_secret: appSecret,
             expect: dCode,
-            code: nType === 1 ? "cjdlt" : "ssq",
+            code: lotteryTypeMap[nType],
           },
         })
         .then((res) => {
