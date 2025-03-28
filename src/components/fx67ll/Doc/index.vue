@@ -9,7 +9,7 @@ export default {
   name: "fx67llDoc",
   data() {
     return {
-      url: "https://fx67ll.vip/",
+      url: "https://life.fx67ll.com/",
     };
   },
   methods: {
