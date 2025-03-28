@@ -347,7 +347,18 @@
             :loading="qryRewardLoading"
             @click="handleQueryRewardDubounce(scope.row)"
             v-hasPermi="['lottery:log:queryReward']"
+            v-if="[1, 2, '1', '2'].includes(scope.row.numberType)"
             >查询中奖信息</el-button
+          >
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-coordinate"
+            :loading="qryRewardLoading"
+            @click="handleQueryRewardDubounce(scope.row)"
+            v-hasPermi="['lottery:log:queryReward']"
+            v-if="![1, 2, '1', '2'].includes(scope.row.numberType)"
+            >功能开发中</el-button
           >
           <el-button
             size="mini"
