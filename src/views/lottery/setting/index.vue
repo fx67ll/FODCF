@@ -180,8 +180,27 @@
       style="top: 30px"
       append-to-body
     >
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="生成配置" prop="lotterySetting">
+      <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+        <el-form-item label="查看格式化配置">
+          <el-switch
+            v-model="isViewJson"
+            active-color="#2ecc71"
+            @change="handleIsViewJson"
+          >
+          </el-switch>
+        </el-form-item>
+        <vue-json-viewer
+          v-if="isViewJson"
+          :value="form.lotterySetting ? JSON.parse(form.lotterySetting) : {}"
+          :expand-depth="1"
+          copyable
+          boxed
+          sort
+          show-array-length
+          show-object-size
+          show-type
+        ></vue-json-viewer>
+        <el-form-item v-if="!isViewJson" label="编辑生成配置" prop="lotterySetting">
           <el-input
             v-model="form.lotterySetting"
             type="textarea"
@@ -219,9 +238,14 @@ import {
   updateSetting,
 } from "@/api/fx67ll/lottery/setting";
 
+import VueJsonViewer from "vue-json-viewer";
+
 export default {
   name: "Setting",
   dicts: ["sys_yes_no"],
+  components: {
+    VueJsonViewer,
+  },
   data() {
     return {
       // 遮罩层
@@ -264,12 +288,18 @@ export default {
           { required: true, message: "个人彩票生成配置不能为空", trigger: "blur" },
         ],
       },
+      // 是否查看json
+      isViewJson: false,
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    // 切换查看状态
+    handleIsViewJson(val) {
+      this.isViewJson = val;
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
@@ -302,6 +332,7 @@ export default {
     },
     // 表单重置
     reset() {
+      this.isViewJson = false;
       this.form = {
         settingId: null,
         userId: null,
