@@ -140,9 +140,17 @@
         align="center"
         class-name="small-padding fixed-width"
         fixed="right"
-        width="140"
+        width="210"
       >
         <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-files"
+            @click="handleUpdate(scope.row, true)"
+            v-hasPermi="['lottery:setting:view']"
+            >查看</el-button
+          >
           <el-button
             size="mini"
             type="text"
@@ -181,7 +189,7 @@
       append-to-body
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="查看格式化配置">
+        <el-form-item label="格式化配置" class="formatButton">
           <el-switch
             v-model="isViewJson"
             active-color="#2ecc71"
@@ -299,6 +307,7 @@ export default {
     // 切换查看状态
     handleIsViewJson(val) {
       this.isViewJson = val;
+      this.title = `${val ? "查看" : "修改"}固定追号配置`;
     },
     // 重置时间段查询
     clearDateQueryParams() {
@@ -370,13 +379,16 @@ export default {
       this.title = "添加固定追号配置";
     },
     /** 修改按钮操作 */
-    handleUpdate(row) {
+    handleUpdate(row, isView) {
       this.reset();
+      if (isView) {
+        this.isViewJson = true;
+      }
       const settingId = row.settingId || this.ids;
       getSetting(settingId).then((response) => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改固定追号配置";
+        this.title = `${this.isViewJson ? "查看" : "修改"}固定追号配置`;
       });
     },
     /** 提交按钮 */
@@ -426,3 +438,11 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.formatButton {
+  position: absolute;
+  top: 10px;
+  left: 577px;
+}
+</style>
