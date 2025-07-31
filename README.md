@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.4.4.20250731
+* 适配没有内存执行构建的jenkins应用  
+
 ## 0.4.3.20250425  
 * 优化格式化配置按钮布局   
 
