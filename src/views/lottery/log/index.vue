@@ -358,6 +358,7 @@
             @click="handleQueryRewardDubounce(scope.row)"
             v-hasPermi="['lottery:log:queryReward']"
             v-if="![1, 2, '1', '2'].includes(scope.row.numberType)"
+            disabled
             >功能开发中</el-button
           >
           <el-button
