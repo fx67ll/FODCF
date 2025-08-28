@@ -51,6 +51,7 @@
 import { getToken } from "@/utils/auth";
 
 export default {
+  name: "ImageUpload",
   props: {
     value: [String, Object, Array],
     // 图片数量限制
