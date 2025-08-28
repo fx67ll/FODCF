@@ -8,13 +8,37 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="用户id" prop="userId">
+      <el-form-item label="创建者" prop="createBy">
         <el-input
-          v-model="queryParams.userId"
-          placeholder="请输入用户id"
+          v-model="queryParams.createBy"
+          placeholder="请输入记录创建者"
           clearable
           @keyup.enter.native="handleQuery"
         />
+      </el-form-item>
+      <el-form-item label="创建时间">
+        <el-date-picker
+          v-model="daterangeCreateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="更新时间">
+        <el-date-picker
+          v-model="daterangeUpdateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button
@@ -162,9 +186,9 @@
     />
 
     <!-- 添加或修改备忘记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="备忘">
+        <el-form-item label="内容">
           <editor v-model="form.noteContent" :min-height="192" />
         </el-form-item>
         <el-form-item label="备注" prop="noteRemark">
@@ -214,6 +238,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 创建时间范围
+      daterangeCreateTime: [],
+      // 更新时间范围
+      daterangeUpdateTime: [],
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -236,11 +264,27 @@ export default {
     this.getList();
   },
   methods: {
+    // 重置时间段查询
+    clearDateQueryParams() {
+      this.queryParams.beginCreateTime = null;
+      this.queryParams.endCreateTime = null;
+      this.queryParams.beginUpdateTime = null;
+      this.queryParams.endUpdateTime = null;
+    },
     /** 查询备忘记录列表 */
     getList() {
       this.loading = true;
+      this.clearDateQueryParams();
+      if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
+        this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
+        this.queryParams.endCreateTime = this.daterangeCreateTime[1];
+      }
+      if (null != this.daterangeUpdateTime && "" != this.daterangeUpdateTime) {
+        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
+        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
+      }
       listNoteLog(this.queryParams).then((response) => {
-        this.logList = response.rows;
+        this.logList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
         this.loading = false;
       });
@@ -270,6 +314,8 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
@@ -283,7 +329,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加备忘记录";
+      this.title = "添加备忘";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -292,7 +338,7 @@ export default {
       getNoteLog(noteId).then((response) => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改备忘记录";
+        this.title = "修改备忘";
       });
     },
     /** 提交按钮 */
