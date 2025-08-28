@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.5.2.20250828
+* 优化备忘记录相关功能  
+
 ## 0.5.1.20250826
 * 新增备忘记录相关功能  
 
