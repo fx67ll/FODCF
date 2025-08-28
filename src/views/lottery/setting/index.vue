@@ -274,9 +274,9 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
-      // 删除标志时间范围
+      // 创建时间范围
       daterangeCreateTime: [],
-      // 删除标志时间范围
+      // 更新时间范围
       daterangeUpdateTime: [],
       // 查询参数
       queryParams: {
