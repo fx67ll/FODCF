@@ -62,7 +62,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['system:log:add']"
+          v-hasPermi="['note:log:add']"
           >新增</el-button
         >
       </el-col>
@@ -74,7 +74,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['system:log:edit']"
+          v-hasPermi="['note:log:edit']"
           >修改</el-button
         >
       </el-col>
@@ -86,7 +86,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['system:log:remove']"
+          v-hasPermi="['note:log:remove']"
           >删除</el-button
         >
       </el-col>
@@ -97,7 +97,7 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['system:log:export']"
+          v-hasPermi="['note:log:export']"
           >导出</el-button
         >
       </el-col>
@@ -162,7 +162,7 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:log:edit']"
+            v-hasPermi="['note:log:edit']"
             >修改</el-button
           >
           <el-button
@@ -170,7 +170,7 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['system:log:remove']"
+            v-hasPermi="['note:log:remove']"
             >删除</el-button
           >
         </template>
@@ -378,7 +378,7 @@ export default {
     /** 导出按钮操作 */
     handleExport() {
       this.download(
-        "system/log/export",
+        "note/log/export",
         {
           ...this.queryParams,
         },
