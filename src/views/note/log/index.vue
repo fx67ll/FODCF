@@ -113,7 +113,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="备忘" align="center" prop="noteContent" />
+      <el-table-column label="富文本" align="center" prop="noteContent" />
       <el-table-column label="备注" align="center" prop="noteRemark" />
       <el-table-column
         label="记录创建者"
@@ -185,7 +185,7 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改备忘记录对话框 -->
+    <!-- 添加或修改富文本记录对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="内容">
@@ -232,7 +232,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 备忘记录表格数据
+      // 富文本记录表格数据
       logList: [],
       // 弹出层标题
       title: "",
@@ -255,7 +255,7 @@ export default {
       // 表单校验
       rules: {
         noteContent: [
-          { required: true, message: "备忘内容不能为空", trigger: "blur" },
+          { required: true, message: "富文本内容不能为空", trigger: "blur" },
         ],
       },
     };
@@ -271,7 +271,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询备忘记录列表 */
+    /** 查询富文本记录列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -329,7 +329,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加备忘";
+      this.title = "添加富文本";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -338,7 +338,7 @@ export default {
       getNoteLog(noteId).then((response) => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改备忘";
+        this.title = "修改富文本";
       });
     },
     /** 提交按钮 */
@@ -365,7 +365,7 @@ export default {
     handleDelete(row) {
       const noteIds = row.noteId || this.ids;
       this.$modal
-        .confirm('是否确认删除备忘记录编号为"' + noteIds + '"的数据项？')
+        .confirm('是否确认删除富文本记录编号为"' + noteIds + '"的数据项？')
         .then(function () {
           return delNoteLog(noteIds);
         })
