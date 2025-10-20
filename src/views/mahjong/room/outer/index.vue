@@ -33,7 +33,7 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="mahjongRoomRemark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['mahjong:room:edit']">修改</el-button>
