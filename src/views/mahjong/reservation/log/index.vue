@@ -110,36 +110,53 @@
       @pagination="getList" />
 
     <!-- 添加或修改麻将室预约记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="用户ID" prop="userId" v-if="nowUserName === 'fx67ll'">
-          <el-input v-model="form.userId" placeholder="请输入预约用户ID" />
-        </el-form-item>
-        <el-form-item label="麻将室ID" prop="mahjongRoomId" v-if="nowUserName === 'fx67ll'">
-          <el-input v-model="form.mahjongRoomId" placeholder="请输入预约的麻将室ID" />
-        </el-form-item>
-        <el-form-item label="开始时间" prop="reservationStartTime">
-          <el-date-picker clearable v-model="form.reservationStartTime" type="datetime" value-format="yyyy-MM-dd"
-            placeholder="请选择预约开始时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="结束时间" prop="reservationEndTime">
-          <el-date-picker clearable v-model="form.reservationEndTime" type="datetime" value-format="yyyy-MM-dd"
-            placeholder="请选择预约结束时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="订单状态" prop="reservationStatus">
-          <el-select v-model="form.reservationStatus" placeholder="请选择订单状态" clearable>
-            <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
-              :value="dict.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="联系方式" prop="reservationContact">
-          <el-input v-model="form.reservationContact" placeholder="请输入预约用户联系方式" />
-        </el-form-item>
-        <el-form-item label="备注" prop="reservationRemark">
-          <el-input v-model="form.reservationRemark" type="textarea" placeholder="请输入预约备注内容" />
-        </el-form-item>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body
+      style="top: 130px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="用户ID" prop="userId" v-if="nowUserName === 'fx67ll'">
+              <el-input v-model="form.userId" placeholder="请输入预约用户ID" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="麻将室ID" prop="mahjongRoomId" v-if="nowUserName === 'fx67ll'">
+              <el-input v-model="form.mahjongRoomId" placeholder="请输入预约的麻将室ID" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开始时间" prop="reservationStartTime">
+              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime" value-format="yyyy-MM-dd"
+                placeholder="请选择预约开始时间" style="width: 270px">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束时间" prop="reservationEndTime">
+              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime" value-format="yyyy-MM-dd"
+                placeholder="请选择预约结束时间" style="width: 270px">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="订单状态" prop="reservationStatus">
+              <el-select v-model="form.reservationStatus" placeholder="请选择订单状态" clearable style="width: 270px">
+                <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="联系方式" prop="reservationContact">
+              <el-input v-model="form.reservationContact" placeholder="请输入预约用户联系方式" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="备注" prop="reservationRemark">
+              <el-input v-model="form.reservationRemark" type="textarea" placeholder="请输入预约备注内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -185,6 +202,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 创建时间范围
+      daterangeCreateTime: [],
+      // 更新时间范围
+      daterangeUpdateTime: [],
       // 查询参数
       queryParams: {
         pageNum: 1,

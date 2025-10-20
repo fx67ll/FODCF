@@ -106,6 +106,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 创建时间范围
+      daterangeCreateTime: [],
+      // 更新时间范围
+      daterangeUpdateTime: [],
       // 查询参数
       queryParams: {
         pageNum: 1,
