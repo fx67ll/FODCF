@@ -61,17 +61,17 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="预约用户" align="center" prop="createBy" />
       <el-table-column label="麻将室" align="center" prop="mahjongRoomName" />
-      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="180">
+      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160">
         <template slot-scope="scope">
           <span>{{
-            parseTime(scope.row.reservationStartTime, "{y}-{m}-{d}")
+            parseTime(scope.row.reservationStartTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="180">
+      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="160">
         <template slot-scope="scope">
           <span>{{
-            parseTime(scope.row.reservationEndTime, "{y}-{m}-{d}")
+            parseTime(scope.row.reservationEndTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
