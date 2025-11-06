@@ -45,11 +45,11 @@
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-              v-hasPermi="['system:user:edit']">修改</el-button>
+              v-hasPermi="['system:user:chaoshen:edit']">修改</el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-              v-hasPermi="['system:user:remove']">删除</el-button>
+              v-hasPermi="['system:user:chaoshen:remove']">删除</el-button>
           </el-col>
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
         </el-row>
@@ -81,11 +81,11 @@
           <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
             <template slot-scope="scope" v-if="scope.row.userId !== 1">
               <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                v-hasPermi="['system:user:edit']">修改</el-button>
+                v-hasPermi="['system:user:chaoshen:edit']">修改</el-button>
               <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                v-hasPermi="['system:user:remove']">删除</el-button>
+                v-hasPermi="['system:user:chaoshen:remove']">删除</el-button>
               <el-button size="mini" type="text" icon="el-icon-key" @click="handleResetPwd(scope.row)"
-                v-hasPermi="['system:user:resetPwd']">重置密码</el-button>
+                v-hasPermi="['system:user:chaoshen:resetPwd']">重置密码</el-button>
             </template>
           </el-table-column>
         </el-table>
