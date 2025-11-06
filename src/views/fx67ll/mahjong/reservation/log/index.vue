@@ -23,11 +23,11 @@
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item style="margin-left: 12px">
@@ -126,14 +126,14 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="开始时间" prop="reservationStartTime">
-              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime" value-format="yyyy-MM-dd"
+              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                 placeholder="请选择预约开始时间" style="width: 270px">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="结束时间" prop="reservationEndTime">
-              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime" value-format="yyyy-MM-dd"
+              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                 placeholder="请选择预约结束时间" style="width: 270px">
               </el-date-picker>
             </el-form-item>
@@ -174,6 +174,7 @@ import {
   addLog,
   updateLog,
 } from "@/api/fx67ll/mahjong/log";
+import moment from "moment";
 
 export default {
   name: "mahjongReservationLog",
@@ -259,6 +260,8 @@ export default {
         this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
         this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
+      this.queryParams.reservationStartTime = this.queryParams.reservationStartTime ? moment(this.queryParams.reservationStartTime) : null;
+      this.queryParams.reservationEndTime = this.queryParams.reservationEndTime ? moment(this.queryParams.reservationEndTime) : null;
       listLog(this.queryParams).then((response) => {
         this.logList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;

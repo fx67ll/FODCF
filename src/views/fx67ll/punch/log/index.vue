@@ -719,5 +719,5 @@ export default {
 </script>
 
 <style lang="less" scoped="scoped">
-@import "@/views/punch/log/index.less";
+@import "@/views/fx67ll/punch/log/index.less";
 </style>
