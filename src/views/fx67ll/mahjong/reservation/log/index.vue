@@ -22,14 +22,14 @@
             :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间" style="margin-left: 12px">
+      <!-- <el-form-item label="创建时间" style="margin-left: 12px">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新时间" style="margin-left: 12px">
+      </el-form-item> -->
+      <!-- <el-form-item label="更新时间" style="margin-left: 12px">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item style="margin-left: 12px">
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -59,8 +59,9 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="订单编号" align="center" prop="orderId" width="130"/>
       <el-table-column label="预约用户" align="center" prop="createBy" />
-      <el-table-column label="麻将室" align="center" prop="mahjongRoomName" />
+      <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" />
       <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -76,26 +77,26 @@
         </template>
       </el-table-column>
       <el-table-column label="联系方式" align="center" prop="reservationContact" />
-      <el-table-column label="订单状态" align="center" prop="reservationStatus" width="100">
+      <el-table-column label="订单状态" align="center" prop="reservationStatus" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.fx67ll_order_status" :value="scope.row.reservationStatus" />
         </template>
       </el-table-column>
       <el-table-column label="订单备注" align="center" prop="reservationRemark" />
-      <el-table-column label="订单创建时间" align="center" prop="createTime" width="160">
+      <!-- <el-table-column label="订单创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
-      </el-table-column>
-      <el-table-column label="订单更新用户" align="center" prop="updateBy" width="100" />
-      <el-table-column label="订单更新时间" align="center" prop="updateTime" width="160">
+      </el-table-column> -->
+      <!-- <el-table-column label="订单更新用户" align="center" prop="updateBy" width="100" /> -->
+      <!-- <el-table-column label="订单更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -126,15 +127,15 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="开始时间" prop="reservationStartTime">
-              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                placeholder="请选择预约开始时间" style="width: 270px">
+              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约开始时间" style="width: 270px">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="结束时间" prop="reservationEndTime">
-              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                placeholder="请选择预约结束时间" style="width: 270px">
+              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约结束时间" style="width: 270px">
               </el-date-picker>
             </el-form-item>
           </el-col>
@@ -263,7 +264,15 @@ export default {
       this.queryParams.reservationStartTime = this.queryParams.reservationStartTime ? moment(this.queryParams.reservationStartTime) : null;
       this.queryParams.reservationEndTime = this.queryParams.reservationEndTime ? moment(this.queryParams.reservationEndTime) : null;
       listLog(this.queryParams).then((response) => {
-        this.logList = this.formatObjectArrayNullProperty(response.rows);
+        const rowsTmpList = this.formatObjectArrayNullProperty(response.rows);
+        this.logList = rowsTmpList.map(item => {
+          const timeStamp = new Date(item.createTime).getTime();
+          const rowObjTmp = {
+            ...item,
+            orderId: timeStamp + (item?.mahjongReservationLogId || 0)
+          };
+          return rowObjTmp;
+        })
         this.total = response.total;
         this.loading = false;
       });

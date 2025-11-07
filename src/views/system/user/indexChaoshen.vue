@@ -32,10 +32,10 @@
                 :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间">
+          <!-- <el-form-item label="创建时间">
             <el-date-picker v-model="dateRange" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
               range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
             <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -73,17 +73,18 @@
                 @change="handleStatusChange(scope.row)"></el-switch>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+          <!-- <el-table-column label="创建时间" align="center" prop="createTime" width="160">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
-            <template slot-scope="scope" v-if="scope.row.userId !== 1">
+            <template slot-scope="scope">
               <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
                 v-hasPermi="['system:user:chaoshen:edit']">修改</el-button>
               <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                v-hasPermi="['system:user:chaoshen:remove']">删除</el-button>
+                v-hasPermi="['system:user:chaoshen:remove']"
+                v-if="parseInt(scope.row.userId, 10) > 1000001">删除</el-button>
               <el-button size="mini" type="text" icon="el-icon-key" @click="handleResetPwd(scope.row)"
                 v-hasPermi="['system:user:chaoshen:resetPwd']">重置密码</el-button>
             </template>
