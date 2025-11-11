@@ -21,8 +21,7 @@
       </el-form-item>
     </el-form>
 
-    <el-table v-loading="loading" :data="roomList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+    <el-table v-loading="loading" :data="roomList"">
       <el-table-column label="管理员" align="center" prop="userName" />
       <el-table-column label="麻将室名称" align="center" prop="mahjongRoomName" />
       <el-table-column label="对外描述" align="center" prop="mahjongRoomDescription" />
@@ -90,12 +89,6 @@ export default {
     return {
       // 遮罩层
       loading: true,
-      // 选中数组
-      ids: [],
-      // 非单个禁用
-      single: true,
-      // 非多个禁用
-      multiple: true,
       // 显示搜索条件
       showSearch: true,
       // 总条数
@@ -203,16 +196,10 @@ export default {
       this.resetForm("queryForm");
       this.handleQuery();
     },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map((item) => item.mahjongRoomId);
-      this.single = selection.length !== 1;
-      this.multiple = !selection.length;
-    },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const mahjongRoomId = row.mahjongRoomId || this.ids;
+      const mahjongRoomId = row.mahjongRoomId;
       getRoom(mahjongRoomId).then((response) => {
         this.form = response.data;
         this.open = true;
