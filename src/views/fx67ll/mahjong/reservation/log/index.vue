@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
       <el-form-item label="预约用户" prop="createBy">
         <el-input v-model="queryParams.createBy" placeholder="请输入预约用户名" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -17,10 +17,23 @@
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="订单状态" prop="reservationStatus">
-        <el-select v-model="queryParams.reservationStatus" placeholder="请选择订单状态" clearable>
+        <el-select v-model="queryParams.reservationStatus" placeholder="请选择订单状态" clearable
+          @keyup.enter.native="handleQuery">
           <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
+      </el-form-item>
+      <!-- 订单开始时间范围搜索 -->
+      <el-form-item label="订单开始时间" style="margin-left: 12px">
+        <el-date-picker v-model="daterangeStartTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
+          @keyup.enter.native="handleQuery"></el-date-picker>
+      </el-form-item>
+      <!-- 订单结束时间范围搜索 -->
+      <el-form-item label="订单结束时间" style="margin-left: 12px">
+        <el-date-picker v-model="daterangeEndTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
+          @keyup.enter.native="handleQuery"></el-date-picker>
       </el-form-item>
       <!-- <el-form-item label="创建时间" style="margin-left: 12px">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
@@ -59,7 +72,7 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="订单编号" align="center" prop="orderId" width="130"/>
+      <el-table-column label="订单编号" align="center" prop="orderId" width="130" />
       <el-table-column label="预约用户" align="center" prop="createBy" />
       <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" />
       <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160">
@@ -204,6 +217,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 订单开始时间范围（数组：[开始时间, 结束时间]）
+      daterangeStartTime: [],
+      // 订单结束时间范围（数组：[开始时间, 结束时间]）
+      daterangeEndTime: [],
       // 创建时间范围
       daterangeCreateTime: [],
       // 更新时间范围
@@ -221,6 +238,10 @@ export default {
         endCreateTime: null,
         beginUpdateTime: null,
         endUpdateTime: null,
+        beginReservationStartTime: null, // 订单开始时间-起始
+        endReservationStartTime: null,   // 订单开始时间-结束
+        beginReservationEndTime: null,   // 订单结束时间-起始
+        endReservationEndTime: null      // 订单结束时间-结束
       },
       // 表单参数
       form: {},
@@ -244,6 +265,11 @@ export default {
   methods: {
     // 重置时间段查询
     clearDateQueryParams() {
+      this.queryParams.beginReservationStartTime = null;
+      this.queryParams.endReservationStartTime = null;
+      this.queryParams.beginReservationEndTime = null;
+      this.queryParams.endReservationEndTime = null;
+
       this.queryParams.beginCreateTime = null;
       this.queryParams.endCreateTime = null;
       this.queryParams.beginUpdateTime = null;
@@ -253,6 +279,16 @@ export default {
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
+      // 处理订单开始时间范围（若选择了时间，则赋值给查询参数）
+      if (this.daterangeStartTime && this.daterangeStartTime.length > 0) {
+        this.queryParams.beginReservationStartTime = this.daterangeStartTime[0];
+        this.queryParams.endReservationStartTime = this.daterangeStartTime[1];
+      }
+      // 处理订单结束时间范围（若选择了时间，则赋值给查询参数）
+      if (this.daterangeEndTime && this.daterangeEndTime.length > 0) {
+        this.queryParams.beginReservationEndTime = this.daterangeEndTime[0];
+        this.queryParams.endReservationEndTime = this.daterangeEndTime[1];
+      }
       if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
         this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
         this.queryParams.endCreateTime = this.daterangeCreateTime[1];
@@ -261,8 +297,6 @@ export default {
         this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
         this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
-      this.queryParams.reservationStartTime = this.queryParams.reservationStartTime ? moment(this.queryParams.reservationStartTime) : null;
-      this.queryParams.reservationEndTime = this.queryParams.reservationEndTime ? moment(this.queryParams.reservationEndTime) : null;
       listLog(this.queryParams).then((response) => {
         const rowsTmpList = this.formatObjectArrayNullProperty(response.rows);
         this.logList = rowsTmpList.map(item => {
@@ -311,6 +345,10 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
+      this.daterangeStartTime = [];
+      this.daterangeEndTime = [];
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
