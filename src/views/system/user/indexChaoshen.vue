@@ -55,7 +55,7 @@
         </el-row>
 
         <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column type="selection" width="50" align="center" :selectable="handleSelectable" />
           <el-table-column label="用户名称" align="center" key="userName" prop="userName" :show-overflow-tooltip="true"
             width="120" />
           <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" :show-overflow-tooltip="true"
@@ -168,7 +168,6 @@ import {
   resetUserPwd,
   changeUserStatus,
 } from "@/api/system/userChaoshen";
-import { getToken } from "@/utils/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -258,6 +257,11 @@ export default {
     });
   },
   methods: {
+    // 新增：控制表格复选框是否可选中
+    handleSelectable(row) {
+      // userId为1000001时返回false（禁止选中），其他返回true（允许选中）
+      return parseInt(row.userId, 10) !== 1000001;
+    },
     /** 查询用户列表 */
     getList() {
       this.loading = true;
