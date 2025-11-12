@@ -75,14 +75,16 @@
       <el-table-column label="订单编号" align="center" prop="orderId" width="130" />
       <el-table-column label="预约用户" align="center" prop="createBy" />
       <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" />
-      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160">
+      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160" sortable
+        :sort-method="sortStartTime">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationStartTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="160">
+      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="160" sortable
+        :sort-method="sortEndTime">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationEndTime, "{y}-{m}-{d} {h}:{i}:{s}")
@@ -263,6 +265,18 @@ export default {
     this.getList();
   },
   methods: {
+    // 预约开始时间排序方法
+    sortStartTime(a, b) {
+      const timeA = new Date(a.reservationStartTime).getTime();
+      const timeB = new Date(b.reservationStartTime).getTime();
+      return timeA - timeB;
+    },
+    // 预约结束时间排序方法
+    sortEndTime(a, b) {
+      const timeA = new Date(a.reservationEndTime).getTime();
+      const timeB = new Date(b.reservationEndTime).getTime();
+      return timeA - timeB;
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginReservationStartTime = null;
