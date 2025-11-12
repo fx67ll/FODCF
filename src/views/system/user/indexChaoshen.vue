@@ -12,10 +12,10 @@
             <el-input v-model="queryParams.nickName" placeholder="请输入用户昵称" clearable style="width: 240px"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
-          <el-form-item label="电子邮箱" prop="email">
+          <!-- <el-form-item label="电子邮箱" prop="email">
             <el-input v-model="queryParams.email" placeholder="请输入电子邮箱" clearable style="width: 240px"
               @keyup.enter.native="handleQuery" />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="联系方式" prop="contactInfo">
             <el-input v-model="queryParams.contactInfo" placeholder="请输入联系方式" clearable style="width: 240px"
               @keyup.enter.native="handleQuery" />
@@ -56,17 +56,16 @@
 
         <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" :selectable="handleSelectable" />
-          <el-table-column label="用户名称" align="center" key="userName" prop="userName" :show-overflow-tooltip="true"
-            width="120" />
-          <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" :show-overflow-tooltip="true"
-            width="120" />
-          <el-table-column label="电子邮箱" align="center" key="email" prop="email" />
-          <el-table-column label="联系方式" align="center" key="contactInfo" prop="contactInfo" />
+          <el-table-column label="用户名称" align="center" key="userName" prop="userName" :show-overflow-tooltip="true" />
+          <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" :show-overflow-tooltip="true" />
           <el-table-column label="性别" align="center" key="sex" prop="sex" width="80">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.sys_user_sex" :value="scope.row.sex" />
             </template>
           </el-table-column>
+          <!-- <el-table-column label="电子邮箱" align="center" key="email" prop="email" /> -->
+          <el-table-column label="联系方式" align="center" key="contactInfo" prop="contactInfo" />
+          <el-table-column label="备注" align="center" key="remark" prop="remark" :show-overflow-tooltip="true" />
           <el-table-column label="账户状态" align="center" key="status" width="80">
             <template slot-scope="scope">
               <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
@@ -114,18 +113,6 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="电子邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入电子邮箱" maxlength="50" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系方式" prop="contactInfo">
-              <el-input v-model="form.contactInfo" placeholder="请输入联系方式" maxlength="50" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
             <el-form-item label="性别">
               <el-select v-model="form.sex" placeholder="请选择性别">
                 <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
@@ -143,10 +130,24 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-row>
+          <!-- <el-col :span="12">
+            <el-form-item label="电子邮箱" prop="email">
+              <el-input v-model="form.email" placeholder="请输入电子邮箱" maxlength="50" />
+            </el-form-item>
+          </el-col> -->
+          <el-col :span="24">
+            <el-form-item label="联系方式" prop="contactInfo">
+              <el-input v-model="form.contactInfo" placeholder="请输入联系方式" maxlength="50" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-row>
           <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
+            <!-- 保留原有备注表单项，确保修改功能正常 -->
+            <el-form-item label="备注" prop="remark">
+              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" maxlength="200" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -214,12 +215,12 @@ export default {
         deptId: undefined,
         userName: undefined,
         nickName: undefined,
-        email: undefined,
+        // email: undefined,
         contactInfo: undefined,
         sex: undefined,
         status: undefined,
       },
-      // 表单校验
+      // 表单校验：新增remark字段校验（非必填，可根据需求调整）
       rules: {
         userName: [
           { required: true, message: "用户名称不能为空", trigger: "blur" },
@@ -240,10 +241,17 @@ export default {
             trigger: "blur",
           },
         ],
-        email: [
+        // email: [
+        //   {
+        //     type: "email",
+        //     message: "请输入正确电子邮箱地址",
+        //     trigger: ["blur", "change"],
+        //   },
+        // ],
+        remark: [
           {
-            type: "email",
-            message: "请输入正确电子邮箱地址",
+            max: 200,
+            message: "备注长度不能超过200个字符",
             trigger: ["blur", "change"],
           },
         ],
@@ -299,11 +307,11 @@ export default {
         userName: undefined,
         nickName: undefined,
         password: undefined,
-        email: undefined,
+        // email: undefined,
         contactInfo: undefined,
         sex: undefined,
         status: "0",
-        remark: undefined,
+        remark: undefined, // 重置时清空remark
         postIds: [],
         roleIds: [],
       };
@@ -334,6 +342,8 @@ export default {
       const userId = row.userId || this.ids;
       getUser(userId).then((response) => {
         this.form = response.data;
+        // 确保remark字段从接口数据中赋值（如果接口返回remark）
+        this.form.remark = response.data.remark || undefined;
         this.postOptions = response.posts;
         this.roleOptions = response.roles;
         this.$set(this.form, "postIds", response.postIds);
