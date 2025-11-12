@@ -1,11 +1,7 @@
 <template>
   <div class="navbar">
-    <hamburger
-      id="hamburger-container"
-      :is-active="sidebar.opened"
-      class="hamburger-container"
-      @toggleClick="toggleSideBar"
-    />
+    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container"
+      @toggleClick="toggleSideBar" />
 
     <breadcrumb id="breadcrumb-container" class="breadcrumb-container" v-if="!topNav" />
     <top-nav id="topmenu-container" class="topmenu-container" v-if="topNav" />
@@ -80,7 +76,7 @@ export default {
     };
   },
   mounted() {
-    if (Cookies.get("username") === "user") {
+    if (Cookies.get("username") === "user" || parseInt(Cookies.get("userId")) > 100000) {
       this.isUser = true;
     } else {
       this.isUser = false;
@@ -120,7 +116,7 @@ export default {
             location.href = "/index";
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     },
   },
 };
