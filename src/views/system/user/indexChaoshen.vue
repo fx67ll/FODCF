@@ -69,7 +69,8 @@
           <el-table-column label="账户状态" align="center" key="status" width="80">
             <template slot-scope="scope">
               <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
-                @change="handleStatusChange(scope.row)"></el-switch>
+                @change="handleStatusChange(scope.row)"
+                :disabled="parseInt(scope.row.userId, 10) === 1000001"></el-switch>
             </template>
           </el-table-column>
           <!-- <el-table-column label="创建时间" align="center" prop="createTime" width="160">
@@ -122,7 +123,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="账户状态">
-              <el-radio-group v-model="form.status">
+              <el-radio-group v-model="form.status":disabled="parseInt(form.userId, 10) === 1000001">
                 <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{
                   dict.label
                 }}</el-radio>
