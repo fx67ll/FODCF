@@ -23,3 +23,19 @@ export function stopTomcat() {
     method: 'post'
   })
 }
+
+// 查询Github连接状态
+export function testConnectToGithubByTcp() {
+  return request({
+    url: '/server/tomcat/testConnectToGithubByTcp',
+    method: 'get'
+  })
+}
+
+// 查询Github连接状态
+export function testConnectToGithubByHttp() {
+  return request({
+    url: '/server/tomcat/testConnectToGithubByHttp',
+    method: 'get'
+  })
+}
