@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.7.2.20251121
+* 补充启动jenkins服务的前置条件检测功能：*Github服务连通性测试*~    
+
 ## 0.7.1.20251119
 * 新增Tomcat服务状态管理  
 
