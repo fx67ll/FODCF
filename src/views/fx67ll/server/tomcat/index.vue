@@ -93,7 +93,7 @@
 
         <div class="detection-result" v-if="githubLogInfo">
           <h3>检测结果</h3>
-          <pre>{{ githubLogInfo }}</pre>
+          <pre>{{ githubLogInfo || 未知问题 }}</pre>
         </div>
       </div>
     </div>
