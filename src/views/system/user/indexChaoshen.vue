@@ -123,7 +123,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="账户状态">
-              <el-radio-group v-model="form.status":disabled="parseInt(form.userId, 10) === 1000001">
+              <el-radio-group v-model="form.status" :disabled="parseInt(form.userId, 10) === 1000001">
                 <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{
                   dict.label
                 }}</el-radio>
@@ -275,7 +275,7 @@ export default {
     getList() {
       this.loading = true;
       listUser(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.userList = response.rows;
+        this.userList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
         this.loading = false;
       });
