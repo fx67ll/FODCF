@@ -72,9 +72,10 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="订单编号" align="center" prop="orderId" width="130" />
+      <!-- <el-table-column label="订单编号" align="center" prop="orderId" width="130" /> -->
       <el-table-column label="预约用户" align="center" prop="createBy" />
-      <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" />
+      <el-table-column label="预约用户备注" align="center" prop="userRemark" />
+      <!-- <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" /> -->
       <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160" sortable
         :sort-method="sortStartTime">
         <template slot-scope="scope">
