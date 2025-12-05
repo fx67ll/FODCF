@@ -40,6 +40,16 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="查询记录" prop="hasWinningNumber">
+        <el-select v-model="queryParams.hasWinningNumber" placeholder="请选择是否查询记录过中奖号码" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_yes_no"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="是否中奖" prop="isWin">
         <el-select v-model="queryParams.isWin" placeholder="请选择是否中奖" clearable>
           <el-option
@@ -122,6 +132,14 @@
         <el-input
           v-model="queryParams.createBy"
           placeholder="请输入查询的记录创建者"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="更新者" prop="updateBy">
+        <el-input
+          v-model="queryParams.updateBy"
+          placeholder="请输入查询的记录更新者"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -347,6 +365,15 @@
             :loading="qryRewardLoading"
             @click="handleQueryRewardDubounce(scope.row)"
             v-hasPermi="['lottery:log:queryReward']"
+            >查询中奖信息</el-button
+          >
+          <!-- <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-coordinate"
+            :loading="qryRewardLoading"
+            @click="handleQueryRewardDubounce(scope.row)"
+            v-hasPermi="['lottery:log:queryReward']"
             v-if="[1, 2, '1', '2'].includes(scope.row.numberType)"
             >查询中奖信息</el-button
           >
@@ -360,7 +387,7 @@
             v-if="![1, 2, '1', '2'].includes(scope.row.numberType)"
             disabled
             >功能开发中</el-button
-          >
+          > -->
           <el-button
             size="mini"
             type="text"
@@ -638,6 +665,7 @@ export default {
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
+        hasWinningNumber: null,
         isWin: null,
         winningPrice: null,
         numberType: null,
@@ -676,6 +704,8 @@ export default {
       logTotalLoading: false,
       // 中奖信息查询加载
       qryRewardLoading: false,
+      // 号码类型列表
+      lotteryTypeList: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"],
     };
   },
   created() {
@@ -869,7 +899,7 @@ export default {
     // 查询中奖信息前确认是否有彩票期号
     checkRecordData(record) {
       const self = this;
-      if (record?.numberType !== 1 && record?.numberType !== 2) {
+      if (!self.lotteryTypeList.includes(record?.numberType)) {
         this.$modal.msgError("数据异常，请联系管理员！");
         return;
       }
