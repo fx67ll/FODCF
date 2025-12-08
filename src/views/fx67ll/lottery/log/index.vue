@@ -40,15 +40,13 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="查询记录" prop="hasWinningNumber">
-        <el-select v-model="queryParams.hasWinningNumber" placeholder="请选择是否查询记录过中奖号码" clearable>
-          <el-option
-            v-for="dict in dict.type.sys_yes_no"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
+      <el-form-item label="中奖金额" prop="winningPrice">
+        <el-input
+          v-model="queryParams.winningPrice"
+          placeholder="请输入查询的中奖金额"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
       <el-form-item label="是否中奖" prop="isWin">
         <el-select v-model="queryParams.isWin" placeholder="请选择是否中奖" clearable>
@@ -60,13 +58,15 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="中奖金额" prop="winningPrice">
-        <el-input
-          v-model="queryParams.winningPrice"
-          placeholder="请输入查询的中奖金额"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+      <el-form-item label="是否记录" prop="hasWinningNumber">
+        <el-select v-model="queryParams.hasWinningNumber" placeholder="是否记录过中奖号码" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_yes_no"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="彩票类型" prop="numberType">
         <el-select
@@ -665,9 +665,9 @@ export default {
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
-        hasWinningNumber: null,
-        isWin: null,
         winningPrice: null,
+        isWin: null,
+        hasWinningNumber: null,
         numberType: null,
         weekType: null,
         hasMorePurchases: null,
