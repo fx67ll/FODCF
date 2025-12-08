@@ -8,48 +8,12 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="彩票期号" prop="dateCode">
-        <el-input
-          v-model="queryParams.dateCode"
-          placeholder="请输入查询的彩票期号"
+      <el-form-item label="有无期号" prop="hasDateCode">
+        <el-select
+          v-model="queryParams.hasDateCode"
+          placeholder="是否记录过彩票期号"
           clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="购买号码" prop="recordNumber">
-        <el-input
-          v-model="queryParams.recordNumber"
-          placeholder="请输入查询的购买号码"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="固定追号" prop="chaseNumber">
-        <el-input
-          v-model="queryParams.chaseNumber"
-          placeholder="请输入查询的固定追号"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="中奖号码" prop="winningNumber">
-        <el-input
-          v-model="queryParams.winningNumber"
-          placeholder="请输入查询的中奖号码"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="中奖金额" prop="winningPrice">
-        <el-input
-          v-model="queryParams.winningPrice"
-          placeholder="请输入查询的中奖金额"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="是否中奖" prop="isWin">
-        <el-select v-model="queryParams.isWin" placeholder="请选择是否中奖" clearable>
+        >
           <el-option
             v-for="dict in dict.type.sys_yes_no"
             :key="dict.value"
@@ -58,8 +22,12 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="是否记录" prop="hasWinningNumber">
-        <el-select v-model="queryParams.hasWinningNumber" placeholder="是否记录过中奖号码" clearable>
+      <el-form-item label="有无记录" prop="hasWinningNumber">
+        <el-select
+          v-model="queryParams.hasWinningNumber"
+          placeholder="是否记录过中奖号码"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_yes_no"
             :key="dict.value"
@@ -82,7 +50,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="彩票周期" prop="weekType">
+      <el-form-item label="彩票周期" prop="weekType" v-if="isMoreQuery">
         <el-select
           v-model="queryParams.weekType"
           placeholder="请选择查询的星期几"
@@ -96,7 +64,101 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="是否追加" prop="hasMorePurchases">
+      <el-form-item label="创建用户" prop="createBy" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.createBy"
+          placeholder="请输入查询的记录创建者"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
+        <el-date-picker
+          v-model="daterangeCreateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="更新用户" prop="updateBy" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.updateBy"
+          placeholder="请输入查询的记录更新者"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="更新时间" v-if="isMoreQuery">
+        <el-date-picker
+          v-model="daterangeUpdateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="彩票期号" prop="dateCode" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.dateCode"
+          placeholder="请输入查询的彩票期号"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="购买号码" prop="recordNumber" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.recordNumber"
+          placeholder="请输入查询的购买号码"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="固定追号" prop="chaseNumber" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.chaseNumber"
+          placeholder="请输入查询的固定追号"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="中奖号码" prop="winningNumber" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.winningNumber"
+          placeholder="请输入查询的中奖号码"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="中奖金额" prop="winningPrice" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.winningPrice"
+          placeholder="请输入查询的中奖金额"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="是否中奖" prop="isWin" v-if="isMoreQuery">
+        <el-select
+          v-model="queryParams.isWin"
+          placeholder="请选择是否中奖"
+          clearable
+        >
+          <el-option
+            v-for="dict in dict.type.sys_yes_no"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="是否追加" prop="hasMorePurchases" v-if="isMoreQuery">
         <el-select
           v-model="queryParams.hasMorePurchases"
           placeholder="请选择是否有追加购买"
@@ -110,7 +172,7 @@
           />
         </el-select>
       </el-form-item>
-      <!-- <el-form-item label="删除标志" prop="delFlag">
+      <!-- <el-form-item label="删除标志" prop="delFlag" v-if="isMoreQuery">
         <el-select v-model="queryParams.delFlag" placeholder="请选择删除标志" clearable>
           <el-option
             v-for="dict in dict.type.sys_yes_no"
@@ -120,7 +182,7 @@
           />
         </el-select>
       </el-form-item> -->
-      <!-- <el-form-item label="用户ID" prop="userId">
+      <!-- <el-form-item label="用户ID" prop="userId" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.userId"
           placeholder="请输入用户ID"
@@ -128,59 +190,24 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item> -->
-      <el-form-item label="创建者" prop="createBy">
-        <el-input
-          v-model="queryParams.createBy"
-          placeholder="请输入查询的记录创建者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="更新者" prop="updateBy">
-        <el-input
-          v-model="queryParams.updateBy"
-          placeholder="请输入查询的记录更新者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="创建时间">
-        <el-date-picker
-          v-model="daterangeCreateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
-      </el-form-item>
-      <!-- <el-form-item label="更新者" prop="updateBy">
-        <el-input
-          v-model="queryParams.updateBy"
-          placeholder="请输入记录更新者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item> -->
-      <el-form-item label="更新时间">
-        <el-date-picker
-          v-model="daterangeUpdateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
-      </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
+          >{{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -242,7 +269,10 @@
           >查看历史号码中奖金额统计</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -267,17 +297,29 @@
         width="160"
       >
         <template slot-scope="scope">
-          <span v-if="scope.row.recordNumber === '-'">{{ scope.row.recordNumber }}</span>
+          <span v-if="scope.row.recordNumber === '-'">{{
+            scope.row.recordNumber
+          }}</span>
           <div v-if="scope.row.recordNumberList.length > 0">
-            <div v-for="(num, index) in scope.row.recordNumberList" :key="index">
+            <div
+              v-for="(num, index) in scope.row.recordNumberList"
+              :key="index"
+            >
               <div>{{ num }}</div>
             </div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="当日固定追号" align="center" prop="chaseNumber" width="160">
+      <el-table-column
+        label="当日固定追号"
+        align="center"
+        prop="chaseNumber"
+        width="160"
+      >
         <template slot-scope="scope">
-          <span v-if="scope.row.chaseNumber === '-'">{{ scope.row.chaseNumber }}</span>
+          <span v-if="scope.row.chaseNumber === '-'">{{
+            scope.row.chaseNumber
+          }}</span>
           <div v-if="scope.row.chaseNumberList.length > 0">
             <div v-for="(num, index) in scope.row.chaseNumberList" :key="index">
               <div>{{ num }}</div>
@@ -296,12 +338,23 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
         </template>
       </el-table-column>
-      <el-table-column label="中奖金额" align="center" prop="winningPrice" width="150">
+      <el-table-column
+        label="中奖金额"
+        align="center"
+        prop="winningPrice"
+        width="150"
+      >
         <template slot-scope="scope">
-          {{ scope.row.winningPrice === "-" ? "" : "￥" }}{{ scope.row.winningPrice }}
+          {{ scope.row.winningPrice === "-" ? "" : "￥"
+          }}{{ scope.row.winningPrice }}
         </template>
       </el-table-column>
-      <el-table-column label="彩票类型" align="center" prop="numberType" width="100">
+      <el-table-column
+        label="彩票类型"
+        align="center"
+        prop="numberType"
+        width="100"
+      >
         <template slot-scope="scope">
           <dict-tag
             :options="dict.type.fx67ll_lottery_type"
@@ -309,27 +362,54 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="彩票周期" align="center" prop="weekType" width="100">
+      <el-table-column
+        label="彩票周期"
+        align="center"
+        prop="weekType"
+        width="100"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
+          <dict-tag
+            :options="dict.type.sys_week_type"
+            :value="scope.row.weekType"
+          />
         </template>
       </el-table-column>
       <el-table-column align="center" prop="hasMorePurchases" width="180">
         <!-- eslint-disable-next-line -->
         <template slot="header" slot-scope="scope">
           是否有追加购买行为
-          <el-tooltip class="item" :content="hasAppendBuyingTip" placement="top">
+          <el-tooltip
+            class="item"
+            :content="hasAppendBuyingTip"
+            placement="top"
+          >
             <i class="el-icon-question"></i>
           </el-tooltip>
         </template>
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
+          <dict-tag
+            :options="dict.type.sys_yes_no"
+            :value="scope.row.hasMorePurchases"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
+      <el-table-column
+        label="记录更新者"
+        align="center"
+        prop="updateBy"
+        width="100"
+      />
+      <el-table-column
+        label="记录更新时间"
+        align="center"
+        prop="updateTime"
+        width="160"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -347,7 +427,9 @@
         width="160"
       >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} </span>
+          <span
+            >{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column
@@ -368,16 +450,6 @@
             >查询中奖信息</el-button
           >
           <!-- <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-coordinate"
-            :loading="qryRewardLoading"
-            @click="handleQueryRewardDubounce(scope.row)"
-            v-hasPermi="['lottery:log:queryReward']"
-            v-if="[1, 2, '1', '2'].includes(scope.row.numberType)"
-            >查询中奖信息</el-button
-          >
-          <el-button
             size="mini"
             type="text"
             icon="el-icon-coordinate"
@@ -430,7 +502,11 @@
     >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="彩票期号" prop="dateCode">
-          <el-input v-model="form.dateCode" placeholder="请输入当日购买号码" clearable />
+          <el-input
+            v-model="form.dateCode"
+            placeholder="请输入当日购买号码"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="购买号码" prop="recordNumber">
           <el-input
@@ -518,7 +594,11 @@
               :value="dict.value"
             ></el-option>
           </el-select>
-          <el-tooltip class="item" :content="hasAppendBuyingTip" placement="top-end">
+          <el-tooltip
+            class="item"
+            :content="hasAppendBuyingTip"
+            placement="top-end"
+          >
             <i class="el-icon-question"></i>
           </el-tooltip>
         </el-form-item>
@@ -570,34 +650,61 @@
               <span style="color: #909399">{{ scope.row.totalTickets }}</span>
             </template>
           </el-table-column> -->
-          <el-table-column label="总购买期数" align="center" prop="totalTickets" />
-          <el-table-column label="总购买注数" align="center" prop="totalNumbers">
+          <el-table-column
+            label="总购买期数"
+            align="center"
+            prop="totalTickets"
+          />
+          <el-table-column
+            label="总购买注数"
+            align="center"
+            prop="totalNumbers"
+          >
             <template slot-scope="scope">
               <span style="color: #e6a23c">{{ scope.row.totalNumbers }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="总花费金额" align="center" prop="totalNumbers">
+          <el-table-column
+            label="总花费金额"
+            align="center"
+            prop="totalNumbers"
+          >
             <template slot-scope="scope">
-              <span style="color: #409eff">{{ `￥${scope.row.totalNumbers * 2}` }}</span>
+              <span style="color: #409eff">{{
+                `￥${scope.row.totalNumbers * 2}`
+              }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="中奖期数" align="center" prop="winningTickets">
+          <el-table-column
+            label="中奖期数"
+            align="center"
+            prop="winningTickets"
+          >
             <template slot-scope="scope">
               <span style="color: #2ecc71">{{ scope.row.winningTickets }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="中奖金额" align="center" prop="totalWinningAmount">
+          <el-table-column
+            label="中奖金额"
+            align="center"
+            prop="totalWinningAmount"
+          >
             <template slot-scope="scope">
               <span style="color: #ff5a5f">{{
                 `￥${scope.row.totalWinningAmount}`
               }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="回血比例" align="center" prop="totalWinningAmount">
+          <el-table-column
+            label="回血比例"
+            align="center"
+            prop="totalWinningAmount"
+          >
             <template slot-scope="scope">
               <span>{{
                 `${(
-                  (scope.row.totalWinningAmount / (scope.row.totalNumbers * 2)) *
+                  (scope.row.totalWinningAmount /
+                    (scope.row.totalNumbers * 2)) *
                   100
                 ).toFixed(2)}%`
               }}</span>
@@ -657,26 +764,29 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        hasDateCode: null,
+        hasWinningNumber: null,
+        numberType: null,
+        weekType: null,
+        createBy: null,
+        createTime: null,
+        updateBy: null,
+        updateTime: null,
         dateCode: null,
         recordNumber: null,
         chaseNumber: null,
         winningNumber: null,
         winningPrice: null,
         isWin: null,
-        hasWinningNumber: null,
-        numberType: null,
-        weekType: null,
         hasMorePurchases: null,
         delFlag: null,
         userId: null,
-        createBy: null,
-        createTime: null,
-        updateBy: null,
-        updateTime: null,
       },
       // 表单参数
       form: {},
@@ -686,11 +796,21 @@ export default {
           { required: true, message: "当日购买号码不能为空", trigger: "blur" },
         ],
         numberType: [
-          { required: true, message: "当日购买的彩票类型不能为空", trigger: "change" },
+          {
+            required: true,
+            message: "当日购买的彩票类型不能为空",
+            trigger: "change",
+          },
         ],
-        weekType: [{ required: true, message: "星期几不能为空", trigger: "change" }],
+        weekType: [
+          { required: true, message: "星期几不能为空", trigger: "change" },
+        ],
         hasMorePurchases: [
-          { required: true, message: "是否有追加购买不能为空", trigger: "change" },
+          {
+            required: true,
+            message: "是否有追加购买不能为空",
+            trigger: "change",
+          },
         ],
       },
       // 是否有追加购买的提示
@@ -717,7 +837,10 @@ export default {
       const self = this;
       self.logTotalLoading = true;
       listTotalReward().then((response) => {
-        self.logTotalList = self.formatObjectArrayNullProperty(response.rows, true);
+        self.logTotalList = self.formatObjectArrayNullProperty(
+          response.rows,
+          true
+        );
         self.logTotalLoading = false;
       });
     },
@@ -751,8 +874,12 @@ export default {
       }
       listLog(this.queryParams).then((response) => {
         const logRows = response.rows.map((item) => {
-          item.recordNumberList = item?.recordNumber ? item.recordNumber?.split("/") : [];
-          item.chaseNumberList = item?.chaseNumber ? item.chaseNumber?.split("/") : [];
+          item.recordNumberList = item?.recordNumber
+            ? item.recordNumber?.split("/")
+            : [];
+          item.chaseNumberList = item?.chaseNumber
+            ? item.chaseNumber?.split("/")
+            : [];
           return item;
         });
         this.logList = this.formatObjectArrayNullProperty(logRows);
@@ -786,6 +913,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -851,7 +982,8 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          this.form.winningPrice = this.form.isWin === "Y" ? this.form.winningPrice : 0;
+          this.form.winningPrice =
+            this.form.isWin === "Y" ? this.form.winningPrice : 0;
           if (this.form.lotteryId != null) {
             updateLog(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
@@ -942,7 +1074,12 @@ export default {
               );
               getSecretConfig({ secretKey: "qryLotteryRewardAppSecret" })
                 .then((res) => {
-                  if (res && res?.rows && res?.rows.length > 0 && res?.code === 200) {
+                  if (
+                    res &&
+                    res?.rows &&
+                    res?.rows.length > 0 &&
+                    res?.code === 200
+                  ) {
                     const qryLotteryRewardAppSecret = decryptString(
                       res.rows[0].secretValue,
                       getCryptoSaltKey()
@@ -955,11 +1092,15 @@ export default {
                       logNumId
                     );
                   } else {
-                    self.$modal.msgWarning("查询中奖信息查询接口配置项AppSecret失败！");
+                    self.$modal.msgWarning(
+                      "查询中奖信息查询接口配置项AppSecret失败！"
+                    );
                   }
                 })
                 .catch((error) => {
-                  console.error("查询中奖信息查询接口配置项AppSecret异常：" + error);
+                  console.error(
+                    "查询中奖信息查询接口配置项AppSecret异常：" + error
+                  );
                   self.qryRewardLoading = false;
                 });
             } else {
@@ -1077,7 +1218,8 @@ export default {
         .then((res) => {
           if (res?.code === 200) {
             if (res?.data) {
-              const recordNumStrList = res?.data?.recordNumber?.split("/") || [];
+              const recordNumStrList =
+                res?.data?.recordNumber?.split("/") || [];
               const chaseNumStrList = res?.data?.chaseNumber?.split("/") || [];
               let totalRewardCount = 0;
               let totalRewardPrize = 0;
@@ -1096,7 +1238,8 @@ export default {
                 }
               });
               if (totalRewardCount > 0) {
-                const numTypeText = numTp === 1 ? "大乐透" : numTp === 2 ? "双色球" : "";
+                const numTypeText =
+                  numTp === 1 ? "大乐透" : numTp === 2 ? "双色球" : "";
                 self
                   .$confirm("", "恭喜您中奖了！", {
                     confirmButtonText: "保存",
