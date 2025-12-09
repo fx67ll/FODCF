@@ -1145,8 +1145,20 @@ export default {
           // };
           if (res && res?.data?.code === 1) {
             const resData = res?.data?.data || {};
-            if (resData?.openCode) {
+            if (
+              resData?.openCode &&
+              [lotteryTypeMap[1], lotteryTypeMap[2]].includes(resData?.code)
+            ) {
               self.formatWinningNumber(resData.openCode, nType, lid);
+            } else if (
+              resData?.openCode &&
+              [
+                lotteryTypeMap[3],
+                lotteryTypeMap[4],
+                lotteryTypeMap[5],
+              ].includes(resData?.code)
+            ) {
+              self.saveWinningNumber(resData?.openCode, nType, lid, false);
             } else {
               self.$modal.msgWarning("外部接口异常，请联系管理员！");
               self.qryRewardLoading = false;
@@ -1190,10 +1202,10 @@ export default {
       // 将两个字符串通过-连接
       const resultString = firstString + "-" + secondString;
       // 保存结果字符串
-      this.saveWinningNumber(resultString, nType, lid);
+      this.saveWinningNumber(resultString, nType, lid, true);
     },
     // 保存中奖号码
-    saveWinningNumber(winNum, nType, lid) {
+    saveWinningNumber(winNum, nType, lid, isSSQDLT) {
       const self = this;
       const saveParams = {
         lotteryId: lid,
@@ -1202,7 +1214,12 @@ export default {
       updateLog(saveParams)
         .then((res) => {
           if (res?.code === 200) {
-            self.checkIsGetReward(winNum, nType, lid);
+            if (isSSQDLT) {
+              self.checkIsGetReward(winNum, nType, lid);
+            } else {
+              self.$modal.msgSuccess("开奖号码保存成功！PS:排列三、排列五、七星彩 暂时只支持记录开奖号码，请自行对比是否中奖！");
+              self.getList();
+            }
           } else {
             self.$modal.msgWarning("开奖号码保存失败！");
           }
