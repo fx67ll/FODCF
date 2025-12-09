@@ -220,8 +220,9 @@
           size="mini"
           @click="handleAdd"
           v-hasPermi="['lottery:log:add']"
-          >新增</el-button
         >
+          新增
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -232,8 +233,9 @@
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['lottery:log:edit']"
-          >修改</el-button
         >
+          修改
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -244,8 +246,9 @@
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['lottery:log:remove']"
-          >删除</el-button
         >
+          删除
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -255,8 +258,9 @@
           size="mini"
           @click="handleExport"
           v-hasPermi="['lottery:log:export']"
-          >导出</el-button
         >
+          导出
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -266,8 +270,36 @@
           size="mini"
           @click="handleLogTotalOpen"
           v-hasPermi="['punch:log:total']"
-          >查看历史号码中奖金额统计</el-button
         >
+          查看历史号码中奖金额统计
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-dropdown>
+          <el-button type="info" plain icon="el-icon-bell" size="mini">
+            开奖查询
+          </el-button>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>
+              <el-link
+                href="https://m.lottery.gov.cn/mkjdlt/"
+                target="_blank"
+                type="info"
+              >
+                大乐透
+              </el-link>
+            </el-dropdown-item>
+            <el-dropdown-item
+              ><el-link
+                href="https://www.cwl.gov.cn/ygkj/wqkjgg/ssq/"
+                target="_blank"
+                type="info"
+              >
+                双色球
+              </el-link>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
       </el-col>
       <right-toolbar
         :showSearch.sync="showSearch"
@@ -1217,7 +1249,9 @@ export default {
             if (isSSQDLT) {
               self.checkIsGetReward(winNum, nType, lid);
             } else {
-              self.$modal.msgSuccess("开奖号码保存成功！PS:排列三、排列五、七星彩 暂时只支持记录开奖号码，请自行对比是否中奖！");
+              self.$modal.msgSuccess(
+                "开奖号码保存成功！PS:排列三、排列五、七星彩 暂时只支持记录开奖号码，请自行对比是否中奖！"
+              );
               self.getList();
             }
           } else {
