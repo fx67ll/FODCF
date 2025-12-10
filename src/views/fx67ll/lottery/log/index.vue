@@ -277,7 +277,7 @@
       <el-col :span="1.5">
         <el-dropdown>
           <el-button type="info" plain icon="el-icon-bell" size="mini">
-            开奖查询
+            官方开奖信息查询
           </el-button>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item>
@@ -309,7 +309,7 @@
             </el-dropdown-item>
             <el-dropdown-item>
               <el-link
-                href="https://m.lottery.gov.cn/mkjpl5/"
+                href="https://m.lottery.gov.cn/mkjplw/"
                 target="_blank"
                 type="success"
               >
