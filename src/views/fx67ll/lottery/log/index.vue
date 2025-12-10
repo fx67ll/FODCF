@@ -284,7 +284,7 @@
               <el-link
                 href="https://m.lottery.gov.cn/mkjdlt/"
                 target="_blank"
-                type="info"
+                type="primary"
               >
                 大乐透
               </el-link>
@@ -293,9 +293,36 @@
               ><el-link
                 href="https://www.cwl.gov.cn/ygkj/wqkjgg/ssq/"
                 target="_blank"
-                type="info"
+                type="danger"
               >
                 双色球
+              </el-link>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <el-link
+                href="https://m.lottery.gov.cn/mkjpls/"
+                target="_blank"
+                type="warning"
+              >
+                排列三
+              </el-link>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <el-link
+                href="https://m.lottery.gov.cn/mkjpl5/"
+                target="_blank"
+                type="success"
+              >
+                排列五
+              </el-link>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <el-link
+                href="https://m.lottery.gov.cn/mkjqxc/"
+                target="_blank"
+                type="info"
+              >
+                七星彩
               </el-link>
             </el-dropdown-item>
           </el-dropdown-menu>
