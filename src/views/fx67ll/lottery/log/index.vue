@@ -481,17 +481,6 @@
             v-hasPermi="['lottery:log:queryReward']"
             >查询中奖信息</el-button
           >
-          <!-- <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-coordinate"
-            :loading="qryRewardLoading"
-            @click="handleQueryRewardDubounce(scope.row)"
-            v-hasPermi="['lottery:log:queryReward']"
-            v-if="![1, 2, '1', '2'].includes(scope.row.numberType)"
-            disabled
-            >功能开发中</el-button
-          > -->
           <el-button
             size="mini"
             type="text"
@@ -856,7 +845,39 @@ export default {
       logTotalLoading: false,
       // 中奖信息查询加载
       qryRewardLoading: false,
-      // 号码类型列表
+      // 彩票类型枚举（后期改为后台枚举接口获取）
+      lotteryTypeMap: {
+        1: {
+          text: "大乐透",
+          type: 1,
+          winImg: "https://test.fx67ll.com/fx67ll-img-collection/luffy.jpg",
+          ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
+        },
+        2: {
+          text: "双色球",
+          type: 2,
+          winImg: "https://test.fx67ll.com/fx67ll-img-collection/luffy.jpg",
+          ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
+        },
+        3: {
+          text: "排列三",
+          type: 3,
+          winImg: "https://test.fx67ll.com/fx67ll-img-collection/luffy.jpg",
+          ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
+        },
+        4: {
+          text: "排列五",
+          type: 4,
+          winImg: "https://test.fx67ll.com/fx67ll-img-collection/luffy.jpg",
+          ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
+        },
+        5: {
+          text: "七星彩",
+          type: 5,
+          winImg: "https://test.fx67ll.com/fx67ll-img-collection/luffy.jpg",
+          ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
+        },
+      },
       lotteryTypeList: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"],
     };
   },
@@ -1190,7 +1211,7 @@ export default {
                 lotteryTypeMap[5],
               ].includes(resData?.code)
             ) {
-              self.saveWinningNumber(resData?.openCode, nType, lid, false);
+              self.saveWinningNumber(resData?.openCode, nType, lid);
             } else {
               self.$modal.msgWarning("外部接口异常，请联系管理员！");
               self.qryRewardLoading = false;
@@ -1234,10 +1255,10 @@ export default {
       // 将两个字符串通过-连接
       const resultString = firstString + "-" + secondString;
       // 保存结果字符串
-      this.saveWinningNumber(resultString, nType, lid, true);
+      this.saveWinningNumber(resultString, nType, lid);
     },
     // 保存中奖号码
-    saveWinningNumber(winNum, nType, lid, isSSQDLT) {
+    saveWinningNumber(winNum, nType, lid) {
       const self = this;
       const saveParams = {
         lotteryId: lid,
@@ -1246,14 +1267,7 @@ export default {
       updateLog(saveParams)
         .then((res) => {
           if (res?.code === 200) {
-            if (isSSQDLT) {
-              self.checkIsGetReward(winNum, nType, lid);
-            } else {
-              self.$modal.msgSuccess(
-                "开奖号码保存成功！PS:排列三、排列五、七星彩 暂时只支持记录开奖号码，请自行对比是否中奖！"
-              );
-              self.getList();
-            }
+            self.checkIsGetReward(winNum, nType, lid);
           } else {
             self.$modal.msgWarning("开奖号码保存失败！");
           }
@@ -1289,8 +1303,7 @@ export default {
                 }
               });
               if (totalRewardCount > 0) {
-                const numTypeText =
-                  numTp === 1 ? "大乐透" : numTp === 2 ? "双色球" : "";
+                const numTypeText = self.lotteryTypeMap[numTp].text || "";
                 self
                   .$confirm("", "恭喜您中奖了！", {
                     confirmButtonText: "保存",

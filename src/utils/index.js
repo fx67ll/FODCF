@@ -434,23 +434,37 @@ export function decryptString(encryptedText, key) {
   return decryptedText;
 }
 
-// 返回中奖信息
-export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
-  const frontNumbers = recordNumStr.split('-')[0].split(',');
-  const backNumbers = recordNumStr.split('-')[1].split(',');
-  const winningFrontNumbers = winNumStr.split('-')[0].split(',');
-  const winningBackNumbers = winNumStr.split('-')[1].split(',');
+// 返回双色球和大乐透的中奖信息
+export function checkLotteryResultForSSQDLT(
+  lotteryType,
+  recordNumStr,
+  winNumStr
+) {
+  const frontNumbers = recordNumStr.split("-")[0].split(",");
+  const backNumbers = recordNumStr.split("-")[1].split(",");
+  const winningFrontNumbers = winNumStr.split("-")[0].split(",");
+  const winningBackNumbers = winNumStr.split("-")[1].split(",");
 
-  console.log(lotteryType, frontNumbers, backNumbers, winningFrontNumbers, winningBackNumbers);
+  console.log(
+    lotteryType,
+    frontNumbers,
+    backNumbers,
+    winningFrontNumbers,
+    winningBackNumbers
+  );
 
   const result = {
     prizeLevel: 0,
-    prizeText: '',
+    prizeText: "",
     prizeAmount: 0,
   };
 
-  const frontMatchCount = frontNumbers.filter(num => winningFrontNumbers.includes(num)).length;
-  const backMatchCount = backNumbers.filter(num => winningBackNumbers.includes(num)).length;
+  const frontMatchCount = frontNumbers.filter((num) =>
+    winningFrontNumbers.includes(num)
+  ).length;
+  const backMatchCount = backNumbers.filter((num) =>
+    winningBackNumbers.includes(num)
+  ).length;
   const totalMatchCount = frontMatchCount + backMatchCount;
 
   if (lotteryType === 1) {
@@ -466,60 +480,60 @@ export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
     switch (totalMatchCount) {
       case 7:
         result.prizeLevel = 1;
-        result.prizeText = '一等奖';
+        result.prizeText = "一等奖";
         result.prizeAmount = 10000000;
         break;
       case 6:
         if (backMatchCount === 2) {
           result.prizeLevel = 4;
-          result.prizeText = '四等奖';
+          result.prizeText = "四等奖";
           result.prizeAmount = 3000;
         } else if (backMatchCount === 1) {
           result.prizeLevel = 2;
-          result.prizeText = '二等奖';
+          result.prizeText = "二等奖";
           result.prizeAmount = 5000000;
         }
         break;
       case 5:
         if (backMatchCount === 2) {
           result.prizeLevel = 6;
-          result.prizeText = '六等奖';
+          result.prizeText = "六等奖";
           result.prizeAmount = 200;
         } else if (backMatchCount === 1) {
           result.prizeLevel = 5;
-          result.prizeText = '五等奖';
+          result.prizeText = "五等奖";
           result.prizeAmount = 300;
         } else {
           result.prizeLevel = 5;
-          result.prizeText = '三等奖';
+          result.prizeText = "三等奖";
           result.prizeAmount = 10000;
         }
         break;
       case 4:
         if (backMatchCount > 0) {
           result.prizeLevel = 8;
-          result.prizeText = '八等奖';
+          result.prizeText = "八等奖";
           result.prizeAmount = 15;
         } else {
           result.prizeLevel = 7;
-          result.prizeText = '七等奖';
+          result.prizeText = "七等奖";
           result.prizeAmount = 100;
         }
         break;
       case 3:
         result.prizeLevel = 9;
-        result.prizeText = '九等奖';
+        result.prizeText = "九等奖";
         result.prizeAmount = 5;
         break;
       case 2:
         if (backMatchCount === 2) {
           result.prizeLevel = 9;
-          result.prizeText = '九等奖';
+          result.prizeText = "九等奖";
           result.prizeAmount = 5;
         }
         break;
       default:
-        result.prizeText = '未中奖';
+        result.prizeText = "未中奖";
         break;
     }
   }
@@ -534,57 +548,199 @@ export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
     switch (totalMatchCount) {
       case 7:
         result.prizeLevel = 1;
-        result.prizeText = '一等奖';
+        result.prizeText = "一等奖";
         result.prizeAmount = 5000000;
         break;
       case 6:
         if (backMatchCount === 1) {
           result.prizeLevel = 3;
-          result.prizeText = '三等奖';
+          result.prizeText = "三等奖";
           result.prizeAmount = 3000;
         } else {
           result.prizeLevel = 2;
-          result.prizeText = '二等奖';
+          result.prizeText = "二等奖";
           result.prizeAmount = 100000;
         }
         break;
       case 5:
         result.prizeLevel = 4;
-        result.prizeText = '四等奖';
+        result.prizeText = "四等奖";
         result.prizeAmount = 200;
         break;
       case 4:
         result.prizeLevel = 5;
-        result.prizeText = '五等奖';
+        result.prizeText = "五等奖";
         result.prizeAmount = 10;
         break;
       case 3:
         if (backMatchCount === 1) {
           result.prizeLevel = 6;
-          result.prizeText = '六等奖';
+          result.prizeText = "六等奖";
           result.prizeAmount = 5;
         }
         break;
       case 2:
         if (backMatchCount === 1) {
           result.prizeLevel = 6;
-          result.prizeText = '六等奖';
+          result.prizeText = "六等奖";
           result.prizeAmount = 5;
         }
         break;
       case 1:
         if (backMatchCount === 1) {
           result.prizeLevel = 6;
-          result.prizeText = '六等奖';
+          result.prizeText = "六等奖";
           result.prizeAmount = 5;
         }
         break;
       default:
-        result.prizeText = '未中奖';
+        result.prizeText = "未中奖";
         break;
     }
   }
 
   console.log(result);
   return result;
+}
+
+// 返回七星彩的中奖信息
+export function checkLotteryResultForPL7(recordNumStr, winNumStr) {
+  // 初始化结果对象（与参考方法结构保持一致）
+  const result = {
+    prizeLevel: 0,
+    prizeText: '',
+    prizeAmount: 0,
+  };
+
+  // 1. 号码拆分
+  // 拆分投注号码：前6位（0-9）+后1位（0-14），逗号分隔的7位数字字符串
+  const recordNumbers = recordNumStr.split(',').filter(num => num.trim() !== '');
+  const winningNumbers = winNumStr.split(',').filter(num => num.trim() !== '');
+
+  // 拆分前区（前6位）和后区（最后1位）
+  const recordFront = recordNumbers.slice(0, 6);
+  const recordBack = recordNumbers[6];
+  const winFront = winningNumbers.slice(0, 6);
+  const winBack = winningNumbers[6];
+
+  // 2. 统计对位匹配数量
+  // 前区（前6位）对位匹配数（核心：对位不连续）
+  let frontMatchCount = 0;
+  for (let i = 0; i < 6; i++) {
+    if (recordFront[i] === winFront[i]) {
+      frontMatchCount++;
+    }
+  }
+  // 后区（最后1位）匹配数（0或1）
+  const backMatchCount = recordBack === winBack ? 1 : 0;
+
+  // 3. 按官方规则判定奖级
+  // 一等奖：7位全中（前6位全中+后区中）
+  if (frontMatchCount === 6 && backMatchCount === 1) {
+    result.prizeLevel = 1;
+    result.prizeText = '一等奖';
+    result.prizeAmount = 5000000; // 浮动奖金，暂设最高限额
+  }
+  // 二等奖：前6位全中，后区不中
+  else if (frontMatchCount === 6 && backMatchCount === 0) {
+    result.prizeLevel = 2;
+    result.prizeText = '二等奖';
+    result.prizeAmount = 1000000; // 浮动奖金，暂设参考值
+  }
+  // 三等奖：前6位中5个+后区中
+  else if (frontMatchCount === 5 && backMatchCount === 1) {
+    result.prizeLevel = 3;
+    result.prizeText = '三等奖';
+    result.prizeAmount = 3000; // 固定奖金
+  }
+  // 四等奖：前6位中5个+后区不中 或 前6位中4个+后区中
+  else if ((frontMatchCount === 5 && backMatchCount === 0) || (frontMatchCount === 4 && backMatchCount === 1)) {
+    result.prizeLevel = 4;
+    result.prizeText = '四等奖';
+    result.prizeAmount = 500; // 固定奖金
+  }
+  // 五等奖：前6位中4个+后区不中 或 前6位中3个+后区中
+  else if ((frontMatchCount === 4 && backMatchCount === 0) || (frontMatchCount === 3 && backMatchCount === 1)) {
+    result.prizeLevel = 5;
+    result.prizeText = '五等奖';
+    result.prizeAmount = 20; // 固定奖金
+  }
+  // 六等奖：前6位中3个+后区不中 / 前2中+后中 / 前1中+后中 / 前0中+后中
+  else if (
+    (frontMatchCount === 3 && backMatchCount === 0) ||
+    (frontMatchCount === 2 && backMatchCount === 1) ||
+    (frontMatchCount === 1 && backMatchCount === 1) ||
+    (frontMatchCount === 0 && backMatchCount === 1)
+  ) {
+    result.prizeLevel = 6;
+    result.prizeText = '六等奖';
+    result.prizeAmount = 5; // 固定奖金
+  }
+  // 未中奖
+  else {
+    result.prizeText = '未中奖';
+  }
+
+  return result;
+}
+
+// 返回排列三/排列五的中奖信息（仅处理全匹配中奖场景）
+export function checkLotteryResultForPL35(lotteryType, recordNumStr, winNumStr) {
+  // 初始化结果对象（与双色球/大乐透方法结构完全一致）
+  const result = {
+    prizeLevel: 0,
+    prizeText: '',
+    prizeAmount: 0,
+  };
+
+  // 1. 号码拆分（排列三/五无前后区，直接按逗号拆分）
+  const recordNumbers = recordNumStr.split(',').filter(num => num.trim() !== '');
+  const winningNumbers = winNumStr.split(',').filter(num => num.trim() !== '');
+
+  // 2. 全匹配判定（核心逻辑：按位完全一致）
+  const isFullMatch = recordNumbers.every((num, index) => num === winningNumbers[index]);
+
+  // 3. 按彩种类型判定奖项（仅全匹配中奖）
+  if (lotteryType === 3) {
+    // 排列三：3位全匹配=一等奖，奖金1040元
+    if (isFullMatch) {
+      result.prizeLevel = 1;
+      result.prizeText = '一等奖';
+      result.prizeAmount = 1040;
+    } else {
+      result.prizeText = '未中奖';
+    }
+  } else if (lotteryType === 5) {
+    // 排列五：5位全匹配=一等奖，奖金100000元
+    if (isFullMatch) {
+      result.prizeLevel = 1;
+      result.prizeText = '一等奖';
+      result.prizeAmount = 100000;
+    } else {
+      result.prizeText = '未中奖';
+    }
+  }
+
+  return result;
+}
+
+// 返回中奖信息通用入口
+export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
+  switch (lotteryType) {
+    case 1: // 大乐透
+    case '1': // 大乐透
+    case 2: // 双色球
+    case '2': // 双色球
+      return checkLotteryResultForSSQDLT(lotteryType, recordNumStr, winNumStr);
+    case 3: // 排列三
+    case '3': // 排列三
+    case 4: // 排列五
+    case '4': // 排列五
+      return checkLotteryResultForPL35(lotteryType, recordNumStr, winNumStr);
+    case 5: // 七星彩
+    case '5': // 七星彩
+      return checkLotteryResultForPL7(recordNumStr, winNumStr);
+    default:
+      return { prizeLevel: 0, prizeText: '不支持的彩种类型', prizeAmount: 0 };
+  }
 }
