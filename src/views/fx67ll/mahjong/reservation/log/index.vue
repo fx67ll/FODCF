@@ -1,39 +1,95 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
+    <el-form
+      :model="queryParams"
+      ref="queryForm"
+      size="small"
+      :inline="true"
+      v-show="showSearch"
+      label-width="100px"
+    >
       <el-form-item label="预约用户" prop="createBy">
-        <el-input v-model="queryParams.createBy" placeholder="请输入预约用户名" clearable @keyup.enter.native="handleQuery" />
+        <el-input
+          v-model="queryParams.createBy"
+          placeholder="请输入预约用户名"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
       <el-form-item label="麻将室" prop="mahjongRoomId">
-        <el-input v-model="queryParams.mahjongRoomName" placeholder="请输入预约的麻将室名称" clearable
-          @keyup.enter.native="handleQuery" />
+        <el-input
+          v-model="queryParams.mahjongRoomName"
+          placeholder="请输入预约的麻将室名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="联系方式" prop="reservationContact" style="margin-left: 12px">
-        <el-input v-model="queryParams.reservationContact" placeholder="请输入预约用户联系方式" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item
+        label="联系方式"
+        prop="reservationContact"
+        style="margin-left: 12px"
+      >
+        <el-input
+          v-model="queryParams.reservationContact"
+          placeholder="请输入预约用户联系方式"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="订单备注" prop="reservationRemark" style="margin-left: 12px">
-        <el-input v-model="queryParams.reservationRemark" placeholder="请输入订单备注" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item
+        label="订单备注"
+        prop="reservationRemark"
+        style="margin-left: 12px"
+      >
+        <el-input
+          v-model="queryParams.reservationRemark"
+          placeholder="请输入订单备注"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
       <el-form-item label="订单状态" prop="reservationStatus">
-        <el-select v-model="queryParams.reservationStatus" placeholder="请选择订单状态" clearable
-          @keyup.enter.native="handleQuery">
-          <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
-            :value="dict.value" />
+        <el-select
+          v-model="queryParams.reservationStatus"
+          placeholder="请选择订单状态"
+          clearable
+          @keyup.enter.native="handleQuery"
+        >
+          <el-option
+            v-for="dict in dict.type.fx67ll_order_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <!-- 订单开始时间范围搜索 -->
       <el-form-item label="订单开始时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeStartTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
-          @keyup.enter.native="handleQuery"></el-date-picker>
+        <el-date-picker
+          v-model="daterangeStartTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+          @keyup.enter.native="handleQuery"
+        ></el-date-picker>
       </el-form-item>
       <!-- 订单结束时间范围搜索 -->
       <el-form-item label="订单结束时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeEndTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
-          @keyup.enter.native="handleQuery"></el-date-picker>
+        <el-date-picker
+          v-model="daterangeEndTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+          @keyup.enter.native="handleQuery"
+        ></el-date-picker>
       </el-form-item>
       <!-- <el-form-item label="创建时间" style="margin-left: 12px">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
@@ -44,61 +100,127 @@
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item> -->
       <el-form-item style="margin-left: 12px">
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
+          >搜索</el-button
+        >
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['mahjong:reservation:log:add']">新增</el-button>
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleAdd"
+          v-hasPermi="['mahjong:reservation:log:add']"
+          >新增</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['mahjong:reservation:log:edit']">修改</el-button>
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-edit"
+          size="mini"
+          :disabled="single"
+          @click="handleUpdate"
+          v-hasPermi="['mahjong:reservation:log:edit']"
+          >修改</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['mahjong:reservation:log:remove']">删除</el-button>
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['mahjong:reservation:log:remove']"
+          >删除</el-button
+        >
       </el-col>
       <!-- 导出按钮，无法使用，也不开放商用，后期再说吧 -->
       <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['mahjong:reservation:log:export']">导出</el-button>
       </el-col> -->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
+    <el-table
+      v-loading="loading"
+      :data="logList"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="订单编号" align="center" prop="orderId" width="130" /> -->
       <el-table-column label="预约用户" align="center" prop="createBy" />
       <el-table-column label="预约用户备注" align="center" prop="userRemark" />
       <!-- <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" /> -->
-      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160" sortable
-        :sort-method="sortStartTime">
+      <el-table-column
+        label="预约开始时间"
+        align="center"
+        prop="reservationStartTime"
+        width="160"
+        sortable
+        :sort-method="sortStartTime"
+      >
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationStartTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="160" sortable
-        :sort-method="sortEndTime">
+      <el-table-column
+        label="预约结束时间"
+        align="center"
+        prop="reservationEndTime"
+        width="160"
+        sortable
+        :sort-method="sortEndTime"
+      >
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationEndTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系方式" align="center" prop="reservationContact" />
-      <el-table-column label="订单状态" align="center" prop="reservationStatus" width="80">
+      <el-table-column
+        label="联系方式"
+        align="center"
+        prop="reservationContact"
+      />
+      <el-table-column
+        label="订单状态"
+        align="center"
+        prop="reservationStatus"
+        width="80"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.fx67ll_order_status" :value="scope.row.reservationStatus" />
+          <dict-tag
+            :options="dict.type.fx67ll_order_status"
+            :value="scope.row.reservationStatus"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="订单备注" align="center" prop="reservationRemark" />
+      <el-table-column
+        label="订单备注"
+        align="center"
+        prop="reservationRemark"
+      />
       <!-- <el-table-column label="订单创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
@@ -113,64 +235,131 @@
           }}</span>
         </template>
       </el-table-column> -->
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+      >
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['mahjong:reservation:log:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['mahjong:reservation:log:remove']">删除</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleUpdate(scope.row)"
+            v-hasPermi="['mahjong:reservation:log:edit']"
+            >修改</el-button
+          >
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['mahjong:reservation:log:remove']"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 添加或修改麻将室预约记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body
-      style="top: 130px">
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="800px"
+      append-to-body
+      style="top: 130px"
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户ID" prop="userId" v-if="nowUserName === 'fx67ll'">
+            <el-form-item
+              label="用户ID"
+              prop="userId"
+              v-if="nowUserName === 'fx67ll'"
+            >
               <el-input v-model="form.userId" placeholder="请输入预约用户ID" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="麻将室ID" prop="mahjongRoomId" v-if="nowUserName === 'fx67ll'">
-              <el-input v-model="form.mahjongRoomId" placeholder="请输入预约的麻将室ID" />
+            <el-form-item
+              label="麻将室ID"
+              prop="mahjongRoomId"
+              v-if="nowUserName === 'fx67ll'"
+            >
+              <el-input
+                v-model="form.mahjongRoomId"
+                placeholder="请输入预约的麻将室ID"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="开始时间" prop="reservationStartTime">
-              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约开始时间" style="width: 270px">
+              <el-date-picker
+                clearable
+                v-model="form.reservationStartTime"
+                type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择预约开始时间"
+                style="width: 270px"
+              >
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="结束时间" prop="reservationEndTime">
-              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约结束时间" style="width: 270px">
+              <el-date-picker
+                clearable
+                v-model="form.reservationEndTime"
+                type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择预约结束时间"
+                style="width: 270px"
+              >
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="订单状态" prop="reservationStatus">
-              <el-select v-model="form.reservationStatus" placeholder="请选择订单状态" clearable style="width: 270px">
-                <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value" />
+              <el-select
+                v-model="form.reservationStatus"
+                placeholder="请选择订单状态"
+                clearable
+                style="width: 270px"
+              >
+                <el-option
+                  v-for="dict in dict.type.fx67ll_order_status"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="联系方式" prop="reservationContact">
-              <el-input v-model="form.reservationContact" placeholder="请输入预约用户联系方式" />
+              <el-input
+                v-model="form.reservationContact"
+                placeholder="请输入预约用户联系方式"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="备注" prop="reservationRemark">
-              <el-input v-model="form.reservationRemark" type="textarea" placeholder="请输入预约备注内容" />
+              <el-input
+                v-model="form.reservationRemark"
+                type="textarea"
+                placeholder="请输入预约备注内容"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -242,9 +431,9 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
         beginReservationStartTime: null, // 订单开始时间-起始
-        endReservationStartTime: null,   // 订单开始时间-结束
-        beginReservationEndTime: null,   // 订单结束时间-起始
-        endReservationEndTime: null      // 订单结束时间-结束
+        endReservationStartTime: null, // 订单开始时间-结束
+        beginReservationEndTime: null, // 订单结束时间-起始
+        endReservationEndTime: null, // 订单结束时间-结束
       },
       // 表单参数
       form: {},
@@ -314,14 +503,14 @@ export default {
       }
       listLog(this.queryParams).then((response) => {
         const rowsTmpList = this.formatObjectArrayNullProperty(response.rows);
-        this.logList = rowsTmpList.map(item => {
+        this.logList = rowsTmpList.map((item) => {
           const timeStamp = new Date(item.createTime).getTime();
           const rowObjTmp = {
             ...item,
-            orderId: timeStamp + (item?.mahjongReservationLogId || 0)
+            orderId: timeStamp + (item?.mahjongReservationLogId || 0),
           };
           return rowObjTmp;
-        })
+        });
         this.total = response.total;
         this.loading = false;
       });
@@ -394,10 +583,10 @@ export default {
       const self = this;
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          if (self.nowUserName !== 'fx67ll') {
+          if (self.nowUserName !== "fx67ll") {
             this.form.nowUserId = self.nowUserId;
           }
-          if (self.nowUserName !== 'fx67ll') {
+          if (self.nowUserName !== "fx67ll") {
             this.form.mahjongRoomId = 1;
           }
           if (this.form.mahjongReservationLogId != null) {
@@ -422,8 +611,8 @@ export default {
       this.$modal
         .confirm(
           '是否确认删除麻将室预约记录编号为"' +
-          mahjongReservationLogIds +
-          '"的数据项？'
+            mahjongReservationLogIds +
+            '"的数据项？'
         )
         .then(function () {
           return delLog(mahjongReservationLogIds);
@@ -432,7 +621,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => { });
+        .catch(() => {});
     },
     /** 导出按钮操作，无法使用，也不开放商用，后期再说吧 */
     // handleExport() {

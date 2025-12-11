@@ -1,39 +1,95 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
+    <el-form
+      :model="queryParams"
+      ref="queryForm"
+      size="small"
+      :inline="true"
+      v-show="showSearch"
+      label-width="100px"
+    >
       <el-form-item label="预约用户" prop="createBy">
-        <el-input v-model="queryParams.createBy" placeholder="请输入预约用户名" clearable @keyup.enter.native="handleQuery" />
+        <el-input
+          v-model="queryParams.createBy"
+          placeholder="请输入预约用户名"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
       <el-form-item label="麻将室" prop="mahjongRoomId">
-        <el-input v-model="queryParams.mahjongRoomName" placeholder="请输入预约的麻将室名称" clearable
-          @keyup.enter.native="handleQuery" />
+        <el-input
+          v-model="queryParams.mahjongRoomName"
+          placeholder="请输入预约的麻将室名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="联系方式" prop="reservationContact" style="margin-left: 12px">
-        <el-input v-model="queryParams.reservationContact" placeholder="请输入预约用户联系方式" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item
+        label="联系方式"
+        prop="reservationContact"
+        style="margin-left: 12px"
+      >
+        <el-input
+          v-model="queryParams.reservationContact"
+          placeholder="请输入预约用户联系方式"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="订单备注" prop="reservationRemark" style="margin-left: 12px">
-        <el-input v-model="queryParams.reservationRemark" placeholder="请输入订单备注" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item
+        label="订单备注"
+        prop="reservationRemark"
+        style="margin-left: 12px"
+      >
+        <el-input
+          v-model="queryParams.reservationRemark"
+          placeholder="请输入订单备注"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
       <el-form-item label="订单状态" prop="reservationStatus">
-        <el-select v-model="queryParams.reservationStatus" placeholder="请选择订单状态" clearable
-          @keyup.enter.native="handleQuery">
-          <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
-            :value="dict.value" />
+        <el-select
+          v-model="queryParams.reservationStatus"
+          placeholder="请选择订单状态"
+          clearable
+          @keyup.enter.native="handleQuery"
+        >
+          <el-option
+            v-for="dict in dict.type.fx67ll_order_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <!-- 订单开始时间范围搜索 -->
       <el-form-item label="订单开始时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeStartTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
-          @keyup.enter.native="handleQuery"></el-date-picker>
+        <el-date-picker
+          v-model="daterangeStartTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+          @keyup.enter.native="handleQuery"
+        ></el-date-picker>
       </el-form-item>
       <!-- 订单结束时间范围搜索 -->
       <el-form-item label="订单结束时间" style="margin-left: 12px">
-        <el-date-picker v-model="daterangeEndTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable
-          @keyup.enter.native="handleQuery"></el-date-picker>
+        <el-date-picker
+          v-model="daterangeEndTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+          @keyup.enter.native="handleQuery"
+        ></el-date-picker>
       </el-form-item>
       <!-- <el-form-item label="创建时间" style="margin-left: 12px">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
@@ -44,66 +100,139 @@
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item> -->
       <el-form-item style="margin-left: 12px">
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
+          >搜索</el-button
+        >
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['mahjong:reservation:log:add']">新增</el-button>
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleAdd"
+          v-hasPermi="['mahjong:reservation:log:add']"
+          >新增</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['mahjong:reservation:log:edit']">修改</el-button>
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-edit"
+          size="mini"
+          :disabled="single"
+          @click="handleUpdate"
+          v-hasPermi="['mahjong:reservation:log:edit']"
+          >修改</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['mahjong:reservation:log:remove']">删除</el-button>
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['mahjong:reservation:log:remove']"
+          >删除</el-button
+        >
       </el-col>
       <!-- 新增时间轴视图按钮 -->
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-time" size="mini" @click="handleTimelineView"
-          v-hasPermi="['mahjong:reservation:log:viewChart']">时间轴视图</el-button>
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-time"
+          size="mini"
+          @click="handleTimelineView"
+          v-hasPermi="['mahjong:reservation:log:viewChart']"
+          >时间轴视图</el-button
+        >
       </el-col>
       <!-- 导出按钮，无法使用，也不开放商用，后期再说吧 -->
       <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['mahjong:reservation:log:export']">导出</el-button>
       </el-col> -->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
+    <el-table
+      v-loading="loading"
+      :data="logList"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="订单编号" align="center" prop="orderId" width="130" /> -->
       <el-table-column label="预约用户" align="center" prop="createBy" />
       <el-table-column label="预约用户备注" align="center" prop="userRemark" />
       <!-- <el-table-column label="麻将室" align="center" prop="mahjongRoomName" width="80" /> -->
-      <el-table-column label="预约开始时间" align="center" prop="reservationStartTime" width="160" sortable
-        :sort-method="sortStartTime">
+      <el-table-column
+        label="预约开始时间"
+        align="center"
+        prop="reservationStartTime"
+        width="160"
+        sortable
+        :sort-method="sortStartTime"
+      >
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationStartTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预约结束时间" align="center" prop="reservationEndTime" width="160" sortable
-        :sort-method="sortEndTime">
+      <el-table-column
+        label="预约结束时间"
+        align="center"
+        prop="reservationEndTime"
+        width="160"
+        sortable
+        :sort-method="sortEndTime"
+      >
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.reservationEndTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系方式" align="center" prop="reservationContact" />
-      <el-table-column label="订单状态" align="center" prop="reservationStatus" width="80">
+      <el-table-column
+        label="联系方式"
+        align="center"
+        prop="reservationContact"
+      />
+      <el-table-column
+        label="订单状态"
+        align="center"
+        prop="reservationStatus"
+        width="80"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.fx67ll_order_status" :value="scope.row.reservationStatus" />
+          <dict-tag
+            :options="dict.type.fx67ll_order_status"
+            :value="scope.row.reservationStatus"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="订单备注" align="center" prop="reservationRemark" />
+      <el-table-column
+        label="订单备注"
+        align="center"
+        prop="reservationRemark"
+      />
       <!-- <el-table-column label="订单创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
@@ -118,64 +247,131 @@
           }}</span>
         </template>
       </el-table-column> -->
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+      >
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['mahjong:reservation:log:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['mahjong:reservation:log:remove']">删除</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleUpdate(scope.row)"
+            v-hasPermi="['mahjong:reservation:log:edit']"
+            >修改</el-button
+          >
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['mahjong:reservation:log:remove']"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 添加或修改麻将室预约记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body
-      style="top: 130px">
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="800px"
+      append-to-body
+      style="top: 130px"
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户ID" prop="userId" v-if="nowUserName === 'fx67ll'">
+            <el-form-item
+              label="用户ID"
+              prop="userId"
+              v-if="nowUserName === 'fx67ll'"
+            >
               <el-input v-model="form.userId" placeholder="请输入预约用户ID" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="麻将室ID" prop="mahjongRoomId" v-if="nowUserName === 'fx67ll'">
-              <el-input v-model="form.mahjongRoomId" placeholder="请输入预约的麻将室ID" />
+            <el-form-item
+              label="麻将室ID"
+              prop="mahjongRoomId"
+              v-if="nowUserName === 'fx67ll'"
+            >
+              <el-input
+                v-model="form.mahjongRoomId"
+                placeholder="请输入预约的麻将室ID"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="开始时间" prop="reservationStartTime">
-              <el-date-picker clearable v-model="form.reservationStartTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约开始时间" style="width: 270px">
+              <el-date-picker
+                clearable
+                v-model="form.reservationStartTime"
+                type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择预约开始时间"
+                style="width: 270px"
+              >
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="结束时间" prop="reservationEndTime">
-              <el-date-picker clearable v-model="form.reservationEndTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择预约结束时间" style="width: 270px">
+              <el-date-picker
+                clearable
+                v-model="form.reservationEndTime"
+                type="datetime"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择预约结束时间"
+                style="width: 270px"
+              >
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="订单状态" prop="reservationStatus">
-              <el-select v-model="form.reservationStatus" placeholder="请选择订单状态" clearable style="width: 270px">
-                <el-option v-for="dict in dict.type.fx67ll_order_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value" />
+              <el-select
+                v-model="form.reservationStatus"
+                placeholder="请选择订单状态"
+                clearable
+                style="width: 270px"
+              >
+                <el-option
+                  v-for="dict in dict.type.fx67ll_order_status"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="联系方式" prop="reservationContact">
-              <el-input v-model="form.reservationContact" placeholder="请输入预约用户联系方式" />
+              <el-input
+                v-model="form.reservationContact"
+                placeholder="请输入预约用户联系方式"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="备注" prop="reservationRemark">
-              <el-input v-model="form.reservationRemark" type="textarea" placeholder="请输入预约备注内容" />
+              <el-input
+                v-model="form.reservationRemark"
+                type="textarea"
+                placeholder="请输入预约备注内容"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -187,30 +383,60 @@
     </el-dialog>
 
     <!-- 时间轴可视化弹窗 -->
-    <el-dialog title="预约时间轴视图" :visible.sync="timelineOpen" :close-on-click-modal="false" width="90%"
-      :fullscreen="isFullscreen" append-to-body @closed="handleTimelineClose">
+    <el-dialog
+      title="预约时间轴视图"
+      :visible.sync="timelineOpen"
+      :close-on-click-modal="false"
+      width="90%"
+      :fullscreen="isFullscreen"
+      append-to-body
+      @closed="handleTimelineClose"
+    >
       <div class="timeline-container">
         <!-- 日期选择和时间段筛选 -->
         <div class="timeline-header">
           <div class="date-picker-section">
             <span class="label">选择日期：</span>
-            <el-date-picker v-model="selectedDate" type="date" placeholder="选择日期" format="yyyy年MM月dd日"
-              value-format="yyyy-MM-dd" @change="loadTimelineData" style="width: 200px">
+            <el-date-picker
+              v-model="selectedDate"
+              type="date"
+              placeholder="选择日期"
+              format="yyyy年MM月dd日"
+              value-format="yyyy-MM-dd"
+              @change="loadTimelineData"
+              style="width: 200px"
+            >
             </el-date-picker>
-            <el-select v-model="selectedTimeRange" placeholder="选择时间段" @change="filterTimelineData"
-              style="width: 180px; margin-left: 10px">
+            <el-select
+              v-model="selectedTimeRange"
+              placeholder="选择时间段"
+              @change="filterTimelineData"
+              style="width: 180px; margin-left: 10px"
+            >
               <el-option label="全部时间段" value="all"></el-option>
               <el-option label="上午 (10:00-13:00)" value="morning"></el-option>
-              <el-option label="下午 (13:00-18:00)" value="afternoon"></el-option>
+              <el-option
+                label="下午 (13:00-18:00)"
+                value="afternoon"
+              ></el-option>
               <el-option label="晚上 (18:00-23:00)" value="evening"></el-option>
             </el-select>
-            <el-button type="primary" icon="el-icon-refresh" size="mini" @click="loadTimelineData"
-              style="margin-left: 10px">
+            <el-button
+              type="primary"
+              icon="el-icon-refresh"
+              size="mini"
+              @click="loadTimelineData"
+              style="margin-left: 10px"
+            >
               刷新
             </el-button>
-            <el-button :icon="isFullscreen ? 'el-icon-close' : 'el-icon-full-screen'" size="mini"
-              @click="toggleFullscreen" style="margin-left: 10px">
-              {{ isFullscreen ? '退出全屏' : '全屏' }}
+            <el-button
+              :icon="isFullscreen ? 'el-icon-close' : 'el-icon-full-screen'"
+              size="mini"
+              @click="toggleFullscreen"
+              style="margin-left: 10px"
+            >
+              {{ isFullscreen ? "退出全屏" : "全屏" }}
             </el-button>
           </div>
         </div>
@@ -219,8 +445,14 @@
         <div class="timeline-body" v-loading="timelineLoading">
           <!-- 时间刻度 (10:00-23:00) -->
           <div class="time-scale">
-            <div class="time-scale-item" v-for="hour in timeScaleHours" :key="hour">
-              <div class="hour-label">{{ hour.toString().padStart(2, '0') }}:00</div>
+            <div
+              class="time-scale-item"
+              v-for="hour in timeScaleHours"
+              :key="hour"
+            >
+              <div class="hour-label">
+                {{ hour.toString().padStart(2, "0") }}:00
+              </div>
               <div class="hour-line"></div>
             </div>
           </div>
@@ -228,14 +460,21 @@
           <!-- 时间轴内容 -->
           <div class="timeline-content" ref="timelineContent">
             <!-- 预约条 -->
-            <div v-for="(item, index) in filteredTimelineData" :key="item.mahjongReservationLogId" class="timeline-item"
-              :style="getTimelineItemStyle(item, index)" :title="getTimelineItemTooltip(item)"
-              @click="highlightItem(item)">
+            <div
+              v-for="(item, index) in filteredTimelineData"
+              :key="item.mahjongReservationLogId"
+              class="timeline-item"
+              :style="getTimelineItemStyle(item, index)"
+              :title="getTimelineItemTooltip(item)"
+              @click="highlightItem(item)"
+            >
               <div class="timeline-item-content">
                 <div class="item-info">
                   <!-- <span class="user-name">{{ item.createBy }}</span> -->
-                  <span class="time-range">{{ formatTime(item.reservationStartTime) }} - {{
-                    formatTime(item.reservationEndTime) }}</span>
+                  <span class="time-range"
+                    >{{ formatTime(item.reservationStartTime) }} -
+                    {{ formatTime(item.reservationEndTime) }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -246,7 +485,10 @@
         <div class="detail-panel" v-if="selectedItem">
           <div class="detail-header">
             <h4><i class="el-icon-document"></i> 预约详情</h4>
-            <div class="status-indicator" :style="{ backgroundColor: getItemColor(selectedItem) }">
+            <div
+              class="status-indicator"
+              :style="{ backgroundColor: getItemColor(selectedItem) }"
+            >
               预约中
             </div>
           </div>
@@ -254,63 +496,105 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-user"></i> 预约用户：</span>
-                  <span class="detail-value">{{ selectedItem.createBy || '匿名用户' }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-user"></i> 预约用户：</span
+                  >
+                  <span class="detail-value">{{
+                    selectedItem.createBy || "匿名用户"
+                  }}</span>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-message"></i> 用户备注：</span>
-                  <span class="detail-value">{{ selectedItem.userRemark || '无' }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-message"></i> 用户备注：</span
+                  >
+                  <span class="detail-value">{{
+                    selectedItem.userRemark || "无"
+                  }}</span>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-video-play"></i> 开始时间：</span>
-                  <span class="detail-value">{{ parseTime(selectedItem.reservationStartTime, '{y}-{m}-{d} {h}:{i}:{s}')
-                    }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-video-play"></i> 开始时间：</span
+                  >
+                  <span class="detail-value">{{
+                    parseTime(
+                      selectedItem.reservationStartTime,
+                      "{y}-{m}-{d} {h}:{i}:{s}"
+                    )
+                  }}</span>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-video-pause"></i> 结束时间：</span>
-                  <span class="detail-value">{{ parseTime(selectedItem.reservationEndTime, '{y}-{m}-{d} {h}:{i}:{s}')
-                    }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-video-pause"></i> 结束时间：</span
+                  >
+                  <span class="detail-value">{{
+                    parseTime(
+                      selectedItem.reservationEndTime,
+                      "{y}-{m}-{d} {h}:{i}:{s}"
+                    )
+                  }}</span>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-phone"></i> 联系方式：</span>
-                  <span class="detail-value">{{ selectedItem.reservationContact || '未提供' }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-phone"></i> 联系方式：</span
+                  >
+                  <span class="detail-value">{{
+                    selectedItem.reservationContact || "未提供"
+                  }}</span>
                 </div>
               </el-col>
               <el-col :span="24">
                 <div class="detail-item">
-                  <span class="detail-label"><i class="el-icon-edit-outline"></i> 订单备注：</span>
-                  <span class="detail-value">{{ selectedItem.reservationRemark || '无' }}</span>
+                  <span class="detail-label"
+                    ><i class="el-icon-edit-outline"></i> 订单备注：</span
+                  >
+                  <span class="detail-value">{{
+                    selectedItem.reservationRemark || "无"
+                  }}</span>
                 </div>
               </el-col>
             </el-row>
             <div class="duration-info">
               <div class="duration-item">
                 <span class="duration-label">预约时长：</span>
-                <span class="duration-value">{{ calculateDuration(selectedItem) }} 小时</span>
+                <span class="duration-value"
+                  >{{ calculateDuration(selectedItem) }} 小时</span
+                >
               </div>
             </div>
           </div>
           <div class="detail-footer">
-            <el-button type="primary" size="small" icon="el-icon-edit"
-              @click="handleTimelineUpdate(selectedItem)">编辑预约</el-button>
-            <el-button type="danger" size="small" icon="el-icon-delete"
-              @click="handleTimelineDelete(selectedItem)">删除预约</el-button>
-            <el-button size="small" icon="el-icon-close" @click="clearHighlight">关闭详情</el-button>
+            <el-button
+              type="primary"
+              size="small"
+              icon="el-icon-edit"
+              @click="handleTimelineUpdate(selectedItem)"
+              >编辑预约</el-button
+            >
+            <el-button
+              type="danger"
+              size="small"
+              icon="el-icon-delete"
+              @click="handleTimelineDelete(selectedItem)"
+              >删除预约</el-button
+            >
+            <el-button size="small" icon="el-icon-close" @click="clearHighlight"
+              >关闭详情</el-button
+            >
           </div>
         </div>
 
         <!-- 统计数据 -->
         <div class="statistics-panel" v-if="timelineData.length > 0">
           <div class="stat-card">
-            <div class="stat-icon" style="background-color: #409EFF;">
+            <div class="stat-icon" style="background-color: #409eff">
               <i class="el-icon-document"></i>
             </div>
             <div class="stat-content">
@@ -319,7 +603,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background-color: #67C23A;">
+            <div class="stat-icon" style="background-color: #67c23a">
               <i class="el-icon-time"></i>
             </div>
             <div class="stat-content">
@@ -328,7 +612,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background-color: #E6A23C;">
+            <div class="stat-icon" style="background-color: #e6a23c">
               <i class="el-icon-sunny"></i>
             </div>
             <div class="stat-content">
@@ -337,7 +621,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background-color: #909399;">
+            <div class="stat-icon" style="background-color: #909399">
               <i class="el-icon-data-line"></i>
             </div>
             <div class="stat-content">
@@ -371,8 +655,8 @@ export default {
       timelineLoading: false,
       timelineData: [],
       filteredTimelineData: [],
-      selectedDate: moment().format('YYYY-MM-DD'),
-      selectedTimeRange: 'all',
+      selectedDate: moment().format("YYYY-MM-DD"),
+      selectedTimeRange: "all",
       selectedItem: null,
       isFullscreen: false,
 
@@ -381,11 +665,31 @@ export default {
 
       // 颜色数组 - 不同的预约记录用不同颜色，使用鲜艳的颜色
       colorPalette: [
-        '#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0', '#118AB2',
-        '#EF476F', '#FF9A76', '#7BC950', '#6A0572', '#FF9F1C',
-        '#2A9D8F', '#E9C46A', '#F4A261', '#E76F51', '#264653',
-        '#9B5DE5', '#F15BB5', '#00BBF9', '#00F5D4', '#FF99C8',
-        '#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'
+        "#FF6B6B",
+        "#4ECDC4",
+        "#FFD166",
+        "#06D6A0",
+        "#118AB2",
+        "#EF476F",
+        "#FF9A76",
+        "#7BC950",
+        "#6A0572",
+        "#FF9F1C",
+        "#2A9D8F",
+        "#E9C46A",
+        "#F4A261",
+        "#E76F51",
+        "#264653",
+        "#9B5DE5",
+        "#F15BB5",
+        "#00BBF9",
+        "#00F5D4",
+        "#FF99C8",
+        "#FF595E",
+        "#FFCA3A",
+        "#8AC926",
+        "#1982C4",
+        "#6A4C93",
       ],
 
       // 当前登录用户ID
@@ -432,9 +736,9 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
         beginReservationStartTime: null, // 订单开始时间-起始
-        endReservationStartTime: null,   // 订单开始时间-结束
-        beginReservationEndTime: null,   // 订单结束时间-起始
-        endReservationEndTime: null      // 订单结束时间-结束
+        endReservationStartTime: null, // 订单开始时间-结束
+        beginReservationEndTime: null, // 订单结束时间-起始
+        endReservationEndTime: null, // 订单结束时间-结束
       },
       // 表单参数
       form: {},
@@ -468,7 +772,7 @@ export default {
     async loadTimelineData() {
       this.clearHighlight();
       if (!this.selectedDate) {
-        this.$message.warning('请先选择日期');
+        this.$message.warning("请先选择日期");
         return;
       }
 
@@ -478,28 +782,28 @@ export default {
         const queryParams = {
           pageNum: 1,
           pageSize: 1000, // 获取足够多的数据
-          beginReservationStartTime: this.selectedDate + ' 00:00:00',
-          endReservationStartTime: this.selectedDate + ' 23:59:59',
+          beginReservationStartTime: this.selectedDate + " 00:00:00",
+          endReservationStartTime: this.selectedDate + " 23:59:59",
           // 或者根据结束时间也在当天
-          beginReservationEndTime: this.selectedDate + ' 00:00:00',
-          endReservationEndTime: this.selectedDate + ' 23:59:59'
+          beginReservationEndTime: this.selectedDate + " 00:00:00",
+          endReservationEndTime: this.selectedDate + " 23:59:59",
         };
 
         const response = await listLog(queryParams);
         // 过滤数据：只显示没有取消(状态不等于4)和没有删除的记录
         // 假设delFlag为1表示已删除，这里根据实际情况调整
-        this.timelineData = (response.rows || []).filter(item => {
+        this.timelineData = (response.rows || []).filter((item) => {
           // 过滤掉已取消的预约(状态为4)
           // 这里假设状态4是已取消，请根据实际字典值调整
-          const isNotCancelled = item.reservationStatus != '4';
+          const isNotCancelled = item.reservationStatus != "4";
           // 过滤掉已删除的记录(delFlag不等于1)
-          const isNotDeleted = item.delFlag != '1';
+          const isNotDeleted = item.delFlag != "1";
           return isNotCancelled && isNotDeleted;
         });
         this.filterTimelineData();
       } catch (error) {
-        console.error('加载时间轴数据失败:', error);
-        this.$message.error('加载数据失败');
+        console.error("加载时间轴数据失败:", error);
+        this.$message.error("加载数据失败");
       } finally {
         this.timelineLoading = false;
       }
@@ -507,23 +811,23 @@ export default {
 
     /** 过滤时间轴数据 */
     filterTimelineData() {
-      if (this.selectedTimeRange === 'all') {
+      if (this.selectedTimeRange === "all") {
         this.filteredTimelineData = [...this.timelineData];
         return;
       }
 
       const timeRanges = {
-        morning: { start: '10:00', end: '13:00' },
-        afternoon: { start: '13:00', end: '18:00' },
-        evening: { start: '18:00', end: '23:00' }
+        morning: { start: "10:00", end: "13:00" },
+        afternoon: { start: "13:00", end: "18:00" },
+        evening: { start: "18:00", end: "23:00" },
       };
 
       const range = timeRanges[this.selectedTimeRange];
       if (!range) return;
 
-      this.filteredTimelineData = this.timelineData.filter(item => {
-        const startTime = moment(item.reservationStartTime).format('HH:mm');
-        const endTime = moment(item.reservationEndTime).format('HH:mm');
+      this.filteredTimelineData = this.timelineData.filter((item) => {
+        const startTime = moment(item.reservationStartTime).format("HH:mm");
+        const endTime = moment(item.reservationEndTime).format("HH:mm");
 
         // 检查预约是否与选定时间段有重叠
         return this.timeOverlaps(startTime, endTime, range.start, range.end);
@@ -533,7 +837,7 @@ export default {
     /** 检查时间段是否重叠 */
     timeOverlaps(start1, end1, start2, end2) {
       const timeToMinutes = (time) => {
-        const [hours, minutes] = time.split(':').map(Number);
+        const [hours, minutes] = time.split(":").map(Number);
         return hours * 60 + minutes;
       };
 
@@ -557,22 +861,23 @@ export default {
 
       // 计算时长（分钟）
       const durationMinutes = endMinutes - startMinutes;
-      if (durationMinutes <= 0) return { display: 'none' };
+      if (durationMinutes <= 0) return { display: "none" };
 
       // 过滤不在10:00-23:00范围内的时间
       if (startHour < 10 || startHour >= 23) {
-        return { display: 'none' };
+        return { display: "none" };
       }
 
       // 计算位置和宽度 (时间轴宽度代表13个小时，从10:00到23:00，共780分钟)
       const timelineStartMinutes = 10 * 60; // 10:00
       const timelineTotalMinutes = 13 * 60; // 13小时
 
-      const left = ((startMinutes - timelineStartMinutes) / timelineTotalMinutes) * 100;
+      const left =
+        ((startMinutes - timelineStartMinutes) / timelineTotalMinutes) * 100;
       const width = (durationMinutes / timelineTotalMinutes) * 100;
 
       // 确保位置在可视范围内
-      if (left < 0 || left + width > 100) return { display: 'none' };
+      if (left < 0 || left + width > 100) return { display: "none" };
 
       // 获取颜色 - 基于索引从调色板中选择颜色
       const backgroundColor = this.getItemColor(item, index);
@@ -583,7 +888,7 @@ export default {
         backgroundColor: backgroundColor,
         borderColor: this.darkenColor(backgroundColor, 20),
         zIndex: item === this.selectedItem ? 100 : 10 + index,
-        opacity: item === this.selectedItem ? 1 : 0.9
+        opacity: item === this.selectedItem ? 1 : 0.9,
       };
     },
 
@@ -599,23 +904,32 @@ export default {
       const num = parseInt(color.slice(1), 16);
       const amt = Math.round(2.55 * percent);
       const R = (num >> 16) - amt;
-      const G = (num >> 8 & 0x00FF) - amt;
-      const B = (num & 0x0000FF) - amt;
-      return "#" + (
-        0x1000000 +
-        (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-        (B < 255 ? B < 1 ? 0 : B : 255)
-      ).toString(16).slice(1);
+      const G = ((num >> 8) & 0x00ff) - amt;
+      const B = (num & 0x0000ff) - amt;
+      return (
+        "#" +
+        (
+          0x1000000 +
+          (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+          (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+          (B < 255 ? (B < 1 ? 0 : B) : 255)
+        )
+          .toString(16)
+          .slice(1)
+      );
     },
 
     /** 获取时间轴条目的提示文本 */
     getTimelineItemTooltip(item) {
-      const startTime = moment(item.reservationStartTime).format('HH:mm');
-      const endTime = moment(item.reservationEndTime).format('HH:mm');
+      const startTime = moment(item.reservationStartTime).format("HH:mm");
+      const endTime = moment(item.reservationEndTime).format("HH:mm");
       const duration = this.calculateDuration(item);
 
-      return `${item.createBy || '匿名用户'}\n${startTime} - ${endTime} (${duration}小时)\n备注：${item.reservationRemark || '无'}`;
+      return `${
+        item.createBy || "匿名用户"
+      }\n${startTime} - ${endTime} (${duration}小时)\n备注：${
+        item.reservationRemark || "无"
+      }`;
     },
 
     /** 计算预约时长 */
@@ -623,12 +937,12 @@ export default {
       const start = moment(item.reservationStartTime);
       const end = moment(item.reservationEndTime);
       const duration = moment.duration(end.diff(start));
-      return (duration.asHours()).toFixed(1);
+      return duration.asHours().toFixed(1);
     },
 
     /** 格式化时间显示 */
     formatTime(time) {
-      return moment(time).format('HH:mm');
+      return moment(time).format("HH:mm");
     },
 
     /** 高亮选中的条目 */
@@ -649,19 +963,27 @@ export default {
     /** 计算总预约小时数 (10:00-23:00范围内) */
     calculateTotalHours() {
       let totalMinutes = 0;
-      this.timelineData.forEach(item => {
+      this.timelineData.forEach((item) => {
         const start = moment(item.reservationStartTime);
         const end = moment(item.reservationEndTime);
 
         // 只计算10:00-23:00范围内的重叠时间
-        const dayStart = moment(this.selectedDate).set({ hour: 10, minute: 0, second: 0 });
-        const dayEnd = moment(this.selectedDate).set({ hour: 23, minute: 0, second: 0 });
+        const dayStart = moment(this.selectedDate).set({
+          hour: 10,
+          minute: 0,
+          second: 0,
+        });
+        const dayEnd = moment(this.selectedDate).set({
+          hour: 23,
+          minute: 0,
+          second: 0,
+        });
 
         const overlapStart = moment.max(start, dayStart);
         const overlapEnd = moment.min(end, dayEnd);
 
         if (overlapStart.isBefore(overlapEnd)) {
-          totalMinutes += overlapEnd.diff(overlapStart, 'minutes');
+          totalMinutes += overlapEnd.diff(overlapStart, "minutes");
         }
       });
       return (totalMinutes / 60).toFixed(1);
@@ -673,19 +995,27 @@ export default {
       let bookedMinutes = 0;
 
       // 简化计算：假设所有预约都在同一天且不重叠
-      this.timelineData.forEach(item => {
+      this.timelineData.forEach((item) => {
         const start = moment(item.reservationStartTime);
         const end = moment(item.reservationEndTime);
 
         // 只计算10:00-23:00范围内的重叠时间
-        const dayStart = moment(this.selectedDate).set({ hour: 10, minute: 0, second: 0 });
-        const dayEnd = moment(this.selectedDate).set({ hour: 23, minute: 0, second: 0 });
+        const dayStart = moment(this.selectedDate).set({
+          hour: 10,
+          minute: 0,
+          second: 0,
+        });
+        const dayEnd = moment(this.selectedDate).set({
+          hour: 23,
+          minute: 0,
+          second: 0,
+        });
 
         const overlapStart = moment.max(start, dayStart);
         const overlapEnd = moment.min(end, dayEnd);
 
         if (overlapStart.isBefore(overlapEnd)) {
-          bookedMinutes += overlapEnd.diff(overlapStart, 'minutes');
+          bookedMinutes += overlapEnd.diff(overlapStart, "minutes");
         }
       });
 
@@ -698,19 +1028,27 @@ export default {
       const totalMinutes = 13 * 60; // 10:00-23:00共13小时
       let bookedMinutes = 0;
 
-      this.timelineData.forEach(item => {
+      this.timelineData.forEach((item) => {
         const start = moment(item.reservationStartTime);
         const end = moment(item.reservationEndTime);
 
         // 只计算10:00-23:00范围内的重叠时间
-        const dayStart = moment(this.selectedDate).set({ hour: 10, minute: 0, second: 0 });
-        const dayEnd = moment(this.selectedDate).set({ hour: 23, minute: 0, second: 0 });
+        const dayStart = moment(this.selectedDate).set({
+          hour: 10,
+          minute: 0,
+          second: 0,
+        });
+        const dayEnd = moment(this.selectedDate).set({
+          hour: 23,
+          minute: 0,
+          second: 0,
+        });
 
         const overlapStart = moment.max(start, dayStart);
         const overlapEnd = moment.min(end, dayEnd);
 
         if (overlapStart.isBefore(overlapEnd)) {
-          bookedMinutes += overlapEnd.diff(overlapStart, 'minutes');
+          bookedMinutes += overlapEnd.diff(overlapStart, "minutes");
         }
       });
 
@@ -720,7 +1058,7 @@ export default {
     /** 时间轴弹窗关闭时的处理 */
     handleTimelineClose() {
       this.selectedItem = null;
-      this.selectedTimeRange = 'all';
+      this.selectedTimeRange = "all";
       this.isFullscreen = false;
     },
 
@@ -733,9 +1071,7 @@ export default {
     /** 从时间轴删除预约 */
     handleTimelineDelete(row) {
       this.$modal
-        .confirm(
-          '是否确认删除预约记录？'
-        )
+        .confirm("是否确认删除预约记录？")
         .then(() => {
           return delLog(row.mahjongReservationLogId);
         })
@@ -744,7 +1080,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => { });
+        .catch(() => {});
     },
 
     // 预约开始时间排序方法
@@ -795,14 +1131,14 @@ export default {
       }
       listLog(this.queryParams).then((response) => {
         const rowsTmpList = this.formatObjectArrayNullProperty(response.rows);
-        this.logList = rowsTmpList.map(item => {
+        this.logList = rowsTmpList.map((item) => {
           const timeStamp = new Date(item.createTime).getTime();
           const rowObjTmp = {
             ...item,
-            orderId: timeStamp + (item?.mahjongReservationLogId || 0)
+            orderId: timeStamp + (item?.mahjongReservationLogId || 0),
           };
           return rowObjTmp;
-        })
+        });
         this.total = response.total;
         this.loading = false;
       });
@@ -875,10 +1211,10 @@ export default {
       const self = this;
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          if (self.nowUserName !== 'fx67ll') {
+          if (self.nowUserName !== "fx67ll") {
             this.form.nowUserId = self.nowUserId;
           }
-          if (self.nowUserName !== 'fx67ll') {
+          if (self.nowUserName !== "fx67ll") {
             this.form.mahjongRoomId = 1;
           }
           if (this.form.mahjongReservationLogId != null) {
@@ -903,8 +1239,8 @@ export default {
       this.$modal
         .confirm(
           '是否确认删除麻将室预约记录编号为"' +
-          mahjongReservationLogIds +
-          '"的数据项？'
+            mahjongReservationLogIds +
+            '"的数据项？'
         )
         .then(function () {
           return delLog(mahjongReservationLogIds);
@@ -913,7 +1249,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => { });
+        .catch(() => {});
     },
     /** 导出按钮操作，无法使用，也不开放商用，后期再说吧 */
     // handleExport() {
@@ -1072,7 +1408,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(90deg, #409EFF, #66b1ff);
+  background: linear-gradient(90deg, #409eff, #66b1ff);
   color: white;
 }
 
@@ -1137,13 +1473,13 @@ export default {
 
 .duration-label {
   font-weight: 600;
-  color: #67C23A;
+  color: #67c23a;
 }
 
 .duration-value {
   font-size: 18px;
   font-weight: bold;
-  color: #67C23A;
+  color: #67c23a;
 }
 
 .detail-footer {
