@@ -351,7 +351,7 @@ export default {
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          if (!self.form.noteContent || self.form.noteContent?.trim() === "") {
+          if (!this.form.noteContent || this.form.noteContent?.trim() === "") {
             this.$modal.msgError("富文本内容不能为空");
             return;
           }
