@@ -836,6 +836,11 @@ export default {
           selectedWeek: initDate.week,
           activeIndex: 0,
         };
+        this.handleDateChange({
+          selectedDate: initDate.date,
+          selectedWeek: initDate.week,
+          activeIndex: 0,
+        });
       }
     },
     // prettyTimes组件：包夜变化事件处理
