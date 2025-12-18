@@ -2,7 +2,7 @@
   <div class="content">
     <div class="container">
       <!-- 日期列表 -->
-      <div class="scroll-view_H b-t b-b">
+      <div class="scroll-view_H b-t b-b" ref="dateScrollContainer">
         <div class="date-scroll-wrapper">
           <div
             v-for="(item, index) in dateArr"
@@ -265,6 +265,7 @@ export default {
       isOvernightDisabled: false,
       isOvernightExpired: false,
       isOvernightMyAppoint: false,
+      isWheelEventAdded: false, // 添加滚轮事件监听标志
     };
   },
   watch: {
@@ -304,8 +305,53 @@ export default {
   },
   mounted() {
     this.$emit("ready");
+    // 添加鼠标滚轮事件监听
+    this.addWheelEventListener();
+  },
+  beforeDestroy() {
+    // 组件销毁前移除事件监听
+    this.removeWheelEventListener();
   },
   methods: {
+    // 添加鼠标滚轮事件监听
+    addWheelEventListener() {
+      if (this.isWheelEventAdded) return;
+
+      const scrollContainer = this.$refs.dateScrollContainer;
+      if (!scrollContainer) return;
+
+      // 使用 passive: false 以便可以调用 preventDefault
+      scrollContainer.addEventListener("wheel", this.handleWheelScroll, {
+        passive: false,
+      });
+      this.isWheelEventAdded = true;
+    },
+
+    // 移除鼠标滚轮事件监听
+    removeWheelEventListener() {
+      if (!this.isWheelEventAdded) return;
+
+      const scrollContainer = this.$refs.dateScrollContainer;
+      if (!scrollContainer) return;
+
+      scrollContainer.removeEventListener("wheel", this.handleWheelScroll);
+      this.isWheelEventAdded = false;
+    },
+
+    // 处理鼠标滚轮滚动事件
+    handleWheelScroll(event) {
+      event.preventDefault();
+
+      const scrollContainer = this.$refs.dateScrollContainer;
+      if (!scrollContainer) return;
+
+      // 计算滚动距离，可以根据需要调整滚动速度
+      const scrollAmount = event.deltaY * 4;
+
+      // 水平滚动
+      scrollContainer.scrollLeft += scrollAmount;
+    },
+
     initOnload() {
       this.dateArr = initData();
       this.timeArr = initTime(
@@ -976,8 +1022,15 @@ export default {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   /* margin-bottom: 16px; */
+
+  /* 添加滚轮滚动平滑效果 */
+  scroll-behavior: smooth;
+  /* 隐藏滚动条但仍可滚动 */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
+/* Chrome, Safari and Opera */
 .scroll-view_H::-webkit-scrollbar {
   display: none;
 }
@@ -1147,23 +1200,5 @@ export default {
 
 .overnight-box.disable .overnight-status {
   color: #999;
-}
-
-/* 滚动条样式 */
-.scroll-view_H::-webkit-scrollbar {
-  height: 4px;
-}
-
-.scroll-view_H::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.scroll-view_H::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 2px;
-}
-
-.scroll-view_H::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
 }
 </style>
