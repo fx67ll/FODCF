@@ -196,7 +196,8 @@ export default {
     undisableText: {
       //未禁用显示的文本
       type: String,
-      default: "可预约",
+      // default: "可预约",
+      default: "未预约",
     },
     timeInterval: {
       // 时间间隔，小时为单位
@@ -608,7 +609,8 @@ export default {
       } else if (this.isOvernightDisabled) {
         return "已约满";
       } else {
-        return "可预约";
+        // return "可预约";
+        return "未预约";
       }
     },
     checkOvernightStatus() {
