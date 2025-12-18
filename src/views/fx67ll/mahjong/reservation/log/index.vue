@@ -320,7 +320,8 @@
                 clearable
                 v-model="form.reservationStartTime"
                 type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss"
+                format="yyyy-MM-dd HH:mm:ss"
+                value-format="yyyy-MM-dd HH:00:00"
                 placeholder="请选择预约开始时间"
                 style="width: 270px"
               >
@@ -333,7 +334,8 @@
                 clearable
                 v-model="form.reservationEndTime"
                 type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss"
+                format="yyyy-MM-dd HH:mm:ss"
+                value-format="yyyy-MM-dd HH:00:00"
                 placeholder="请选择预约结束时间"
                 style="width: 270px"
               >
