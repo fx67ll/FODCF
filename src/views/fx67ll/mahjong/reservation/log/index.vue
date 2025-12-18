@@ -6,9 +6,9 @@
       size="small"
       :inline="true"
       v-show="showSearch"
-      label-width="100px"
+      label-width="70px"
     >
-      <el-form-item label="预约用户" prop="createBy">
+      <el-form-item label="预约用户" prop="createBy" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.createBy"
           placeholder="请输入预约用户名"
@@ -16,18 +16,19 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="麻将室" prop="mahjongRoomId">
+      <!-- <el-form-item label="麻将室" prop="mahjongRoomId" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.mahjongRoomName"
           placeholder="请输入预约的麻将室名称"
           clearable
           @keyup.enter.native="handleQuery"
         />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item
         label="联系方式"
         prop="reservationContact"
         style="margin-left: 12px"
+        v-if="isMoreQuery"
       >
         <el-input
           v-model="queryParams.reservationContact"
@@ -40,6 +41,7 @@
         label="订单备注"
         prop="reservationRemark"
         style="margin-left: 12px"
+        v-if="isMoreQuery"
       >
         <el-input
           v-model="queryParams.reservationRemark"
@@ -64,29 +66,33 @@
         </el-select>
       </el-form-item>
       <!-- 订单开始时间范围搜索 -->
-      <el-form-item label="订单开始时间" style="margin-left: 12px">
+      <el-form-item label="开始时间" style="margin-left: 12px">
         <el-date-picker
           v-model="daterangeStartTime"
-          style="width: 240px"
+          style="width: 340px"
           value-format="yyyy-MM-dd HH:mm:ss"
           type="datetimerange"
           range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
           clearable
           @keyup.enter.native="handleQuery"
         ></el-date-picker>
       </el-form-item>
       <!-- 订单结束时间范围搜索 -->
-      <el-form-item label="订单结束时间" style="margin-left: 12px">
+      <el-form-item
+        label="结束时间"
+        style="margin-left: 12px"
+        v-if="isMoreQuery"
+      >
         <el-date-picker
           v-model="daterangeEndTime"
-          style="width: 240px"
+          style="width: 340px"
           value-format="yyyy-MM-dd HH:mm:ss"
           type="datetimerange"
           range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
           clearable
           @keyup.enter.native="handleQuery"
         ></el-date-picker>
@@ -109,6 +115,13 @@
         >
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
           >重置</el-button
+        >
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
+          >{{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}</el-button
         >
       </el-form-item>
     </el-form>
@@ -475,6 +488,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -531,6 +546,29 @@ export default {
     };
   },
   created() {
+    this.queryParams.reservationStatus = "0";
+    console.log(
+      moment().startOf("day").format("YYYY-MM-DD HH:mm:ss"),
+      moment()
+        .startOf("day")
+        .add(1, "month")
+        .add(1, "day")
+        .format("YYYY-MM-DD HH:mm:ss")
+    );
+    const beginReservationStartTime = moment()
+      .startOf("day")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const endReservationStartTime = moment()
+      .startOf("day")
+      .add(1, "month")
+      .add(1, "day")
+      .format("YYYY-MM-DD HH:mm:ss");
+    if (beginReservationStartTime && endReservationStartTime) {
+      this.daterangeStartTime = [
+        beginReservationStartTime,
+        endReservationStartTime,
+      ];
+    }
     this.getList();
   },
   methods: {
@@ -621,6 +659,10 @@ export default {
       };
       this.resetForm("form");
     },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
@@ -632,6 +674,23 @@ export default {
       this.daterangeEndTime = [];
       this.daterangeCreateTime = [];
       this.daterangeUpdateTime = [];
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 10,
+        createBy: null,
+        mahjongRoomName: null,
+        reservationContact: null,
+        reservationStatus: null,
+        reservationRemark: null,
+        beginCreateTime: null,
+        endCreateTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
+        beginReservationStartTime: null, // 订单开始时间-起始
+        endReservationStartTime: null, // 订单开始时间-结束
+        beginReservationEndTime: null, // 订单结束时间-起始
+        endReservationEndTime: null, // 订单结束时间-结束
+      };
       this.resetForm("queryForm");
       this.handleQuery();
     },
