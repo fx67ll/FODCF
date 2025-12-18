@@ -42,3 +42,16 @@ export function delLog(mahjongReservationLogId) {
     method: "delete",
   });
 }
+
+// 查询麻将室预约记录列表
+export function listMahjongReservationLog(data) {
+  const pageNum = data.pageNum;
+  const pageSize = data.pageSize;
+  delete data.pageNum;
+  delete data.pageSize
+  return request({
+    url: `/mahjong/reservation/log/getReservationLogListForApp?pageNum=${pageNum}&pageSize=${pageSize}`,
+    method: "post",
+    data: data,
+  });
+}
