@@ -154,6 +154,18 @@
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['mahjong:reservation:log:export']">导出</el-button>
       </el-col> -->
+      <el-col :span="1.5">
+        <el-button
+          type="info"
+          plain
+          icon="el-icon-data-line"
+          size="mini"
+          @click="handleLogViewOpen"
+          v-hasPermi="['mahjong:reservation:log:total']"
+        >
+          {{ prettyTimesDialogTitle }}
+        </el-button>
+      </el-col>
       <right-toolbar
         :showSearch.sync="showSearch"
         @queryTable="getList"
@@ -369,6 +381,47 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog
+      :title="prettyTimesDialogTitle"
+      :visible.sync="prettyTimesDialogOpen"
+      :close-on-click-modal="false"
+      width="700px"
+      append-to-body
+      style="top: 0px"
+    >
+      <prettyTimes
+        ref="prettyTimes"
+        :showOvernight="appointConfig.showOvernight"
+        :beginTime="appointConfig.allowBeginTime"
+        :endTime="appointConfig.allowEndTime"
+        :timeInterval="appointConfig.allowTimeInterval"
+        :appointTime="appointConfig.appointTime"
+        :isSection="true"
+        :disableTimeSlot="appointConfig.disableTimeSlot"
+        :myAppointTimeSlot="appointConfig.myAppointTimeSlot"
+        @date-change="handleDateChange"
+        @ready="handleComponentReady"
+      >
+        <!-- <prettyTimes
+        ref="prettyTimes"
+        :showOvernight="appointConfig.showOvernight"
+        :beginTime="appointConfig.allowBeginTime"
+        :endTime="appointConfig.allowEndTime"
+        :timeInterval="appointConfig.allowTimeInterval"
+        :appointTime="appointConfig.appointTime"
+        :isSection="true"
+        :disableTimeSlot="appointConfig.disableTimeSlot"
+        :myAppointTimeSlot="appointConfig.myAppointTimeSlot"
+        :formParams="prettyTimesFormParams"
+        @change="handleTimeChange"
+        @date-change="handleDateChange"
+        @ready="handleComponentReady"
+        @overnight-change="handleOvernightChange"
+        @overnight-submit="handleOvernightSubmit"
+      > -->
+      </prettyTimes>
+    </el-dialog>
   </div>
 </template>
 
@@ -379,11 +432,14 @@ import {
   delLog,
   addLog,
   updateLog,
+  listMahjongReservationLog,
 } from "@/api/fx67ll/mahjong/log";
 import moment from "moment";
+import prettyTimes from "../../components/pretty-times/pretty-times.vue";
 
 export default {
   name: "mahjongReservationLog",
+  components: { prettyTimes },
   dicts: ["fx67ll_order_status"],
   data() {
     return {
@@ -449,6 +505,27 @@ export default {
           { required: true, message: "预约状态不能为空", trigger: "change" },
         ],
       },
+
+      // =============== prettyTimes组件参数开始 ===============
+      appointConfig: {
+        showOvernight: true,
+        allowBeginTime: "10:00:00",
+        allowEndTime: "22:00:00",
+        allowTimeInterval: 1,
+        appointTime: [],
+        disableTimeSlot: [],
+        myAppointTimeSlot: [],
+      },
+      // prettyTimesFormParams: {
+      //   mahjongRoomId: 1,
+      //   reservationStartTime: null,
+      //   reservationEndTime: null,
+      //   reservationStatus: null,
+      // },
+      // prettyTimesDialogLogList: [],
+      prettyTimesDialogTitle: "预约记录可视化查询",
+      prettyTimesDialogOpen: false,
+      // =============== prettyTimes组件参数结束 ===============
     };
   },
   created() {
@@ -633,6 +710,155 @@ export default {
     //     `log_${new Date().getTime()}.xlsx`
     //   );
     // },
+
+    // =============== prettyTimes组件方法开始 ===============
+    //  prettyTimes组件：打开预约可视化记录查询弹窗
+    handleLogViewOpen() {
+      this.prettyTimesDialogOpen = true;
+    },
+    // prettyTimes组件：查询预约历史记录 - 修改为返回Promise
+    queryLogList(isNeedAll = true) {
+      const self = this;
+
+      // // 新增：开始查询时显示加载状态（如果还没显示的话）
+      // if (!this.loading) {
+      //   this.loading = true;
+      // }
+
+      this.queryParams.pageNum = 1;
+      this.queryParams.pageSize = 999;
+      this.queryParams.isNeedAll = isNeedAll;
+
+      // 返回Promise，便于外部等待
+      return new Promise((resolve, reject) => {
+        listMahjongReservationLog(self.queryParams)
+          .then((res) => {
+            if (res?.code === 200) {
+              if (res?.rows && res?.rows?.length > 0) {
+                // self.prettyTimesDialogLogList = res?.rows || [];
+                const targetTimeSlot =
+                  (res?.rows || [])
+                    // 第一步：过滤出 reservationStatus 等于 '0' 的数据
+                    ?.filter((item) => item.reservationStatus === "0")
+                    // 第二步：对过滤后的数据处理时间，生成禁用时间段
+                    ?.map((item) => {
+                      const startTime = moment(
+                        item.reservationStartTime
+                      ).format("YYYY-MM-DD HH:mm:ss");
+                      let endTime = moment(item.reservationEndTime);
+                      const currentTime = moment();
+                      // 如果结束时间晚于当前时间前1小时，则调整为当前时间前1小时
+                      if (endTime.isAfter(currentTime.subtract(1, "hours"))) {
+                        endTime = endTime.subtract(1, "hours");
+                      }
+                      return [startTime, endTime.format("YYYY-MM-DD HH:mm:ss")];
+                    }) || [];
+
+                // 根据查询类型更新对应配置
+                if (isNeedAll) {
+                  this.appointConfig.disableTimeSlot = targetTimeSlot;
+                } else {
+                  this.appointConfig.myAppointTimeSlot = targetTimeSlot;
+                }
+              }
+              //  else {
+              //   // 只有当isNeedAll为true时才清空（避免两次请求互相清空）
+              //   if (isNeedAll) {
+              //     self.clearLogList();
+              //   }
+              // }
+              resolve(res);
+            } else {
+              // // 只有当isNeedAll为true时才清空（避免两次请求互相清空）
+              // if (isNeedAll) {
+              //   self.clearLogList();
+              // }
+              // uni.showToast({
+              //   title: "查询预约订单记录失败！",
+              //   icon: "none",
+              //   duration: 1998,
+              // });
+              resolve(res); // 即使失败也resolve，让Promise.all能继续执行
+            }
+          })
+          .catch((res) => {
+            // // 只有当isNeedAll为true时才清空（避免两次请求互相清空）
+            // if (isNeedAll) {
+            //   self.clearLogList();
+            // }
+            reject(res);
+          })
+          .finally(() => {
+            // 只有当两次请求都完成后才隐藏加载状态（在initData的finally中处理）
+          });
+      });
+    },
+    // prettyTimes组件：时间范围点击监听
+    handleTimeChange(timeArr) {
+      //   const self = this;
+      //   // 选择普通时间时，取消包夜标记
+      //   this.isOvernightSelected = false;
+      //   let startTime = timeArr?.beginTime || "";
+      //   let endTime = timeArr?.endTime || "";
+      //   this.formParams = {
+      //     ...self.formParams,
+      //     reservationStartTime: startTime,
+      //     reservationEndTime: endTime,
+      //   };
+    },
+    // prettyTimes组件：日期切换监听
+    handleDateChange(dateInfo) {
+      this.nowDateInfo = dateInfo;
+      // console.log('当前选中的日期：',dateInfo.selectedDate);
+      // console.log('当前选中的星期：', dateInfo.selectedWeek);
+      // console.log('选中日期的索引：', dateInfo.activeIndex);
+      const dateStr = dateInfo?.selectedDate?.replace(/-/g, "") || "";
+      this.queryParams.isNeedAll = true;
+      this.queryParams.reservationDate = dateStr;
+
+      // 日期切换时也等待两次请求完成
+      // this.loading = true;
+      Promise.all([this.queryLogList(true), this.queryLogList(false)]).finally(
+        () => {
+          // this.loading = false;
+        }
+      );
+    },
+    // prettyTimes组件：子组件渲染完成后，同步初始日期到父组件 nowDateInfo
+    handleComponentReady() {
+      // 子组件的 dateArr 是生成的日期列表，取第一个（默认选中的当日）
+      const initDate = this?.$refs?.prettyTimes?.dateArr?.[0] || null;
+      if (initDate) {
+        this.nowDateInfo = {
+          selectedDate: initDate.date,
+          selectedWeek: initDate.week,
+          activeIndex: 0,
+        };
+      }
+    },
+    // prettyTimes组件：包夜变化事件处理
+    handleOvernightChange(overnightData) {
+      //   if (overnightData) {
+      //     this.isOvernightSelected = true;
+      //     this.formParams.reservationStartTime = overnightData.start;
+      //     this.formParams.reservationEndTime = moment(overnightData.end)
+      //       .subtract(1, "h")
+      //       .format("YYYY-MM-DD HH:mm:ss");
+      //   } else {
+      //     this.isOvernightSelected = false;
+      //     this.formParams.reservationStartTime = null;
+      //     this.formParams.reservationEndTime = null;
+      //   }
+      // },
+      // prettyTimes组件：包夜提交事件处理
+      // handleOvernightSubmit(overnightData) {
+      //   if (overnightData) {
+      //     this.formParams.reservationStartTime = overnightData.start;
+      //     this.formParams.reservationEndTime = overnightData.end;
+      //     this.submitReservation();
+      //   }
+    },
+    // =============== prettyTimes组件方法结束 ===============
   },
 };
 </script>
