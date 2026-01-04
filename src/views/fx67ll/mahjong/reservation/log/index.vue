@@ -113,8 +113,20 @@
           @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+        <el-button
+          type="success"
+          icon="el-icon-refresh"
+          size="mini"
+          @click="resetQuery"
           >重置</el-button
+        >
+        <el-button
+          v-if="!isMoreQuery"
+          type="warning"
+          icon="el-icon-scissors"
+          size="mini"
+          @click="handleQueryCoreData"
+          >只查询有效数据</el-button
         >
         <el-button
           type="info"
@@ -546,32 +558,50 @@ export default {
     };
   },
   created() {
-    this.queryParams.reservationStatus = "0";
-    console.log(
-      moment().startOf("day").format("YYYY-MM-DD HH:mm:ss"),
-      moment()
+    this.handleQueryCoreData();
+  },
+  methods: {
+    // 查询核心有效数据
+    handleQueryCoreData() {
+      this.daterangeStartTime = [];
+      this.daterangeEndTime = [];
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
+      this.queryParams = {
+        pageNum: 1,
+        pageSize: 10,
+        createBy: null,
+        mahjongRoomName: null,
+        reservationContact: null,
+        reservationStatus: null,
+        reservationRemark: null,
+        beginCreateTime: null,
+        endCreateTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
+        beginReservationStartTime: null, // 订单开始时间-起始
+        endReservationStartTime: null, // 订单开始时间-结束
+        beginReservationEndTime: null, // 订单结束时间-起始
+        endReservationEndTime: null, // 订单结束时间-结束
+      };
+      this.resetForm("queryForm");
+      this.queryParams.reservationStatus = "0";
+      const beginReservationStartTime = moment()
+        .startOf("day")
+        .format("YYYY-MM-DD HH:mm:ss");
+      const endReservationStartTime = moment()
         .startOf("day")
         .add(1, "month")
         .add(1, "day")
-        .format("YYYY-MM-DD HH:mm:ss")
-    );
-    const beginReservationStartTime = moment()
-      .startOf("day")
-      .format("YYYY-MM-DD HH:mm:ss");
-    const endReservationStartTime = moment()
-      .startOf("day")
-      .add(1, "month")
-      .add(1, "day")
-      .format("YYYY-MM-DD HH:mm:ss");
-    if (beginReservationStartTime && endReservationStartTime) {
-      this.daterangeStartTime = [
-        beginReservationStartTime,
-        endReservationStartTime,
-      ];
-    }
-    this.getList();
-  },
-  methods: {
+        .format("YYYY-MM-DD HH:mm:ss");
+      if (beginReservationStartTime && endReservationStartTime) {
+        this.daterangeStartTime = [
+          beginReservationStartTime,
+          endReservationStartTime,
+        ];
+      }
+      this.getList();
+    },
     // 预约开始时间排序方法
     sortStartTime(a, b) {
       const timeA = new Date(a.reservationStartTime).getTime();
@@ -661,6 +691,10 @@ export default {
     },
     /** 高级搜索按钮操作 */
     handleMoreQuery() {
+      if (this.isMoreQuery) {
+        this.handleQueryCoreData();
+      }
+
       this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
