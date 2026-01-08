@@ -55,7 +55,7 @@
               @keyup.enter.native="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
+          <el-form-item label="用户状态" prop="status">
             <el-select
               v-model="queryParams.status"
               placeholder="用户状态"
@@ -142,7 +142,7 @@
               >导入</el-button
             >
           </el-col>
-          <el-col :span="1.5">
+          <!-- <el-col :span="1.5">
             <el-button
               type="warning"
               plain
@@ -152,7 +152,7 @@
               v-hasPermi="['system:user:export']"
               >导出</el-button
             >
-          </el-col>
+          </el-col> -->
           <right-toolbar
             :showSearch.sync="showSearch"
             @queryTable="getList"
@@ -333,7 +333,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
+              <el-input
+                v-model="form.email"
+                placeholder="请输入邮箱"
+                maxlength="50"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -396,7 +400,11 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="岗位">
-              <el-select v-model="form.postIds" multiple placeholder="请选择岗位">
+              <el-select
+                v-model="form.postIds"
+                multiple
+                placeholder="请选择岗位"
+              >
                 <el-option
                   v-for="item in postOptions"
                   :key="item.postId"
@@ -409,7 +417,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="角色">
-              <el-select v-model="form.roleIds" multiple placeholder="请选择角色">
+              <el-select
+                v-model="form.roleIds"
+                multiple
+                placeholder="请选择角色"
+              >
                 <el-option
                   v-for="item in roleOptions"
                   :key="item.roleId"
@@ -463,7 +475,8 @@
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
           <div class="el-upload__tip" slot="tip">
-            <el-checkbox v-model="upload.updateSupport" /> 是否更新已经存在的用户数据
+            <el-checkbox v-model="upload.updateSupport" />
+            是否更新已经存在的用户数据
           </div>
           <span>仅允许导入xls、xlsx格式文件。</span>
           <el-link
@@ -585,7 +598,9 @@ export default {
             trigger: "blur",
           },
         ],
-        nickName: [{ required: true, message: "用户昵称不能为空", trigger: "blur" }],
+        nickName: [
+          { required: true, message: "用户昵称不能为空", trigger: "blur" },
+        ],
         password: [
           { required: true, message: "用户密码不能为空", trigger: "blur" },
           {
@@ -629,11 +644,13 @@ export default {
     /** 查询用户列表 */
     getList() {
       this.loading = true;
-      listUser(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.userList = this.formatObjectArrayNullProperty(response.rows);
-        this.total = response.total;
-        this.loading = false;
-      });
+      listUser(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.userList = this.formatObjectArrayNullProperty(response.rows);
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     /** 查询部门下拉树结构 */
     getDeptTree() {

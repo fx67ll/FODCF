@@ -27,7 +27,11 @@
         />
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="数据状态" clearable>
+        <el-select
+          v-model="queryParams.status"
+          placeholder="数据状态"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
@@ -37,10 +41,16 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -80,7 +90,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -90,7 +100,7 @@
           v-hasPermi="['system:dict:export']"
           >导出</el-button
         >
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="warning"
@@ -101,7 +111,10 @@
           >关闭</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -113,9 +126,10 @@
       <el-table-column label="字典编码" align="center" prop="dictCode" />
       <el-table-column label="字典标签" align="center" prop="dictLabel">
         <template slot-scope="scope">
-          <span v-if="scope.row.listClass == '' || scope.row.listClass == 'default'">{{
-            scope.row.dictLabel
-          }}</span>
+          <span
+            v-if="scope.row.listClass == '' || scope.row.listClass == 'default'"
+            >{{ scope.row.dictLabel }}</span
+          >
           <el-tag
             v-else
             :type="scope.row.listClass == 'primary' ? '' : scope.row.listClass"
@@ -127,7 +141,10 @@
       <el-table-column label="字典排序" align="center" prop="dictSort" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -136,12 +153,21 @@
         prop="remark"
         :show-overflow-tooltip="true"
       />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -193,7 +219,11 @@
           <el-input v-model="form.cssClass" placeholder="请输入样式属性" />
         </el-form-item>
         <el-form-item label="显示排序" prop="dictSort">
-          <el-input-number v-model="form.dictSort" controls-position="right" :min="0" />
+          <el-input-number
+            v-model="form.dictSort"
+            controls-position="right"
+            :min="0"
+          />
         </el-form-item>
         <el-form-item label="回显样式" prop="listClass">
           <el-select v-model="form.listClass">
@@ -232,8 +262,17 @@
 </template>
 
 <script>
-import { listData, getData, delData, addData, updateData } from "@/api/system/dict/data";
-import { optionselect as getDictOptionselect, getType } from "@/api/system/dict/type";
+import {
+  listData,
+  getData,
+  delData,
+  addData,
+  updateData,
+} from "@/api/system/dict/data";
+import {
+  optionselect as getDictOptionselect,
+  getType,
+} from "@/api/system/dict/type";
 
 export default {
   name: "Data",
@@ -301,9 +340,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        dictLabel: [{ required: true, message: "数据标签不能为空", trigger: "blur" }],
-        dictValue: [{ required: true, message: "数据键值不能为空", trigger: "blur" }],
-        dictSort: [{ required: true, message: "数据顺序不能为空", trigger: "blur" }],
+        dictLabel: [
+          { required: true, message: "数据标签不能为空", trigger: "blur" },
+        ],
+        dictValue: [
+          { required: true, message: "数据键值不能为空", trigger: "blur" },
+        ],
+        dictSort: [
+          { required: true, message: "数据顺序不能为空", trigger: "blur" },
+        ],
       },
     };
   },
@@ -400,14 +445,20 @@ export default {
         if (valid) {
           if (this.form.dictCode != undefined) {
             updateData(this.form).then((response) => {
-              this.$store.dispatch("dict/removeDict", this.queryParams.dictType);
+              this.$store.dispatch(
+                "dict/removeDict",
+                this.queryParams.dictType
+              );
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
             addData(this.form).then((response) => {
-              this.$store.dispatch("dict/removeDict", this.queryParams.dictType);
+              this.$store.dispatch(
+                "dict/removeDict",
+                this.queryParams.dictType
+              );
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();

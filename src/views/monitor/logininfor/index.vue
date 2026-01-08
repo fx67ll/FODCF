@@ -26,7 +26,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item label="登录状态" prop="status">
         <el-select
           v-model="queryParams.status"
           placeholder="登录状态"
@@ -54,10 +54,16 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -97,7 +103,7 @@
           >解锁</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -107,8 +113,11 @@
           v-hasPermi="['monitor:logininfor:export']"
           >导出</el-button
         >
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      </el-col> -->
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -151,7 +160,10 @@
       <el-table-column label="操作系统" align="center" prop="os" />
       <el-table-column label="登录状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_common_status"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -234,11 +246,13 @@ export default {
     /** 查询登录日志列表 */
     getList() {
       this.loading = true;
-      list(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.list = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      list(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.list = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     /** 搜索按钮操作 */
     handleQuery() {

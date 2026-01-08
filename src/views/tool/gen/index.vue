@@ -36,10 +36,16 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -90,7 +96,10 @@
           >删除</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -98,7 +107,11 @@
       :data="tableList"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" align="center" width="55"></el-table-column>
+      <el-table-column
+        type="selection"
+        align="center"
+        width="55"
+      ></el-table-column>
       <el-table-column label="序号" type="index" width="50" align="center">
         <template slot-scope="scope">
           <span>{{
@@ -127,9 +140,23 @@
         :show-overflow-tooltip="true"
         width="120"
       />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160" />
-      <el-table-column label="更新时间" align="center" prop="updateTime" width="160" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="160"
+      />
+      <el-table-column
+        label="更新时间"
+        align="center"
+        prop="updateTime"
+        width="160"
+      />
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             type="text"
@@ -215,7 +242,13 @@
 </template>
 
 <script>
-import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/gen";
+import {
+  listTable,
+  previewTable,
+  delTable,
+  genCode,
+  synchDb,
+} from "@/api/tool/gen";
 import importTable from "./importTable";
 import hljs from "highlight.js/lib/highlight";
 import "highlight.js/styles/github-gist.css";
@@ -223,7 +256,10 @@ hljs.registerLanguage("java", require("highlight.js/lib/languages/java"));
 hljs.registerLanguage("xml", require("highlight.js/lib/languages/xml"));
 hljs.registerLanguage("html", require("highlight.js/lib/languages/xml"));
 hljs.registerLanguage("vue", require("highlight.js/lib/languages/xml"));
-hljs.registerLanguage("javascript", require("highlight.js/lib/languages/javascript"));
+hljs.registerLanguage(
+  "javascript",
+  require("highlight.js/lib/languages/javascript")
+);
 hljs.registerLanguage("sql", require("highlight.js/lib/languages/sql"));
 
 export default {
@@ -282,11 +318,13 @@ export default {
     /** 查询表集合 */
     getList() {
       this.loading = true;
-      listTable(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.tableList = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      listTable(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.tableList = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -305,7 +343,10 @@ export default {
           this.$modal.msgSuccess("成功生成到自定义路径：" + row.genPath);
         });
       } else {
-        this.$download.zip("/tool/gen/batchGenCode?tables=" + tableNames, "fx67ll.zip");
+        this.$download.zip(
+          "/tool/gen/batchGenCode?tables=" + tableNames,
+          "fx67ll.zip"
+        );
       }
     },
     /** 同步数据库操作 */
@@ -341,7 +382,10 @@ export default {
     },
     /** 高亮显示 */
     highlightedCode(code, key) {
-      const vmName = key.substring(key.lastIndexOf("/") + 1, key.indexOf(".vm"));
+      const vmName = key.substring(
+        key.lastIndexOf("/") + 1,
+        key.indexOf(".vm")
+      );
       var language = vmName.substring(vmName.indexOf(".") + 1, vmName.length);
       const result = hljs.highlight(language, code || "", true);
       return result.value || "&nbsp;";

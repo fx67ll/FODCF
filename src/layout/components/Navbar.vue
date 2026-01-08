@@ -1,9 +1,17 @@
 <template>
   <div class="navbar">
-    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container"
-      @toggleClick="toggleSideBar" />
+    <hamburger
+      id="hamburger-container"
+      :is-active="sidebar.opened"
+      class="hamburger-container"
+      @toggleClick="toggleSideBar"
+    />
 
-    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" v-if="!topNav" />
+    <breadcrumb
+      id="breadcrumb-container"
+      class="breadcrumb-container"
+      v-if="!topNav"
+    />
     <top-nav id="topmenu-container" class="topmenu-container" v-if="topNav" />
 
     <div class="right-menu">
@@ -14,7 +22,10 @@
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <el-tooltip content="fx67ll's H5 App - https://life.fx67ll.com" placement="bottom">
+        <el-tooltip
+          content="fx67ll's H5 App - https://life.fx67ll.com"
+          placement="bottom"
+        >
           <fx67ll-doc id="fx67ll-doc" class="right-menu-item hover-effect" />
         </el-tooltip>
 
@@ -25,7 +36,10 @@
         </el-tooltip> -->
       </template>
 
-      <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
+      <el-dropdown
+        class="avatar-container right-menu-item hover-effect"
+        trigger="click"
+      >
         <div class="avatar-wrapper">
           <img :src="avatar" class="user-avatar" />
           <i class="el-icon-caret-bottom" />
@@ -76,7 +90,10 @@ export default {
     };
   },
   mounted() {
-    if (Cookies.get("username") === "user" || parseInt(Cookies.get("userId")) > 100000) {
+    if (
+      Cookies.get("username") === "user" ||
+      parseInt(Cookies.get("userId")) > 100000
+    ) {
       this.isUser = true;
     } else {
       this.isUser = false;
@@ -116,7 +133,7 @@ export default {
             location.href = "/index";
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     },
   },
 };

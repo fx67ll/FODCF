@@ -24,7 +24,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="类型" prop="noticeType">
+      <el-form-item label="公告类型" prop="noticeType">
         <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
           <el-option
             v-for="dict in dict.type.sys_notice_type"

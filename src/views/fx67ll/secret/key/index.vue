@@ -17,10 +17,16 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -60,7 +66,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -70,8 +76,11 @@
           v-hasPermi="['secret:key:export']"
           >导出</el-button
         >
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      </el-col> -->
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -90,7 +99,12 @@
         "
       />
       <!-- <el-table-column label="秘钥主键" align="center" prop="secretId" /> -->
-      <el-table-column label="秘钥键" align="center" prop="secretKey" width="120" />
+      <el-table-column
+        label="秘钥键"
+        align="center"
+        prop="secretKey"
+        width="120"
+      />
       <el-table-column label="秘钥值" align="center" prop="secretValueEncrypt">
         <template slot-scope="scope">
           <el-tooltip
@@ -184,7 +198,13 @@
 </template>
 
 <script>
-import { listKey, getKey, delKey, addKey, updateKey } from "@/api/fx67ll/secret/key";
+import {
+  listKey,
+  getKey,
+  delKey,
+  addKey,
+  updateKey,
+} from "@/api/fx67ll/secret/key";
 import { encryptString, decryptString } from "@/utils/index";
 
 export default {
@@ -219,8 +239,12 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        secretKey: [{ required: true, message: "秘钥键不能为空", trigger: "blur" }],
-        secretValue: [{ required: true, message: "秘钥值不能为空", trigger: "blur" }],
+        secretKey: [
+          { required: true, message: "秘钥键不能为空", trigger: "blur" },
+        ],
+        secretValue: [
+          { required: true, message: "秘钥值不能为空", trigger: "blur" },
+        ],
       },
       cryptoSaltKey: null,
     };
@@ -242,7 +266,10 @@ export default {
       datalist.forEach((item) => {
         formatList.push({
           ...item,
-          secretValueEncrypt: encryptString(item?.secretValue, this.cryptoSaltKey),
+          secretValueEncrypt: encryptString(
+            item?.secretValue,
+            this.cryptoSaltKey
+          ),
         });
       });
       return formatList;

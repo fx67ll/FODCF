@@ -17,7 +17,11 @@
         />
       </el-form-item>
       <el-form-item label="任务组名" prop="jobGroup">
-        <el-select v-model="queryParams.jobGroup" placeholder="请选择任务组名" clearable>
+        <el-select
+          v-model="queryParams.jobGroup"
+          placeholder="请选择任务组名"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_job_group"
             :key="dict.value"
@@ -27,7 +31,11 @@
         </el-select>
       </el-form-item>
       <el-form-item label="任务状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable>
+        <el-select
+          v-model="queryParams.status"
+          placeholder="请选择任务状态"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_job_status"
             :key="dict.value"
@@ -37,10 +45,16 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -80,7 +94,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -90,7 +104,7 @@
           v-hasPermi="['monitor:job:export']"
           >导出</el-button
         >
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="info"
@@ -102,7 +116,10 @@
           >日志</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -111,7 +128,12 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="任务编号" width="100" align="center" prop="jobId" />
+      <el-table-column
+        label="任务编号"
+        width="100"
+        align="center"
+        prop="jobId"
+      />
       <el-table-column
         label="任务名称"
         align="center"
@@ -120,7 +142,10 @@
       />
       <el-table-column label="任务组名" align="center" prop="jobGroup">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_job_group" :value="scope.row.jobGroup" />
+          <dict-tag
+            :options="dict.type.sys_job_group"
+            :value="scope.row.jobGroup"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -145,7 +170,11 @@
           ></el-switch>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -244,12 +273,18 @@
                   <i class="el-icon-question"></i>
                 </el-tooltip>
               </span>
-              <el-input v-model="form.invokeTarget" placeholder="请输入调用目标字符串" />
+              <el-input
+                v-model="form.invokeTarget"
+                placeholder="请输入调用目标字符串"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="cron表达式" prop="cronExpression">
-              <el-input v-model="form.cronExpression" placeholder="请输入cron执行表达式">
+              <el-input
+                v-model="form.cronExpression"
+                placeholder="请输入cron执行表达式"
+              >
                 <template slot="append">
                   <el-button type="primary" @click="handleShowCron">
                     生成表达式
@@ -326,11 +361,17 @@
             <el-form-item label="任务名称：">{{ form.jobName }}</el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="任务分组：">{{ jobGroupFormat(form) }}</el-form-item>
-            <el-form-item label="创建时间：">{{ form.createTime }}</el-form-item>
+            <el-form-item label="任务分组：">{{
+              jobGroupFormat(form)
+            }}</el-form-item>
+            <el-form-item label="创建时间：">{{
+              form.createTime
+            }}</el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="cron表达式：">{{ form.cronExpression }}</el-form-item>
+            <el-form-item label="cron表达式：">{{
+              form.cronExpression
+            }}</el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="下次执行时间：">{{
@@ -338,7 +379,9 @@
             }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="调用目标方法：">{{ form.invokeTarget }}</el-form-item>
+            <el-form-item label="调用目标方法：">{{
+              form.invokeTarget
+            }}</el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="任务状态：">
@@ -423,12 +466,22 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        jobName: [{ required: true, message: "任务名称不能为空", trigger: "blur" }],
+        jobName: [
+          { required: true, message: "任务名称不能为空", trigger: "blur" },
+        ],
         invokeTarget: [
-          { required: true, message: "调用目标字符串不能为空", trigger: "blur" },
+          {
+            required: true,
+            message: "调用目标字符串不能为空",
+            trigger: "blur",
+          },
         ],
         cronExpression: [
-          { required: true, message: "cron执行表达式不能为空", trigger: "blur" },
+          {
+            required: true,
+            message: "cron执行表达式不能为空",
+            trigger: "blur",
+          },
         ],
       },
     };

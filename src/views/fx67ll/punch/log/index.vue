@@ -9,7 +9,11 @@
       label-width="68px"
     >
       <el-form-item label="打卡类型" prop="punchType">
-        <el-select v-model="queryParams.punchType" placeholder="请选择打卡类型" clearable>
+        <el-select
+          v-model="queryParams.punchType"
+          placeholder="请选择打卡类型"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.fx67ll_punch_type"
             :key="dict.value"
@@ -75,10 +79,16 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -118,7 +128,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -128,7 +138,7 @@
           v-hasPermi="['punch:log:export']"
           >导出</el-button
         >
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="info"
@@ -140,7 +150,10 @@
           >查看月度工时统计</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -153,8 +166,12 @@
       <el-table-column label="打卡类型" align="center" prop="punchType">
         <template slot-scope="scope">
           <!-- <dict-tag :options="dict.type.fx67ll_punch_type" :value="scope.row.punchType" /> -->
-          <span style="color: #2ecc71" v-if="scope.row.punchType === '1'">上班打卡</span>
-          <span style="color: #ff5a5f" v-if="scope.row.punchType === '2'">下班打卡</span>
+          <span style="color: #2ecc71" v-if="scope.row.punchType === '1'"
+            >上班打卡</span
+          >
+          <span style="color: #ff5a5f" v-if="scope.row.punchType === '2'"
+            >下班打卡</span
+          >
           <span
             style="color: #999999"
             v-if="scope.row.punchType !== '1' && scope.row.punchType !== '2'"
@@ -163,19 +180,37 @@
         </template>
       </el-table-column>
       <el-table-column label="打卡人" align="center" prop="updateBy" />
-      <el-table-column label="打卡时间" align="center" prop="updateTime" width="180">
+      <el-table-column
+        label="打卡时间"
+        align="center"
+        prop="updateTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column label="打卡记录备注" align="center" prop="punchRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -287,7 +322,11 @@
           >
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月总工时 (小时)</span>
-              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+              <el-tooltip
+                :style="{ cursor: 'pointer' }"
+                effect="dark"
+                placement="top"
+              >
                 <div slot="content">
                   若您有正常的打卡记录并且没有缺卡记录，但是当月总工时仍为0，<br />
                   则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间。
@@ -298,7 +337,9 @@
             <template slot-scope="scope">
               <span style="color: #e6a23c"
                 >{{
-                  scope.row.totalWorkHours > 0 ? scope.row.totalWorkHours.toFixed(2) : 0
+                  scope.row.totalWorkHours > 0
+                    ? scope.row.totalWorkHours.toFixed(2)
+                    : 0
                 }}
               </span>
             </template>
@@ -310,7 +351,9 @@
             width="120"
           >
             <template slot-scope="scope">
-              <span style="color: #409eff">{{ scope.row.totalPunchDays }} </span>
+              <span style="color: #409eff"
+                >{{ scope.row.totalPunchDays }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column
@@ -344,7 +387,11 @@
           >
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月日均工时 (小时)</span>
-              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+              <el-tooltip
+                :style="{ cursor: 'pointer' }"
+                effect="dark"
+                placement="top"
+              >
                 <div slot="content">
                   当月日均工时 = 当月总工时 / 正常打卡天数。<br /><br />
                   若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
@@ -359,9 +406,13 @@
                 v-if="scope.row.workHoursPerDay.toFixed(2) >= 8"
                 >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
-              <span style="color: #ff5a5f" v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
+              <span
+                style="color: #ff5a5f"
+                v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
                 >{{
-                  scope.row.workHoursPerDay > 0 ? scope.row.workHoursPerDay.toFixed(2) : 0
+                  scope.row.workHoursPerDay > 0
+                    ? scope.row.workHoursPerDay.toFixed(2)
+                    : 0
                 }}
               </span>
             </template>
@@ -373,8 +424,14 @@
             width="175"
           >
             <template slot="header">
-              <span :style="{ paddingRight: '4px' }">当月净日均工时 (小时)</span>
-              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
+              <span :style="{ paddingRight: '4px' }"
+                >当月净日均工时 (小时)</span
+              >
+              <el-tooltip
+                :style="{ cursor: 'pointer' }"
+                effect="dark"
+                placement="top"
+              >
                 <div slot="content">
                   当月日均工时 = 当月净日均工时 / 所有打卡天数。<br /><br />
                   若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
@@ -387,20 +444,28 @@
               <span
                 style="color: #2ecc71"
                 v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) >= 8
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                    2
+                  ) >= 8
                 "
                 >{{
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) || 0
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                    2
+                  ) || 0
                 }}
               </span>
               <span
                 style="color: #ff5a5f"
                 v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2) < 8
+                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                    2
+                  ) < 8
                 "
                 >{{
                   scope.row.totalWorkHours / scope.row.totalPunchDays > 0
-                    ? (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(2)
+                    ? (
+                        scope.row.totalWorkHours / scope.row.totalPunchDays
+                      ).toFixed(2)
                     : 0
                 }}
               </span>
@@ -428,10 +493,14 @@
           <el-table-column label="缺卡日期" align="center" prop="punchDay" />
           <el-table-column label="缺卡类型" align="center" prop="lostPunchType">
             <template slot-scope="scope">
-              <span style="color: #2ecc71" v-if="scope.row.lostPunchType === '上班缺卡'"
+              <span
+                style="color: #2ecc71"
+                v-if="scope.row.lostPunchType === '上班缺卡'"
                 >上班缺卡</span
               >
-              <span style="color: #ff5a5f" v-if="scope.row.lostPunchType === '下班缺卡'"
+              <span
+                style="color: #ff5a5f"
+                v-if="scope.row.lostPunchType === '下班缺卡'"
                 >下班缺卡</span
               >
               <span
@@ -510,8 +579,12 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        punchType: [{ required: true, message: "打卡类型不能为空", trigger: "change" }],
-        updateTime: [{ required: true, message: "打卡时间不能为空", trigger: "change" }],
+        punchType: [
+          { required: true, message: "打卡类型不能为空", trigger: "change" },
+        ],
+        updateTime: [
+          { required: true, message: "打卡时间不能为空", trigger: "change" },
+        ],
       },
       // 工时统计相关参数
       logTotalOpen: false,

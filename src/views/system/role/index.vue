@@ -25,7 +25,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item label="角色状态" prop="status">
         <el-select
           v-model="queryParams.status"
           placeholder="角色状态"
@@ -40,7 +40,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间">
+      <!-- <el-form-item label="创建时间">
         <el-date-picker
           v-model="dateRange"
           style="width: 240px"
@@ -50,12 +50,18 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
         ></el-date-picker>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -95,7 +101,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -105,8 +111,11 @@
           v-hasPermi="['system:role:export']"
           >导出</el-button
         >
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      </el-col> -->
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -139,12 +148,21 @@
           ></el-switch>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope" v-if="scope.row.roleId !== 1">
           <el-button
             size="mini"
@@ -222,7 +240,11 @@
           <el-input v-model="form.roleKey" placeholder="请输入权限字符" />
         </el-form-item>
         <el-form-item label="角色顺序" prop="roleSort">
-          <el-input-number v-model="form.roleSort" controls-position="right" :min="0" />
+          <el-input-number
+            v-model="form.roleSort"
+            controls-position="right"
+            :min="0"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status">
@@ -348,7 +370,10 @@ import {
   changeRoleStatus,
   deptTreeSelect,
 } from "@/api/system/role";
-import { treeselect as menuTreeselect, roleMenuTreeselect } from "@/api/system/menu";
+import {
+  treeselect as menuTreeselect,
+  roleMenuTreeselect,
+} from "@/api/system/menu";
 
 export default {
   name: "Role",
@@ -424,9 +449,15 @@ export default {
       },
       // 表单校验
       rules: {
-        roleName: [{ required: true, message: "角色名称不能为空", trigger: "blur" }],
-        roleKey: [{ required: true, message: "权限字符不能为空", trigger: "blur" }],
-        roleSort: [{ required: true, message: "角色顺序不能为空", trigger: "blur" }],
+        roleName: [
+          { required: true, message: "角色名称不能为空", trigger: "blur" },
+        ],
+        roleKey: [
+          { required: true, message: "权限字符不能为空", trigger: "blur" },
+        ],
+        roleSort: [
+          { required: true, message: "角色顺序不能为空", trigger: "blur" },
+        ],
       },
     };
   },
@@ -437,11 +468,13 @@ export default {
     /** 查询角色列表 */
     getList() {
       this.loading = true;
-      listRole(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.roleList = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      listRole(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.roleList = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     /** 查询菜单树结构 */
     getMenuTreeselect() {

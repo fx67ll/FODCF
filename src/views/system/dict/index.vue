@@ -26,7 +26,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item label="字典状态" prop="status">
         <el-select
           v-model="queryParams.status"
           placeholder="字典状态"
@@ -41,7 +41,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间">
+      <!-- <el-form-item label="创建时间">
         <el-date-picker
           v-model="dateRange"
           style="width: 240px"
@@ -51,12 +51,18 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"
         ></el-date-picker>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -96,7 +102,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -106,7 +112,7 @@
           v-hasPermi="['system:dict:export']"
           >导出</el-button
         >
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="danger"
@@ -118,7 +124,10 @@
           >刷新缓存</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -134,7 +143,11 @@
         prop="dictName"
         :show-overflow-tooltip="true"
       />
-      <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
+      <el-table-column
+        label="字典类型"
+        align="center"
+        :show-overflow-tooltip="true"
+      >
         <template slot-scope="scope">
           <router-link
             :to="'/system/dict-data/index/' + scope.row.dictId"
@@ -146,7 +159,10 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -155,12 +171,21 @@
         prop="remark"
         :show-overflow-tooltip="true"
       />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -278,8 +303,12 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        dictName: [{ required: true, message: "字典名称不能为空", trigger: "blur" }],
-        dictType: [{ required: true, message: "字典类型不能为空", trigger: "blur" }],
+        dictName: [
+          { required: true, message: "字典名称不能为空", trigger: "blur" },
+        ],
+        dictType: [
+          { required: true, message: "字典类型不能为空", trigger: "blur" },
+        ],
       },
     };
   },
@@ -290,11 +319,13 @@ export default {
     /** 查询字典类型列表 */
     getList() {
       this.loading = true;
-      listType(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.typeList = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      listType(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.typeList = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     // 取消按钮
     cancel() {

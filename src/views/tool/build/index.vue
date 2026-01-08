@@ -98,7 +98,12 @@
         >
           复制代码
         </el-button>
-        <el-button class="delete-btn" icon="el-icon-delete" type="text" @click="empty">
+        <el-button
+          class="delete-btn"
+          icon="el-icon-delete"
+          type="text"
+          @click="empty"
+        >
           清空
         </el-button>
       </div>
@@ -167,7 +172,12 @@ import {
   formConf,
 } from "@/utils/generator/config";
 import { beautifierConf, titleCase } from "@/utils/index";
-import { makeUpHtml, vueTemplate, vueScript, cssStyle } from "@/utils/generator/html";
+import {
+  makeUpHtml,
+  vueTemplate,
+  vueScript,
+  cssStyle,
+} from "@/utils/generator/html";
 import { makeUpJs } from "@/utils/generator/js";
 import { makeUpCss } from "@/utils/generator/css";
 import drawingDefault from "@/utils/generator/drawingDefault";
@@ -223,7 +233,8 @@ export default {
       ) {
         return;
       }
-      this.activeData.placeholder = this.activeData.placeholder.replace(oldVal, "") + val;
+      this.activeData.placeholder =
+        this.activeData.placeholder.replace(oldVal, "") + val;
     },
     activeId: {
       handler(val) {
@@ -306,9 +317,11 @@ export default {
       document.getElementById("copyNode").click();
     },
     empty() {
-      this.$confirm("确定要清空所有组件吗？", "提示", { type: "warning" }).then(() => {
-        this.drawingList = [];
-      });
+      this.$confirm("确定要清空所有组件吗？", "提示", { type: "warning" }).then(
+        () => {
+          this.drawingList = [];
+        }
+      );
     },
     drawingItemCopy(item, parent) {
       let clone = JSON.parse(JSON.stringify(item));
@@ -325,7 +338,9 @@ export default {
         item.componentName = `row${this.idGlobal}`;
       }
       if (Array.isArray(item.children)) {
-        item.children = item.children.map((childItem) => this.createIdAndKey(childItem));
+        item.children = item.children.map((childItem) =>
+          this.createIdAndKey(childItem)
+        );
       }
       return item;
     },
@@ -386,7 +401,8 @@ export default {
         list.splice(index, 1, newTag);
       } else {
         list.forEach((item) => {
-          if (Array.isArray(item.children)) this.updateDrawingList(newTag, item.children);
+          if (Array.isArray(item.children))
+            this.updateDrawingList(newTag, item.children);
         });
       }
     },

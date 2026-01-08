@@ -59,10 +59,16 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -90,7 +96,7 @@
           >清空</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -100,7 +106,7 @@
           v-hasPermi="['monitor:job:export']"
           >导出</el-button
         >
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="warning"
@@ -111,7 +117,10 @@
           >关闭</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -120,7 +129,12 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="日志编号" width="80" align="center" prop="jobLogId" />
+      <el-table-column
+        label="日志编号"
+        width="80"
+        align="center"
+        prop="jobLogId"
+      />
       <el-table-column
         label="任务名称"
         align="center"
@@ -134,7 +148,10 @@
         :show-overflow-tooltip="true"
       >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_job_group" :value="scope.row.jobGroup" />
+          <dict-tag
+            :options="dict.type.sys_job_group"
+            :value="scope.row.jobGroup"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -151,15 +168,27 @@
       />
       <el-table-column label="执行状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_common_status"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="执行时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="执行时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -197,13 +226,19 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="任务分组：">{{ form.jobGroup }}</el-form-item>
-            <el-form-item label="执行时间：">{{ form.createTime }}</el-form-item>
+            <el-form-item label="执行时间：">{{
+              form.createTime
+            }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="调用方法：">{{ form.invokeTarget }}</el-form-item>
+            <el-form-item label="调用方法：">{{
+              form.invokeTarget
+            }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="日志信息：">{{ form.jobMessage }}</el-form-item>
+            <el-form-item label="日志信息：">{{
+              form.jobMessage
+            }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="执行状态：">
@@ -278,11 +313,13 @@ export default {
     /** 查询调度日志列表 */
     getList() {
       this.loading = true;
-      listJobLog(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.jobLogList = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      listJobLog(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.jobLogList = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     // 返回按钮
     handleClose() {

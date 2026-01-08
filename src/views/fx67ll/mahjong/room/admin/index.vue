@@ -1,123 +1,306 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px"
-      label-position="right">
+    <el-form
+      :model="queryParams"
+      ref="queryForm"
+      size="small"
+      :inline="true"
+      v-show="showSearch"
+      label-width="68px"
+      label-position="right"
+    >
       <el-form-item label="管理员" prop="userName" style="margin-left: -10px">
-        <el-input v-model="queryParams.userName" placeholder="请输入管理员名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input
+          v-model="queryParams.userName"
+          placeholder="请输入管理员名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="麻将室" prop="mahjongRoomName" style="margin-left: 5px">
-        <el-input v-model="queryParams.mahjongRoomName" placeholder="请输入麻将室名称" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item
+        label="麻将室"
+        prop="mahjongRoomName"
+        style="margin-left: 5px"
+      >
+        <el-input
+          v-model="queryParams.mahjongRoomName"
+          placeholder="请输入麻将室名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
       </el-form-item>
-      <el-form-item label="状态" prop="mahjongRoomStatus" style="margin-left: -10px">
-        <el-select v-model="queryParams.mahjongRoomStatus" placeholder="请选择麻将室状态" clearable>
-          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-            :value="dict.value" />
+      <el-form-item
+        label="状态"
+        prop="mahjongRoomStatus"
+        style="margin-left: -10px"
+      >
+        <el-select
+          v-model="queryParams.mahjongRoomStatus"
+          placeholder="请选择麻将室状态"
+          clearable
+        >
+          <el-option
+            v-for="dict in dict.type.sys_normal_disable"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" style="margin-left: 20px">
-        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+        <el-date-picker
+          v-model="daterangeCreateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" style="margin-left: 2px">
-        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+        <el-date-picker
+          v-model="daterangeUpdateTime"
+          style="width: 240px"
+          value-format="yyyy-MM-dd"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          clearable
+        ></el-date-picker>
       </el-form-item>
       <el-form-item style="margin-left: 20px">
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
+          >搜索</el-button
+        >
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['mahjong:room:add']">新增</el-button>
+        <el-button
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleAdd"
+          v-hasPermi="['mahjong:room:add']"
+          >新增</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['mahjong:room:edit']">修改</el-button>
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-edit"
+          size="mini"
+          :disabled="single"
+          @click="handleUpdate"
+          v-hasPermi="['mahjong:room:edit']"
+          >修改</el-button
+        >
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['mahjong:room:remove']">删除</el-button>
+        <el-button
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['mahjong:room:remove']"
+          >删除</el-button
+        >
       </el-col>
-      <!-- 导出按钮，无法使用，也不开放商用，后期再说吧 -->
       <!-- <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['mahjong:room:export']">导出</el-button>
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+          v-hasPermi="['mahjong:room:export']"
+          >导出</el-button
+        >
       </el-col> -->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="roomList" @selection-change="handleSelectionChange">
+    <el-table
+      v-loading="loading"
+      :data="roomList"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="管理员" align="center" prop="userName" />
-      <el-table-column label="麻将室名称" align="center" prop="mahjongRoomName" />
-      <el-table-column label="对外描述" align="center" prop="mahjongRoomDescription" />
-      <el-table-column label="容纳人数" align="center" prop="mahjongRoomCapacity" />
-      <el-table-column label="计费配置" align="center" prop="mahjongRoomPriceConfig" />
-      <el-table-column label="麻将室状态" align="center" prop="mahjongRoomStatus" width="100">
+      <el-table-column
+        label="麻将室名称"
+        align="center"
+        prop="mahjongRoomName"
+      />
+      <el-table-column
+        label="对外描述"
+        align="center"
+        prop="mahjongRoomDescription"
+      />
+      <el-table-column
+        label="容纳人数"
+        align="center"
+        prop="mahjongRoomCapacity"
+      />
+      <el-table-column
+        label="计费配置"
+        align="center"
+        prop="mahjongRoomPriceConfig"
+      />
+      <el-table-column
+        label="麻将室状态"
+        align="center"
+        prop="mahjongRoomStatus"
+        width="100"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.mahjongRoomStatus" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.mahjongRoomStatus"
+          />
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="mahjongRoomRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
+      <el-table-column
+        label="记录创建者"
+        align="center"
+        prop="createBy"
+        width="100"
+      />
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        width="160"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
+          <span
+            >{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
+      <el-table-column
+        label="记录更新者"
+        align="center"
+        prop="updateBy"
+        width="100"
+      />
+      <el-table-column
+        label="记录更新时间"
+        align="center"
+        prop="updateTime"
+        width="160"
+      >
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+        fixed="right"
+      >
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['mahjong:room:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['mahjong:room:remove']">删除</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleUpdate(scope.row)"
+            v-hasPermi="['mahjong:room:edit']"
+            >修改</el-button
+          >
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['mahjong:room:remove']"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 添加或修改麻将室对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
+    <el-dialog
+      :title="title"
+      :visible.sync="open"
+      :close-on-click-modal="false"
+      width="800px"
+      append-to-body
+    >
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="用户ID" prop="userId">
           <el-input v-model="form.userId" placeholder="请输入用户ID" />
         </el-form-item>
         <el-form-item label="名称" prop="mahjongRoomName">
-          <el-input v-model="form.mahjongRoomName" placeholder="请输入麻将室名称" />
+          <el-input
+            v-model="form.mahjongRoomName"
+            placeholder="请输入麻将室名称"
+          />
         </el-form-item>
         <el-form-item label="对外描述" prop="mahjongRoomDescription">
           <editor v-model="form.mahjongRoomDescription" :min-height="192" />
         </el-form-item>
         <el-form-item label="容纳人数" prop="mahjongRoomCapacity">
-          <el-input v-model="form.mahjongRoomCapacity" placeholder="请输入容纳人数" />
+          <el-input
+            v-model="form.mahjongRoomCapacity"
+            placeholder="请输入容纳人数"
+          />
         </el-form-item>
         <!-- 预留：计费配置（未来存储分时段/包夜规则等JSON数据） -->
         <!-- <el-form-item label="计费配置" prop="mahjongRoomPriceConfig">
           <editor v-model="form.mahjongRoomPriceConfig" :min-height="192" />
         </el-form-item> -->
         <el-form-item label="状态" prop="mahjongRoomStatus">
-          <el-select v-model="form.mahjongRoomStatus" placeholder="请选择麻将室状态" clearable>
-            <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-              :value="dict.value" />
+          <el-select
+            v-model="form.mahjongRoomStatus"
+            placeholder="请选择麻将室状态"
+            clearable
+          >
+            <el-option
+              v-for="dict in dict.type.sys_normal_disable"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="mahjongRoomRemark">
-          <el-input v-model="form.mahjongRoomRemark" type="textarea" placeholder="请输入备注内容" />
+          <el-input
+            v-model="form.mahjongRoomRemark"
+            type="textarea"
+            placeholder="请输入备注内容"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -313,7 +496,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => { });
+        .catch(() => {});
     },
     /** 导出按钮操作，无法使用，也不开放商用，后期再说吧 */
     // handleExport() {

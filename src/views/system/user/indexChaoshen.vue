@@ -20,6 +20,10 @@
             <el-input v-model="queryParams.contactInfo" placeholder="请输入联系方式" clearable style="width: 240px"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
+          <el-form-item label="用户备注" prop="remark">
+            <el-input v-model="queryParams.remark" placeholder="请输入用户备注" clearable style="width: 240px"
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
           <el-form-item label="用户性别" prop="sex">
             <el-select v-model="queryParams.sex" placeholder="请选择用户性别" clearable style="width: 240px">
               <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
@@ -218,6 +222,7 @@ export default {
         nickName: undefined,
         // email: undefined,
         contactInfo: undefined,
+        remark: undefined,
         sex: undefined,
         status: undefined,
       },

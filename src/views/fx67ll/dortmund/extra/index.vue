@@ -8,7 +8,7 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="总金额" prop="extraMoney">
+      <el-form-item label="总金额" prop="extraMoney" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.extraMoney"
           placeholder="请输入当前外快总金额"
@@ -17,7 +17,11 @@
         />
       </el-form-item>
       <el-form-item label="是否盈利" prop="isWin">
-        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable>
+        <el-select
+          v-model="queryParams.isWin"
+          placeholder="请选择是否盈利"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_yes_no"
             :key="dict.value"
@@ -26,7 +30,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="盈亏金额" prop="winMoney">
+      <el-form-item label="盈亏金额" prop="winMoney" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.winMoney"
           placeholder="请输入外快盈亏金额"
@@ -34,7 +38,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="当前本金" prop="seedMoney">
+      <el-form-item label="当前本金" prop="seedMoney" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.seedMoney"
           placeholder="请输入当前投入本金"
@@ -43,7 +47,7 @@
         />
       </el-form-item>
 
-      <el-form-item label="落袋金额" prop="saveMoney">
+      <el-form-item label="落袋金额" prop="saveMoney" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.saveMoney"
           placeholder="请输入已经落袋为安的盈利金额"
@@ -51,7 +55,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="目标金额" prop="targetMoney">
+      <el-form-item label="目标金额" prop="targetMoney" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.targetMoney"
           placeholder="请输入目标金额"
@@ -59,7 +63,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="创建者" prop="createBy">
+      <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.createBy"
           placeholder="请输入记录创建者"
@@ -90,10 +94,23 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
+          >{{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -133,7 +150,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -141,9 +158,10 @@
           size="mini"
           @click="handleExport"
           v-hasPermi="['dortmund:extra:export']"
-          >导出</el-button
         >
-      </el-col>
+          导出</el-button
+        >
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="info"
@@ -154,7 +172,10 @@
           >查看外快盈亏历史数据走势图</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -168,14 +189,14 @@
         align="center"
         prop="extraMoney"
         fixed="left"
-        width="130"
+        width="90"
       />
       <el-table-column
         label="是否盈利"
         align="center"
         prop="isWin"
         fixed="left"
-        width="100"
+        width="80"
       >
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
@@ -196,7 +217,10 @@
           >
           <span
             style="color: #999999"
-            v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney || 0) === 0"
+            v-if="
+              scope.row.isWin !== 'Y' &&
+              parseFloat(scope.row.winMoney || 0) === 0
+            "
             >{{ scope.row.winMoney }}</span
           >
           <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'">{{
@@ -208,7 +232,7 @@
         label="历史总盈亏金额"
         align="center"
         prop="currentMoney"
-        width="130"
+        width="120"
       >
         <template slot-scope="scope">
           <span style="color: #ff5a5f" v-if="scope.row.currentMoney < 0">{{
@@ -224,22 +248,53 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="130" />
+      <el-table-column
+        label="当前投入本金"
+        align="center"
+        prop="seedMoney"
+        width="100"
+      />
       <el-table-column
         label="已经落袋为安的盈利金额"
         align="center"
         prop="saveMoney"
-        width="180"
+        width="170"
       />
-      <el-table-column label="目标金额" align="center" prop="targetMoney" width="130" />
-      <el-table-column label="备注" align="center" prop="extraRemark" />
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column
+        label="目标金额"
+        align="center"
+        prop="targetMoney"
+        width="80"
+      />
+      <el-table-column
+        label="备注"
+        align="center"
+        prop="extraRemark"
+      />
+      <el-table-column
+        label="记录更新者"
+        align="center"
+        prop="updateBy"
+        width="120"
+      />
+      <el-table-column
+        label="记录更新时间"
+        align="center"
+        prop="updateTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
+      <el-table-column
+        label="记录创建者"
+        align="center"
+        prop="createBy"
+        width="120"
+      />
       <el-table-column
         label="记录创建时间"
         align="center"
@@ -248,7 +303,9 @@
         width="180"
       >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -336,7 +393,10 @@
           />
         </el-form-item>
         <el-form-item label="落袋金额" prop="saveMoney">
-          <el-input v-model="form.saveMoney" placeholder="请输入已经落袋为安的盈利金额" />
+          <el-input
+            v-model="form.saveMoney"
+            placeholder="请输入已经落袋为安的盈利金额"
+          />
         </el-form-item>
         <el-form-item label="目标金额" prop="targetMoney">
           <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
@@ -416,6 +476,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -443,15 +505,31 @@ export default {
       // 表单校验
       rules: {
         extraMoney: [
-          { required: true, message: "当前外快总金额不能为空", trigger: "blur" },
+          {
+            required: true,
+            message: "当前外快总金额不能为空",
+            trigger: "blur",
+          },
         ],
-        isWin: [{ required: true, message: "是否盈利不能为空", trigger: "change" }],
-        winMoney: [{ required: true, message: "外快盈亏金额不能为空", trigger: "blur" }],
-        seedMoney: [{ required: true, message: "当前投入本金不能为空", trigger: "blur" }],
+        isWin: [
+          { required: true, message: "是否盈利不能为空", trigger: "change" },
+        ],
+        winMoney: [
+          { required: true, message: "外快盈亏金额不能为空", trigger: "blur" },
+        ],
+        seedMoney: [
+          { required: true, message: "当前投入本金不能为空", trigger: "blur" },
+        ],
         saveMoney: [
-          { required: true, message: "已经落袋为安的盈利金额不能为空", trigger: "blur" },
+          {
+            required: true,
+            message: "已经落袋为安的盈利金额不能为空",
+            trigger: "blur",
+          },
         ],
-        targetMoney: [{ required: true, message: "目标金额不能为空", trigger: "blur" }],
+        targetMoney: [
+          { required: true, message: "目标金额不能为空", trigger: "blur" },
+        ],
       },
       // 外快盈亏历史数据走势图弹窗相关参数
       historyDataAnalysisOpen: false,
@@ -509,7 +587,8 @@ export default {
           );
           const nowMoney = parseFloat(
             (
-              parseFloat(item?.extraMoney || 0) - parseFloat(item?.seedMoney || 0)
+              parseFloat(item?.extraMoney || 0) -
+              parseFloat(item?.seedMoney || 0)
             ).toFixed(2)
           );
           const highMoney = lastMoney > nowMoney ? lastMoney : nowMoney;
@@ -821,6 +900,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

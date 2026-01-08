@@ -26,7 +26,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="类型" prop="businessType">
+      <el-form-item label="操作类型" prop="businessType">
         <el-select
           v-model="queryParams.businessType"
           placeholder="操作类型"
@@ -41,7 +41,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item label="操作状态" prop="status">
         <el-select
           v-model="queryParams.status"
           placeholder="操作状态"
@@ -69,10 +69,16 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -100,7 +106,7 @@
           >清空</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -110,8 +116,11 @@
           v-hasPermi="['monitor:operlog:export']"
           >导出</el-button
         >
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      </el-col> -->
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -132,7 +141,10 @@
       />
       <el-table-column label="操作类型" align="center" prop="businessType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_oper_type" :value="scope.row.businessType" />
+          <dict-tag
+            :options="dict.type.sys_oper_type"
+            :value="scope.row.businessType"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -159,7 +171,10 @@
       />
       <el-table-column label="操作状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_common_status" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_common_status"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -187,7 +202,11 @@
           <span>{{ scope.row.costTime }}毫秒</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -230,7 +249,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="请求地址：">{{ form.operUrl }}</el-form-item>
-            <el-form-item label="请求方式：">{{ form.requestMethod }}</el-form-item>
+            <el-form-item label="请求方式：">{{
+              form.requestMethod
+            }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="操作方法：">{{ form.method }}</el-form-item>
@@ -239,7 +260,9 @@
             <el-form-item label="请求参数：">{{ form.operParam }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="返回参数：">{{ form.jsonResult }}</el-form-item>
+            <el-form-item label="返回参数：">{{
+              form.jsonResult
+            }}</el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="操作状态：">
@@ -248,10 +271,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="消耗时间：">{{ form.costTime }}毫秒</el-form-item>
+            <el-form-item label="消耗时间："
+              >{{ form.costTime }}毫秒</el-form-item
+            >
           </el-col>
           <el-col :span="10">
-            <el-form-item label="操作时间：">{{ parseTime(form.operTime) }}</el-form-item>
+            <el-form-item label="操作时间：">{{
+              parseTime(form.operTime)
+            }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="异常信息：" v-if="form.status === 1">{{
@@ -313,15 +340,20 @@ export default {
     /** 查询登录日志 */
     getList() {
       this.loading = true;
-      list(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
-        this.list = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
+      list(this.addDateRange(this.queryParams, this.dateRange)).then(
+        (response) => {
+          this.list = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        }
+      );
     },
     // 操作日志类型字典翻译
     typeFormat(row, column) {
-      return this.selectDictLabel(this.dict.type.sys_oper_type, row.businessType);
+      return this.selectDictLabel(
+        this.dict.type.sys_oper_type,
+        row.businessType
+      );
     },
     /** 搜索按钮操作 */
     handleQuery() {

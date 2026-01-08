@@ -24,8 +24,12 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="岗位状态" clearable>
+      <el-form-item label="岗位状态" prop="status">
+        <el-select
+          v-model="queryParams.status"
+          placeholder="岗位状态"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
@@ -35,10 +39,16 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
           >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
+          >重置</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -78,7 +88,7 @@
           >删除</el-button
         >
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="warning"
           plain
@@ -88,8 +98,11 @@
           v-hasPermi="['system:post:export']"
           >导出</el-button
         >
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      </el-col> -->
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -104,15 +117,27 @@
       <el-table-column label="岗位排序" align="center" prop="postSort" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -158,7 +183,11 @@
           <el-input v-model="form.postCode" placeholder="请输入编码名称" />
         </el-form-item>
         <el-form-item label="岗位顺序" prop="postSort">
-          <el-input-number v-model="form.postSort" controls-position="right" :min="0" />
+          <el-input-number
+            v-model="form.postSort"
+            controls-position="right"
+            :min="0"
+          />
         </el-form-item>
         <el-form-item label="岗位状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -171,7 +200,11 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+          <el-input
+            v-model="form.remark"
+            type="textarea"
+            placeholder="请输入内容"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -183,7 +216,13 @@
 </template>
 
 <script>
-import { listPost, getPost, delPost, addPost, updatePost } from "@/api/system/post";
+import {
+  listPost,
+  getPost,
+  delPost,
+  addPost,
+  updatePost,
+} from "@/api/system/post";
 
 export default {
   name: "Post",
@@ -220,9 +259,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        postName: [{ required: true, message: "岗位名称不能为空", trigger: "blur" }],
-        postCode: [{ required: true, message: "岗位编码不能为空", trigger: "blur" }],
-        postSort: [{ required: true, message: "岗位顺序不能为空", trigger: "blur" }],
+        postName: [
+          { required: true, message: "岗位名称不能为空", trigger: "blur" },
+        ],
+        postCode: [
+          { required: true, message: "岗位编码不能为空", trigger: "blur" },
+        ],
+        postSort: [
+          { required: true, message: "岗位顺序不能为空", trigger: "blur" },
+        ],
       },
     };
   },

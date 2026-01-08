@@ -174,10 +174,16 @@
           >删除</el-button
         >
       </el-col>
-      <!-- 导出按钮，无法使用，也不开放商用，后期再说吧 -->
       <!-- <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['mahjong:reservation:log:export']">导出</el-button>
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+          v-hasPermi="['mahjong:reservation:log:export']"
+          >导出</el-button
+        >
       </el-col> -->
       <el-col :span="1.5">
         <el-button

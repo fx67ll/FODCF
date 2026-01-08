@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px"
+    <!-- <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px"
       label-position="right">
       <el-form-item label="管理员" prop="userName" style="margin-left: -10px">
         <el-input v-model="queryParams.userName" placeholder="请输入管理员名称" clearable @keyup.enter.native="handleQuery" />
@@ -19,7 +19,7 @@
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
-    </el-form>
+    </el-form> -->
 
     <el-table v-loading="loading" :data="roomList"">
       <el-table-column label="管理员" align="center" prop="userName" />
@@ -40,8 +40,8 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
+    <!-- <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+      @pagination="getList" /> -->
 
     <!-- 添加或修改麻将室对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
