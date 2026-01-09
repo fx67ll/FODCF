@@ -46,7 +46,16 @@
               @keyup.enter.native="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="手机号码" prop="phonenumber">
+          <el-form-item label="用户昵称" prop="nickName" v-if="isMoreQuery">
+            <el-input
+              v-model="queryParams.nickName"
+              placeholder="请输入用户昵称"
+              clearable
+              style="width: 240px"
+              @keyup.enter.native="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="手机号码" prop="phonenumber" v-if="isMoreQuery">
             <el-input
               v-model="queryParams.phonenumber"
               placeholder="请输入手机号码"
@@ -70,7 +79,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间">
+          <el-form-item label="创建时间" v-if="isMoreQuery">
             <el-date-picker
               v-model="dateRange"
               style="width: 240px"
@@ -87,11 +96,20 @@
               icon="el-icon-search"
               size="mini"
               @click="handleQuery"
-              >搜索</el-button
             >
-            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
-              >重置</el-button
+              搜索
+            </el-button>
+            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+              重置
+            </el-button>
+            <el-button
+              type="info"
+              :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+              size="mini"
+              @click="handleMoreQuery"
             >
+              {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+            </el-button>
           </el-form-item>
         </el-form>
 
@@ -568,11 +586,14 @@ export default {
         // 上传的地址
         url: process.env.VUE_APP_BASE_API + "/system/user/importData",
       },
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         userName: undefined,
+        nickName: undefined,
         phonenumber: undefined,
         status: undefined,
         deptId: undefined,
@@ -705,6 +726,10 @@ export default {
         roleIds: [],
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

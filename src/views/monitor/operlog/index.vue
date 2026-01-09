@@ -8,7 +8,7 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="系统模块" prop="title">
+      <el-form-item label="系统模块" prop="title" v-if="isMoreQuery">
         <el-input
           v-model="queryParams.title"
           placeholder="请输入系统模块"
@@ -21,6 +21,24 @@
         <el-input
           v-model="queryParams.operName"
           placeholder="请输入操作人员"
+          clearable
+          style="width: 240px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="操作地址" prop="operIp" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.operIp"
+          placeholder="请输入操作地址"
+          clearable
+          style="width: 240px"
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="操作地点" prop="operLocation" v-if="isMoreQuery">
+        <el-input
+          v-model="queryParams.operLocation"
+          placeholder="请输入操作地点"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
@@ -41,7 +59,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="操作状态" prop="status">
+      <el-form-item label="操作状态" prop="status" v-if="isMoreQuery">
         <el-select
           v-model="queryParams.status"
           placeholder="操作状态"
@@ -74,11 +92,20 @@
           icon="el-icon-search"
           size="mini"
           @click="handleQuery"
-          >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
-          >重置</el-button
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
         >
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -322,12 +349,16 @@ export default {
       defaultSort: { prop: "operTime", order: "descending" },
       // 表单参数
       form: {},
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         title: undefined,
         operName: undefined,
+        operIp: undefined,
+        operLocation: undefined,
         businessType: undefined,
         status: undefined,
       },
@@ -354,6 +385,10 @@ export default {
         this.dict.type.sys_oper_type,
         row.businessType
       );
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

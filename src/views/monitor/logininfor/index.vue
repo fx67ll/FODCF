@@ -8,19 +8,19 @@
       v-show="showSearch"
       label-width="68px"
     >
-      <el-form-item label="登录地址" prop="ipaddr">
+      <el-form-item label="用户名称" prop="userName" v-if="isMoreQuery">
         <el-input
-          v-model="queryParams.ipaddr"
-          placeholder="请输入登录地址"
+          v-model="queryParams.userName"
+          placeholder="请输入用户名称"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="用户名称" prop="userName">
+      <el-form-item label="登录地址" prop="ipaddr" v-if="isMoreQuery">
         <el-input
-          v-model="queryParams.userName"
-          placeholder="请输入用户名称"
+          v-model="queryParams.ipaddr"
+          placeholder="请输入登录地址"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
@@ -59,11 +59,20 @@
           icon="el-icon-search"
           size="mini"
           @click="handleQuery"
-          >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
-          >重置</el-button
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
         >
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -229,6 +238,8 @@ export default {
       dateRange: [],
       // 默认排序
       defaultSort: { prop: "loginTime", order: "descending" },
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -253,6 +264,10 @@ export default {
           this.loading = false;
         }
       );
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

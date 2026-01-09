@@ -47,7 +47,11 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间" style="margin-left: 20px">
+      <el-form-item
+        label="创建时间"
+        style="margin-left: 20px"
+        v-if="isMoreQuery"
+      >
         <el-date-picker
           v-model="daterangeCreateTime"
           style="width: 240px"
@@ -59,7 +63,11 @@
           clearable
         ></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间" style="margin-left: 2px">
+      <el-form-item
+        label="更新时间"
+        style="margin-left: 2px"
+        v-if="isMoreQuery"
+      >
         <el-date-picker
           v-model="daterangeUpdateTime"
           style="width: 240px"
@@ -77,11 +85,20 @@
           icon="el-icon-search"
           size="mini"
           @click="handleQuery"
-          >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
-          >重置</el-button
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
+        <el-button
+          type="info"
+          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+          size="mini"
+          @click="handleMoreQuery"
         >
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -347,6 +364,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -431,6 +450,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {
