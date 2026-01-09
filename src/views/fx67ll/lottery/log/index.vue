@@ -196,18 +196,20 @@
           icon="el-icon-search"
           size="mini"
           @click="handleQuery"
-          >搜索</el-button
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery"
-          >重置</el-button
-        >
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
         <el-button
           type="info"
           :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
           size="mini"
           @click="handleMoreQuery"
-          >{{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}</el-button
         >
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 

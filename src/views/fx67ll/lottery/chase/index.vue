@@ -103,10 +103,17 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -165,7 +172,10 @@
           >导出</el-button
         >
       </el-col> -->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -181,7 +191,12 @@
         align="center"
         prop="chaseNumber"
       />
-      <el-table-column label="彩票类型" align="center" prop="numberType" width="90">
+      <el-table-column
+        label="彩票类型"
+        align="center"
+        prop="numberType"
+        width="90"
+      >
         <template slot-scope="scope">
           <dict-tag
             :options="dict.type.fx67ll_lottery_type"
@@ -189,22 +204,60 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="追号周期" align="center" prop="weekType" width="90">
+      <el-table-column
+        label="追号周期"
+        align="center"
+        prop="weekType"
+        width="90"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
+          <dict-tag
+            :options="dict.type.sys_week_type"
+            :value="scope.row.weekType"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="排序" align="center" prop="sort" width="120" sortable />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="排序"
+        align="center"
+        prop="sort"
+        width="120"
+        sortable
+      />
+      <el-table-column
+        label="记录创建者"
+        align="center"
+        prop="createBy"
+        width="120"
+      />
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column
+        label="记录更新者"
+        align="center"
+        prop="updateBy"
+        width="120"
+      />
+      <el-table-column
+        label="记录更新时间"
+        align="center"
+        prop="updateTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -290,7 +343,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="1" placeholder="请输入排序" />
+          <el-input-number
+            v-model="form.sort"
+            :min="1"
+            placeholder="请输入排序"
+          />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select
@@ -375,10 +432,18 @@ export default {
           { required: true, message: "每日固定追号不能为空", trigger: "blur" },
         ],
         numberType: [
-          { required: true, message: "固定追号的彩票类型不能为空", trigger: "change" },
+          {
+            required: true,
+            message: "固定追号的彩票类型不能为空",
+            trigger: "change",
+          },
         ],
         weekType: [
-          { required: true, message: "星期几的固定追号不能为空", trigger: "change" },
+          {
+            required: true,
+            message: "星期几的固定追号不能为空",
+            trigger: "change",
+          },
         ],
         sort: [{ required: true, message: "排序不能为空", trigger: "blur" }],
       },

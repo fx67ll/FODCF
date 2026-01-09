@@ -16,7 +16,11 @@
         />
       </el-form-item>
       <el-form-item label="部门状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="部门状态" clearable>
+        <el-select
+          v-model="queryParams.status"
+          placeholder="部门状态"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
@@ -26,10 +30,17 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -55,7 +66,10 @@
           >展开/折叠</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -66,19 +80,39 @@
       :default-expand-all="isExpandAll"
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
     >
-      <el-table-column prop="deptName" label="部门名称" width="260"></el-table-column>
-      <el-table-column prop="orderNum" label="排序" width="200"></el-table-column>
+      <el-table-column
+        prop="deptName"
+        label="部门名称"
+        width="260"
+      ></el-table-column>
+      <el-table-column
+        prop="orderNum"
+        label="排序"
+        width="200"
+      ></el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="200">
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="200"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -149,7 +183,11 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="负责人" prop="leader">
-              <el-input v-model="form.leader" placeholder="请输入负责人" maxlength="20" />
+              <el-input
+                v-model="form.leader"
+                placeholder="请输入负责人"
+                maxlength="20"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -165,7 +203,11 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
+              <el-input
+                v-model="form.email"
+                placeholder="请输入邮箱"
+                maxlength="50"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -233,9 +275,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        parentId: [{ required: true, message: "上级部门不能为空", trigger: "blur" }],
-        deptName: [{ required: true, message: "部门名称不能为空", trigger: "blur" }],
-        orderNum: [{ required: true, message: "显示排序不能为空", trigger: "blur" }],
+        parentId: [
+          { required: true, message: "上级部门不能为空", trigger: "blur" },
+        ],
+        deptName: [
+          { required: true, message: "部门名称不能为空", trigger: "blur" },
+        ],
+        orderNum: [
+          { required: true, message: "显示排序不能为空", trigger: "blur" },
+        ],
         email: [
           {
             type: "email",

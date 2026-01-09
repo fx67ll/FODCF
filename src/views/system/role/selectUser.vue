@@ -26,10 +26,17 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
     <el-row>
@@ -41,16 +48,40 @@
         height="260px"
       >
         <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column label="用户名称" prop="userName" :show-overflow-tooltip="true" />
-        <el-table-column label="用户昵称" prop="nickName" :show-overflow-tooltip="true" />
-        <el-table-column label="邮箱" prop="email" :show-overflow-tooltip="true" />
-        <el-table-column label="手机" prop="phonenumber" :show-overflow-tooltip="true" />
+        <el-table-column
+          label="用户名称"
+          prop="userName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="用户昵称"
+          prop="nickName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="邮箱"
+          prop="email"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="手机"
+          prop="phonenumber"
+          :show-overflow-tooltip="true"
+        />
         <el-table-column label="状态" align="center" prop="status">
           <template slot-scope="scope">
-            <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+            <dict-tag
+              :options="dict.type.sys_normal_disable"
+              :value="scope.row.status"
+            />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+        <el-table-column
+          label="创建时间"
+          align="center"
+          prop="createTime"
+          width="180"
+        >
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>

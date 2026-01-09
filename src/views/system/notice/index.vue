@@ -25,7 +25,11 @@
         />
       </el-form-item>
       <el-form-item label="公告类型" prop="noticeType">
-        <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
+        <el-select
+          v-model="queryParams.noticeType"
+          placeholder="公告类型"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_notice_type"
             :key="dict.value"
@@ -35,10 +39,17 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -78,7 +89,10 @@
           >删除</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -87,30 +101,60 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="序号" align="center" prop="noticeId" width="100" />
+      <el-table-column
+        label="序号"
+        align="center"
+        prop="noticeId"
+        width="100"
+      />
       <el-table-column
         label="公告标题"
         align="center"
         prop="noticeTitle"
         :show-overflow-tooltip="true"
       />
-      <el-table-column label="公告类型" align="center" prop="noticeType" width="100">
+      <el-table-column
+        label="公告类型"
+        align="center"
+        prop="noticeType"
+        width="100"
+      >
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_notice_type" :value="scope.row.noticeType" />
+          <dict-tag
+            :options="dict.type.sys_notice_type"
+            :value="scope.row.noticeType"
+          />
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_notice_status"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
-      <el-table-column label="创建者" align="center" prop="createBy" width="100" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="100">
+      <el-table-column
+        label="创建者"
+        align="center"
+        prop="createBy"
+        width="100"
+      />
+      <el-table-column
+        label="创建时间"
+        align="center"
+        prop="createTime"
+        width="100"
+      >
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -152,7 +196,10 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="公告标题" prop="noticeTitle">
-              <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" />
+              <el-input
+                v-model="form.noticeTitle"
+                placeholder="请输入公告标题"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -238,8 +285,12 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        noticeTitle: [{ required: true, message: "公告标题不能为空", trigger: "blur" }],
-        noticeType: [{ required: true, message: "公告类型不能为空", trigger: "change" }],
+        noticeTitle: [
+          { required: true, message: "公告标题不能为空", trigger: "blur" },
+        ],
+        noticeType: [
+          { required: true, message: "公告类型不能为空", trigger: "change" },
+        ],
       },
     };
   },

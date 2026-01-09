@@ -7,13 +7,28 @@
         placement="top"
         v-if="search"
       >
-        <el-button size="mini" circle icon="el-icon-search" @click="toggleSearch()" />
+        <el-button
+          size="mini"
+          circle
+          icon="el-icon-search"
+          @click="toggleSearch()"
+        />
       </el-tooltip>
       <el-tooltip class="item" content="刷新" placement="top">
-        <el-button size="mini" circle icon="el-icon-refresh" @click="refresh()" />
+        <el-button
+          size="mini"
+          circle
+          icon="el-icon-refresh"
+          @click="refresh()"
+        />
       </el-tooltip>
       <el-tooltip class="item" content="显隐列" placement="top" v-if="columns">
-        <el-button size="mini" circle icon="el-icon-menu" @click="showColumn()" />
+        <el-button
+          size="mini"
+          circle
+          icon="el-icon-menu"
+          @click="showColumn()"
+        />
       </el-tooltip>
     </el-row>
     <el-dialog

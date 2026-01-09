@@ -16,7 +16,11 @@
         />
       </el-form-item>
       <el-form-item label="菜单状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="菜单状态" clearable>
+        <el-select
+          v-model="queryParams.status"
+          placeholder="菜单状态"
+          clearable
+        >
           <el-option
             v-for="dict in dict.type.sys_normal_disable"
             :key="dict.value"
@@ -26,10 +30,17 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -55,7 +66,10 @@
           >展开/折叠</el-button
         >
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -77,7 +91,11 @@
           <svg-icon :icon-class="scope.row.icon" />
         </template>
       </el-table-column>
-      <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
+      <el-table-column
+        prop="orderNum"
+        label="排序"
+        width="60"
+      ></el-table-column>
       <el-table-column
         prop="perms"
         label="权限标识"
@@ -90,7 +108,10 @@
       ></el-table-column>
       <el-table-column prop="status" label="状态" width="80">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.status"
+          />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime">
@@ -98,7 +119,11 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column
+        label="操作"
+        align="center"
+        class-name="small-padding fixed-width"
+      >
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -183,7 +208,11 @@
                     :icon-class="form.icon"
                     style="width: 25px"
                   />
-                  <i v-else slot="prefix" class="el-icon-search el-input__icon" />
+                  <i
+                    v-else
+                    slot="prefix"
+                    class="el-icon-search el-input__icon"
+                  />
                 </el-input>
               </el-popover>
             </el-form-item>
@@ -353,7 +382,13 @@
 </template>
 
 <script>
-import { listMenu, getMenu, delMenu, addMenu, updateMenu } from "@/api/system/menu";
+import {
+  listMenu,
+  getMenu,
+  delMenu,
+  addMenu,
+  updateMenu,
+} from "@/api/system/menu";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import IconSelect from "@/components/IconSelect";
@@ -389,9 +424,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        menuName: [{ required: true, message: "菜单名称不能为空", trigger: "blur" }],
-        orderNum: [{ required: true, message: "菜单顺序不能为空", trigger: "blur" }],
-        path: [{ required: true, message: "路由地址不能为空", trigger: "blur" }],
+        menuName: [
+          { required: true, message: "菜单名称不能为空", trigger: "blur" },
+        ],
+        orderNum: [
+          { required: true, message: "菜单顺序不能为空", trigger: "blur" },
+        ],
+        path: [
+          { required: true, message: "路由地址不能为空", trigger: "blur" },
+        ],
       },
     };
   },

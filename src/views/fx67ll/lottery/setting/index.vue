@@ -57,10 +57,17 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery"
-          >搜索</el-button
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          size="mini"
+          @click="handleQuery"
         >
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          搜索
+        </el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+          重置
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -111,7 +118,10 @@
           >导出</el-button
         >
       </el-col> -->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar
+        :showSearch.sync="showSearch"
+        @queryTable="getList"
+      ></right-toolbar>
     </el-row>
 
     <el-table
@@ -122,17 +132,45 @@
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="生成配置主键" align="center" prop="settingId" width="120" /> -->
       <!-- <el-table-column label="用户ID" align="center" prop="userId" /> -->
-      <el-table-column label="个人彩票生成配置" align="center" prop="lotterySetting" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="180">
+      <el-table-column
+        label="个人彩票生成配置"
+        align="center"
+        prop="lotterySetting"
+      />
+      <el-table-column
+        label="记录创建者"
+        align="center"
+        prop="createBy"
+        width="120"
+      />
+      <el-table-column
+        label="记录创建时间"
+        align="center"
+        prop="createTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column
+        label="记录更新者"
+        align="center"
+        prop="updateBy"
+        width="120"
+      />
+      <el-table-column
+        label="记录更新时间"
+        align="center"
+        prop="updateTime"
+        width="180"
+      >
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{
+            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -208,7 +246,11 @@
           show-object-size
           show-type
         ></vue-json-viewer>
-        <el-form-item v-if="!isViewJson" label="编辑生成配置" prop="lotterySetting">
+        <el-form-item
+          v-if="!isViewJson"
+          label="编辑生成配置"
+          prop="lotterySetting"
+        >
           <el-input
             v-model="form.lotterySetting"
             type="textarea"
@@ -293,7 +335,11 @@ export default {
       // 表单校验
       rules: {
         lotterySetting: [
-          { required: true, message: "个人彩票生成配置不能为空", trigger: "blur" },
+          {
+            required: true,
+            message: "个人彩票生成配置不能为空",
+            trigger: "blur",
+          },
         ],
       },
       // 是否查看json
