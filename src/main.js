@@ -15,7 +15,7 @@ import plugins from "./plugins"; // plugins
 import { download } from "@/utils/common/request";
 
 import "./assets/icons"; // icon
-import "./utils/common/permission"; // permission control
+import "./permission"; // permission control
 import { getDicts } from "@/api/system/dict/data";
 import { getConfigKey } from "@/api/system/config";
 import { formatObjectArrayNullProperty } from "@/utils/fx67ll/utils";
