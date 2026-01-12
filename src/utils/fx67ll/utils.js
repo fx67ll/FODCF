@@ -356,19 +356,19 @@ export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
 
 /**
  * 校验彩票字符串是否符合对应格式
- * @param {number} type - 彩票类型：1(大乐透)、2(双色球)、3(排列三)、4(排列五)、5(七星彩)
- * @param {string} str - 待校验的彩票字符串
+ * @param {number} lotteryType - 彩票类型：1(大乐透)、2(双色球)、3(排列三)、4(排列五)、5(七星彩)
+ * @param {string} lotteryStr - 待校验的彩票字符串
  * @returns {boolean} 校验结果：true=符合，false=不符合
  */
-export function validateLotteryString(type, str) {
+export function validateLotteryString(lotteryType, lotteryStr) {
   // 1. 基础参数校验
-  if (![1, 2, 3, 4, 5].includes(Number(type)) || typeof str !== "string") {
+  if (![1, 2, 3, 4, 5].includes(Number(lotteryType))) {
     return false;
   }
 
   // 2. 去除首尾空格
-  str = str.trim();
-  if (str.length === 0) return false;
+  lotteryStr = lotteryStr.trim();
+  if (lotteryStr.length === 0) return false;
 
   // 3. 定义各类型的校验规则
   const lotteryRules = {
@@ -431,18 +431,18 @@ export function validateLotteryString(type, str) {
     },
   };
 
-  const rule = lotteryRules[type];
+  const rule = lotteryRules[lotteryType];
   if (!rule) return false;
 
   try {
     // 4. 拆分字符串并校验拆分后的部分数量
-    let parts = rule.splitChar ? str.split(rule.splitChar) : [str];
+    let parts = rule.splitChar ? lotteryStr.split(rule.splitChar) : [lotteryStr];
 
     // 检查分隔符是否正确（防止多余的分隔符）
-    if (rule.splitChar && str.includes(rule.splitChar)) {
+    if (rule.splitChar && lotteryStr.includes(rule.splitChar)) {
       // 确保分隔符两侧没有多余的分隔符
       const splitCount = (
-        str.match(new RegExp(`\\${rule.splitChar}`, "g")) || []
+        lotteryStr.match(new RegExp(`\\${rule.splitChar}`, "g")) || []
       ).length;
       if (splitCount !== rule.partCount - 1) {
         return false;

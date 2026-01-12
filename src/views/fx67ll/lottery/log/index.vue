@@ -781,8 +781,11 @@ import {
 
 // 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { debounce } from "@/utils/common/index-ruoyi";
-import { decryptString, checkLotteryResult } from "@/utils/fx67ll/utils";
+import {
+  decryptString,
+  checkLotteryResult,
+  validateLotteryString,
+} from "@/utils/fx67ll/utils";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 
 import axios from "axios";
@@ -1061,12 +1064,60 @@ export default {
         this.title = "修改每日号码记录";
       });
     },
+    /** 校验不同类型号码的字符串格式 */
+    checkFormNumber(checkNumType, checkNumStr) {
+      const referenceFormat = {
+        1: {
+          numType: "大乐透",
+          numStr: "4,7,8,10,23-4,9",
+        },
+        2: {
+          numType: "双色球",
+          numStr: "1,4,5,8,10,23-5",
+        },
+        3: {
+          numType: "排列三",
+          numStr: "1,2,3",
+        },
+        4: {
+          numType: "排列五",
+          numStr: "1,2,3,4,5",
+        },
+        5: {
+          numType: "七星彩",
+          numStr: "1,2,3,4,5,6,7",
+        },
+      };
+      if (checkNumStr) {
+        const checkRecord = validateLotteryString(checkNumType, checkNumStr);
+        if (!checkRecord) {
+          this.$modal.msgError(
+            `${referenceFormat?.[checkNumType]?.numType}号码格式错误！参考格式：${referenceFormat?.[checkNumType]?.numStr}`
+          );
+          return false;
+        }
+        return true;
+      }
+      return true;
+    },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
           this.form.winningPrice =
             this.form.isWin === "Y" ? this.form.winningPrice : 0;
+
+          const nType = this.form.numberType;
+          if (
+            !(
+              this.checkFormNumber(nType, this.form.recordNumber) &&
+              this.checkFormNumber(nType, this.form.chaseNumber) &&
+              this.checkFormNumber(nType, this.form.winningNumber)
+            )
+          ) {
+            return;
+          }
+
           if (this.form.lotteryId != null) {
             updateLog(this.form).then((response) => {
               this.$modal.msgSuccess("修改成功");
