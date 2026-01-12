@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/common/request'
 
 // 查询外快盈亏记录列表
 export function listExtra(query) {

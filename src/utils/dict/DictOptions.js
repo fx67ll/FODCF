@@ -1,4 +1,4 @@
-import { mergeRecursive } from '@/utils/fx67ll';
+import { mergeRecursive } from '@/utils/common/fx67ll-ruoyi';
 import dictConverter from './DictConverter';
 
 export const options = {

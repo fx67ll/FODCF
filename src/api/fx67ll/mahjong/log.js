@@ -1,4 +1,4 @@
-import request from "@/utils/request";
+import request from "@/utils/common/request";
 
 // 查询麻将室预约记录列表
 export function listLog(query) {

@@ -781,7 +781,8 @@ import {
 
 // 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { decryptString, checkLotteryResult, debounce } from "@/utils/index";
+import { debounce } from "@/utils/common/index-ruoyi";
+import { decryptString, checkLotteryResult } from "@/utils/fx67ll/utils";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 
 import axios from "axios";

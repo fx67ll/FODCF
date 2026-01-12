@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import { login, logout, getInfo, getAvatar } from "@/api/login";
-import { getToken, setToken, removeToken } from "@/utils/auth";
+import { getToken, setToken, removeToken } from "@/utils/common/auth";
 
 const user = {
   state: {

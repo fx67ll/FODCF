@@ -525,7 +525,7 @@ import {
   changeUserStatus,
   deptTreeSelect,
 } from "@/api/system/user";
-import { getToken } from "@/utils/auth";
+import { getToken } from "@/utils/common/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 

@@ -171,7 +171,7 @@ import {
   layoutComponents,
   formConf,
 } from "@/utils/generator/config";
-import { beautifierConf, titleCase } from "@/utils/index";
+import { beautifierConf, titleCase } from "@/utils/common/index-ruoyi";
 import {
   makeUpHtml,
   vueTemplate,

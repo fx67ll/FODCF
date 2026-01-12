@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/common/request'
 
 // 查询富文本记录列表
 export function listNoteLog(query) {

@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/common/request'
 
 // 查询Tomcat状态
 export function getTomcatStatus() {

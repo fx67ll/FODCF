@@ -46,7 +46,7 @@
   </div>
 </template>
 <script>
-import { isNumberStr } from "@/utils/index";
+import { isNumberStr } from "@/utils/common/index-ruoyi";
 
 export default {
   components: {},

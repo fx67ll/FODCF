@@ -83,7 +83,7 @@
 <script>
 import { getCodeImg } from "@/api/login";
 import Cookies from "js-cookie";
-import { encrypt, decrypt } from "@/utils/jsencrypt";
+import { encrypt, decrypt } from "@/utils/common/jsencrypt";
 
 export default {
   name: "Login",

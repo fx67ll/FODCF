@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { isExternal } from "@/utils/validate";
+import { isExternal } from "@/utils/common/validate";
 
 export default {
   name: "SvgIcon",

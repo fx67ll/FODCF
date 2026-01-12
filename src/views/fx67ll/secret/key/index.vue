@@ -206,7 +206,7 @@ import {
   addKey,
   updateKey,
 } from "@/api/fx67ll/secret/key";
-import { encryptString, decryptString } from "@/utils/index";
+import { encryptString, decryptString } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Key",

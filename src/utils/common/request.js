@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { Notification, MessageBox, Message, Loading } from 'element-ui';
 import store from '@/store';
-import { getToken } from '@/utils/auth';
-import errorCode from '@/utils/errorCode';
-import { tansParams, blobValidate } from '@/utils/fx67ll';
+import { getToken } from '@/utils/common/auth';
+import errorCode from '@/utils/common/errorCode';
+import { tansParams, blobValidate } from '@/utils/common/fx67ll-ruoyi';
 import cache from '@/plugins/cache';
 import { saveAs } from 'file-saver';
 

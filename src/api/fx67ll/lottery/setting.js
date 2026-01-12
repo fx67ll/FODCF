@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/common/request'
 
 // 查询固定追号配置列表
 export function listSetting(query) {

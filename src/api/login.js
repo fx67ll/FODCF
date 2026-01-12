@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request from "@/utils/common/request";
 
 // 登录方法
 export function login(username, password, code, uuid) {
@@ -9,11 +9,11 @@ export function login(username, password, code, uuid) {
     uuid,
   };
   return request({
-    url: '/login',
+    url: "/login",
     headers: {
       isToken: false,
     },
-    method: 'post',
+    method: "post",
     data: data,
   });
 }
@@ -21,11 +21,11 @@ export function login(username, password, code, uuid) {
 // 注册方法
 export function register(data) {
   return request({
-    url: '/register',
+    url: "/register",
     headers: {
       isToken: false,
     },
-    method: 'post',
+    method: "post",
     data: data,
   });
 }
@@ -33,27 +33,27 @@ export function register(data) {
 // 获取用户详细信息
 export function getInfo() {
   return request({
-    url: '/getInfo',
-    method: 'get',
+    url: "/getInfo",
+    method: "get",
   });
 }
 
 // 退出方法
 export function logout() {
   return request({
-    url: '/logout',
-    method: 'post',
+    url: "/logout",
+    method: "post",
   });
 }
 
 // 获取验证码
 export function getCodeImg() {
   return request({
-    url: '/captchaImage',
+    url: "/captchaImage",
     headers: {
       isToken: false,
     },
-    method: 'get',
+    method: "get",
     timeout: 20000,
   });
 }
@@ -61,7 +61,7 @@ export function getCodeImg() {
 // 获取随机马赛克头像
 export function getAvatar() {
   return request({
-    url: '/getRandomAvatarByBase64?avatarBlockNum=5&avatarPadding=50',
-    method: 'get',
+    url: "/getRandomAvatarByBase64?avatarBlockNum=5&avatarPadding=50",
+    method: "get",
   });
 }

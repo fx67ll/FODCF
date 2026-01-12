@@ -84,7 +84,7 @@
 import store from "@/store";
 import { VueCropper } from "vue-cropper";
 import { uploadAvatar } from "@/api/system/user";
-import { debounce } from "@/utils";
+import { debounce } from "@/utils/common/index-ruoyi";
 
 export default {
   components: { VueCropper },

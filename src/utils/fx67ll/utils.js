@@ -1,400 +1,3 @@
-import { parseTime } from "./fx67ll";
-import CryptoJS from "crypto-js";
-
-/**
- * 表格时间格式化
- */
-export function formatDate(cellValue) {
-  if (cellValue == null || cellValue == "") return "";
-  var date = new Date(cellValue);
-  var year = date.getFullYear();
-  var month =
-    date.getMonth() + 1 < 10
-      ? "0" + (date.getMonth() + 1)
-      : date.getMonth() + 1;
-  var day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-  var hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
-  var minutes =
-    date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
-  var seconds =
-    date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds();
-  return (
-    year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds
-  );
-}
-
-/**
- * @param {number} time
- * @param {string} option
- * @returns {string}
- */
-export function formatTime(time, option) {
-  if (("" + time).length === 10) {
-    time = parseInt(time) * 1000;
-  } else {
-    time = +time;
-  }
-  const d = new Date(time);
-  const now = Date.now();
-
-  const diff = (now - d) / 1000;
-
-  if (diff < 30) {
-    return "刚刚";
-  } else if (diff < 3600) {
-    // less 1 hour
-    return Math.ceil(diff / 60) + "分钟前";
-  } else if (diff < 3600 * 24) {
-    return Math.ceil(diff / 3600) + "小时前";
-  } else if (diff < 3600 * 24 * 2) {
-    return "1天前";
-  }
-  if (option) {
-    return parseTime(time, option);
-  } else {
-    return (
-      d.getMonth() +
-      1 +
-      "月" +
-      d.getDate() +
-      "日" +
-      d.getHours() +
-      "时" +
-      d.getMinutes() +
-      "分"
-    );
-  }
-}
-
-/**
- * @param {string} url
- * @returns {Object}
- */
-export function getQueryObject(url) {
-  url = url == null ? window.location.href : url;
-  const search = url.substring(url.lastIndexOf("?") + 1);
-  const obj = {};
-  const reg = /([^?&=]+)=([^?&=]*)/g;
-  search.replace(reg, (rs, $1, $2) => {
-    const name = decodeURIComponent($1);
-    let val = decodeURIComponent($2);
-    val = String(val);
-    obj[name] = val;
-    return rs;
-  });
-  return obj;
-}
-
-/**
- * @param {string} input value
- * @returns {number} output value
- */
-export function byteLength(str) {
-  // returns the byte length of an utf8 string
-  let s = str.length;
-  for (var i = str.length - 1; i >= 0; i--) {
-    const code = str.charCodeAt(i);
-    if (code > 0x7f && code <= 0x7ff) s++;
-    else if (code > 0x7ff && code <= 0xffff) s += 2;
-    if (code >= 0xdc00 && code <= 0xdfff) i--;
-  }
-  return s;
-}
-
-/**
- * @param {Array} actual
- * @returns {Array}
- */
-export function cleanArray(actual) {
-  const newArray = [];
-  for (let i = 0; i < actual.length; i++) {
-    if (actual[i]) {
-      newArray.push(actual[i]);
-    }
-  }
-  return newArray;
-}
-
-/**
- * @param {Object} json
- * @returns {Array}
- */
-export function param(json) {
-  if (!json) return "";
-  return cleanArray(
-    Object.keys(json).map((key) => {
-      if (json[key] === undefined) return "";
-      return encodeURIComponent(key) + "=" + encodeURIComponent(json[key]);
-    })
-  ).join("&");
-}
-
-/**
- * @param {string} url
- * @returns {Object}
- */
-export function param2Obj(url) {
-  const search = decodeURIComponent(url.split("?")[1]).replace(/\+/g, " ");
-  if (!search) {
-    return {};
-  }
-  const obj = {};
-  const searchArr = search.split("&");
-  searchArr.forEach((v) => {
-    const index = v.indexOf("=");
-    if (index !== -1) {
-      const name = v.substring(0, index);
-      const val = v.substring(index + 1, v.length);
-      obj[name] = val;
-    }
-  });
-  return obj;
-}
-
-/**
- * @param {string} val
- * @returns {string}
- */
-export function html2Text(val) {
-  const div = document.createElement("div");
-  div.innerHTML = val;
-  return div.textContent || div.innerText;
-}
-
-/**
- * Merges two objects, giving the last one precedence
- * @param {Object} target
- * @param {(Object|Array)} source
- * @returns {Object}
- */
-export function objectMerge(target, source) {
-  if (typeof target !== "object") {
-    target = {};
-  }
-  if (Array.isArray(source)) {
-    return source.slice();
-  }
-  Object.keys(source).forEach((property) => {
-    const sourceProperty = source[property];
-    if (typeof sourceProperty === "object") {
-      target[property] = objectMerge(target[property], sourceProperty);
-    } else {
-      target[property] = sourceProperty;
-    }
-  });
-  return target;
-}
-
-/**
- * @param {HTMLElement} element
- * @param {string} className
- */
-export function toggleClass(element, className) {
-  if (!element || !className) {
-    return;
-  }
-  let classString = element.className;
-  const nameIndex = classString.indexOf(className);
-  if (nameIndex === -1) {
-    classString += "" + className;
-  } else {
-    classString =
-      classString.substr(0, nameIndex) +
-      classString.substr(nameIndex + className.length);
-  }
-  element.className = classString;
-}
-
-/**
- * @param {string} type
- * @returns {Date}
- */
-export function getTime(type) {
-  if (type === "start") {
-    return new Date().getTime() - 3600 * 1000 * 24 * 90;
-  } else {
-    return new Date(new Date().toDateString());
-  }
-}
-
-/**
- * @param {Function} func
- * @param {number} wait
- * @param {boolean} immediate
- * @return {*}
- */
-export function debounce(func, wait, immediate) {
-  let timeout, args, context, timestamp, result;
-
-  const later = function () {
-    // 据上一次触发时间间隔
-    const last = +new Date() - timestamp;
-
-    // 上次被包装函数被调用时间间隔 last 小于设定时间间隔 wait
-    if (last < wait && last > 0) {
-      timeout = setTimeout(later, wait - last);
-    } else {
-      timeout = null;
-      // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
-      if (!immediate) {
-        result = func.apply(context, args);
-        if (!timeout) context = args = null;
-      }
-    }
-  };
-
-  return function (...args) {
-    context = this;
-    timestamp = +new Date();
-    const callNow = immediate && !timeout;
-    // 如果延时不存在，重新设定延时
-    if (!timeout) timeout = setTimeout(later, wait);
-    if (callNow) {
-      result = func.apply(context, args);
-      context = args = null;
-    }
-
-    return result;
-  };
-}
-
-/**
- * This is just a simple version of deep copy
- * Has a lot of edge cases bug
- * If you want to use a perfect deep copy, use lodash's _.cloneDeep
- * @param {Object} source
- * @returns {Object}
- */
-export function deepClone(source) {
-  if (!source && typeof source !== "object") {
-    throw new Error("error arguments", "deepClone");
-  }
-  const targetObj = source.constructor === Array ? [] : {};
-  Object.keys(source).forEach((keys) => {
-    if (source[keys] && typeof source[keys] === "object") {
-      targetObj[keys] = deepClone(source[keys]);
-    } else {
-      targetObj[keys] = source[keys];
-    }
-  });
-  return targetObj;
-}
-
-/**
- * @param {Array} arr
- * @returns {Array}
- */
-export function uniqueArr(arr) {
-  return Array.from(new Set(arr));
-}
-
-/**
- * @returns {string}
- */
-export function createUniqueString() {
-  const timestamp = +new Date() + "";
-  const randomNum = parseInt((1 + Math.random()) * 65536) + "";
-  return (+(randomNum + timestamp)).toString(32);
-}
-
-/**
- * Check if an element has a class
- * @param {HTMLElement} elm
- * @param {string} cls
- * @returns {boolean}
- */
-export function hasClass(ele, cls) {
-  return !!ele.className.match(new RegExp("(\\s|^)" + cls + "(\\s|$)"));
-}
-
-/**
- * Add class to element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
-export function addClass(ele, cls) {
-  if (!hasClass(ele, cls)) ele.className += " " + cls;
-}
-
-/**
- * Remove class from element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
-export function removeClass(ele, cls) {
-  if (hasClass(ele, cls)) {
-    const reg = new RegExp("(\\s|^)" + cls + "(\\s|$)");
-    ele.className = ele.className.replace(reg, " ");
-  }
-}
-
-export function makeMap(str, expectsLowerCase) {
-  const map = Object.create(null);
-  const list = str.split(",");
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true;
-  }
-  return expectsLowerCase ? (val) => map[val.toLowerCase()] : (val) => map[val];
-}
-
-export const exportDefault = "export default ";
-
-export const beautifierConf = {
-  html: {
-    indent_size: "2",
-    indent_char: " ",
-    max_preserve_newlines: "-1",
-    preserve_newlines: false,
-    keep_array_indentation: false,
-    break_chained_methods: false,
-    indent_scripts: "separate",
-    brace_style: "end-expand",
-    space_before_conditional: true,
-    unescape_strings: false,
-    jslint_happy: false,
-    end_with_newline: true,
-    wrap_line_length: "110",
-    indent_inner_html: true,
-    comma_first: false,
-    e4x: true,
-    indent_empty_lines: true,
-  },
-  js: {
-    indent_size: "2",
-    indent_char: " ",
-    max_preserve_newlines: "-1",
-    preserve_newlines: false,
-    keep_array_indentation: false,
-    break_chained_methods: false,
-    indent_scripts: "normal",
-    brace_style: "end-expand",
-    space_before_conditional: true,
-    unescape_strings: false,
-    jslint_happy: true,
-    end_with_newline: true,
-    wrap_line_length: "110",
-    indent_inner_html: true,
-    comma_first: false,
-    e4x: true,
-    indent_empty_lines: true,
-  },
-};
-
-// 首字母大小
-export function titleCase(str) {
-  return str.replace(/( |^)[a-z]/g, (L) => L.toUpperCase());
-}
-
-// 下划转驼峰
-export function camelCase(str) {
-  return str.replace(/_[a-z]/g, (str1) => str1.substr(-1).toUpperCase());
-}
-
-// 判断是否是字符串数字
-export function isNumberStr(str) {
-  return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str);
-}
-
 // 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
 export function formatObjectArrayNullProperty(arr, isNeedNumZero) {
   // 创建一个新的数组，用于存储处理后的对象
@@ -748,5 +351,166 @@ export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
       return checkLotteryResultForPL7(recordNumStr, winNumStr);
     default:
       return { prizeLevel: 0, prizeText: "不支持的彩种类型", prizeAmount: 0 };
+  }
+}
+
+/**
+ * 校验彩票字符串是否符合对应格式
+ * @param {number} type - 彩票类型：1(大乐透)、2(双色球)、3(排列三)、4(排列五)、5(七星彩)
+ * @param {string} str - 待校验的彩票字符串
+ * @returns {boolean} 校验结果：true=符合，false=不符合
+ */
+export function validateLotteryString(type, str) {
+  // 1. 基础参数校验
+  if (![1, 2, 3, 4, 5].includes(Number(type)) || typeof str !== "string") {
+    return false;
+  }
+
+  // 2. 去除首尾空格
+  str = str.trim();
+  if (str.length === 0) return false;
+
+  // 3. 定义各类型的校验规则
+  const lotteryRules = {
+    1: {
+      // 大乐透
+      splitChar: "-", // 分隔符
+      partCount: 2, // 分隔后部分数量
+      numCounts: [5, 2], // 每部分的数字数量
+      numRanges: [
+        [1, 35],
+        [1, 12],
+      ], // 每部分数字的范围
+      noRepeat: [true, true], // 每部分是否禁止数字重复
+      ascending: [true, true], // 每部分是否必须升序排列
+      description:
+        "大乐透: 5个前区数字(1-35) + 2个后区数字(1-12)，格式: 1,2,3,4,5-6,7",
+    },
+    2: {
+      // 双色球
+      splitChar: "-",
+      partCount: 2,
+      numCounts: [6, 1],
+      numRanges: [
+        [1, 33],
+        [1, 16],
+      ],
+      noRepeat: [true, false], // 蓝球只有1个，无需校验重复
+      ascending: [true, false], // 红球需升序，蓝球只有一个无需校验
+      description: "双色球: 6个红球(1-33) + 1个蓝球(1-16)，格式: 1,2,3,4,5,6-7",
+    },
+    3: {
+      // 排列三
+      splitChar: null, // 无分隔符
+      partCount: 1,
+      numCounts: [3],
+      numRanges: [[0, 9]],
+      noRepeat: [false],
+      ascending: [false],
+      description: "排列三: 3个数字(0-9)，格式: 1,2,3",
+    },
+    4: {
+      // 排列五
+      splitChar: null,
+      partCount: 1,
+      numCounts: [5],
+      numRanges: [[0, 9]],
+      noRepeat: [false],
+      ascending: [false],
+      description: "排列五: 5个数字(0-9)，格式: 1,2,3,4,5",
+    },
+    5: {
+      // 七星彩
+      splitChar: null,
+      partCount: 1,
+      numCounts: [7],
+      numRanges: [[0, 9]],
+      noRepeat: [false],
+      ascending: [false],
+      description: "七星彩: 7个数字(0-9)，格式: 1,2,3,4,5,6,7",
+    },
+  };
+
+  const rule = lotteryRules[type];
+  if (!rule) return false;
+
+  try {
+    // 4. 拆分字符串并校验拆分后的部分数量
+    let parts = rule.splitChar ? str.split(rule.splitChar) : [str];
+
+    // 检查分隔符是否正确（防止多余的分隔符）
+    if (rule.splitChar && str.includes(rule.splitChar)) {
+      // 确保分隔符两侧没有多余的分隔符
+      const splitCount = (
+        str.match(new RegExp(`\\${rule.splitChar}`, "g")) || []
+      ).length;
+      if (splitCount !== rule.partCount - 1) {
+        return false;
+      }
+    }
+
+    if (parts.length !== rule.partCount) {
+      return false;
+    }
+
+    // 5. 遍历每个部分，校验数字合法性
+    for (let i = 0; i < parts.length; i++) {
+      // 清理空格并分割
+      const partStr = parts[i].trim();
+      if (partStr === "") return false;
+
+      const numStrList = partStr
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s !== "");
+
+      // 校验数字数量是否匹配
+      if (numStrList.length !== rule.numCounts[i]) {
+        return false;
+      }
+
+      // 转换为数字并校验是否为有效整数
+      const numList = numStrList.map((numStr) => {
+        // 检查是否包含非数字字符
+        if (!/^-?\d+$/.test(numStr)) {
+          throw new Error("包含非数字字符");
+        }
+        const num = parseInt(numStr, 10);
+        if (isNaN(num) || !Number.isInteger(num) || numStr !== num.toString()) {
+          throw new Error("不是有效的整数");
+        }
+        return num;
+      });
+
+      // 校验数字范围
+      const [min, max] = rule.numRanges[i];
+      const isInRange = numList.every((num) => num >= min && num <= max);
+      if (!isInRange) {
+        return false;
+      }
+
+      // 校验数字是否重复（如果规则要求）
+      if (rule.noRepeat[i]) {
+        const uniqueNums = new Set(numList);
+        if (uniqueNums.size !== numList.length) {
+          return false;
+        }
+      }
+
+      // 校验是否升序排列（如果规则要求）
+      if (rule.ascending[i]) {
+        for (let j = 1; j < numList.length; j++) {
+          if (numList[j] <= numList[j - 1]) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // 所有校验通过
+    return true;
+  } catch (error) {
+    // 捕获异常，返回false
+    return false;
   }
 }

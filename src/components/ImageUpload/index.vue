@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import { getToken } from "@/utils/auth";
+import { getToken } from "@/utils/common/auth";
 
 export default {
   name: "ImageUpload",

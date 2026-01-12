@@ -40,7 +40,11 @@
         class="el-upload-list__item ele-upload-list__item-content"
         v-for="(file, index) in fileList"
       >
-        <el-link :href="`${baseUrl}${file.url}`" :underline="false" target="_blank">
+        <el-link
+          :href="`${baseUrl}${file.url}`"
+          :underline="false"
+          target="_blank"
+        >
           <span class="el-icon-document"> {{ getFileName(file.name) }} </span>
         </el-link>
         <div class="ele-upload-list__item-content-action">
@@ -54,7 +58,7 @@
 </template>
 
 <script>
-import { getToken } from "@/utils/auth";
+import { getToken } from "@/utils/common/auth";
 
 export default {
   name: "FileUpload",
