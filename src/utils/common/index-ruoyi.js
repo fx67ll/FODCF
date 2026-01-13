@@ -1,5 +1,4 @@
 import { parseTime } from "./fx67ll-ruoyi";
-import CryptoJS from "crypto-js";
 
 /**
  * 表格时间格式化

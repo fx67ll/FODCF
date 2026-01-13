@@ -1,3 +1,5 @@
+import CryptoJS from "crypto-js";
+
 // 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
 export function formatObjectArrayNullProperty(arr, isNeedNumZero) {
   // 创建一个新的数组，用于存储处理后的对象
