@@ -37,6 +37,7 @@ module.exports = {
       [process.env.VUE_APP_BASE_API]: {
         // target: `http://localhost:9897/vip-api`,
         target: `https://vip.fx67ll.com/vip-api/`,
+        // target: `https://vip.fx67ll.com/vip-api-chaoshen/`,
         changeOrigin: true,
         pathRewrite: {
           ["^" + process.env.VUE_APP_BASE_API]: "",
