@@ -4,7 +4,6 @@
     <div class="status-card">
       <div class="status-header">
         <h2>Tomcat 服务管理</h2>
-        <!-- 新增主动刷新按钮 -->
         <div class="refresh-container">
           <el-button type="text" icon="el-icon-refresh" @click="handleRefresh" :loading="isRefreshing"
             class="refresh-btn">
@@ -37,7 +36,7 @@
       </div>
     </div>
 
-    <!-- 新增：GitHub 连接状态检测卡片 -->
+    <!-- GitHub 连接状态检测卡片 -->
     <div class="status-card">
       <div class="status-header">
         <h2>GitHub 连通性检测</h2>
@@ -98,6 +97,7 @@
       </div>
     </div>
 
+
     <!-- 新增：常用服务快速访问卡片 -->
     <div class="status-card">
       <div class="status-header">
@@ -108,7 +108,7 @@
       </div>
 
       <div class="service-grid">
-        <div class="service-item  service-item-jenkins" @click="goToJenkins">
+        <div class="service-item" @click="goToJenkins">
           <div class="service-icon jenkins-icon">
             <i class="el-icon-s-promotion"></i>
           </div>
@@ -118,11 +118,11 @@
             <div class="service-link">run.fx67ll.com/jenkins</div>
           </div>
           <div class="service-action">
-            <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-jenkins"></el-button>
+            <el-button type="text" icon="el-icon-right" class="goto-btn"></el-button>
           </div>
         </div>
 
-        <div class="service-item service-item-baota" @click="goToBaota">
+        <div class="service-item" @click="goToBaota">
           <div class="service-icon baota-icon">
             <i class="el-icon-monitor"></i>
           </div>
@@ -132,7 +132,7 @@
             <div class="service-link">baota.fx67ll.com</div>
           </div>
           <div class="service-action">
-            <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-baota"></el-button>
+            <el-button type="text" icon="el-icon-right" class="goto-btn"></el-button>
           </div>
         </div>
       </div>
@@ -141,6 +141,7 @@
         <span class="tip-text">点击上方卡片快速访问对应服务</span>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -387,7 +388,7 @@ export default {
     padZero(num) {
       return num < 10 ? `0${num}` : num;
     },
-
+    
     /**
      * 跳转到 Jenkins 服务
      */
@@ -406,12 +407,22 @@ export default {
 </script>
 
 <style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .status-card {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .status-header {
@@ -419,14 +430,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f5f5f5;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .status-header h2 {
   margin: 0;
   font-size: 18px;
   color: #1f2d3d;
+  font-weight: 600;
 }
 
 .refresh-container {
@@ -439,11 +451,13 @@ export default {
   color: #409eff;
   font-size: 12px;
   padding: 4px 8px;
+  transition: all 0.2s ease;
 }
 
 .refresh-btn:hover {
   color: #66b1ff;
   background-color: #e6f4ff;
+  border-radius: 4px;
 }
 
 .refresh-time {
@@ -467,7 +481,7 @@ export default {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-right: 12px;
   transition: all 0.3s ease;
 }
 
@@ -483,45 +497,51 @@ export default {
 
 .status-text {
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1f2d3d;
 }
 
 .operation-buttons {
+  display: flex;
+  gap: 15px;
   margin-left: 20px;
 }
 
 .operation-buttons .el-button {
-  margin-right: 15px;
-  width: 120px;
+  min-width: 120px;
   height: 40px;
   font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .status-log {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  margin-top: 24px;
+  padding: 18px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
 }
 
 .status-log h3 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 14px;
   color: #4e5969;
+  font-weight: 600;
 }
 
 .status-log pre {
   margin: 0;
-  padding: 10px;
+  padding: 14px;
   background-color: #1f2d3d;
   color: #e0e0e0;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: 13px;
   line-height: 1.5;
   max-height: 300px;
   overflow-y: auto;
   white-space: pre-wrap;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 }
 
 /* 新增：GitHub 检测相关样式 */
@@ -538,12 +558,13 @@ export default {
 
 .method-card {
   border: 1px solid #e6e6e6;
-  border-radius: 6px;
-  padding: 16px;
-  background-color: #fafafa;
+  border-radius: 10px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
   transition: all 0.3s ease;
 }
 
+/* 修改：method-card hover 效果改为绿色系边框和阴影 */
 .method-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-color: #d1d1d1;
@@ -553,13 +574,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .method-header h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: #1f2d3d;
+  font-weight: 600;
 }
 
 .method-status {
@@ -590,69 +612,59 @@ export default {
 }
 
 .method-desc {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .method-desc p {
-  margin: 4px 0;
-  font-size: 12px;
+  margin: 6px 0;
+  font-size: 13px;
   color: #666;
+  line-height: 1.5;
 }
 
 .desc-detail {
   color: #999 !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
 }
 
 .method-action {
   text-align: center;
 }
 
+.method-action .el-button {
+  width: 100%;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
 .detection-result {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
 }
 
 .detection-result h3 {
-  margin: 0 0 10px 0;
-  font-size: 14px;
+  margin: 0 0 14px 0;
+  font-size: 15px;
   color: #4e5969;
+  font-weight: 600;
 }
 
 .detection-result pre {
   margin: 0;
-  padding: 10px;
+  padding: 16px;
   background-color: #1f2d3d;
   color: #e0e0e0;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.5;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
   max-height: 200px;
   overflow-y: auto;
   white-space: pre-wrap;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .detection-methods {
-    grid-template-columns: 1fr;
-  }
-
-  .status-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-indicator {
-    margin-bottom: 15px;
-    margin-right: 0;
-  }
-
-  .operation-buttons {
-    margin-left: 0;
-  }
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 }
 
 /* 新增：服务快速访问卡片样式 */
@@ -676,31 +688,19 @@ export default {
   overflow: hidden;
 }
 
-.service-item-jenkins:hover {
+/* 修改：hover 效果改为绿色系 */
+.service-item:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.15);
-  border-color: #eb5656;
-  background: linear-gradient(135deg, #fee9e9 0%, #f8dddd 100%);
-}
-
-.service-item-jenkins:hover::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #eb5656, #FAB6B6);
-}
-
-.service-item-baota:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.15);
+  /* 绿色阴影 */
   border-color: #2ECC71;
+  /* 主题色边框 */
   background: linear-gradient(135deg, #f0fff7 0%, #e6ffe6 100%);
+  /* 淡绿色渐变背景 */
 }
 
-.service-item-baota:hover::before {
+/* 修改：hover 顶部渐变条改为绿色系 */
+.service-item:hover::before {
   content: '';
   position: absolute;
   top: 0;
@@ -708,6 +708,7 @@ export default {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #2ECC71, #58D68D);
+  /* 绿色渐变 */
 }
 
 .service-icon {
@@ -724,8 +725,8 @@ export default {
 }
 
 .jenkins-icon {
-  background: linear-gradient(135deg, #eb5656 0%, #FAB6B6 100%);
-  box-shadow: 0 8px 32px rgba(250, 182, 182, 0.6);
+  background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
 }
@@ -737,13 +738,13 @@ export default {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(250, 182, 182, 0.2), transparent);
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   animation: shine 3s linear infinite;
 }
 
 .baota-icon {
-  background: linear-gradient(135deg, #2ECC71 0%, #51c468 100%);
-  box-shadow: 0 8px 32px rgba(81, 196, 127, 0.6);
+  background: linear-gradient(135deg, #2ECC71 0%, #20a53a 100%);
+  box-shadow: 0 8px 32px rgba(0, 255, 127, 0.6);
   position: relative;
   overflow: hidden;
 }
@@ -812,15 +813,8 @@ export default {
   margin-left: 12px;
 }
 
-.goto-btn-jenkins {
-  font-size: 16px;
-  color: #FAB6B6;
-  /* 主题色 */
-  padding: 8px;
-  transition: transform 0.3s ease;
-}
-
-.goto-btn-baota {
+/* 修改：跳转图标颜色改为主题色 */
+.goto-btn {
   font-size: 16px;
   color: #2ECC71;
   /* 主题色 */
@@ -837,5 +831,105 @@ export default {
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
   text-align: center;
+}
+
+.tip-text {
+  font-size: 12px;
+  color: #8392a5;
+  font-style: italic;
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+  .operation-buttons {
+    gap: 12px;
+  }
+
+  .operation-buttons .el-button {
+    min-width: 110px;
+  }
+}
+
+@media (max-width: 768px) {
+  .detection-methods {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .status-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .status-indicator {
+    margin-bottom: 0;
+    margin-right: 0;
+  }
+
+  .operation-buttons {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .service-grid {
+    gap: 12px;
+  }
+
+  .service-item {
+    padding: 16px;
+  }
+
+  .service-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .operation-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .operation-buttons .el-button {
+    width: 100%;
+  }
+
+  .status-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .refresh-container {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .service-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .service-icon {
+    margin-right: 0;
+    margin-bottom: 16px;
+  }
+
+  .service-info {
+    margin-bottom: 16px;
+  }
+
+  .service-action {
+    margin-left: 0;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+  }
 }
 </style>
