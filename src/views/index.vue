@@ -1,9 +1,16 @@
 <template>
   <div class="app-container home">
     <el-row :gutter="20">
+      <!-- 左侧：品牌与Logo -->
       <el-col :sm="24" :lg="12" style="padding-left: 20px">
         <h2>fx67ll's 后台管理框架</h2>
+        <el-image src="https://test.fx67ll.com/fx67ll-img-collection/fx67ll.jpg"
+          :preview-src-list="['https://test.fx67ll.com/fx67ll-img-collection/fx67ll.jpg']"
+          style="margin-top: 12px; display: block; border-radius: 4px; width: 123px; height:123px;"
+          fit="cover"></el-image>
       </el-col>
+
+      <!-- 右侧：技术选型 -->
       <el-col :sm="24" :lg="12" style="padding-left: 20px">
         <el-row>
           <el-col :span="12">
@@ -47,8 +54,7 @@ export default {
   name: "Index",
   data() {
     return {
-      // 版本号
-      version: "3.8.5",
+      // version: "3.8.5",
     };
   },
   methods: {
@@ -84,7 +90,11 @@ export default {
     margin: 0;
   }
 
-  font-family: "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "open sans",
+  "Helvetica Neue",
+  Helvetica,
+  Arial,
+  sans-serif;
   font-size: 13px;
   color: #676a6c;
   overflow-x: hidden;
