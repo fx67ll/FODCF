@@ -37,7 +37,58 @@
       </div>
     </div>
 
-    <!-- 新增：GitHub 连接状态检测卡片 -->
+    <!-- 新增：系统内存信息卡片 -->
+    <div class="status-card">
+      <div class="status-header">
+        <h2>系统内存信息</h2>
+        <div class="refresh-container">
+          <el-button type="text" icon="el-icon-refresh" @click="queryStatus" :loading="isRefreshing" class="refresh-btn">
+            手动刷新
+          </el-button>
+          <span class="refresh-time">最后更新: {{ lastRefreshTime }}</span>
+        </div>
+      </div>
+
+      <div class="memory-grid">
+        <div class="memory-item total-memory">
+          <div class="memory-label">总内存</div>
+          <div class="memory-value">{{ formatMemory(memoryInfo.totalMemoryMb) }} MB</div>
+          <div class="memory-progress">
+            <el-progress :percentage="100" :show-text="false" status="success"></el-progress>
+          </div>
+        </div>
+        <div class="memory-item used-memory">
+          <div class="memory-label">已用内存</div>
+          <div class="memory-value">{{ formatMemory(memoryInfo.usedMemoryMb) }} MB</div>
+          <div class="memory-progress">
+            <el-progress :percentage="(memoryInfo.usedMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="exception"></el-progress>
+          </div>
+        </div>
+        <div class="memory-item available-memory">
+          <div class="memory-label">可用内存</div>
+          <div class="memory-value">{{ formatMemory(memoryInfo.availableMemoryMb) }} MB</div>
+          <div class="memory-progress">
+            <el-progress :percentage="(memoryInfo.availableMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="success"></el-progress>
+          </div>
+        </div>
+        <div class="memory-item tomcat-memory">
+          <div class="memory-label">Tomcat占用</div>
+          <div class="memory-value">{{ formatMemory(memoryInfo.tomcatResidentMemoryMb) }} MB</div>
+          <div class="memory-progress">
+            <el-progress :percentage="(memoryInfo.tomcatResidentMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="warning"></el-progress>
+          </div>
+        </div>
+      </div>
+
+      <div class="cache-clear-section">
+        <el-button type="warning" icon="el-icon-delete" @click="handleClearCache" :loading="clearingCache">
+          清理系统缓存
+        </el-button>
+        <span class="cache-tip">执行 sync; echo 3 > /proc/sys/vm/drop_caches 释放内存缓存</span>
+      </div>
+    </div>
+
+    <!-- 新增：GitHub 连接状态检测卡片（原内容不变） -->
     <div class="status-card">
       <div class="status-header">
         <h2>GitHub 连通性检测</h2>
@@ -98,7 +149,7 @@
       </div>
     </div>
 
-    <!-- 新增：常用服务快速访问卡片 -->
+    <!-- 新增：常用服务快速访问卡片（原内容不变） -->
     <div class="status-card">
       <div class="status-header">
         <h2>常用服务快速访问</h2>
@@ -150,7 +201,8 @@ import {
   startTomcat,
   stopTomcat,
   testConnectToGithubByTcp,
-  testConnectToGithubByHttp
+  testConnectToGithubByHttp,
+  clearSystemCache
 } from "@/api/fx67ll/server/tomcat";
 
 export default {
@@ -159,6 +211,12 @@ export default {
     return {
       // Tomcat 状态相关
       status: "加载中...",
+      memoryInfo: {          // 新增内存信息对象
+        totalMemoryMb: 0,
+        availableMemoryMb: 0,
+        usedMemoryMb: 0,
+        tomcatResidentMemoryMb: 0
+      },
       lastRefreshTime: "",
       logInfo: "",
       isOperating: false,
@@ -172,7 +230,10 @@ export default {
       testingHttp: false,
       githubLogInfo: "",
       lastGithubTestTime: "",
-      isRefreshingGithub: false
+      isRefreshingGithub: false,
+
+      // 清理缓存状态
+      clearingCache: false
     };
   },
   created() {
@@ -202,25 +263,18 @@ export default {
     },
 
     /**
-     * 手动刷新GitHub检测状态
-     */
-    handleRefreshGithub() {
-      this.isRefreshingGithub = true;
-      // 重置状态
-      this.tcpStatus = "waiting";
-      this.httpStatus = "waiting";
-      this.githubLogInfo = "";
-      setTimeout(() => {
-        this.isRefreshingGithub = false;
-      }, 500);
-    },
-
-    /**
-     * 查询Tomcat状态
+     * 查询Tomcat状态（适配新接口）
      */
     queryStatus() {
       return getTomcatStatus().then(response => {
-        this.status = response.data;
+        const data = response.data || {};
+        this.status = data.status || "未知";
+        this.memoryInfo = data.memoryInfo || {
+          totalMemoryMb: 0,
+          availableMemoryMb: 0,
+          usedMemoryMb: 0,
+          tomcatResidentMemoryMb: 0
+        };
         this.lastRefreshTime = this.formatDateTime(new Date());
       }).catch(error => {
         this.$message.error("查询状态失败: " + (error.msg || error.message));
@@ -294,6 +348,51 @@ export default {
       }).catch(() => {
         this.$message.info('已取消停止');
       });
+    },
+
+    /**
+     * 清理系统缓存
+     */
+    handleClearCache() {
+      this.$confirm('清理系统缓存将释放被占用的内存，但可能导致短时间内磁盘IO升高。确定继续吗？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.clearingCache = true;
+        clearSystemCache().then(response => {
+          this.$message.success(response.msg || '缓存清理成功');
+          this.queryStatus(); // 刷新内存信息
+        }).catch(error => {
+          this.$message.error(error.msg || '缓存清理失败');
+        }).finally(() => {
+          this.clearingCache = false;
+        });
+      }).catch(() => {
+        this.$message.info('缓存清理操作失败，请联系管理员！');
+      });
+    },
+
+    /**
+     * 格式化内存数值，保留两位小数
+     */
+    formatMemory(value) {
+      if (value === undefined || value === null || isNaN(value)) return '0.00';
+      return Number(value).toFixed(2);
+    },
+
+    /**
+     * 手动刷新GitHub检测状态
+     */
+    handleRefreshGithub() {
+      this.isRefreshingGithub = true;
+      // 重置状态
+      this.tcpStatus = "waiting";
+      this.httpStatus = "waiting";
+      this.githubLogInfo = "";
+      setTimeout(() => {
+        this.isRefreshingGithub = false;
+      }, 500);
     },
 
     /**
@@ -524,7 +623,81 @@ export default {
   white-space: pre-wrap;
 }
 
-/* 新增：GitHub 检测相关样式 */
+/* 新增：内存卡片样式 */
+.memory-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.memory-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid;
+  transition: all 0.3s;
+}
+
+.memory-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.total-memory {
+  border-left-color: #409eff;
+}
+.total-memory .memory-label { color: #409eff; }
+
+.used-memory {
+  border-left-color: #f56c6c;
+}
+.used-memory .memory-label { color: #f56c6c; }
+
+.available-memory {
+  border-left-color: #67c23a;
+}
+.available-memory .memory-label { color: #67c23a; }
+
+.tomcat-memory {
+  border-left-color: #e6a23c;
+}
+.tomcat-memory .memory-label { color: #e6a23c; }
+
+.memory-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.memory-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.memory-progress {
+  margin-top: 8px;
+}
+
+.cache-clear-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #e6e6e6;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cache-tip {
+  font-size: 12px;
+  color: #8392a5;
+  background: #f5f7fa;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* 原有 GitHub 检测相关样式（保持不变） */
 .github-content {
   margin-top: 10px;
 }
@@ -634,28 +807,7 @@ export default {
   white-space: pre-wrap;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .detection-methods {
-    grid-template-columns: 1fr;
-  }
-
-  .status-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-indicator {
-    margin-bottom: 15px;
-    margin-right: 0;
-  }
-
-  .operation-buttons {
-    margin-left: 0;
-  }
-}
-
-/* 新增：服务快速访问卡片样式 */
+/* 原有服务快速访问卡片样式 */
 .service-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -815,7 +967,6 @@ export default {
 .goto-btn-jenkins {
   font-size: 16px;
   color: #FAB6B6;
-  /* 主题色 */
   padding: 8px;
   transition: transform 0.3s ease;
 }
@@ -823,7 +974,6 @@ export default {
 .goto-btn-baota {
   font-size: 16px;
   color: #2ECC71;
-  /* 主题色 */
   padding: 8px;
   transition: transform 0.3s ease;
 }
@@ -837,5 +987,35 @@ export default {
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
   text-align: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .detection-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .status-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .status-indicator {
+    margin-bottom: 15px;
+    margin-right: 0;
+  }
+
+  .operation-buttons {
+    margin-left: 0;
+  }
+
+  .memory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cache-clear-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>
