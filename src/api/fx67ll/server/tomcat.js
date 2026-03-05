@@ -39,3 +39,11 @@ export function testConnectToGithubByHttp() {
     method: 'get'
   })
 }
+
+// 清理系统缓存
+export function clearSystemCache() {
+  return request({
+    url: '/server/tomcat/clearCache',
+    method: 'post'
+  })
+}
