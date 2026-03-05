@@ -640,14 +640,18 @@ export default {
     handleQueryNoRewardInfo() {
       const self = this;
       this.reset();
+      this.resetQuery();
       setTimeout(() => {
         self.queryParams = {
+          ...self.queryParams,
           hasDateCode: 'Y',
           hasWinningNumber: 'N',
           pageNum: self.queryParams.pageNum,
           pageSize: self.queryParams.pageSize,
         }
-        self.getList();
+        setTimeout(() => {
+          self.getList();
+        }, 1);
       }, 1);
     },
     /** 高级搜索按钮操作 */
@@ -661,8 +665,25 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
+      const self = this;
       this.daterangeCreateTime = [];
       this.daterangeUpdateTime = [];
+      this.queryParams = {
+        ...self.queryParams,
+        pageNum: 1,
+        pageSize: 10,
+        hasDateCode: null,
+        hasWinningNumber: null,
+        numberType: '',
+        weekType: null,
+        dateCode: null,
+        recordNumber: null,
+        chaseNumber: null,
+        winningNumber: null,
+        winningPrice: null,
+        isWin: null,
+        hasMorePurchases: null,
+      };
       this.resetForm("queryForm");
       this.handleQuery();
     },
