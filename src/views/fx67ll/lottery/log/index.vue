@@ -14,13 +14,13 @@
       <el-form-item label="彩票类型" prop="numberType">
         <el-select v-model="queryParams.numberType" placeholder="请选择查询的彩票类型" clearable>
           <el-option v-for="dict in dict.type.fx67ll_lottery_type" :key="dict.value" :label="dict.label"
-            :value="dict.value" />
+            :value="parseInt(dict.value)" />
         </el-select>
       </el-form-item>
       <el-form-item label="彩票周期" prop="weekType" v-if="isMoreQuery">
         <el-select v-model="queryParams.weekType" placeholder="请选择查询的星期几" clearable>
           <el-option v-for="dict in dict.type.sys_week_type" :key="dict.value" :label="dict.label"
-            :value="dict.value" />
+            :value="parseInt(dict.value)" />
         </el-select>
       </el-form-item>
       <el-form-item label="创建用户" prop="createBy" v-if="isMoreQuery">
@@ -674,7 +674,7 @@ export default {
         pageSize: 10,
         hasDateCode: null,
         hasWinningNumber: null,
-        numberType: '',
+        numberType: null,
         weekType: null,
         dateCode: null,
         recordNumber: null,
@@ -695,26 +695,29 @@ export default {
     },
     // 根据彩票类型动态修改可配置的追号周期
     handleNumberTypeChange(type) {
+      // 强制转换为Number类型，防止字符串类型导致的匹配失败
+      const numType = Number(type);
       const enumWeekList = [...this.dict.type.sys_week_type];
-      if (type?.toString() === "1") {
+      
+      // 清空并重新赋值，确保Vue能检测到数组变化
+      this.dynamicWeekList = [];
+
+      if (numType === 1) {
         this.dynamicWeekList = enumWeekList.filter((item) => {
-          const val = item?.value?.toString();
-          return val !== "2" && val !== "4" && val !== "7";
+          const val = Number(item?.value);
+          return val !== 2 && val !== 4 && val !== 7;
         });
-      }
-      if (type?.toString() === "2") {
+      } else if (numType === 2) {
         this.dynamicWeekList = enumWeekList.filter((item) => {
-          const val = item?.value?.toString();
-          return val !== "1" && val !== "3" && val !== "6";
+          const val = Number(item?.value);
+          return val !== 1 && val !== 3 && val !== 6;
         });
-      }
-      if (["3", "4"].includes(type?.toString())) {
+      } else if (numType === 3 || numType === 4) {
         this.dynamicWeekList = enumWeekList;
-      }
-      if (type?.toString() === "5") {
+      } else if (numType === 5) {
         this.dynamicWeekList = enumWeekList.filter((item) => {
-          const val = item?.value?.toString();
-          return val !== "1" && val !== "3" && val !== "4" && val !== "6";
+          const val = Number(item?.value);
+          return val !== 1 && val !== 3 && val !== 4 && val !== 6;
         });
       }
     },
@@ -729,14 +732,27 @@ export default {
       this.reset();
       const lotteryId = row.lotteryId || this.ids;
       getLog(lotteryId).then((response) => {
-        this.handleNumberTypeChange(response?.data?.numberType);
-        this.form = response.data;
+        // 先处理数据，强制转换类型
+        const data = response.data;
+        const processedData = {
+          ...data,
+          numberType: data.numberType ? Number(data.numberType) : null,
+          weekType: data.weekType ? Number(data.weekType) : null
+        }; 
+        
+        // 先赋值表单
+        this.form = processedData;
+        // 再根据类型动态加载周次选项
+        this.handleNumberTypeChange(processedData.numberType);
+        
         this.open = true;
         this.title = "修改每日号码记录";
       });
     },
     /** 校验不同类型号码的字符串格式 */
     checkFormNumber(checkNumType, checkNumStr) {
+      // 强制转换类型
+      const numType = Number(checkNumType);
       const referenceFormat = {
         1: {
           numType: "大乐透",
@@ -760,10 +776,10 @@ export default {
         },
       };
       if (checkNumStr) {
-        const checkRecord = validateLotteryString(checkNumType, checkNumStr);
+        const checkRecord = validateLotteryString(numType, checkNumStr);
         if (!checkRecord) {
           this.$modal.msgError(
-            `${referenceFormat?.[checkNumType]?.numType}号码格式错误！参考格式：${referenceFormat?.[checkNumType]?.numStr}`
+            `${referenceFormat?.[numType]?.numType}号码格式错误！参考格式：${referenceFormat?.[numType]?.numStr}`
           );
           return false;
         }
@@ -778,7 +794,8 @@ export default {
           this.form.winningPrice =
             this.form.isWin === "Y" ? this.form.winningPrice : 0;
 
-          const nType = this.form.numberType;
+          // 强制转换类型
+          const nType = Number(this.form.numberType);
           if (
             !(
               this.checkFormNumber(nType, this.form.recordNumber) &&
@@ -850,7 +867,7 @@ export default {
           .then(() => {
             self.qryRewardQueryConfig(
               record?.dateCode,
-              record?.numberType,
+              Number(record?.numberType),
               record?.lotteryId
             );
           })
@@ -858,7 +875,7 @@ export default {
       } else if (record?.dateCode) {
         this.qryRewardQueryConfig(
           record?.dateCode,
-          record?.numberType,
+          Number(record?.numberType),
           record?.lotteryId
         );
       } else {
@@ -868,7 +885,10 @@ export default {
     // 查询外部网站所需要的配置
     qryRewardQueryConfig(logDateCode, logNumType, logNumId) {
       const self = this;
-      if (logDateCode && logNumType && logNumId) {
+      // 确保类型正确
+      const numType = Number(logNumType);
+      
+      if (logDateCode && numType && logNumId) {
         this.qryRewardLoading = true;
         getSecretConfig({ secretKey: "qryLotteryRewardAppId" })
           .then((res) => {
@@ -893,7 +913,7 @@ export default {
                       qryLotteryRewardAppId,
                       qryLotteryRewardAppSecret,
                       logDateCode,
-                      logNumType,
+                      numType,
                       logNumId
                     );
                   } else {
@@ -923,6 +943,9 @@ export default {
     // 通过第三方站点查询开奖号码
     queryLotteryRewardInfo(appId, appSecret, dCode, nType, lid) {
       const self = this;
+      // 确保类型正确
+      const numType = Number(nType);
+      
       const lotteryTypeMap = {
         1: "cjdlt",
         2: "ssq",
@@ -936,7 +959,7 @@ export default {
             app_id: appId,
             app_secret: appSecret,
             expect: dCode,
-            code: lotteryTypeMap[nType],
+            code: lotteryTypeMap[numType],
           },
         })
         .then((res) => {
@@ -954,7 +977,7 @@ export default {
               resData?.openCode &&
               [lotteryTypeMap[1], lotteryTypeMap[2]].includes(resData?.code)
             ) {
-              self.formatWinningNumber(resData.openCode, nType, lid);
+              self.formatWinningNumber(resData.openCode, numType, lid);
             } else if (
               resData?.openCode &&
               [
@@ -963,7 +986,7 @@ export default {
                 lotteryTypeMap[5],
               ].includes(resData?.code)
             ) {
-              self.saveWinningNumber(resData?.openCode, nType, lid);
+              self.saveWinningNumber(resData?.openCode, numType, lid);
             } else {
               self.$modal.msgWarning("外部接口异常，请联系管理员！");
               self.qryRewardLoading = false;
@@ -987,6 +1010,9 @@ export default {
     },
     // 格式化中奖号码，原格式为逗号+加号拼接，转换成我的逗号+横杠来拼接
     formatWinningNumber(winNum, nType, lid) {
+      // 确保类型正确
+      const numType = Number(nType);
+      
       // 将第一个匹配的加号替换为减号，第二个匹配的加号替换为逗号
       const originalString = winNum.replace(/\+/, "-").replace(/\+/, ",");
       // 以 - 分割字符串为两部分
@@ -1007,11 +1033,14 @@ export default {
       // 将两个字符串通过-连接
       const resultString = firstString + "-" + secondString;
       // 保存结果字符串
-      this.saveWinningNumber(resultString, nType, lid);
+      this.saveWinningNumber(resultString, numType, lid);
     },
     // 保存中奖号码
     saveWinningNumber(winNum, nType, lid) {
       const self = this;
+      // 确保类型正确
+      const numType = Number(nType);
+      
       const saveParams = {
         lotteryId: lid,
         winningNumber: winNum,
@@ -1019,7 +1048,7 @@ export default {
       updateLog(saveParams)
         .then((res) => {
           if (res?.code === 200) {
-            self.checkIsGetReward(winNum, nType, lid);
+            self.checkIsGetReward(winNum, numType, lid);
           } else {
             self.$modal.msgWarning("开奖号码保存失败！");
           }
@@ -1031,6 +1060,9 @@ export default {
     // 查询号码详情并检查是否中奖
     checkIsGetReward(winNum, numTp, logId) {
       const self = this;
+      // 确保类型正确
+      const numType = Number(numTp);
+      
       getLog(logId)
         .then((res) => {
           if (res?.code === 200) {
@@ -1041,21 +1073,21 @@ export default {
               let totalRewardCount = 0;
               let totalRewardPrize = 0;
               recordNumStrList.forEach((item) => {
-                const resultTmp = checkLotteryResult(numTp, item, winNum);
+                const resultTmp = checkLotteryResult(numType, item, winNum);
                 if (resultTmp?.prizeLevel > 0) {
                   totalRewardCount = totalRewardCount + 1;
                   totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
                 }
               });
               chaseNumStrList.forEach((item) => {
-                const resultTmp = checkLotteryResult(numTp, item, winNum);
+                const resultTmp = checkLotteryResult(numType, item, winNum);
                 if (resultTmp?.prizeLevel > 0) {
                   totalRewardCount = totalRewardCount + 1;
                   totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
                 }
               });
               if (totalRewardCount > 0) {
-                const numTypeText = self.lotteryTypeMap[numTp].text || "";
+                const numTypeText = self.lotteryTypeMap[numType].text || "";
                 self
                   .$confirm("", "恭喜您中奖了！", {
                     confirmButtonText: "保存",
