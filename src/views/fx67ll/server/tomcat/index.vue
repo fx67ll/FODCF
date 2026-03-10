@@ -4,7 +4,7 @@
     <div class="status-card">
       <div class="status-header">
         <h2>Tomcat 服务管理</h2>
-        <!-- 新增主动刷新按钮 -->
+        <!-- 手动刷新按钮及最后刷新时间显示 -->
         <div class="refresh-container">
           <el-button type="text" icon="el-icon-refresh" @click="handleRefresh" :loading="isRefreshing"
             class="refresh-btn">
@@ -16,6 +16,7 @@
 
       <div class="status-content">
         <div class="status-indicator">
+          <!-- 状态指示灯，根据 status 动态添加 running 或 stopped 类 -->
           <div class="indicator-dot" :class="status === '运行中' ? 'running' : 'stopped'"></div>
           <div class="status-text">{{ status }}</div>
         </div>
@@ -37,7 +38,7 @@
       </div>
     </div>
 
-    <!-- 新增：系统内存信息卡片 -->
+    <!-- 系统内存信息卡片 -->
     <div class="status-card">
       <div class="status-header">
         <h2>系统内存信息</h2>
@@ -88,7 +89,7 @@
       </div>
     </div>
 
-    <!-- 新增：GitHub 连接状态检测卡片（原内容不变） -->
+    <!-- GitHub 连接状态检测卡片 -->
     <div class="status-card">
       <div class="status-header">
         <h2>GitHub 连通性检测</h2>
@@ -103,6 +104,7 @@
 
       <div class="github-content">
         <div class="detection-methods">
+          <!-- TCP 网络层检测卡片 -->
           <div class="method-card">
             <div class="method-header">
               <h4>TCP 网络层检测</h4>
@@ -122,6 +124,7 @@
             </div>
           </div>
 
+          <!-- HTTP 应用层检测卡片 -->
           <div class="method-card">
             <div class="method-header">
               <h4>HTTP 应用层检测</h4>
@@ -149,7 +152,7 @@
       </div>
     </div>
 
-    <!-- 新增：常用服务快速访问卡片（原内容不变） -->
+    <!-- 常用服务快速访问卡片 -->
     <div class="status-card">
       <div class="status-header">
         <h2>常用服务快速访问</h2>
@@ -159,6 +162,7 @@
       </div>
 
       <div class="service-grid">
+        <!-- Jenkins 服务入口卡片 -->
         <div class="service-item  service-item-jenkins" @click="goToJenkins">
           <div class="service-icon jenkins-icon">
             <i class="el-icon-s-promotion"></i>
@@ -173,6 +177,7 @@
           </div>
         </div>
 
+        <!-- 宝塔面板入口卡片 -->
         <div class="service-item service-item-baota" @click="goToBaota">
           <div class="service-icon baota-icon">
             <i class="el-icon-monitor"></i>
@@ -196,6 +201,10 @@
 </template>
 
 <script>
+/**
+ * Tomcat 服务管理组件
+ * 提供 Tomcat 服务的启动/停止、状态监控、内存信息展示、GitHub连通性检测、常用服务快速访问等功能
+ */
 import {
   getTomcatStatus,
   startTomcat,
@@ -209,51 +218,58 @@ export default {
   name: "TomcatManager",
   data() {
     return {
-      // Tomcat 状态相关
+      // Tomcat 服务状态文本，如“运行中”、“已停止”、“加载中...”、“未知”
       status: "加载中...",
-      memoryInfo: {          // 新增内存信息对象
-        totalMemoryMb: 0,
-        availableMemoryMb: 0,
-        usedMemoryMb: 0,
-        tomcatResidentMemoryMb: 0
+      // 内存信息对象，包含各项内存指标（单位：MB）
+      memoryInfo: {
+        totalMemoryMb: 0,           // 系统总内存
+        availableMemoryMb: 0,       // 可用内存
+        usedMemoryMb: 0,            // 已用内存
+        tomcatResidentMemoryMb: 0    // Tomcat 进程常驻内存（RSS）
       },
+      // 最后刷新时间（格式化后的字符串）
       lastRefreshTime: "",
+      // 操作日志文本（启动/停止操作时记录）
       logInfo: "",
+      // 是否正在执行启动/停止操作（用于禁用按钮）
       isOperating: false,
+      // 自动刷新定时器句柄
       refreshInterval: null,
+      // 手动刷新时的加载状态
       isRefreshing: false,
 
-      // GitHub 检测相关
-      tcpStatus: "waiting", // waiting, testing, success, error
-      httpStatus: "waiting", // waiting, testing, success, error
-      testingTcp: false,
-      testingHttp: false,
-      githubLogInfo: "",
-      lastGithubTestTime: "",
-      isRefreshingGithub: false,
+      // GitHub 检测相关状态
+      tcpStatus: "waiting",          // TCP检测状态：waiting, testing, success, error
+      httpStatus: "waiting",         // HTTP检测状态：waiting, testing, success, error
+      testingTcp: false,              // TCP检测进行中标志
+      testingHttp: false,             // HTTP检测进行中标志
+      githubLogInfo: "",              // GitHub检测结果日志
+      lastGithubTestTime: "",         // 最后一次GitHub检测时间
+      isRefreshingGithub: false,      // 重置GitHub检测按钮的加载状态
 
-      // 清理缓存状态
+      // 清理缓存操作状态
       clearingCache: false
     };
   },
   created() {
-    // 初始化查询状态
+    // 组件创建后立即查询一次 Tomcat 状态和内存信息
     this.queryStatus();
 
-    // 设置自动刷新，每10秒一次
+    // 设置定时器，每10秒自动刷新一次状态（保持数据最新）
     this.refreshInterval = setInterval(() => {
       this.queryStatus();
     }, 10000);
   },
   beforeDestroy() {
-    // 清除定时器
+    // 组件销毁前清除定时器，防止内存泄漏
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
   },
   methods: {
     /**
-     * 手动刷新状态
+     * 手动刷新 Tomcat 状态
+     * 设置加载状态，调用 queryStatus，完成后取消加载状态
      */
     handleRefresh() {
       this.isRefreshing = true;
@@ -263,7 +279,9 @@ export default {
     },
 
     /**
-     * 查询Tomcat状态（适配新接口）
+     * 查询 Tomcat 状态和内存信息
+     * 调用后端接口 getTomcatStatus，更新 status、memoryInfo，并记录刷新时间
+     * @returns {Promise} 接口调用 Promise
      */
     queryStatus() {
       return getTomcatStatus().then(response => {
@@ -283,7 +301,8 @@ export default {
     },
 
     /**
-     * 启动Tomcat
+     * 启动 Tomcat 服务
+     * 弹出确认对话框，调用 startTomcat 接口，更新操作日志，并轮询状态确保更新
      */
     startTomcat() {
       this.$confirm('确定要启动Tomcat服务吗？', '提示', {
@@ -297,7 +316,7 @@ export default {
         startTomcat().then(response => {
           this.$message.success(response.msg);
           this.logInfo = response.data || response.msg;
-          // 启动后立即查询一次状态，然后等待3秒再查一次
+          // 启动后立即查询一次状态，然后等待3秒再查一次（确保服务完全启动）
           setTimeout(() => {
             this.queryStatus();
             setTimeout(() => {
@@ -317,7 +336,8 @@ export default {
     },
 
     /**
-     * 停止Tomcat
+     * 停止 Tomcat 服务
+     * 弹出警告对话框，调用 stopTomcat 接口，更新操作日志，并轮询状态确保更新
      */
     stopTomcat() {
       this.$confirm('确定要停止Tomcat服务吗？停止后可能导致相关应用无法访问。', '警告', {
@@ -331,7 +351,7 @@ export default {
         stopTomcat().then(response => {
           this.$message.success(response.msg);
           this.logInfo = response.data || response.msg;
-          // 停止后立即查询一次状态，然后等待3秒再查一次
+          // 停止后立即查询一次状态，然后等待3秒再查一次（确保服务完全停止）
           setTimeout(() => {
             this.queryStatus();
             setTimeout(() => {
@@ -352,6 +372,7 @@ export default {
 
     /**
      * 清理系统缓存
+     * 弹出警告对话框，调用 clearSystemCache 接口，成功后刷新内存信息
      */
     handleClearCache() {
       this.$confirm('清理系统缓存将释放被占用的内存，但可能导致短时间内磁盘IO升高。确定继续吗？', '警告', {
@@ -375,6 +396,8 @@ export default {
 
     /**
      * 格式化内存数值，保留两位小数
+     * @param {number} value 原始内存数值
+     * @returns {string} 格式化后的字符串（保留两位小数）
      */
     formatMemory(value) {
       if (value === undefined || value === null || isNaN(value)) return '0.00';
@@ -382,11 +405,11 @@ export default {
     },
 
     /**
-     * 手动刷新GitHub检测状态
+     * 手动重置 GitHub 检测状态（清除之前的检测结果）
      */
     handleRefreshGithub() {
       this.isRefreshingGithub = true;
-      // 重置状态
+      // 重置状态为等待检测
       this.tcpStatus = "waiting";
       this.httpStatus = "waiting";
       this.githubLogInfo = "";
@@ -396,7 +419,8 @@ export default {
     },
 
     /**
-     * 测试TCP连通性
+     * 测试 GitHub TCP 连通性（仅网络层）
+     * 调用 testConnectToGithubByTcp 接口，更新状态和日志
      */
     testTcpConnectivity() {
       this.testingTcp = true;
@@ -419,7 +443,8 @@ export default {
     },
 
     /**
-     * 测试HTTP连通性
+     * 测试 GitHub HTTP 连通性（包括 SSL 握手）
+     * 调用 testConnectToGithubByHttp 接口，更新状态和日志
      */
     testHttpConnectivity() {
       this.testingHttp = true;
@@ -442,7 +467,9 @@ export default {
     },
 
     /**
-     * 获取状态样式类
+     * 根据状态获取对应的 CSS 类名（用于状态标签样式）
+     * @param {string} status 状态值（waiting, testing, success, error）
+     * @returns {string} 对应的 CSS 类名
      */
     getStatusClass(status) {
       const statusMap = {
@@ -455,7 +482,9 @@ export default {
     },
 
     /**
-     * 获取状态文本
+     * 根据状态获取显示文本
+     * @param {string} status 状态值（waiting, testing, success, error）
+     * @returns {string} 对应的中文文本
      */
     getStatusText(status) {
       const textMap = {
@@ -468,7 +497,9 @@ export default {
     },
 
     /**
-     * 格式化日期时间
+     * 格式化日期时间为字符串 "YYYY-MM-DD HH:mm:ss"
+     * @param {Date} date 日期对象
+     * @returns {string} 格式化后的日期字符串
      */
     formatDateTime(date) {
       const year = date.getFullYear();
@@ -481,21 +512,23 @@ export default {
     },
 
     /**
-     * 补零
+     * 补零函数，将数字补成两位字符串（如 5 -> "05"）
+     * @param {number} num 数字
+     * @returns {string} 补零后的字符串
      */
     padZero(num) {
       return num < 10 ? `0${num}` : num;
     },
 
     /**
-     * 跳转到 Jenkins 服务
+     * 跳转到 Jenkins 服务（新窗口打开）
      */
     goToJenkins() {
       window.open('https://run.fx67ll.com/jenkins', '_blank');
     },
 
     /**
-     * 跳转到宝塔面板
+     * 跳转到宝塔面板（新窗口打开）
      */
     goToBaota() {
       window.open('https://baota.fx67ll.com', '_blank');
@@ -505,6 +538,7 @@ export default {
 </script>
 
 <style scoped>
+/* 整体卡片样式 */
 .status-card {
   background-color: #fff;
   border-radius: 8px;
@@ -513,6 +547,7 @@ export default {
   margin-bottom: 20px;
 }
 
+/* 卡片头部：标题和刷新区域布局 */
 .status-header {
   display: flex;
   justify-content: space-between;
@@ -528,6 +563,7 @@ export default {
   color: #1f2d3d;
 }
 
+/* 刷新按钮区域 */
 .refresh-container {
   display: flex;
   align-items: center;
@@ -550,12 +586,14 @@ export default {
   color: #8392a5;
 }
 
+/* 卡片内容区：状态指示器和操作按钮 */
 .status-content {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
 }
 
+/* 状态指示灯和文本 */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -597,6 +635,7 @@ export default {
   font-size: 14px;
 }
 
+/* 操作日志显示区域 */
 .status-log {
   margin-top: 20px;
   padding: 15px;
@@ -623,7 +662,7 @@ export default {
   white-space: pre-wrap;
 }
 
-/* 新增：内存卡片样式 */
+/* 内存信息卡片样式 */
 .memory-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -644,6 +683,7 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* 不同内存项左侧边框颜色 */
 .total-memory {
   border-left-color: #409eff;
 }
@@ -679,6 +719,7 @@ export default {
   margin-top: 8px;
 }
 
+/* 清理缓存区域 */
 .cache-clear-section {
   margin-top: 20px;
   padding-top: 16px;
@@ -697,7 +738,7 @@ export default {
   border-radius: 12px;
 }
 
-/* 原有 GitHub 检测相关样式（保持不变） */
+/* GitHub 检测卡片样式 */
 .github-content {
   margin-top: 10px;
 }
@@ -735,6 +776,7 @@ export default {
   color: #1f2d3d;
 }
 
+/* 状态标签样式 */
 .method-status {
   padding: 4px 8px;
   border-radius: 4px;
@@ -781,6 +823,7 @@ export default {
   text-align: center;
 }
 
+/* GitHub 检测结果区域 */
 .detection-result {
   margin-top: 20px;
   padding: 15px;
@@ -807,7 +850,7 @@ export default {
   white-space: pre-wrap;
 }
 
-/* 原有服务快速访问卡片样式 */
+/* 服务快速访问卡片样式 */
 .service-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -828,6 +871,7 @@ export default {
   overflow: hidden;
 }
 
+/* Jenkins 卡片 hover 效果 */
 .service-item-jenkins:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.15);
@@ -845,6 +889,7 @@ export default {
   background: linear-gradient(90deg, #eb5656, #FAB6B6);
 }
 
+/* 宝塔卡片 hover 效果 */
 .service-item-baota:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.15);
@@ -862,6 +907,7 @@ export default {
   background: linear-gradient(90deg, #2ECC71, #58D68D);
 }
 
+/* 服务图标样式 */
 .service-icon {
   width: 56px;
   height: 56px;
@@ -882,6 +928,7 @@ export default {
   overflow: hidden;
 }
 
+/* 动态光效动画 */
 .jenkins-icon::before {
   content: '';
   position: absolute;
@@ -900,6 +947,7 @@ export default {
   overflow: hidden;
 }
 
+/* 旋转纹理动画 */
 .baota-icon::after {
   content: '';
   position: absolute;
@@ -917,7 +965,6 @@ export default {
   0% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
   }
-
   100% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
   }
@@ -927,7 +974,6 @@ export default {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -989,7 +1035,7 @@ export default {
   text-align: center;
 }
 
-/* 响应式设计 */
+/* 响应式设计：小屏幕下调整布局 */
 @media (max-width: 768px) {
   .detection-methods {
     grid-template-columns: 1fr;
