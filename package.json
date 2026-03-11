@@ -1,6 +1,6 @@
 {
   "name": "vip.fx67ll",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "fx67ll's 管理系统",
   "author": "fx67ll",
   "license": "MIT",
@@ -66,7 +66,8 @@
     "vue-meta": "2.4.0",
     "vue-router": "3.4.9",
     "vuedraggable": "2.24.3",
-    "vuex": "3.6.0"
+    "vuex": "3.6.0",
+    "flipclock": "^0.10.8"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "4.4.6",
