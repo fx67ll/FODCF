@@ -1,13 +1,11 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="赛季业务编码" prop="seasonCode">
-        <el-input v-model="queryParams.seasonCode" placeholder="请输入赛季业务编码" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="赛季编码" prop="seasonCode">
+        <el-input v-model="queryParams.seasonCode" placeholder="请输入赛季编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="赛季业务名称" prop="seasonName">
-        <el-input v-model="queryParams.seasonName" placeholder="请输入赛季业务名称" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="赛季名称" prop="seasonName">
+        <el-input v-model="queryParams.seasonName" placeholder="请输入赛季名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="赛季开始日期" prop="seasonStartDate">
         <el-date-picker clearable v-model="queryParams.seasonStartDate" type="date" value-format="yyyy-MM-dd"
@@ -18,13 +16,6 @@
         <el-date-picker clearable v-model="queryParams.seasonEndDate" type="date" value-format="yyyy-MM-dd"
           placeholder="请选择赛季结束日期">
         </el-date-picker>
-      </el-form-item>
-      <el-form-item label="赛季展示排序" prop="seasonSort">
-        <el-input v-model="queryParams.seasonSort" placeholder="请输入赛季展示排序" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -62,39 +53,37 @@
 
     <el-table v-loading="loading" :data="seasonList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="赛季唯一标识" align="center" prop="seasonId" />
-      <el-table-column label="赛季业务编码" align="center" prop="seasonCode" />
-      <el-table-column label="赛季业务名称" align="center" prop="seasonName" />
-      <el-table-column label="赛季业务备注" align="center" prop="seasonRemark" />
-      <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="180">
+      <el-table-column label="赛季编码" align="center" prop="seasonCode" />
+      <el-table-column label="赛季名称" align="center" prop="seasonName" />
+      <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.seasonStartDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="180">
+      <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.seasonEndDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="赛季状态" align="center" prop="seasonStatus" />
-      <el-table-column label="赛季展示排序" align="center" prop="seasonSort" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="赛季排序" align="center" prop="seasonSort" />
+      <el-table-column label="赛季备注" align="center" prop="seasonRemark" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-            }}</span>
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:season:edit']">修改</el-button>
@@ -110,14 +99,11 @@
     <!-- 添加或修改赛季管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="赛季业务编码" prop="seasonCode">
-          <el-input v-model="form.seasonCode" placeholder="请输入赛季业务编码" />
+        <el-form-item label="赛季编码" prop="seasonCode">
+          <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" />
         </el-form-item>
-        <el-form-item label="赛季业务名称" prop="seasonName">
-          <el-input v-model="form.seasonName" placeholder="请输入赛季业务名称" />
-        </el-form-item>
-        <el-form-item label="赛季业务备注" prop="seasonRemark">
-          <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入内容" />
+        <el-form-item label="赛季名称" prop="seasonName">
+          <el-input v-model="form.seasonName" placeholder="请输入赛季名称" />
         </el-form-item>
         <el-form-item label="赛季开始日期" prop="seasonStartDate">
           <el-date-picker clearable v-model="form.seasonStartDate" type="date" value-format="yyyy-MM-dd"
@@ -129,14 +115,11 @@
             placeholder="请选择赛季结束日期">
           </el-date-picker>
         </el-form-item>
-        <el-form-item label="赛季展示排序" prop="seasonSort">
-          <el-input v-model="form.seasonSort" placeholder="请输入赛季展示排序" />
+        <el-form-item label="赛季排序" prop="seasonSort">
+          <el-input v-model="form.seasonSort" placeholder="请输入赛季排序" />
         </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
+        <el-form-item label="赛季备注" prop="seasonRemark">
+          <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -187,7 +170,6 @@ export default {
         seasonEndDate: null,
         seasonStatus: null,
         seasonSort: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -198,19 +180,16 @@ export default {
       // 表单校验
       rules: {
         seasonCode: [
-          { required: true, message: "赛季业务编码不能为空", trigger: "blur" }
+          { required: true, message: "赛季编码不能为空", trigger: "blur" }
         ],
         seasonName: [
-          { required: true, message: "赛季业务名称不能为空", trigger: "blur" }
+          { required: true, message: "赛季名称不能为空", trigger: "blur" }
         ],
         seasonStartDate: [
           { required: true, message: "赛季开始日期不能为空", trigger: "blur" }
         ],
         seasonEndDate: [
           { required: true, message: "赛季结束日期不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
         ],
       }
     };
@@ -260,12 +239,10 @@ export default {
         seasonEndDate: null,
         seasonStatus: null,
         seasonSort: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },

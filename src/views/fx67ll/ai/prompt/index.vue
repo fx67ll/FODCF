@@ -1,21 +1,20 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="模板业务名称" prop="promptName">
-        <el-input v-model="queryParams.promptName" placeholder="请输入模板业务名称" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="模板名称" prop="promptName">
+        <el-input v-model="queryParams.promptName" placeholder="请输入模板名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属分组ID" prop="groupId">
-        <el-input v-model="queryParams.groupId" placeholder="请输入所属分组ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="所属分组" prop="groupId">
+        <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" :api-func="listGroup"
+          placeholder="请选择所属分组" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属场景ID" prop="sceneId">
-        <el-input v-model="queryParams.sceneId" placeholder="请输入所属场景ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="所属场景" prop="sceneId">
+        <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" :api-func="listScene"
+          placeholder="请选择所属场景" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="默认绑定模型ID" prop="modelId">
-        <el-input v-model="queryParams.modelId" placeholder="请输入默认绑定模型ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="绑定模型" prop="modelId">
+        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" :api-func="listModel"
+          placeholder="请选择绑定模型" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -53,33 +52,31 @@
 
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="模板唯一标识" align="center" prop="promptId" />
-      <el-table-column label="模板业务名称" align="center" prop="promptName" />
-      <el-table-column label="所属分组ID" align="center" prop="groupId" />
-      <el-table-column label="所属场景ID" align="center" prop="sceneId" />
-      <el-table-column label="默认绑定模型ID" align="center" prop="modelId" />
-      <el-table-column label="Prompt模板主体内容" align="center" prop="promptContent" />
-      <el-table-column label="模板变量元数据配置" align="center" prop="promptVariableConfig" />
-      <el-table-column label="模型调用参数覆盖配置" align="center" prop="promptCustomConfigParams" />
-      <el-table-column label="模板启用状态" align="center" prop="promptStatus" />
-      <el-table-column label="模板业务备注" align="center" prop="promptRemark" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="模板名称" align="center" prop="promptName" />
+      <el-table-column label="所属分组" align="center" prop="groupName" />
+      <el-table-column label="所属场景" align="center" prop="sceneName" />
+      <el-table-column label="绑定模型" align="center" prop="modelName" />
+      <el-table-column label="模版内容" align="center" prop="promptContent" />
+      <el-table-column label="变量配置" align="center" prop="promptVariableConfig" />
+      <el-table-column label="调参配置" align="center" prop="promptCustomConfigParams" />
+      <el-table-column label="模板状态" align="center" prop="promptStatus" />
+      <el-table-column label="模板备注" align="center" prop="promptRemark" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-            }}</span>
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:template:edit']">修改</el-button>
@@ -92,38 +89,35 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改AI Prompt模板管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <!-- 添加或修改提示语模板对话框 -->
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="模板业务名称" prop="promptName">
-          <el-input v-model="form.promptName" placeholder="请输入模板业务名称" />
+        <el-form-item label="模板名称" prop="promptName">
+          <el-input v-model="form.promptName" placeholder="请输入模板名称" />
         </el-form-item>
-        <el-form-item label="所属分组ID" prop="groupId">
-          <el-input v-model="form.groupId" placeholder="请输入所属分组ID" />
+        <el-form-item label="所属分组" prop="groupId">
+          <common-enhanced-select ref="groupSelect" v-model="form.groupId" :api-func="listGroup"
+            placeholder="请选择所属分组" />
         </el-form-item>
-        <el-form-item label="所属场景ID" prop="sceneId">
-          <el-input v-model="form.sceneId" placeholder="请输入所属场景ID" />
+        <el-form-item label="所属场景" prop="sceneId">
+          <common-enhanced-select ref="sceneSelect" v-model="form.sceneId" :api-func="listScene"
+            placeholder="请选择所属场景" />
         </el-form-item>
-        <el-form-item label="默认绑定模型ID" prop="modelId">
-          <el-input v-model="form.modelId" placeholder="请输入默认绑定模型ID" />
+        <el-form-item label="绑定模型" prop="modelId">
+          <common-enhanced-select ref="modelSelect" v-model="form.modelId" :api-func="listModel"
+            placeholder="请选择绑定模型" />
         </el-form-item>
-        <el-form-item label="Prompt模板主体内容">
+        <el-form-item label="模版内容">
           <editor v-model="form.promptContent" :min-height="192" />
         </el-form-item>
-        <el-form-item label="模板变量元数据配置" prop="promptVariableConfig">
+        <el-form-item label="变量配置" prop="promptVariableConfig">
           <el-input v-model="form.promptVariableConfig" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="模型调用参数覆盖配置" prop="promptCustomConfigParams">
+        <el-form-item label="调参配置" prop="promptCustomConfigParams">
           <el-input v-model="form.promptCustomConfigParams" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="模板业务备注" prop="promptRemark">
+        <el-form-item label="模板备注" prop="promptRemark">
           <el-input v-model="form.promptRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -136,9 +130,15 @@
 
 <script>
 import { listTemplate, getTemplate, delTemplate, addTemplate, updateTemplate } from "@/api/fx67ll/ai/template";
+import { listGroup } from "@/api/fx67ll/ai/group";
+import { listScene } from "@/api/fx67ll/ai/scene";
+import { listModel } from "@/api/fx67ll/ai/model";
+
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Template",
+  components: { CommonEnhancedSelect },
   data() {
     return {
       // 遮罩层
@@ -153,7 +153,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // AI Prompt模板管理表格数据
+      // 提示语模板表格数据
       templateList: [],
       // 弹出层标题
       title: "",
@@ -176,7 +176,6 @@ export default {
         promptCustomConfigParams: null,
         promptStatus: null,
         promptRemark: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -187,22 +186,19 @@ export default {
       // 表单校验
       rules: {
         promptName: [
-          { required: true, message: "模板业务名称不能为空", trigger: "blur" }
+          { required: true, message: "模板名称不能为空", trigger: "blur" }
         ],
         groupId: [
-          { required: true, message: "所属分组ID不能为空", trigger: "blur" }
+          { required: true, message: "所属分组不能为空", trigger: "blur" }
         ],
         sceneId: [
-          { required: true, message: "所属场景ID不能为空", trigger: "blur" }
+          { required: true, message: "所属场景不能为空", trigger: "blur" }
         ],
         modelId: [
-          { required: true, message: "默认绑定模型ID不能为空", trigger: "blur" }
+          { required: true, message: "绑定模型不能为空", trigger: "blur" }
         ],
         promptContent: [
-          { required: true, message: "Prompt模板主体内容不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
+          { required: true, message: "模版内容不能为空", trigger: "blur" }
         ],
       }
     };
@@ -218,7 +214,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询AI Prompt模板管理列表 */
+    /** 查询提示语模板列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -254,12 +250,10 @@ export default {
         promptCustomConfigParams: null,
         promptStatus: null,
         promptRemark: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },
@@ -283,7 +277,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加AI Prompt模板管理";
+      this.title = "添加提示语模板";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -292,7 +286,7 @@ export default {
       getTemplate(promptId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改AI Prompt模板管理";
+        this.title = "修改提示语模板";
       });
     },
     /** 提交按钮 */
@@ -318,7 +312,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const promptIds = row.promptId || this.ids;
-      this.$modal.confirm('是否确认删除AI Prompt模板管理编号为"' + promptIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除提示语模板编号为"' + promptIds + '"的数据项？').then(function () {
         return delTemplate(promptIds);
       }).then(() => {
         this.getList();

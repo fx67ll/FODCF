@@ -1,29 +1,21 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="球队业务编码" prop="teamCode">
-        <el-input v-model="queryParams.teamCode" placeholder="请输入球队业务编码" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="球队编码" prop="teamCode">
+        <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="球队全称" prop="teamName">
         <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="球队简称或昵称" prop="teamNameShort">
-        <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队简称或昵称" clearable
+      <el-form-item label="球队昵称" prop="teamNameShort">
+        <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="球队英文全称" prop="teamNameEn">
-        <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文全称" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="球队英文" prop="teamNameEn">
+        <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="球队所属国家/地区" prop="teamCountry">
-        <el-input v-model="queryParams.teamCountry" placeholder="请输入球队所属国家/地区" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="球队展示排序" prop="teamSort">
-        <el-input v-model="queryParams.teamSort" placeholder="请输入球队展示排序" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="所属地区" prop="teamCountry">
+        <el-input v-model="queryParams.teamCountry" placeholder="请输入所属地区" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -61,34 +53,32 @@
 
     <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="球队唯一标识" align="center" prop="teamId" />
-      <el-table-column label="球队业务编码" align="center" prop="teamCode" />
+      <el-table-column label="球队编码" align="center" prop="teamCode" />
       <el-table-column label="球队全称" align="center" prop="teamName" />
-      <el-table-column label="球队简称或昵称" align="center" prop="teamNameShort" />
-      <el-table-column label="球队英文全称" align="center" prop="teamNameEn" />
-      <el-table-column label="球队Logo图片URL地址" align="center" prop="teamLogoUrl" />
-      <el-table-column label="球队所属国家/地区" align="center" prop="teamCountry" />
+      <el-table-column label="球队昵称" align="center" prop="teamNameShort" />
+      <el-table-column label="球队英文" align="center" prop="teamNameEn" />
+      <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" />
+      <el-table-column label="所属地区" align="center" prop="teamCountry" />
       <el-table-column label="球队标签" align="center" prop="teamTag" />
-      <el-table-column label="球队业务备注" align="center" prop="teamRemark" />
       <el-table-column label="球队状态" align="center" prop="teamStatus" />
-      <el-table-column label="球队展示排序" align="center" prop="teamSort" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="球队排序" align="center" prop="teamSort" />
+      <el-table-column label="球队备注" align="center" prop="teamRemark" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-            }}</span>
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:team:edit']">修改</el-button>
@@ -104,38 +94,32 @@
     <!-- 添加或修改球队管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="球队业务编码" prop="teamCode">
-          <el-input v-model="form.teamCode" placeholder="请输入球队业务编码" />
+        <el-form-item label="球队编码" prop="teamCode">
+          <el-input v-model="form.teamCode" placeholder="请输入球队编码" />
         </el-form-item>
         <el-form-item label="球队全称" prop="teamName">
           <el-input v-model="form.teamName" placeholder="请输入球队全称" />
         </el-form-item>
-        <el-form-item label="球队简称或昵称" prop="teamNameShort">
-          <el-input v-model="form.teamNameShort" placeholder="请输入球队简称或昵称" />
+        <el-form-item label="球队昵称" prop="teamNameShort">
+          <el-input v-model="form.teamNameShort" placeholder="请输入球队昵称" />
         </el-form-item>
-        <el-form-item label="球队英文全称" prop="teamNameEn">
-          <el-input v-model="form.teamNameEn" placeholder="请输入球队英文全称" />
+        <el-form-item label="球队英文" prop="teamNameEn">
+          <el-input v-model="form.teamNameEn" placeholder="请输入球队英文" />
         </el-form-item>
-        <el-form-item label="球队Logo图片URL地址" prop="teamLogoUrl">
+        <el-form-item label="球队Logo" prop="teamLogoUrl">
           <el-input v-model="form.teamLogoUrl" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="球队所属国家/地区" prop="teamCountry">
-          <el-input v-model="form.teamCountry" placeholder="请输入球队所属国家/地区" />
+        <el-form-item label="所属地区" prop="teamCountry">
+          <el-input v-model="form.teamCountry" placeholder="请输入所属地区" />
         </el-form-item>
         <el-form-item label="球队标签" prop="teamTag">
           <el-input v-model="form.teamTag" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="球队业务备注" prop="teamRemark">
+        <el-form-item label="球队排序" prop="teamSort">
+          <el-input v-model="form.teamSort" placeholder="请输入球队排序" />
+        </el-form-item>
+        <el-form-item label="球队备注" prop="teamRemark">
           <el-input v-model="form.teamRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="球队展示排序" prop="teamSort">
-          <el-input v-model="form.teamSort" placeholder="请输入球队展示排序" />
-        </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -189,7 +173,6 @@ export default {
         teamRemark: null,
         teamStatus: null,
         teamSort: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -200,13 +183,10 @@ export default {
       // 表单校验
       rules: {
         teamCode: [
-          { required: true, message: "球队业务编码不能为空", trigger: "blur" }
+          { required: true, message: "球队编码不能为空", trigger: "blur" }
         ],
         teamName: [
           { required: true, message: "球队全称不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
         ],
       }
     };
@@ -259,12 +239,10 @@ export default {
         teamRemark: null,
         teamStatus: null,
         teamSort: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },

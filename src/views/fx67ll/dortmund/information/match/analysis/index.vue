@@ -14,9 +14,6 @@
         <el-input v-model="queryParams.requestLogCode" placeholder="请输入AI调用日志关联码" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
@@ -62,15 +59,14 @@
       <el-table-column label="最终请求Prompt" align="center" prop="rawPrompt" />
       <el-table-column label="AI原始响应内容" align="center" prop="rawAiResponse" />
       <el-table-column label="分析业务备注" align="center" prop="analysisRemark" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -78,7 +74,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:analysis:edit']">修改</el-button>
@@ -114,12 +110,6 @@
         </el-form-item>
         <el-form-item label="分析业务备注" prop="analysisRemark">
           <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -171,7 +161,6 @@ export default {
         rawPrompt: null,
         rawAiResponse: null,
         analysisRemark: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -192,9 +181,6 @@ export default {
         ],
         rawAiResponse: [
           { required: true, message: "AI原始响应内容不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
         ],
       }
     };
@@ -245,12 +231,10 @@ export default {
         rawPrompt: null,
         rawAiResponse: null,
         analysisRemark: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },

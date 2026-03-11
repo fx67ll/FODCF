@@ -1,17 +1,11 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="分组业务编码" prop="groupCode">
-        <el-input v-model="queryParams.groupCode" placeholder="请输入分组业务编码" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="分组编码" prop="groupCode">
+        <el-input v-model="queryParams.groupCode" placeholder="请输入分组编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="分组业务名称" prop="groupName">
-        <el-input v-model="queryParams.groupName" placeholder="请输入分组业务名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="分组展示排序" prop="groupSort">
-        <el-input v-model="queryParams.groupSort" placeholder="请输入分组展示排序" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="分组名称" prop="groupName">
+        <el-input v-model="queryParams.groupName" placeholder="请输入分组名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -49,21 +43,19 @@
 
     <el-table v-loading="loading" :data="groupList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="分组唯一标识" align="center" prop="groupId" />
-      <el-table-column label="分组业务编码" align="center" prop="groupCode" />
-      <el-table-column label="分组业务名称" align="center" prop="groupName" />
-      <el-table-column label="分组启用状态" align="center" prop="groupStatus" />
-      <el-table-column label="分组业务备注" align="center" prop="groupRemark" />
-      <el-table-column label="分组展示排序" align="center" prop="groupSort" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="分组编码" align="center" prop="groupCode" />
+      <el-table-column label="分组名称" align="center" prop="groupName" />
+      <el-table-column label="分组状态" align="center" prop="groupStatus" />
+      <el-table-column label="分组排序" align="center" prop="groupSort" />
+      <el-table-column label="分组备注" align="center" prop="groupRemark" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -71,7 +63,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:group:edit']">修改</el-button>
@@ -84,26 +76,20 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改AI Prompt模板分组对话框 -->
+    <!-- 添加或修改提示语模版分组对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="分组业务编码" prop="groupCode">
-          <el-input v-model="form.groupCode" placeholder="请输入分组业务编码" />
+        <el-form-item label="分组编码" prop="groupCode">
+          <el-input v-model="form.groupCode" placeholder="请输入分组编码" />
         </el-form-item>
-        <el-form-item label="分组业务名称" prop="groupName">
-          <el-input v-model="form.groupName" placeholder="请输入分组业务名称" />
+        <el-form-item label="分组名称" prop="groupName">
+          <el-input v-model="form.groupName" placeholder="请输入分组名称" />
         </el-form-item>
-        <el-form-item label="分组业务备注" prop="groupRemark">
+        <el-form-item label="分组排序" prop="groupSort">
+          <el-input v-model="form.groupSort" placeholder="请输入分组排序" />
+        </el-form-item>
+        <el-form-item label="分组备注" prop="groupRemark">
           <el-input v-model="form.groupRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="分组展示排序" prop="groupSort">
-          <el-input v-model="form.groupSort" placeholder="请输入分组展示排序" />
-        </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -133,7 +119,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // AI Prompt模板分组表格数据
+      // 提示语模版分组表格数据
       groupList: [],
       // 弹出层标题
       title: "",
@@ -152,7 +138,6 @@ export default {
         groupStatus: null,
         groupRemark: null,
         groupSort: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -163,13 +148,10 @@ export default {
       // 表单校验
       rules: {
         groupCode: [
-          { required: true, message: "分组业务编码不能为空", trigger: "blur" }
+          { required: true, message: "分组编码不能为空", trigger: "blur" }
         ],
         groupName: [
-          { required: true, message: "分组业务名称不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
+          { required: true, message: "分组名称不能为空", trigger: "blur" }
         ],
       }
     };
@@ -185,7 +167,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询AI Prompt模板分组列表 */
+    /** 查询提示语模版分组列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -217,12 +199,10 @@ export default {
         groupStatus: null,
         groupRemark: null,
         groupSort: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },
@@ -246,7 +226,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加AI Prompt模板分组";
+      this.title = "添加提示语模版分组";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -255,7 +235,7 @@ export default {
       getGroup(groupId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改AI Prompt模板分组";
+        this.title = "修改提示语模版分组";
       });
     },
     /** 提交按钮 */
@@ -281,7 +261,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const groupIds = row.groupId || this.ids;
-      this.$modal.confirm('是否确认删除AI Prompt模板分组编号为"' + groupIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除提示语模版分组编号为"' + groupIds + '"的数据项？').then(function () {
         return delGroup(groupIds);
       }).then(() => {
         this.getList();

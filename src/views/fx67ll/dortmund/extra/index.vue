@@ -118,16 +118,16 @@
       <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
       <el-table-column label="备注" align="center" prop="extraRemark" />
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="120" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="120" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="180">
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
@@ -246,8 +246,6 @@ export default {
         saveMoney: null,
         targetMoney: null,
         extraRemark: null,
-        delFlag: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
@@ -658,8 +656,6 @@ export default {
         saveMoney: 0,
         targetMoney: 0,
         extraRemark: "",
-        delFlag: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,

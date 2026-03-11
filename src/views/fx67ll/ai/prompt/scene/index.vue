@@ -1,17 +1,11 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="场景业务编码" prop="sceneCode">
-        <el-input v-model="queryParams.sceneCode" placeholder="请输入场景业务编码" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="场景编码" prop="sceneCode">
+        <el-input v-model="queryParams.sceneCode" placeholder="请输入场景编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="场景业务名称" prop="sceneName">
-        <el-input v-model="queryParams.sceneName" placeholder="请输入场景业务名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="场景展示排序" prop="sceneSort">
-        <el-input v-model="queryParams.sceneSort" placeholder="请输入场景展示排序" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="用户ID" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="场景名称" prop="sceneName">
+        <el-input v-model="queryParams.sceneName" placeholder="请输入场景名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -49,30 +43,28 @@
 
     <el-table v-loading="loading" :data="sceneList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="场景唯一标识" align="center" prop="sceneId" />
-      <el-table-column label="场景业务编码" align="center" prop="sceneCode" />
-      <el-table-column label="场景业务名称" align="center" prop="sceneName" />
-      <el-table-column label="场景业务描述" align="center" prop="sceneDesc" />
-      <el-table-column label="场景扩展备注" align="center" prop="sceneRemark" />
-      <el-table-column label="场景启用状态" align="center" prop="sceneStatus" />
-      <el-table-column label="场景展示排序" align="center" prop="sceneSort" />
-      <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="100" />
+      <el-table-column label="场景编码" align="center" prop="sceneCode" />
+      <el-table-column label="场景名称" align="center" prop="sceneName" />
+      <el-table-column label="场景描述" align="center" prop="sceneDesc" />
+      <el-table-column label="场景状态" align="center" prop="sceneStatus" />
+      <el-table-column label="场景排序" align="center" prop="sceneSort" />
+      <el-table-column label="场景备注" align="center" prop="sceneRemark" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-            }}</span>
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:scene:edit']">修改</el-button>
@@ -85,29 +77,23 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改AI Prompt场景管理对话框 -->
+    <!-- 添加或修改提示语场景对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="场景业务编码" prop="sceneCode">
-          <el-input v-model="form.sceneCode" placeholder="请输入场景业务编码" />
+        <el-form-item label="场景编码" prop="sceneCode">
+          <el-input v-model="form.sceneCode" placeholder="请输入场景编码" />
         </el-form-item>
-        <el-form-item label="场景业务名称" prop="sceneName">
-          <el-input v-model="form.sceneName" placeholder="请输入场景业务名称" />
+        <el-form-item label="场景名称" prop="sceneName">
+          <el-input v-model="form.sceneName" placeholder="请输入场景名称" />
         </el-form-item>
-        <el-form-item label="场景业务描述" prop="sceneDesc">
+        <el-form-item label="场景描述" prop="sceneDesc">
           <el-input v-model="form.sceneDesc" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="场景扩展备注" prop="sceneRemark">
+        <el-form-item label="场景排序" prop="sceneSort">
+          <el-input v-model="form.sceneSort" placeholder="请输入场景排序" />
+        </el-form-item>
+        <el-form-item label="场景备注" prop="sceneRemark">
           <el-input v-model="form.sceneRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="场景展示排序" prop="sceneSort">
-          <el-input v-model="form.sceneSort" placeholder="请输入场景展示排序" />
-        </el-form-item>
-        <el-form-item label="用户ID" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="逻辑删除标志" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入逻辑删除标志" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -137,7 +123,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // AI Prompt场景管理表格数据
+      // 提示语场景表格数据
       sceneList: [],
       // 弹出层标题
       title: "",
@@ -157,7 +143,6 @@ export default {
         sceneRemark: null,
         sceneStatus: null,
         sceneSort: null,
-        userId: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -168,13 +153,10 @@ export default {
       // 表单校验
       rules: {
         sceneCode: [
-          { required: true, message: "场景业务编码不能为空", trigger: "blur" }
+          { required: true, message: "场景编码不能为空", trigger: "blur" }
         ],
         sceneName: [
-          { required: true, message: "场景业务名称不能为空", trigger: "blur" }
-        ],
-        userId: [
-          { required: true, message: "用户ID不能为空", trigger: "blur" }
+          { required: true, message: "场景名称不能为空", trigger: "blur" }
         ],
       }
     };
@@ -190,7 +172,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询AI Prompt场景管理列表 */
+    /** 查询提示语场景列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -223,12 +205,10 @@ export default {
         sceneRemark: null,
         sceneStatus: null,
         sceneSort: null,
-        userId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
-        delFlag: null
       };
       this.resetForm("form");
     },
@@ -252,7 +232,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加AI Prompt场景管理";
+      this.title = "添加提示语场景";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -261,7 +241,7 @@ export default {
       getScene(sceneId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改AI Prompt场景管理";
+        this.title = "修改提示语场景";
       });
     },
     /** 提交按钮 */
@@ -287,7 +267,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const sceneIds = row.sceneId || this.ids;
-      this.$modal.confirm('是否确认删除AI Prompt场景管理编号为"' + sceneIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除提示语场景编号为"' + sceneIds + '"的数据项？').then(function () {
         return delScene(sceneIds);
       }).then(() => {
         this.getList();
