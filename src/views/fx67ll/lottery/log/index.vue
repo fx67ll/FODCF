@@ -239,7 +239,7 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -247,7 +247,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" fixed="right" width="100" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" fixed="right" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
@@ -698,7 +698,7 @@ export default {
       // 强制转换为Number类型，防止字符串类型导致的匹配失败
       const numType = Number(type);
       const enumWeekList = [...this.dict.type.sys_week_type];
-      
+
       // 清空并重新赋值，确保Vue能检测到数组变化
       this.dynamicWeekList = [];
 
@@ -738,13 +738,13 @@ export default {
           ...data,
           numberType: data.numberType ? Number(data.numberType) : null,
           weekType: data.weekType ? Number(data.weekType) : null
-        }; 
-        
+        };
+
         // 先赋值表单
         this.form = processedData;
         // 再根据类型动态加载周次选项
         this.handleNumberTypeChange(processedData.numberType);
-        
+
         this.open = true;
         this.title = "修改每日号码记录";
       });
@@ -887,7 +887,7 @@ export default {
       const self = this;
       // 确保类型正确
       const numType = Number(logNumType);
-      
+
       if (logDateCode && numType && logNumId) {
         this.qryRewardLoading = true;
         getSecretConfig({ secretKey: "qryLotteryRewardAppId" })
@@ -945,7 +945,7 @@ export default {
       const self = this;
       // 确保类型正确
       const numType = Number(nType);
-      
+
       const lotteryTypeMap = {
         1: "cjdlt",
         2: "ssq",
@@ -1012,7 +1012,7 @@ export default {
     formatWinningNumber(winNum, nType, lid) {
       // 确保类型正确
       const numType = Number(nType);
-      
+
       // 将第一个匹配的加号替换为减号，第二个匹配的加号替换为逗号
       const originalString = winNum.replace(/\+/, "-").replace(/\+/, ",");
       // 以 - 分割字符串为两部分
@@ -1040,7 +1040,7 @@ export default {
       const self = this;
       // 确保类型正确
       const numType = Number(nType);
-      
+
       const saveParams = {
         lotteryId: lid,
         winningNumber: winNum,
@@ -1062,7 +1062,7 @@ export default {
       const self = this;
       // 确保类型正确
       const numType = Number(numTp);
-      
+
       getLog(logId)
         .then((res) => {
           if (res?.code === 200) {
