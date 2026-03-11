@@ -1,7 +1,22 @@
 <template>
-  <el-select v-model="innerValue" :placeholder="placeholder" clearable filterable :filter-method="handleFilter"
-    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef">
-    <el-option v-for="item in options" :key="item[valueKey]" :label="item[labelKey]" :value="item[valueKey]" />
+  <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调，并支持自定义宽度 -->
+  <el-select
+    v-model="innerValue"
+    :placeholder="placeholder"
+    clearable
+    filterable
+    :filter-method="handleFilter"
+    @change="handleChange"
+    @keyup.enter.native="handleEnter"
+    ref="selectRef"
+    :style="selectStyle"
+  >
+    <el-option
+      v-for="item in options"
+      :key="item[valueKey]"
+      :label="item[labelKey]"
+      :value="item[valueKey]"
+    />
   </el-select>
 </template>
 
@@ -44,14 +59,32 @@ export default {
     enterCallback: {
       type: Function,
       default: null
+    },
+    // 【新增】自定义宽度：可传入数字（px）或带单位的字符串（如 '200px', '50%'）
+    // 若不传，则默认宽度为100%，跟随父组件宽度
+    width: {
+      type: [String, Number],
+      default: null
     }
   },
   data() {
     return {
       innerValue: this.value, // 内部绑定值（解决v-model双向绑定）
-      options: [], // 展示的下拉选项
+      options: [], // 展示的下拉选项（经过过滤后的）
       originOptions: [] // 原始接口数据（用于过滤）
     };
+  },
+  computed: {
+    // 【新增】计算select样式：若传入了width则使用，否则默认宽度100%
+    selectStyle() {
+      if (this.width) {
+        // 数字类型自动添加px单位
+        const widthVal = typeof this.width === 'number' ? this.width + 'px' : this.width;
+        return { width: widthVal };
+      }
+      // 默认宽度100%，使其跟随父容器宽度
+      return { width: '100%' };
+    }
   },
   watch: {
     // 监听外部value变化，同步到内部
