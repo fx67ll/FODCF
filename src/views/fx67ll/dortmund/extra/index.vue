@@ -63,16 +63,9 @@
           v-hasPermi="['dortmund:extra:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['dortmund:extra:export']"
-        >
-          导出</el-button
-        >
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['dortmund:extra:export']">
+          导出</el-button>
       </el-col> -->
       <el-col :span="1.5">
         <el-button type="info" plain icon="el-icon-data-line" size="mini"
@@ -118,7 +111,7 @@
       <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
       <el-table-column label="备注" align="center" prop="extraRemark" />
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -126,7 +119,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
         <template slot-scope="scope">
           <span>{{
