@@ -1,22 +1,8 @@
 <template>
   <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调，并支持自定义宽度 -->
-  <el-select
-    v-model="innerValue"
-    :placeholder="placeholder"
-    clearable
-    filterable
-    :filter-method="handleFilter"
-    @change="handleChange"
-    @keyup.enter.native="handleEnter"
-    ref="selectRef"
-    :style="selectStyle"
-  >
-    <el-option
-      v-for="item in options"
-      :key="item[valueKey]"
-      :label="item[labelKey]"
-      :value="item[valueKey]"
-    />
+  <el-select v-model="innerValue" :placeholder="placeholder" clearable filterable :filter-method="handleFilter"
+    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle">
+    <el-option v-for="item in options" :key="item[valueKey]" :label="item[labelKey]" :value="item[valueKey]" />
   </el-select>
 </template>
 
@@ -109,8 +95,10 @@ export default {
           pageSize: 1023, // 后期如果不够再修改调用接口方式
           ...this.queryParams
         };
+        console.log('params', params, this.apiFunc);
         // 直接调用传入的原生接口函数
         const response = await this.apiFunc(params);
+        console.log('response', response);
         // 适配返回格式：{rows: 数组, total: 数字}
         this.originOptions = response.rows || [];
         this.options = [...this.originOptions];
