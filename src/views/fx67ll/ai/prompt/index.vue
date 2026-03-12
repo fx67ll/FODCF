@@ -1,32 +1,43 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="模板名称" prop="promptName">
+      <el-form-item label="模板名称" prop="promptName" v-if="isMoreQuery">
         <el-input v-model="queryParams.promptName" placeholder="请输入模板名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="所属分组" prop="groupId">
-        <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" :api-func="listGroup"
-          placeholder="请选择所属分组" :enter-callback="handleQuery" />
+        <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" valueKey="groupId" labelKey="groupName"
+          :api-func="listGroup" placeholder="请选择所属分组" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="所属场景" prop="sceneId">
-        <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" :api-func="listScene"
-          placeholder="请选择所属场景" :enter-callback="handleQuery" />
+        <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" valueKey="sceneId" labelKey="sceneName"
+          :api-func="listScene" placeholder="请选择所属场景" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="绑定模型" prop="modelId">
-        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" :api-func="listModel"
-          placeholder="请选择绑定模型" :enter-callback="handleQuery" />
+        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
+          :api-func="listModel" placeholder="请选择绑定模型" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="模版状态" prop="promptStatus" v-if="isMoreQuery">
+        <el-select v-model="queryParams.promptStatus" style="width: 100%" placeholder="请选择模版状态" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+            :value="dict.value"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -43,32 +54,36 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:template:remove']">删除</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['system:template:export']">导出</el-button>
-      </el-col>
+      </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="模板名称" align="center" prop="promptName" />
-      <el-table-column label="所属分组" align="center" prop="groupName" />
-      <el-table-column label="所属场景" align="center" prop="sceneName" />
-      <el-table-column label="绑定模型" align="center" prop="modelName" />
+      <el-table-column label="模板名称" align="center" prop="promptName" width="120" fixed="left"/>
+      <el-table-column label="所属分组" align="center" prop="groupName" width="120" />
+      <el-table-column label="所属场景" align="center" prop="sceneName" width="120" />
+      <el-table-column label="绑定模型" align="center" prop="modelName" width="120" />
       <el-table-column label="模版内容" align="center" prop="promptContent" />
       <el-table-column label="变量配置" align="center" prop="promptVariableConfig" />
       <el-table-column label="调参配置" align="center" prop="promptCustomConfigParams" />
-      <el-table-column label="模板状态" align="center" prop="promptStatus" />
+      <el-table-column label="模板状态" align="center" prop="promptStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.promptStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="模板备注" align="center" prop="promptRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -92,33 +107,59 @@
     <!-- 添加或修改提示语模板对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="模板名称" prop="promptName">
-          <el-input v-model="form.promptName" placeholder="请输入模板名称" />
-        </el-form-item>
-        <el-form-item label="所属分组" prop="groupId">
-          <common-enhanced-select ref="groupSelect" v-model="form.groupId" :api-func="listGroup"
-            placeholder="请选择所属分组" />
-        </el-form-item>
-        <el-form-item label="所属场景" prop="sceneId">
-          <common-enhanced-select ref="sceneSelect" v-model="form.sceneId" :api-func="listScene"
-            placeholder="请选择所属场景" />
-        </el-form-item>
-        <el-form-item label="绑定模型" prop="modelId">
-          <common-enhanced-select ref="modelSelect" v-model="form.modelId" :api-func="listModel"
-            placeholder="请选择绑定模型" />
-        </el-form-item>
-        <el-form-item label="模版内容">
-          <editor v-model="form.promptContent" :min-height="192" />
-        </el-form-item>
-        <el-form-item label="变量配置" prop="promptVariableConfig">
-          <el-input v-model="form.promptVariableConfig" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="调参配置" prop="promptCustomConfigParams">
-          <el-input v-model="form.promptCustomConfigParams" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="模板备注" prop="promptRemark">
-          <el-input v-model="form.promptRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="模板名称" prop="promptName">
+              <el-input v-model="form.promptName" placeholder="请输入模板名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属分组" prop="groupId">
+              <common-enhanced-select ref="groupSelect" v-model="form.groupId" valueKey="groupId" labelKey="groupName"
+                :api-func="listGroup" placeholder="请选择所属分组" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属场景" prop="sceneId">
+              <common-enhanced-select ref="sceneSelect" v-model="form.sceneId" valueKey="sceneId" labelKey="sceneName"
+                :api-func="listScene" placeholder="请选择所属场景" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="绑定模型" prop="modelId">
+              <common-enhanced-select ref="modelSelect" v-model="form.modelId" valueKey="modelId" labelKey="modelName"
+                :api-func="listModel" placeholder="请选择绑定模型" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="模版内容">
+              <editor v-model="form.promptContent" :min-height="192" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="变量配置" prop="promptVariableConfig">
+              <el-input v-model="form.promptVariableConfig" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="调参配置" prop="promptCustomConfigParams">
+              <el-input v-model="form.promptCustomConfigParams" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="模版状态" prop="promptStatus">
+              <el-select v-model="form.promptStatus" style="width: 100%" placeholder="请选择模版状态">
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="模板备注" prop="promptRemark">
+              <el-input v-model="form.promptRemark" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -138,6 +179,7 @@ import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Template",
+  dicts: ["sys_normal_disable"],
   components: { CommonEnhancedSelect },
   data() {
     return {
@@ -163,6 +205,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -200,10 +244,18 @@ export default {
         promptContent: [
           { required: true, message: "模版内容不能为空", trigger: "blur" }
         ],
+        promptStatus: [
+          { required: true, message: "模版状态不能为空", trigger: "blur" }
+        ],
       }
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listGroup = listGroup;
+    this.listScene = listScene;
+    this.listModel = listModel;
+
     this.getList();
   },
   methods: {
@@ -256,6 +308,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

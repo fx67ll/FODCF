@@ -1,33 +1,44 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="赛季编码" prop="seasonCode">
+      <el-form-item label="赛季编码" prop="seasonCode" v-if="isMoreQuery">
         <el-input v-model="queryParams.seasonCode" placeholder="请输入赛季编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="赛季名称" prop="seasonName">
         <el-input v-model="queryParams.seasonName" placeholder="请输入赛季名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="赛季开始日期" prop="seasonStartDate">
+      <el-form-item label="开始日期" prop="seasonStartDate" v-if="isMoreQuery">
         <el-date-picker clearable v-model="queryParams.seasonStartDate" type="date" value-format="yyyy-MM-dd"
           placeholder="请选择赛季开始日期">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="赛季结束日期" prop="seasonEndDate">
+      <el-form-item label="结束日期" prop="seasonEndDate" v-if="isMoreQuery">
         <el-date-picker clearable v-model="queryParams.seasonEndDate" type="date" value-format="yyyy-MM-dd"
           placeholder="请选择赛季结束日期">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="赛季状态" prop="seasonStatus" v-if="isMoreQuery">
+        <el-select v-model="queryParams.seasonStatus" style="width: 100%" placeholder="请选择赛季状态" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+            :value="dict.value"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -44,38 +55,42 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:season:remove']">删除</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['system:season:export']">导出</el-button>
-      </el-col>
+      </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="seasonList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="赛季编码" align="center" prop="seasonCode" />
-      <el-table-column label="赛季名称" align="center" prop="seasonName" />
-      <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="160">
+      <el-table-column label="赛季编码" align="center" prop="seasonCode" width="120" fixed="left" />
+      <el-table-column label="赛季名称" align="center" prop="seasonName" width="120" fixed="left" />
+      <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="120">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.seasonStartDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="160">
+      <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="120">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.seasonEndDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="赛季状态" align="center" prop="seasonStatus" />
+      <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.seasonStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="赛季排序" align="center" prop="seasonSort" />
       <el-table-column label="赛季备注" align="center" prop="seasonRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -97,30 +112,53 @@
       @pagination="getList" />
 
     <!-- 添加或修改赛季管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 100px"
+      append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="赛季编码" prop="seasonCode">
-          <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" />
-        </el-form-item>
-        <el-form-item label="赛季名称" prop="seasonName">
-          <el-input v-model="form.seasonName" placeholder="请输入赛季名称" />
-        </el-form-item>
-        <el-form-item label="赛季开始日期" prop="seasonStartDate">
-          <el-date-picker clearable v-model="form.seasonStartDate" type="date" value-format="yyyy-MM-dd"
-            placeholder="请选择赛季开始日期">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="赛季结束日期" prop="seasonEndDate">
-          <el-date-picker clearable v-model="form.seasonEndDate" type="date" value-format="yyyy-MM-dd"
-            placeholder="请选择赛季结束日期">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="赛季排序" prop="seasonSort">
-          <el-input v-model="form.seasonSort" placeholder="请输入赛季排序" />
-        </el-form-item>
-        <el-form-item label="赛季备注" prop="seasonRemark">
-          <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="赛季编码" prop="seasonCode">
+              <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="赛季名称" prop="seasonName">
+              <el-input v-model="form.seasonName" placeholder="请输入赛季名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开始日期" prop="seasonStartDate">
+              <el-date-picker clearable v-model="form.seasonStartDate" type="date" value-format="yyyy-MM-dd"
+                style="width: 100%" placeholder="请选择赛季开始日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束日期" prop="seasonEndDate">
+              <el-date-picker clearable v-model="form.seasonEndDate" type="date" value-format="yyyy-MM-dd"
+                style="width: 100%" placeholder="请选择赛季结束日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="赛季状态" prop="seasonStatus">
+              <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="赛季排序" prop="seasonSort">
+              <el-input v-model="form.seasonSort" placeholder="请输入赛季排序" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="赛季备注" prop="seasonRemark">
+              <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -135,6 +173,7 @@ import { listSeason, getSeason, delSeason, addSeason, updateSeason } from "@/api
 
 export default {
   name: "Season",
+  dicts: ["sys_normal_disable"],
   data() {
     return {
       // 遮罩层
@@ -159,17 +198,19 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         seasonCode: null,
         seasonName: null,
-        seasonRemark: null,
         seasonStartDate: null,
         seasonEndDate: null,
         seasonStatus: null,
         seasonSort: null,
+        seasonRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -190,6 +231,9 @@ export default {
         ],
         seasonEndDate: [
           { required: true, message: "赛季结束日期不能为空", trigger: "blur" }
+        ],
+        seasonStatus: [
+          { required: true, message: "赛季状态不能为空", trigger: "blur" }
         ],
       }
     };
@@ -245,6 +289,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {

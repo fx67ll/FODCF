@@ -1,23 +1,34 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="场景编码" prop="sceneCode">
+      <el-form-item label="场景编码" prop="sceneCode" v-if="isMoreQuery">
         <el-input v-model="queryParams.sceneCode" placeholder="请输入场景编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="场景名称" prop="sceneName">
         <el-input v-model="queryParams.sceneName" placeholder="请输入场景名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="场景状态" prop="sceneStatus">
+        <el-select v-model="queryParams.sceneStatus" style="width: 100%" placeholder="请选择场景状态" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+            :value="dict.value"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -34,29 +45,33 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:scene:remove']">删除</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['system:scene:export']">导出</el-button>
-      </el-col>
+      </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="sceneList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="场景编码" align="center" prop="sceneCode" />
-      <el-table-column label="场景名称" align="center" prop="sceneName" />
+      <el-table-column label="场景编码" align="center" prop="sceneCode" width="120" />
+      <el-table-column label="场景名称" align="center" prop="sceneName" width="120" />
       <el-table-column label="场景描述" align="center" prop="sceneDesc" />
-      <el-table-column label="场景状态" align="center" prop="sceneStatus" />
+      <el-table-column label="场景状态" align="center" prop="sceneStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.sceneStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="场景排序" align="center" prop="sceneSort" />
       <el-table-column label="场景备注" align="center" prop="sceneRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -77,24 +92,45 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改提示语场景对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <!-- 添加或修改模版场景对话框 -->
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 100px"
+      append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="场景编码" prop="sceneCode">
-          <el-input v-model="form.sceneCode" placeholder="请输入场景编码" />
-        </el-form-item>
-        <el-form-item label="场景名称" prop="sceneName">
-          <el-input v-model="form.sceneName" placeholder="请输入场景名称" />
-        </el-form-item>
-        <el-form-item label="场景描述" prop="sceneDesc">
-          <el-input v-model="form.sceneDesc" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="场景排序" prop="sceneSort">
-          <el-input v-model="form.sceneSort" placeholder="请输入场景排序" />
-        </el-form-item>
-        <el-form-item label="场景备注" prop="sceneRemark">
-          <el-input v-model="form.sceneRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="场景编码" prop="sceneCode">
+              <el-input v-model="form.sceneCode" placeholder="请输入场景编码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="场景名称" prop="sceneName">
+              <el-input v-model="form.sceneName" placeholder="请输入场景名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="场景状态" prop="sceneStatus">
+              <el-select v-model="form.sceneStatus" style="width: 100%" placeholder="请选择场景状态">
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="场景排序" prop="sceneSort">
+              <el-input v-model="form.sceneSort" placeholder="请输入场景排序" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="场景描述" prop="sceneDesc">
+              <el-input v-model="form.sceneDesc" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="场景备注" prop="sceneRemark">
+              <el-input v-model="form.sceneRemark" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -109,6 +145,7 @@ import { listScene, getScene, delScene, addScene, updateScene } from "@/api/fx67
 
 export default {
   name: "Scene",
+  dicts: ["sys_normal_disable"],
   data() {
     return {
       // 遮罩层
@@ -123,7 +160,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 提示语场景表格数据
+      // 模版场景表格数据
       sceneList: [],
       // 弹出层标题
       title: "",
@@ -133,6 +170,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -140,9 +179,9 @@ export default {
         sceneCode: null,
         sceneName: null,
         sceneDesc: null,
-        sceneRemark: null,
         sceneStatus: null,
         sceneSort: null,
+        sceneRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -158,6 +197,12 @@ export default {
         sceneName: [
           { required: true, message: "场景名称不能为空", trigger: "blur" }
         ],
+        sceneDesc: [
+          { required: true, message: "场景描述不能为空", trigger: "blur" }
+        ],
+        sceneStatus: [
+          { required: true, message: "场景状态不能为空", trigger: "blur" }
+        ],
       }
     };
   },
@@ -172,7 +217,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询提示语场景列表 */
+    /** 查询模版场景列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -212,6 +257,10 @@ export default {
       };
       this.resetForm("form");
     },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
@@ -232,7 +281,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加提示语场景";
+      this.title = "添加模版场景";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -241,7 +290,7 @@ export default {
       getScene(sceneId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改提示语场景";
+        this.title = "修改模版场景";
       });
     },
     /** 提交按钮 */
@@ -267,7 +316,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const sceneIds = row.sceneId || this.ids;
-      this.$modal.confirm('是否确认删除提示语场景编号为"' + sceneIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除模版场景编号为"' + sceneIds + '"的数据项？').then(function () {
         return delScene(sceneIds);
       }).then(() => {
         this.getList();

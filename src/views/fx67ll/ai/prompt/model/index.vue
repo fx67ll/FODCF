@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="模型编码" prop="modelCode">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="85px">
+      <el-form-item label="模型编码" prop="modelCode" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelCode" placeholder="请输入模型编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="模型名称" prop="modelName">
@@ -10,41 +10,52 @@
       <el-form-item label="模型厂商" prop="modelVendor">
         <el-input v-model="queryParams.modelVendor" placeholder="请输入模型厂商" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="API密钥" prop="modelApiKey">
+      <el-form-item label="API密钥" prop="modelApiKey" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelApiKey" placeholder="请输入API密钥" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="Secret密钥" prop="modelSecretKey">
+      <el-form-item label="Secret密钥" prop="modelSecretKey" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelSecretKey" placeholder="请输入Secret密钥" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="模型API调用地址" prop="modelApiUrl">
+      <el-form-item label="调用地址" prop="modelApiUrl" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelApiUrl" placeholder="请输入模型API调用地址" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="API版本号" prop="modelApiVersion">
+      <el-form-item label="模型版本" prop="modelApiVersion" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelApiVersion" placeholder="请输入API版本号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="模型计费单价" prop="modelTokenPrice">
+      <el-form-item label="计费单价" prop="modelTokenPrice" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelTokenPrice" placeholder="请输入模型计费单价" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="计价货币类型" prop="modelTokenCurrency">
+      <el-form-item label="货币类型" prop="modelTokenCurrency" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelTokenCurrency" placeholder="请输入计价货币类型" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="模型状态" prop="modelStatus">
+        <el-select v-model="queryParams.modelStatus" style="width: 100%" placeholder="请选择模型状态" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+            :value="dict.value"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -61,37 +72,41 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:model:remove']">删除</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['system:model:export']">导出</el-button>
-      </el-col>
+      </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="modelList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="模型编码" align="center" prop="modelCode" />
-      <el-table-column label="模型名称" align="center" prop="modelName" />
+      <el-table-column label="模型编码" align="center" prop="modelCode" width="120" fixed="left" />
+      <el-table-column label="模型名称" align="center" prop="modelName" width="120" fixed="left" />
       <el-table-column label="模型厂商" align="center" prop="modelVendor" />
       <el-table-column label="API密钥" align="center" prop="modelApiKey" />
-      <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" />
-      <el-table-column label="模型API调用地址" align="center" prop="modelApiUrl" />
-      <el-table-column label="API版本号" align="center" prop="modelApiVersion" />
-      <el-table-column label="模型API调用参数" align="center" prop="modelConfigParams" />
-      <el-table-column label="API请求头扩展配置" align="center" prop="modelRequestHeader" />
-      <el-table-column label="模型计费单价" align="center" prop="modelTokenPrice" />
-      <el-table-column label="计价货币类型" align="center" prop="modelTokenCurrency" />
-      <el-table-column label="模型状态" align="center" prop="modelStatus" />
+      <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" width="120" />
+      <el-table-column label="调用地址" align="center" prop="modelApiUrl" />
+      <el-table-column label="模型版本" align="center" prop="modelApiVersion" />
+      <el-table-column label="调用参数" align="center" prop="modelConfigParams" />
+      <el-table-column label="Header配置" align="center" prop="modelRequestHeader" width="120" />
+      <el-table-column label="计费单价" align="center" prop="modelTokenPrice" />
+      <el-table-column label="货币类型" align="center" prop="modelTokenCurrency" />
+      <el-table-column label="模型状态" align="center" prop="modelStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.groupStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="模型排序" align="center" prop="modelSort" />
       <el-table-column label="模型备注" align="center" prop="modelRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -112,48 +127,85 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改提示语模型配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="模型编码" prop="modelCode">
-          <el-input v-model="form.modelCode" placeholder="请输入模型编码" />
-        </el-form-item>
-        <el-form-item label="模型名称" prop="modelName">
-          <el-input v-model="form.modelName" placeholder="请输入模型名称" />
-        </el-form-item>
-        <el-form-item label="模型厂商" prop="modelVendor">
-          <el-input v-model="form.modelVendor" placeholder="请输入模型厂商" />
-        </el-form-item>
-        <el-form-item label="API密钥" prop="modelApiKey">
-          <el-input v-model="form.modelApiKey" placeholder="请输入API密钥" />
-        </el-form-item>
-        <el-form-item label="Secret密钥" prop="modelSecretKey">
-          <el-input v-model="form.modelSecretKey" placeholder="请输入Secret密钥" />
-        </el-form-item>
-        <el-form-item label="模型API调用地址" prop="modelApiUrl">
-          <el-input v-model="form.modelApiUrl" placeholder="请输入模型API调用地址" />
-        </el-form-item>
-        <el-form-item label="API版本号" prop="modelApiVersion">
-          <el-input v-model="form.modelApiVersion" placeholder="请输入API版本号" />
-        </el-form-item>
-        <el-form-item label="模型API调用参数" prop="modelConfigParams">
-          <el-input v-model="form.modelConfigParams" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="API请求头扩展配置" prop="modelRequestHeader">
-          <el-input v-model="form.modelRequestHeader" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="模型计费单价" prop="modelTokenPrice">
-          <el-input v-model="form.modelTokenPrice" placeholder="请输入模型计费单价" />
-        </el-form-item>
-        <el-form-item label="计价货币类型" prop="modelTokenCurrency">
-          <el-input v-model="form.modelTokenCurrency" placeholder="请输入计价货币类型" />
-        </el-form-item>
-        <el-form-item label="模型排序" prop="modelSort">
-          <el-input v-model="form.modelSort" placeholder="请输入模型排序" />
-        </el-form-item>
-        <el-form-item label="模型备注" prop="modelRemark">
-          <el-input v-model="form.modelRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
+    <!-- 添加或修改模型配置对话框 -->
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="1000px" style="top: -10px"
+      append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="88px">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="模型编码" prop="modelCode">
+              <el-input v-model="form.modelCode" placeholder="请输入模型编码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="模型名称" prop="modelName">
+              <el-input v-model="form.modelName" placeholder="请输入模型名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="模型厂商" prop="modelVendor">
+              <el-input v-model="form.modelVendor" placeholder="请输入模型厂商" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="API密钥" prop="modelApiKey">
+              <el-input v-model="form.modelApiKey" placeholder="请输入API密钥" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Secret密钥" prop="modelSecretKey">
+              <el-input v-model="form.modelSecretKey" placeholder="请输入Secret密钥" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="调用地址" prop="modelApiUrl">
+              <el-input v-model="form.modelApiUrl" placeholder="请输入模型API调用地址" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="模型状态" prop="modelStatus">
+              <el-select v-model="form.modelStatus" style="width: 100%" placeholder="请选择模型状态">
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="模型排序" prop="modelSort">
+              <el-input v-model="form.modelSort" placeholder="请输入模型排序" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="模型版本" prop="modelApiVersion">
+              <el-input v-model="form.modelApiVersion" placeholder="请输入API版本号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="计费单价" prop="modelTokenPrice">
+              <el-input v-model="form.modelTokenPrice" placeholder="请输入模型计费单价" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="货币类型" prop="modelTokenCurrency">
+              <el-input v-model="form.modelTokenCurrency" placeholder="请输入计价货币类型" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="调用参数" prop="modelConfigParams">
+              <el-input v-model="form.modelConfigParams" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="Header配置" prop="modelRequestHeader">
+              <el-input v-model="form.modelRequestHeader" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="模型备注" prop="modelRemark">
+              <el-input v-model="form.modelRemark" type="textarea" placeholder="请输入内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -168,6 +220,7 @@ import { listModel, getModel, delModel, addModel, updateModel } from "@/api/fx67
 
 export default {
   name: "Model",
+  dicts: ["sys_normal_disable"],
   data() {
     return {
       // 遮罩层
@@ -182,7 +235,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 提示语模型配置表格数据
+      // 模型配置表格数据
       modelList: [],
       // 弹出层标题
       title: "",
@@ -192,6 +245,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -205,11 +260,11 @@ export default {
         modelApiVersion: null,
         modelConfigParams: null,
         modelRequestHeader: null,
-        modelRemark: null,
-        modelStatus: null,
-        modelSort: null,
         modelTokenPrice: null,
         modelTokenCurrency: null,
+        modelStatus: null,
+        modelSort: null,
+        modelRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -232,10 +287,13 @@ export default {
           { required: true, message: "API密钥不能为空", trigger: "blur" }
         ],
         modelApiUrl: [
-          { required: true, message: "模型API调用地址不能为空", trigger: "blur" }
+          { required: true, message: "调用地址不能为空", trigger: "blur" }
         ],
         modelConfigParams: [
-          { required: true, message: "模型API调用参数不能为空", trigger: "blur" }
+          { required: true, message: "调用参数不能为空", trigger: "blur" }
+        ],
+        modelStatus: [
+          { required: true, message: "模型状态不能为空", trigger: "blur" }
         ],
       }
     };
@@ -251,7 +309,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询提示语模型配置列表 */
+    /** 查询模型配置列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -299,6 +357,10 @@ export default {
       };
       this.resetForm("form");
     },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
@@ -319,7 +381,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加提示语模型配置";
+      this.title = "添加模型配置";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -328,7 +390,7 @@ export default {
       getModel(modelId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改提示语模型配置";
+        this.title = "修改模型配置";
       });
     },
     /** 提交按钮 */
@@ -354,7 +416,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const modelIds = row.modelId || this.ids;
-      this.$modal.confirm('是否确认删除提示语模型配置编号为"' + modelIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除模型配置编号为"' + modelIds + '"的数据项？').then(function () {
         return delModel(modelIds);
       }).then(() => {
         this.getList();
