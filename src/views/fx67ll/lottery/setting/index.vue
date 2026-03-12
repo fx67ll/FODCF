@@ -1,13 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form
-      :model="queryParams"
-      ref="queryForm"
-      size="small"
-      :inline="true"
-      v-show="showSearch"
-      label-width="68px"
-    >
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <!-- <el-form-item label="用户ID" prop="userId">
         <el-input
           v-model="queryParams.userId"
@@ -17,24 +10,11 @@
         />
       </el-form-item> -->
       <el-form-item label="创建者" prop="createBy">
-        <el-input
-          v-model="queryParams.createBy"
-          placeholder="请输入记录创建者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
-        <el-date-picker
-          v-model="daterangeCreateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
+        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <!-- <el-form-item label="记录更新者" prop="updateBy">
         <el-input
@@ -45,24 +25,11 @@
         />
       </el-form-item> -->
       <el-form-item label="更新时间">
-        <el-date-picker
-          v-model="daterangeUpdateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
+        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button
-          type="primary"
-          icon="el-icon-search"
-          size="mini"
-          @click="handleQuery"
-        >
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
           搜索
         </el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
@@ -73,192 +40,73 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-          v-hasPermi="['lottery:setting:add']"
-          >新增</el-button
-        >
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+          v-hasPermi="['lottery:setting:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-edit"
-          size="mini"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['lottery:setting:edit']"
-          >修改</el-button
-        >
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['lottery:setting:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['lottery:setting:remove']"
-          >删除</el-button
-        >
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['lottery:setting:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['lottery:setting:export']"
-          >导出</el-button
-        >
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['lottery:setting:export']">导出</el-button>
       </el-col> -->
-      <right-toolbar
-        :showSearch.sync="showSearch"
-        @queryTable="getList"
-      ></right-toolbar>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table
-      v-loading="loading"
-      :data="settingList"
-      @selection-change="handleSelectionChange"
-    >
+    <el-table v-loading="loading" :data="settingList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="生成配置主键" align="center" prop="settingId" width="120" /> -->
       <!-- <el-table-column label="用户ID" align="center" prop="userId" /> -->
-      <el-table-column
-        label="个人彩票生成配置"
-        align="center"
-        prop="lotterySetting"
-      />
-      <el-table-column
-        label="记录创建者"
-        align="center"
-        prop="createBy"
-        width="120"
-      />
-      <el-table-column
-        label="记录创建时间"
-        align="center"
-        prop="createTime"
-        width="180"
-      >
+      <el-table-column label="个人彩票生成配置" align="center" prop="lotterySetting" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="记录更新者"
-        align="center"
-        prop="updateBy"
-        width="120"
-      />
-      <el-table-column
-        label="记录更新时间"
-        align="center"
-        prop="updateTime"
-        width="180"
-      >
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="180">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="操作"
-        align="center"
-        class-name="small-padding fixed-width"
-        fixed="right"
-        width="210"
-      >
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="210">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-files"
-            @click="handleUpdate(scope.row, true)"
-            v-hasPermi="['lottery:setting:view']"
-            >查看</el-button
-          >
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['lottery:setting:edit']"
-            >修改</el-button
-          >
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['lottery:setting:remove']"
-            >删除</el-button
-          >
+          <el-button size="mini" type="text" icon="el-icon-files" @click="handleUpdate(scope.row, true)"
+            v-hasPermi="['lottery:setting:view']">查看</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['lottery:setting:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['lottery:setting:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      width="800px"
-      style="top: 30px"
-      append-to-body
-    >
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 30px"
+      append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="格式化配置" class="formatButton">
-          <el-switch
-            v-model="isViewJson"
-            active-color="#2ecc71"
-            @change="handleIsViewJson"
-          >
+          <el-switch v-model="isViewJson" active-color="#2ecc71" @change="handleIsViewJson">
           </el-switch>
         </el-form-item>
-        <vue-json-viewer
-          v-if="isViewJson"
-          :value="form.lotterySetting ? JSON.parse(form.lotterySetting) : {}"
-          :expand-depth="1"
-          copyable
-          boxed
-          sort
-          show-array-length
-          show-object-size
-          show-type
-        ></vue-json-viewer>
-        <el-form-item
-          v-if="!isViewJson"
-          label="编辑生成配置"
-          prop="lotterySetting"
-        >
-          <el-input
-            v-model="form.lotterySetting"
-            type="textarea"
-            :rows="18"
-            :maxlength="19999"
-            show-word-limit
-            placeholder="请输入个人彩票生成配置"
-          />
+        <vue-json-viewer v-if="isViewJson" :value="form.lotterySetting ? JSON.parse(form.lotterySetting) : {}"
+          :expand-depth="1" copyable boxed sort show-array-length show-object-size show-type></vue-json-viewer>
+        <el-form-item v-if="!isViewJson" label="编辑生成配置" prop="lotterySetting">
+          <el-input v-model="form.lotterySetting" type="textarea" :rows="18" :maxlength="19999" show-word-limit
+            placeholder="请输入个人彩票生成配置" />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select v-model="form.delFlag" placeholder="请选择删除标志">
@@ -469,7 +317,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     /** 导出按钮操作 */
     handleExport() {

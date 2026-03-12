@@ -1,47 +1,20 @@
 <template>
   <div class="app-container">
-    <el-form
-      :model="queryParams"
-      ref="queryForm"
-      size="small"
-      :inline="true"
-      v-show="showSearch"
-      label-width="68px"
-    >
-      <el-form-item label="固定追号" prop="chaseNumber">
-        <el-input
-          v-model="queryParams.chaseNumber"
-          placeholder="请输入每日固定追号"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="固定追号" prop="chaseNumber" v-if="isMoreQuery">
+        <el-input v-model="queryParams.chaseNumber" placeholder="请输入每日固定追号" clearable
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="彩票类型" prop="numberType">
-        <el-select
-          v-model="queryParams.numberType"
-          placeholder="请选择固定追号的彩票类型"
-          clearable
-        >
-          <el-option
-            v-for="dict in dict.type.fx67ll_lottery_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+        <el-select v-model="queryParams.numberType" placeholder="请选择固定追号的彩票类型" clearable>
+          <el-option v-for="dict in dict.type.fx67ll_lottery_type" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="追号周期" prop="weekType">
-        <el-select
-          v-model="queryParams.weekType"
-          placeholder="请选择星期几的固定追号"
-          clearable
-        >
-          <el-option
-            v-for="dict in dict.type.sys_week_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+        <el-select v-model="queryParams.weekType" placeholder="请选择星期几的固定追号" clearable>
+          <el-option v-for="dict in dict.type.sys_week_type" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <!-- <el-form-item label="删除标志" prop="delFlag">
@@ -62,25 +35,12 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item> -->
-      <el-form-item label="创建者" prop="createBy">
-        <el-input
-          v-model="queryParams.createBy"
-          placeholder="请输入记录创建者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+      <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
+        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间">
-        <el-date-picker
-          v-model="daterangeCreateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
+        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <!-- <el-form-item label="更新者" prop="updateBy">
         <el-input
@@ -90,264 +50,114 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item> -->
-      <el-form-item label="更新时间">
-        <el-date-picker
-          v-model="daterangeUpdateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          clearable
-        ></el-date-picker>
+      <el-form-item label="更新时间" v-if="isMoreQuery">
+        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button
-          type="primary"
-          icon="el-icon-search"
-          size="mini"
-          @click="handleQuery"
-        >
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
           搜索
         </el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
           重置
+        </el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
         </el-button>
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          :disabled="checkCanBeAdd"
-          @click="handleAdd"
-          v-hasPermi="['lottery:chase:add']"
-          >新增
-          <el-tooltip
-            content="所有周期规则已配置完毕，请修改已有配置，或删除部分配置后再做新增操作，星期五暂时不允许配置~"
-            placement="top"
-            v-if="checkCanBeAdd"
-          >
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" :disabled="checkCanBeAdd" @click="handleAdd"
+          v-hasPermi="['lottery:chase:add']">新增
+          <el-tooltip content="所有周期规则已配置完毕，请修改已有配置，或删除部分配置后再做新增操作，星期五暂时不允许配置~" placement="top" v-if="checkCanBeAdd">
             <i class="el-icon-question" v-if="checkCanBeAdd" />
           </el-tooltip>
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-edit"
-          size="mini"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['lottery:chase:edit']"
-          >修改</el-button
-        >
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['lottery:chase:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['lottery:chase:remove']"
-          >删除</el-button
-        >
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['lottery:chase:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['lottery:chase:export']"
-          >导出</el-button
-        >
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['lottery:chase:export']">导出</el-button>
       </el-col> -->
-      <right-toolbar
-        :showSearch.sync="showSearch"
-        @queryTable="getList"
-      ></right-toolbar>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table
-      v-loading="loading"
-      :data="chaseList"
-      @selection-change="handleSelectionChange"
-    >
+    <el-table v-loading="loading" :data="chaseList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="固定追号主键" align="center" prop="chaseId" width="120" /> -->
-      <el-table-column
-        label="每日固定追号"
-        width="120"
-        align="center"
-        prop="chaseNumber"
-      />
-      <el-table-column
-        label="彩票类型"
-        align="center"
-        prop="numberType"
-        width="90"
-      >
+      <el-table-column label="每日固定追号" width="120" align="center" prop="chaseNumber" />
+      <el-table-column label="彩票类型" align="center" prop="numberType" width="90">
         <template slot-scope="scope">
-          <dict-tag
-            :options="dict.type.fx67ll_lottery_type"
-            :value="scope.row.numberType"
-          />
+          <dict-tag :options="dict.type.fx67ll_lottery_type" :value="scope.row.numberType" />
         </template>
       </el-table-column>
-      <el-table-column
-        label="追号周期"
-        align="center"
-        prop="weekType"
-        width="90"
-      >
+      <el-table-column label="追号周期" align="center" prop="weekType" width="90">
         <template slot-scope="scope">
-          <dict-tag
-            :options="dict.type.sys_week_type"
-            :value="scope.row.weekType"
-          />
+          <dict-tag :options="dict.type.sys_week_type" :value="scope.row.weekType" />
         </template>
       </el-table-column>
-      <el-table-column
-        label="排序"
-        align="center"
-        prop="sort"
-        width="120"
-        sortable
-      />
-      <el-table-column
-        label="记录创建者"
-        align="center"
-        prop="createBy"
-        width="120"
-      />
-      <el-table-column
-        label="记录创建时间"
-        align="center"
-        prop="createTime"
-        width="180"
-      >
+      <el-table-column label="排序" align="center" prop="sort" width="120" sortable />
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="记录更新者"
-        align="center"
-        prop="updateBy"
-        width="120"
-      />
-      <el-table-column
-        label="记录更新时间"
-        align="center"
-        prop="updateTime"
-        width="180"
-      >
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="操作"
-        align="center"
-        class-name="small-padding fixed-width"
-        fixed="right"
-        width="140"
-      >
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['lottery:chase:edit']"
-            >修改</el-button
-          >
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['lottery:chase:remove']"
-            >删除</el-button
-          >
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['lottery:chase:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['lottery:chase:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      width="500px"
-      style="top: 110px"
-      append-to-body
-    >
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 110px"
+      append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="固定追号" prop="chaseNumber">
-          <el-input
-            v-model="form.chaseNumber"
-            placeholder="请输入每日固定追号"
-            clearable
-          />
+          <el-input v-model="form.chaseNumber" placeholder="请输入每日固定追号" clearable />
         </el-form-item>
         <el-form-item label="彩票类型" prop="numberType">
-          <el-select
-            v-model="form.numberType"
-            style="width: 100%"
-            placeholder="请选择固定追号的彩票类型"
-            @change="handleNumberTypeChange"
-          >
-            <el-option
-              v-for="dict in dict.type.fx67ll_lottery_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="parseInt(dict.value)"
-            ></el-option>
+          <el-select v-model="form.numberType" style="width: 100%" placeholder="请选择固定追号的彩票类型"
+            @change="handleNumberTypeChange">
+            <el-option v-for="dict in dict.type.fx67ll_lottery_type" :key="dict.value" :label="dict.label"
+              :value="parseInt(dict.value)"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="追号周期" prop="weekType" v-if="form.numberType">
-          <el-select
-            v-model="form.weekType"
-            style="width: 100%"
-            placeholder="请选择星期几的固定追号"
-          >
-            <el-option
-              v-for="dict in noUsingWeekList"
-              :key="dict.value"
-              :label="dict.label"
-              :value="parseInt(dict.value)"
-            ></el-option>
+          <el-select v-model="form.weekType" style="width: 100%" placeholder="请选择星期几的固定追号">
+            <el-option v-for="dict in noUsingWeekList" :key="dict.value" :label="dict.label"
+              :value="parseInt(dict.value)"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number
-            v-model="form.sort"
-            :min="1"
-            placeholder="请输入排序"
-          />
+          <el-input-number v-model="form.sort" :min="1" placeholder="请输入排序" />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select
@@ -408,6 +218,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -510,6 +322,10 @@ export default {
         updateTime: null,
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -622,7 +438,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     /** 导出按钮操作 */
     handleExport() {

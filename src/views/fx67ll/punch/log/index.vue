@@ -1,25 +1,10 @@
 <template>
   <div class="app-container">
-    <el-form
-      :model="queryParams"
-      ref="queryForm"
-      size="small"
-      :inline="true"
-      v-show="showSearch"
-      label-width="68px"
-    >
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="打卡类型" prop="punchType">
-        <el-select
-          v-model="queryParams.punchType"
-          placeholder="请选择打卡类型"
-          clearable
-        >
-          <el-option
-            v-for="dict in dict.type.fx67ll_punch_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+        <el-select v-model="queryParams.punchType" placeholder="请选择打卡类型" clearable>
+          <el-option v-for="dict in dict.type.fx67ll_punch_type" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <!-- <el-form-item label="删除标志" prop="delFlag">
@@ -41,61 +26,28 @@
         />
       </el-form-item> -->
       <el-form-item label="打卡人" prop="updateBy">
-        <el-input
-          v-model="queryParams.updateBy"
-          placeholder="请输入打卡人"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-input v-model="queryParams.updateBy" placeholder="请输入打卡人" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="打卡时间">
-        <el-date-picker
-          v-model="daterangeUpdateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
+        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
       </el-form-item>
       <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
-        <el-input
-          v-model="queryParams.createBy"
-          placeholder="请输入记录创建者"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
-        <el-date-picker
-          v-model="daterangeCreateTime"
-          style="width: 240px"
-          value-format="yyyy-MM-dd"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
+        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button
-          type="primary"
-          icon="el-icon-search"
-          size="mini"
-          @click="handleQuery"
-        >
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
           搜索
         </el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
           重置
         </el-button>
-        <el-button
-          type="info"
-          :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
-          size="mini"
-          @click="handleMoreQuery"
-        >
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
           {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
         </el-button>
       </el-form-item>
@@ -103,98 +55,41 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="el-icon-plus"
-          size="mini"
-          @click="handleAdd"
-          v-hasPermi="['punch:log:add']"
-          >新增</el-button
-        >
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+          v-hasPermi="['punch:log:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-edit"
-          size="mini"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['punch:log:edit']"
-          >修改</el-button
-        >
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['punch:log:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="el-icon-delete"
-          size="mini"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['punch:log:remove']"
-          >删除</el-button
-        >
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['punch:log:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['punch:log:export']"
-          >导出</el-button
-        >
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['punch:log:export']">导出</el-button>
       </el-col> -->
       <el-col :span="1.5">
-        <el-button
-          type="info"
-          plain
-          icon="el-icon-data-line"
-          size="mini"
-          @click="handleLogTotalOpen"
-          v-hasPermi="['punch:log:total']"
-          >查看月度工时统计</el-button
-        >
+        <el-button type="info" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
+          v-hasPermi="['punch:log:total']">查看月度工时统计</el-button>
       </el-col>
-      <right-toolbar
-        :showSearch.sync="showSearch"
-        @queryTable="getList"
-      ></right-toolbar>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table
-      v-loading="loading"
-      :data="logList"
-      @selection-change="handleSelectionChange"
-    >
+    <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="打卡记录主键" align="center" prop="punchId" /> -->
       <el-table-column label="打卡类型" align="center" prop="punchType">
         <template slot-scope="scope">
           <!-- <dict-tag :options="dict.type.fx67ll_punch_type" :value="scope.row.punchType" /> -->
-          <span style="color: #2ecc71" v-if="scope.row.punchType === '1'"
-            >上班打卡</span
-          >
-          <span style="color: #ff5a5f" v-if="scope.row.punchType === '2'"
-            >下班打卡</span
-          >
-          <span
-            style="color: #999999"
-            v-if="scope.row.punchType !== '1' && scope.row.punchType !== '2'"
-            >-</span
-          >
+          <span style="color: #2ecc71" v-if="scope.row.punchType === '1'">上班打卡</span>
+          <span style="color: #ff5a5f" v-if="scope.row.punchType === '2'">下班打卡</span>
+          <span style="color: #999999" v-if="scope.row.punchType !== '1' && scope.row.punchType !== '2'">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="打卡人" align="center" prop="updateBy" />
-      <el-table-column
-        label="打卡时间"
-        align="center"
-        prop="updateTime"
-        width="180"
-      >
+      <el-table-column label="打卡人" align="center" prop="updateBy" width="90" />
+      <el-table-column label="打卡时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
@@ -202,93 +97,43 @@
         </template>
       </el-table-column>
       <el-table-column label="打卡记录备注" align="center" prop="punchRemark" />
-      <el-table-column label="记录创建者" align="center" prop="createBy" />
-      <el-table-column
-        label="记录创建时间"
-        align="center"
-        prop="createTime"
-        width="180"
-      >
+      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{
             parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="操作"
-        align="center"
-        class-name="small-padding fixed-width"
-      >
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['punch:log:edit']"
-            >修改</el-button
-          >
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['punch:log:remove']"
-            >删除</el-button
-          >
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['punch:log:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['punch:log:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+      @pagination="getList" />
 
     <!-- 添加或修改打卡记录对话框 -->
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      width="500px"
-      style="top: 130px"
-      append-to-body
-    >
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 130px"
+      append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="打卡类型" prop="punchType">
-          <el-select
-            v-model="form.punchType"
-            style="width: 100%"
-            placeholder="请选择打卡类型"
-          >
-            <el-option
-              v-for="dict in dict.type.fx67ll_punch_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
+          <el-select v-model="form.punchType" style="width: 100%" placeholder="请选择打卡类型">
+            <el-option v-for="dict in dict.type.fx67ll_punch_type" :key="dict.value" :label="dict.label"
+              :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="打卡时间" prop="updateTime">
-          <el-date-picker
-            v-model="form.updateTime"
-            type="datetime"
-            style="width: 100%"
-            placeholder="请选择日期打卡时间"
-          >
+          <el-date-picker v-model="form.updateTime" type="datetime" style="width: 100%" placeholder="请选择日期打卡时间">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="打卡备注" prop="punchRemark">
-          <el-input
-            v-model="form.punchRemark"
-            type="textarea"
-            placeholder="请输入打卡备注"
-            :autosize="{ minRows: 4 }"
-          />
+          <el-input v-model="form.punchRemark" type="textarea" placeholder="请输入打卡备注" :autosize="{ minRows: 4 }" />
         </el-form-item>
         <!-- <el-form-item label="删除标志" prop="delFlag">
           <el-select v-model="form.delFlag" placeholder="请选择删除标志">
@@ -311,31 +156,16 @@
     </el-dialog>
 
     <!-- 查看工时统计数据的弹窗 -->
-    <el-dialog
-      title="月度工时统计"
-      :visible.sync="logTotalOpen"
-      :close-on-click-modal="false"
-      width="930px"
-      style="top: 130px"
-      append-to-body
-    >
+    <el-dialog title="月度工时统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="930px"
+      style="top: 130px" append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="logTotalLoading" :data="logTotalList">
           <el-table-column label="打卡人" align="center" prop="punchUser" />
           <el-table-column label="统计月份" align="center" prop="punchMonth" />
-          <el-table-column
-            label="当月总工时 (小时)"
-            align="center"
-            prop="totalWorkHours"
-            width="160"
-          >
+          <el-table-column label="当月总工时 (小时)" align="center" prop="totalWorkHours" width="160">
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月总工时 (小时)</span>
-              <el-tooltip
-                :style="{ cursor: 'pointer' }"
-                effect="dark"
-                placement="top"
-              >
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
                 <div slot="content">
                   若您有正常的打卡记录并且没有缺卡记录，但是当月总工时仍为0，<br />
                   则说明您某天的打卡记录可能存在异常，比如下班打卡时间早于上班打卡时间。
@@ -344,63 +174,37 @@
               </el-tooltip>
             </template>
             <template slot-scope="scope">
-              <span style="color: #e6a23c"
-                >{{
-                  scope.row.totalWorkHours > 0
-                    ? scope.row.totalWorkHours.toFixed(2)
-                    : 0
+              <span style="color: #e6a23c">{{
+                scope.row.totalWorkHours > 0
+                  ? scope.row.totalWorkHours.toFixed(2)
+                  : 0
+              }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="当月已打卡天数" align="center" prop="totalPunchDays" width="120">
+            <template slot-scope="scope">
+              <span style="color: #409eff">{{ scope.row.totalPunchDays }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="当月缺卡天数" align="center" prop="totalWorkDays" width="100">
+            <template slot-scope="scope">
+              <span style="color: #2ecc71" class="lost-log-btn"
+                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays === 0"
+                @click="handleOpenLostLogDialog(scope.row)">0
+              </span>
+              <span style="color: #ff5a5f" class="lost-log-btn"
+                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays > 0"
+                @click="handleOpenLostLogDialog(scope.row)">{{ scope.row.totalPunchDays - scope.row.totalWorkDays || 0
                 }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column
-            label="当月已打卡天数"
-            align="center"
-            prop="totalPunchDays"
-            width="120"
-          >
-            <template slot-scope="scope">
-              <span style="color: #409eff"
-                >{{ scope.row.totalPunchDays }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            label="当月缺卡天数"
-            align="center"
-            prop="totalWorkDays"
-            width="100"
-          >
-            <template slot-scope="scope">
-              <span
-                style="color: #2ecc71"
-                class="lost-log-btn"
-                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays === 0"
-                @click="handleOpenLostLogDialog(scope.row)"
-                >0
-              </span>
-              <span
-                style="color: #ff5a5f"
-                class="lost-log-btn"
-                v-if="scope.row.totalPunchDays - scope.row.totalWorkDays > 0"
-                @click="handleOpenLostLogDialog(scope.row)"
-                >{{ scope.row.totalPunchDays - scope.row.totalWorkDays || 0 }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            label="当月日均工时 (小时)"
-            align="center"
-            prop="workHoursPerDay"
-            width="170"
-          >
+          <el-table-column label="当月日均工时 (小时)" align="center" prop="workHoursPerDay" width="170">
             <template slot="header">
               <span :style="{ paddingRight: '4px' }">当月日均工时 (小时)</span>
-              <el-tooltip
-                :style="{ cursor: 'pointer' }"
-                effect="dark"
-                placement="top"
-              >
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
                 <div slot="content">
                   当月日均工时 = 当月总工时 / 正常打卡天数。<br /><br />
                   若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
@@ -410,37 +214,21 @@
               </el-tooltip>
             </template>
             <template slot-scope="scope">
-              <span
-                style="color: #2ecc71"
-                v-if="scope.row.workHoursPerDay.toFixed(2) >= 8"
-                >{{ scope.row.workHoursPerDay.toFixed(2) || 0 }}
+              <span style="color: #2ecc71" v-if="scope.row.workHoursPerDay.toFixed(2) >= 8">{{
+                scope.row.workHoursPerDay.toFixed(2) || 0 }}
               </span>
-              <span
-                style="color: #ff5a5f"
-                v-if="scope.row.workHoursPerDay.toFixed(2) < 8"
-                >{{
-                  scope.row.workHoursPerDay > 0
-                    ? scope.row.workHoursPerDay.toFixed(2)
-                    : 0
-                }}
+              <span style="color: #ff5a5f" v-if="scope.row.workHoursPerDay.toFixed(2) < 8">{{
+                scope.row.workHoursPerDay > 0
+                  ? scope.row.workHoursPerDay.toFixed(2)
+                  : 0
+              }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column
-            label="当月净日均工时 (小时)"
-            align="center"
-            prop="workHoursPerDay"
-            width="175"
-          >
+          <el-table-column label="当月净日均工时 (小时)" align="center" prop="workHoursPerDay" width="175">
             <template slot="header">
-              <span :style="{ paddingRight: '4px' }"
-                >当月净日均工时 (小时)</span
-              >
-              <el-tooltip
-                :style="{ cursor: 'pointer' }"
-                effect="dark"
-                placement="top"
-              >
+              <span :style="{ paddingRight: '4px' }">当月净日均工时 (小时)</span>
+              <el-tooltip :style="{ cursor: 'pointer' }" effect="dark" placement="top">
                 <div slot="content">
                   当月日均工时 = 当月净日均工时 / 所有打卡天数。<br /><br />
                   若您有正常的打卡记录并且没有缺卡记录，但是当月日均工时仍为0，<br />
@@ -450,33 +238,27 @@
               </el-tooltip>
             </template>
             <template slot-scope="scope">
-              <span
-                style="color: #2ecc71"
-                v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
-                    2
-                  ) >= 8
-                "
-                >{{
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
-                    2
-                  ) || 0
-                }}
+              <span style="color: #2ecc71" v-if="
+                (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                  2
+                ) >= 8
+              ">{{
+                (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                  2
+                ) || 0
+              }}
               </span>
-              <span
-                style="color: #ff5a5f"
-                v-if="
-                  (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
-                    2
-                  ) < 8
-                "
-                >{{
-                  scope.row.totalWorkHours / scope.row.totalPunchDays > 0
-                    ? (
-                        scope.row.totalWorkHours / scope.row.totalPunchDays
-                      ).toFixed(2)
-                    : 0
-                }}
+              <span style="color: #ff5a5f" v-if="
+                (scope.row.totalWorkHours / scope.row.totalPunchDays).toFixed(
+                  2
+                ) < 8
+              ">{{
+                scope.row.totalWorkHours / scope.row.totalPunchDays > 0
+                  ? (
+                    scope.row.totalWorkHours / scope.row.totalPunchDays
+                  ).toFixed(2)
+                  : 0
+              }}
               </span>
             </template>
           </el-table-column>
@@ -488,38 +270,20 @@
     </el-dialog>
 
     <!-- 查看缺卡记录数据的弹窗 -->
-    <el-dialog
-      title="缺卡记录"
-      :visible.sync="lostLogOpen"
-      :close-on-click-modal="false"
-      width="600px"
-      style="top: 180px"
-      append-to-body
-    >
+    <el-dialog title="缺卡记录" :visible.sync="lostLogOpen" :close-on-click-modal="false" width="600px" style="top: 180px"
+      append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="lostLogLoading" :data="lostLogList">
           <el-table-column label="缺卡人" align="center" prop="punchUser" />
           <el-table-column label="缺卡日期" align="center" prop="punchDay" />
           <el-table-column label="缺卡类型" align="center" prop="lostPunchType">
             <template slot-scope="scope">
-              <span
-                style="color: #2ecc71"
-                v-if="scope.row.lostPunchType === '上班缺卡'"
-                >上班缺卡</span
-              >
-              <span
-                style="color: #ff5a5f"
-                v-if="scope.row.lostPunchType === '下班缺卡'"
-                >下班缺卡</span
-              >
-              <span
-                style="color: #999999"
-                v-if="
-                  scope.row.lostPunchType !== '上班缺卡' &&
-                  scope.row.lostPunchType !== '下班缺卡'
-                "
-                >-</span
-              >
+              <span style="color: #2ecc71" v-if="scope.row.lostPunchType === '上班缺卡'">上班缺卡</span>
+              <span style="color: #ff5a5f" v-if="scope.row.lostPunchType === '下班缺卡'">下班缺卡</span>
+              <span style="color: #999999" v-if="
+                scope.row.lostPunchType !== '上班缺卡' &&
+                scope.row.lostPunchType !== '下班缺卡'
+              ">-</span>
             </template>
           </el-table-column>
         </el-table>
@@ -790,7 +554,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     /** 导出按钮操作 */
     handleExport() {

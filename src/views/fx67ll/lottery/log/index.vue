@@ -87,14 +87,14 @@
         />
       </el-form-item> -->
       <el-form-item>
-        <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo">
-          只查未开奖
-        </el-button>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
           搜索
         </el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
+        <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">
           重置
+        </el-button>
+        <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo">
+          只查未开奖
         </el-button>
         <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
           @click="handleMoreQuery">
@@ -123,14 +123,8 @@
         </el-button>
       </el-col>
       <!-- <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['lottery:log:export']"
-        >
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['lottery:log:export']">
           导出
         </el-button>
       </el-col> -->
@@ -239,7 +233,7 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.hasMorePurchases" />
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
           <span>{{
@@ -247,7 +241,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" fixed="right" />
+      <el-table-column label="记录创建者" align="center" prop="createBy" fixed="right" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
