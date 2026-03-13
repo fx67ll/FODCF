@@ -18,6 +18,13 @@
       <el-form-item label="球队英文" prop="teamNameEn" v-if="isMoreQuery">
         <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+      <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
+        <el-select v-model="queryParams.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
+          allow-create default-first-option>
+          <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value"
+            @keyup.enter.native="handleQuery" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="地区/联赛" prop="teamCountry">
         <el-select v-model="queryParams.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable filterable
           allow-create default-first-option>
@@ -90,6 +97,7 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="球队主场" align="center" prop="teamVenue" width="190" />
       <el-table-column label="地区/联赛" align="center" prop="teamCountry" />
       <el-table-column label="球队标签" align="center" prop="teamTag" width="230">
         <template slot-scope="scope">
@@ -110,16 +118,13 @@
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
-          </span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
-          <span>{{
-            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-          }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
@@ -161,9 +166,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <!-- https://vip.fx67ll.com/vip-api/getRandomAvatar?isNeedMoreMosaic=Y&avatarBlockNum=6&avatarPadding=19 -->
-            <el-form-item label="球队Logo" prop="teamLogoUrl">
-              <el-input v-model="form.teamLogoUrl" placeholder="请输入内容" />
+            <el-form-item label="球队主场" prop="teamVenue">
+              <el-select v-model="form.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
+                allow-create default-first-option>
+                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -173,6 +180,12 @@
                 <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <!-- https://vip.fx67ll.com/vip-api/getRandomAvatar?isNeedMoreMosaic=Y&avatarBlockNum=6&avatarPadding=19 -->
+            <el-form-item label="球队Logo" prop="teamLogoUrl">
+              <el-input v-model="form.teamLogoUrl" placeholder="请输入内容" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -193,7 +206,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="球队排序" prop="teamSort">
-              <el-input v-model="form.teamSort" placeholder="请输入球队排序" />
+              <el-input v-model="form.teamSort" type="number" min="0" max="1023" step="1" placeholder="请输入球队排序" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -213,6 +226,7 @@
 
 <script>
 import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/dortmund/team";
+import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
 
 export default {
   name: "Team",
@@ -292,90 +306,11 @@ export default {
         ],
       },
       // 球队地区预选选项数组
-      teamCountryOptions: [
-        // 五大联赛
-        { label: "德甲", value: "德甲" },
-        { label: "英超", value: "英超" },
-        { label: "西甲", value: "西甲" },
-        { label: "意甲", value: "意甲" },
-        { label: "法甲", value: "法甲" },
-        // 国家队
-        { label: "世界杯", value: "世界杯" },
-        { label: "欧洲杯", value: "欧洲杯" },
-        { label: "德国", value: "德国" },
-        { label: "英国", value: "英国" },
-        { label: "西班牙", value: "西班牙" },
-        { label: "意大利", value: "意大利" },
-        { label: "法国", value: "法国" },
-        // 新增：五大联赛国内杯赛
-        { label: "德国杯", value: "德国杯" },
-        { label: "英格兰足总杯", value: "英格兰足总杯" },
-        { label: "英格兰联赛杯", value: "英格兰联赛杯" },
-        { label: "西班牙国王杯", value: "西班牙国王杯" },
-        { label: "意大利杯", value: "意大利杯" },
-        { label: "法国杯", value: "法国杯" },
-        { label: "法国联赛杯", value: "法国联赛杯" },
-        // 新增：五大联赛关联的洲际/顶级杯赛
-        { label: "欧冠", value: "欧冠" },
-        { label: "欧联杯", value: "欧联杯" },
-        { label: "欧协联", value: "欧协联" },
-        { label: "欧洲超级杯", value: "欧洲超级杯" },
-        { label: "德国超级杯", value: "德国超级杯" },
-        { label: "社区盾杯", value: "社区盾杯" },
-        { label: "西班牙超级杯", value: "西班牙超级杯" },
-        { label: "意大利超级杯", value: "意大利超级杯" },
-        { label: "法国超级杯", value: "法国超级杯" },
-        // 其他，杂七杂八
-        { label: "德乙", value: "德乙" },
-        { label: "英冠", value: "英冠" },
-        { label: "荷甲", value: "荷甲" },
-        { label: "日职", value: "日职" },
-        { label: "日乙", value: "日乙" },
-        { label: "韩职", value: "韩职" },
-        { label: "中超", value: "中超" },
-        { label: "中甲", value: "中甲" },
-        { label: "亚洲杯", value: "亚洲杯" },
-      ],
-      // 球队标签预设选项数组（新增 type 字段）
-      teamTagOptions: [
-        // 基础标签 - 中性/主队相关
-        { label: "我横", value: "我横", type: "warning" }, // 我横-黄色
-        { label: "主队", value: "主队", type: "info" }, // 中性/主队相关 - 灰色
-        { label: "窝里横", value: "窝里横", type: "warning" }, // 偏负面中性
-        // 主场/客场表现
-        { label: "主场龙", value: "主场龙", type: "success" }, // 正向-绿色
-        { label: "客场虫", value: "客场虫", type: "danger" }, // 负向-红色
-        { label: "血脉压制", value: "血脉压制", type: "primary" }, // 优势-深蓝
-        { label: "平局大师", value: "平局大师", type: "info" }, // 中性-灰色
-        { label: "杯赛大师", value: "杯赛大师", type: "info" }, // 中性-灰色
-        { label: "二队出战", value: "二队出战", type: "warning" }, // 提醒-黄色
-        // 比赛风格类
-        { label: "攻势足球", value: "攻势足球", type: "success" }, // 正向-绿色
-        { label: "防守反击", value: "防守反击", type: "primary" }, // 战术-深蓝
-        { label: "传控流", value: "传控流", type: "info" }, // 中性-灰色
-        { label: "摆大巴", value: "摆大巴", type: "warning" }, // 偏保守-黄色
-        { label: "高空轰炸", value: "高空轰炸", type: "primary" }, // 战术-深蓝
-        // 状态表现类
-        { label: "状态火热", value: "状态火热", type: "success" }, // 正向-绿色
-        { label: "状态低迷", value: "状态低迷", type: "danger" }, // 负向-红色
-        { label: "连胜势头", value: "连胜势头", type: "success" }, // 正向-绿色
-        { label: "连败颓势", value: "连败颓势", type: "danger" }, // 负向-红色
-        { label: "绝杀专业户", value: "绝杀专业户", type: "success" }, // 正向-绿色
-        { label: "被逆转之王", value: "被逆转之王", type: "danger" }, // 负向-红色
-        // 球队特质类
-        { label: "青年近卫军", value: "青年近卫军", type: "info" }, // 中性-灰色
-        { label: "老牌劲旅", value: "老牌劲旅", type: "primary" }, // 核心-深蓝
-        { label: "升班马", value: "升班马", type: "warning" }, // 提醒-黄色
-        { label: "保级队", value: "保级队", type: "danger" }, // 危机-红色
-        { label: "争冠热门", value: "争冠热门", type: "success" }, // 正向-绿色
-        { label: "点球大战专家", value: "点球大战专家", type: "primary" }, // 优势-深蓝
-        // 战术特点类
-        { label: "边路飞翼", value: "边路飞翼", type: "success" }, // 正向-绿色
-        { label: "中场绞肉机", value: "中场绞肉机", type: "warning" }, // 强硬-黄色
-        { label: "定位球高手", value: "定位球高手", type: "primary" }, // 优势-深蓝
-        { label: "门将开挂", value: "门将开挂", type: "success" }, // 正向-绿色
-        { label: "锋线哑火", value: "锋线哑火", type: "danger" } // 负向-红色
-      ],
+      teamCountryOptions,
+      // 球队标签预设选项数组
+      teamTagOptions,
+      // 球场预设选项数组
+      teamVenueOptions,
     };
   },
   created() {
