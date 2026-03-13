@@ -136,7 +136,7 @@
           <el-col :span="12">
             <el-form-item label="比赛编码" prop="matchCode">
               <el-input v-model="form.matchCode" placeholder="请输入比赛编码" :disabled="form.matchId">
-                <template #suffix>
+                <template #suffix v-if="!form.matchId">
                   <el-button type="text" icon="el-icon-refresh" @click="generateMatchCode" title="生成比赛编码">
                     生成
                   </el-button>
