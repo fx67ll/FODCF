@@ -91,18 +91,14 @@
       <el-table-column label="打卡人" align="center" prop="updateBy" width="90" />
       <el-table-column label="打卡时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
-          <span>{{
-            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-          }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="打卡记录备注" align="center" prop="punchRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
-          <span>{{
-            parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
-          }}</span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">

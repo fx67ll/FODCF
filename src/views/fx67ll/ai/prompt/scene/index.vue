@@ -67,16 +67,13 @@
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
-          </span>
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
-          <span>{{
-            parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-          }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
@@ -117,7 +114,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="场景排序" prop="sceneSort">
-              <el-input v-model="form.sceneSort" placeholder="请输入场景排序" />
+              <el-input v-model="form.sceneSort" type="number" min="0" max="1023" step="1" placeholder="请输入场景排序" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
