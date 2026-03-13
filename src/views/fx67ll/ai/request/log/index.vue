@@ -1,53 +1,69 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="统计周期内API总调用次数" prop="totalRequests">
-        <el-input v-model="queryParams.totalRequests" placeholder="请输入统计周期内API总调用次数" clearable
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="81px">
+      <el-form-item label="所属模板" prop="promptId">
+        <common-enhanced-select ref="promptSelect" v-model="queryParams.promptId" valueKey="promptId"
+          labelKey="promptName" :api-func="listTemplate" placeholder="请选择所属模板" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="所属分组" prop="groupId" v-if="isMoreQuery">
+        <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" valueKey="groupId" labelKey="groupName"
+          :api-func="listGroup" placeholder="请选择所属分组" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="所属场景" prop="sceneId" v-if="isMoreQuery">
+        <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" valueKey="sceneId" labelKey="sceneName"
+          :api-func="listScene" placeholder="请选择所属场景" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="调用模型" prop="modelId">
+        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
+          :api-func="listModel" placeholder="请选择调用模型" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="输入Token" prop="promptTokens">
+        <el-input v-model="queryParams.promptTokens" placeholder="请输入输入Token" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内业务失败调用次数" prop="failRequests">
-        <el-input v-model="queryParams.failRequests" placeholder="请输入统计周期内业务失败调用次数" clearable
+      <el-form-item label="输出Token" prop="completionTokens">
+        <el-input v-model="queryParams.completionTokens" placeholder="请输入输出Token" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内限流拦截调用次数" prop="limitRequests">
-        <el-input v-model="queryParams.limitRequests" placeholder="请输入统计周期内限流拦截调用次数" clearable
+      <el-form-item label="总Token" prop="totalTokens">
+        <el-input v-model="queryParams.totalTokens" placeholder="请输入总Token" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内熔断拦截调用次数" prop="circuitRequests">
-        <el-input v-model="queryParams.circuitRequests" placeholder="请输入统计周期内熔断拦截调用次数" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="预估费用" prop="cost">
+        <el-input v-model="queryParams.cost" placeholder="请输入预估费用" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内总输入Token消耗量" prop="totalPromptTokens">
-        <el-input v-model="queryParams.totalPromptTokens" placeholder="请输入统计周期内总输入Token消耗量" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="请求耗时" prop="durationMs">
+        <el-input v-model="queryParams.durationMs" placeholder="请输入请求耗时" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内总输出Token消耗量" prop="totalCompletionTokens">
-        <el-input v-model="queryParams.totalCompletionTokens" placeholder="请输入统计周期内总输出Token消耗量" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="调用者IP" prop="callerIp">
+        <el-input v-model="queryParams.callerIp" placeholder="请输入调用IP" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内总预估费用" prop="totalCost">
-        <el-input v-model="queryParams.totalCost" placeholder="请输入统计周期内总预估费用" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="调用用户" prop="createBy">
+        <el-input v-model="queryParams.createBy" placeholder="请输入调用用户" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="统计周期内平均请求耗时" prop="avgDurationMs">
-        <el-input v-model="queryParams.avgDurationMs" placeholder="请输入统计周期内平均请求耗时" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="调用时间">
+        <el-date-picker v-model="daterangeRequestTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['system:log:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['system:log:edit']">修改</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['system:log:remove']">删除</el-button>
@@ -60,29 +76,35 @@
     </el-row>
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="统计日期" align="center" prop="dailyLogDate" />
-      <el-table-column label="统计维度：模型ID" align="center" prop="modelId" />
-      <el-table-column label="统计维度：场景ID" align="center" prop="sceneId" />
-      <el-table-column label="统计周期内API总调用次数" align="center" prop="totalRequests" />
-      <el-table-column label="统计周期内业务失败调用次数" align="center" prop="failRequests" />
-      <el-table-column label="统计周期内限流拦截调用次数" align="center" prop="limitRequests" />
-      <el-table-column label="统计周期内熔断拦截调用次数" align="center" prop="circuitRequests" />
-      <el-table-column label="统计周期内总输入Token消耗量" align="center" prop="totalPromptTokens" />
-      <el-table-column label="统计周期内总输出Token消耗量" align="center" prop="totalCompletionTokens" />
-      <el-table-column label="统计周期内总预估费用" align="center" prop="totalCost" />
-      <el-table-column label="统计周期内平均请求耗时" align="center" prop="avgDurationMs" />
-      <el-table-column label="记录调用者" align="center" prop="createBy" width="100" />
-      <el-table-column label="记录调用时间" align="center" prop="requestTime" width="160">
+      <!-- <el-table-column type="selection" width="55" align="center" /> -->
+      <el-table-column label="日志ID" align="center" prop="requestLogId" />
+      <el-table-column label="所属模板" align="center" prop="promptName" />
+      <el-table-column label="所属分组" align="center" prop="groupName" />
+      <el-table-column label="所属场景" align="center" prop="sceneName" />
+      <el-table-column label="调用模型" align="center" prop="modelName" />
+      <el-table-column label="请求完整内容" align="center" prop="requestContent" />
+      <el-table-column label="响应完整内容" align="center" prop="responseContent" />
+      <el-table-column label="输入Token" align="center" prop="promptTokens" />
+      <el-table-column label="输出Token" align="center" prop="completionTokens" />
+      <el-table-column label="总Token" align="center" prop="totalTokens" />
+      <el-table-column label="预估费用" align="center" prop="cost" />
+      <el-table-column label="请求耗时" align="center" prop="durationMs" />
+      <el-table-column label="HTTP响应状态码" align="center" prop="httpStatus" />
+      <el-table-column label="调用状态" align="center" prop="callStatus" />
+      <el-table-column label="错误堆栈信息" align="center" prop="errorMsg" />
+      <el-table-column label="调用IP" align="center" prop="callerIp" />
+      <el-table-column label="调用用户" align="center" prop="createBy" width="90" />
+      <el-table-column label="调用时间" align="center" prop="requestTime" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.requestTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
-          </span>
+          <span>{{ parseTime(scope.row.requestTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:log:edit']">修改</el-button>
+          <!-- <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['system:log:edit']">修改</el-button> -->
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleUpdate(scope.row)"
+            v-hasPermi="['system:log:edit']">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
             v-hasPermi="['system:log:remove']">删除</el-button>
         </template>
@@ -92,37 +114,90 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改AI 调用请求日统计日志对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="统计周期内API总调用次数" prop="totalRequests">
-          <el-input v-model="form.totalRequests" placeholder="请输入统计周期内API总调用次数" />
-        </el-form-item>
-        <el-form-item label="统计周期内业务失败调用次数" prop="failRequests">
-          <el-input v-model="form.failRequests" placeholder="请输入统计周期内业务失败调用次数" />
-        </el-form-item>
-        <el-form-item label="统计周期内限流拦截调用次数" prop="limitRequests">
-          <el-input v-model="form.limitRequests" placeholder="请输入统计周期内限流拦截调用次数" />
-        </el-form-item>
-        <el-form-item label="统计周期内熔断拦截调用次数" prop="circuitRequests">
-          <el-input v-model="form.circuitRequests" placeholder="请输入统计周期内熔断拦截调用次数" />
-        </el-form-item>
-        <el-form-item label="统计周期内总输入Token消耗量" prop="totalPromptTokens">
-          <el-input v-model="form.totalPromptTokens" placeholder="请输入统计周期内总输入Token消耗量" />
-        </el-form-item>
-        <el-form-item label="统计周期内总输出Token消耗量" prop="totalCompletionTokens">
-          <el-input v-model="form.totalCompletionTokens" placeholder="请输入统计周期内总输出Token消耗量" />
-        </el-form-item>
-        <el-form-item label="统计周期内总预估费用" prop="totalCost">
-          <el-input v-model="form.totalCost" placeholder="请输入统计周期内总预估费用" />
-        </el-form-item>
-        <el-form-item label="统计周期内平均请求耗时" prop="avgDurationMs">
-          <el-input v-model="form.avgDurationMs" placeholder="请输入统计周期内平均请求耗时" />
-        </el-form-item>
+    <!-- 添加或修改调用请求日志对话框 -->
+    <el-dialog :title="title" :visible.sync="open" width="800px" style="top: -10px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="82px"> <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="所属模板" prop="promptName">
+              <el-input v-model="form.promptName" placeholder="请输入所属模板" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属分组" prop="groupName">
+              <el-input v-model="form.groupName" placeholder="请输入所属分组" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属场景" prop="sceneName">
+              <el-input v-model="form.sceneName" placeholder="请输入所属场景" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="调用模型" prop="modelName">
+              <el-input v-model="form.modelName" placeholder="请输入调用模型" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="请求内容">
+              <editor v-model="form.requestContent" :min-height="192" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="响应内容">
+              <editor v-model="form.responseContent" :min-height="192" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="输入Token" prop="promptTokens">
+              <el-input v-model="form.promptTokens" placeholder="请输入输入Token" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="输出Token" prop="completionTokens">
+              <el-input v-model="form.completionTokens" placeholder="请输入输出Token" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="总Token" prop="totalTokens">
+              <el-input v-model="form.totalTokens" placeholder="请输入总Token" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="预估费用" prop="cost">
+              <el-input v-model="form.cost" placeholder="请输入预估费用" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="请求耗时" prop="durationMs">
+              <el-input v-model="form.durationMs" placeholder="请输入请求耗时" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="错误信息" prop="errorMsg">
+              <el-input v-model="form.errorMsg" type="textarea" placeholder="请输入错误信息内容" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="调用IP" prop="callerIp">
+              <el-input v-model="form.callerIp" placeholder="请输入调用IP" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="调用用户" prop="createBy">
+              <el-input v-model="form.createBy" placeholder="请输入调用用户" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="调用时间" prop="requestTime">
+              <el-input v-model="form.requestTime" placeholder="请输入调用时间" disabled />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <!-- <el-button type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button> -->
+        <el-button @click="cancel">关闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -130,9 +205,16 @@
 
 <script>
 import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/ai/log";
+import { listTemplate } from "@/api/fx67ll/ai/template";
+import { listGroup } from "@/api/fx67ll/ai/group";
+import { listScene } from "@/api/fx67ll/ai/scene";
+import { listModel } from "@/api/fx67ll/ai/model";
+
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Log",
+  components: { CommonEnhancedSelect },
   data() {
     return {
       // 遮罩层
@@ -147,28 +229,36 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // AI 调用请求日统计日志表格数据
+      // 调用请求日志表格数据
       logList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
       open: false,
-      // 创建时间范围
-      daterangeCreateTime: [],
-      // 更新时间范围
-      daterangeUpdateTime: [],
+      // 调用时间范围
+      daterangeRequestTime: [],
+      // 是否使用高级搜索
+      isMoreQuery: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        totalRequests: null,
-        failRequests: null,
-        limitRequests: null,
-        circuitRequests: null,
-        totalPromptTokens: null,
-        totalCompletionTokens: null,
-        totalCost: null,
-        avgDurationMs: null,
+        promptId: null,
+        groupId: null,
+        sceneId: null,
+        modelId: null,
+        requestContent: null,
+        responseContent: null,
+        promptTokens: null,
+        completionTokens: null,
+        totalTokens: null,
+        cost: null,
+        durationMs: null,
+        httpStatus: null,
+        callStatus: null,
+        errorMsg: null,
+        callerIp: null,
+        userId: null,
         beginRequestTime: null,
         endRequestTime: null,
       },
@@ -176,10 +266,19 @@ export default {
       form: {},
       // 表单校验
       rules: {
+        // modelId: [
+        //   { required: true, message: "调用模型ID不能为空", trigger: "blur" }
+        // ],
       }
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listTemplate = listTemplate;
+    this.listGroup = listGroup;
+    this.listScene = listScene;
+    this.listModel = listModel;
+
     this.getList();
   },
   methods: {
@@ -188,7 +287,7 @@ export default {
       this.queryParams.beginRequestTime = null;
       this.queryParams.endRequestTime = null;
     },
-    /** 查询AI 调用请求日统计日志列表 */
+    /** 查询调用请求日志列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -210,19 +309,31 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        dailyLogDate: null,
-        modelId: null,
+        requestLogId: null,
+        promptId: null,
+        groupId: null,
         sceneId: null,
-        totalRequests: null,
-        failRequests: null,
-        limitRequests: null,
-        circuitRequests: null,
-        totalPromptTokens: null,
-        totalCompletionTokens: null,
-        totalCost: null,
-        avgDurationMs: null
+        modelId: null,
+        requestContent: null,
+        responseContent: null,
+        promptTokens: null,
+        completionTokens: null,
+        totalTokens: null,
+        cost: null,
+        durationMs: null,
+        httpStatus: null,
+        callStatus: null,
+        errorMsg: null,
+        callerIp: null,
+        requestTime: null,
+        userId: null,
+        createBy: null
       };
       this.resetForm("form");
+    },
+    /** 高级搜索按钮操作 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -236,7 +347,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.dailyLogDate)
+      this.ids = selection.map(item => item.requestLogId)
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
@@ -244,23 +355,23 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加AI 调用请求日统计日志";
+      this.title = "添加调用请求日志";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const dailyLogDate = row.dailyLogDate || this.ids
-      getLog(dailyLogDate).then(response => {
+      const requestLogId = row.requestLogId || this.ids
+      getLog(requestLogId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改AI 调用请求日统计日志";
+        this.title = "修改调用请求日志";
       });
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.dailyLogDate != null) {
+          if (this.form.requestLogId != null) {
             updateLog(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
@@ -278,9 +389,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const dailyLogDates = row.dailyLogDate || this.ids;
-      this.$modal.confirm('是否确认删除AI 调用请求日统计日志编号为"' + dailyLogDates + '"的数据项？').then(function () {
-        return delLog(dailyLogDates);
+      const requestLogIds = row.requestLogId || this.ids;
+      this.$modal.confirm('是否确认删除调用请求日志编号为"' + requestLogIds + '"的数据项？').then(function () {
+        return delLog(requestLogIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
