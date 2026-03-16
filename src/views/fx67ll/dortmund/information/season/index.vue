@@ -206,8 +206,6 @@ export default {
         seasonStartDate: null,
         seasonEndDate: null,
         seasonStatus: null,
-        seasonSort: null,
-        seasonRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,

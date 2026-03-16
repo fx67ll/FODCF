@@ -170,8 +170,6 @@ export default {
         groupCode: null,
         groupName: null,
         groupStatus: null,
-        groupSort: null,
-        groupRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,

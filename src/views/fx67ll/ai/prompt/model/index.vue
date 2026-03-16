@@ -23,7 +23,7 @@
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="模型版本" prop="modelApiVersion" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelApiVersion" placeholder="请输入API版本号" clearable
+        <el-input v-model="queryParams.modelApiVersion" placeholder="请输入模型版本号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="计费单价" prop="modelTokenPrice" v-if="isMoreQuery">
@@ -87,7 +87,7 @@
       <el-table-column label="API密钥" align="center" prop="modelApiKey" />
       <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" width="120" />
       <el-table-column label="调用地址" align="center" prop="modelApiUrl" />
-      <el-table-column label="模型版本" align="center" prop="modelApiVersion" />
+      <el-table-column label="模型版本号" align="center" prop="modelApiVersion" />
       <el-table-column label="调用参数" align="center" prop="modelConfigParams" />
       <el-table-column label="Header配置" align="center" prop="modelRequestHeader" width="120" />
       <el-table-column label="计费单价" align="center" prop="modelTokenPrice" />
@@ -174,7 +174,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="模型版本" prop="modelApiVersion">
-              <el-input v-model="form.modelApiVersion" placeholder="请输入API版本号" />
+              <el-input v-model="form.modelApiVersion" placeholder="请输入模型版本号" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -255,13 +255,9 @@ export default {
         modelSecretKey: null,
         modelApiUrl: null,
         modelApiVersion: null,
-        modelConfigParams: null,
-        modelRequestHeader: null,
         modelTokenPrice: null,
         modelTokenCurrency: null,
         modelStatus: null,
-        modelSort: null,
-        modelRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
