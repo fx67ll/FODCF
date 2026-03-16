@@ -1,6 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="81px">
+      <el-form-item label="日志编号" prop="requestLogId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.requestLogId" placeholder="请输入日志编号" clearable
+          @keyup.enter.native="handleQuery" />
+      </el-form-item>
       <el-form-item label="所属模板" prop="promptId">
         <common-enhanced-select ref="promptSelect" v-model="queryParams.promptId" valueKey="promptId"
           labelKey="promptName" :api-func="listTemplate" placeholder="请选择所属模板" :enter-callback="handleQuery" />
@@ -77,7 +81,7 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <!-- <el-table-column type="selection" width="55" align="center" /> -->
-      <el-table-column label="日志ID" align="center" prop="requestLogId" />
+      <el-table-column label="日志编号" align="center" prop="requestLogId" width="80" fixed="left" />
       <el-table-column label="所属模板" align="center" prop="promptName" />
       <el-table-column label="所属分组" align="center" prop="groupName" />
       <el-table-column label="所属场景" align="center" prop="sceneName" />
@@ -243,6 +247,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        requestLogId: null,
         promptId: null,
         groupId: null,
         sceneId: null,

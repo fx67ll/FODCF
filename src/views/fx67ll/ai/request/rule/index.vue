@@ -1,12 +1,15 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="规则作用维度" prop="limitRuleDimension">
-        <el-input v-model="queryParams.limitRuleDimension" placeholder="请输入规则作用维度" clearable
+      <el-form-item label="规则编号" prop="limitRuleId">
+        <el-input v-model="queryParams.limitRuleId" placeholder="请输入规则编号" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="规则维度" prop="limitRuleDimension">
+        <el-input v-model="queryParams.limitRuleDimension" placeholder="请输入规则维度" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="规则作用目标ID" prop="limitRuleTargetId">
-        <el-input v-model="queryParams.limitRuleTargetId" placeholder="请输入规则作用目标ID" clearable
+      <el-form-item label="规则目标" prop="limitRuleTargetId">
+        <el-input v-model="queryParams.limitRuleTargetId" placeholder="请输入规则目标" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="流控模式" prop="flowControlMode">
@@ -81,9 +84,9 @@
 
     <el-table v-loading="loading" :data="ruleList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="规则唯一标识" align="center" prop="limitRuleId" />
-      <el-table-column label="规则作用维度" align="center" prop="limitRuleDimension" />
-      <el-table-column label="规则作用目标ID" align="center" prop="limitRuleTargetId" />
+      <el-table-column label="规则编号" align="center" prop="limitRuleId" width="80" fixed="left" />
+      <el-table-column label="规则维度" align="center" prop="limitRuleDimension" />
+      <el-table-column label="规则目标" align="center" prop="limitRuleTargetId" />
       <el-table-column label="规则类型" align="center" prop="limitRuleType" />
       <el-table-column label="流控模式" align="center" prop="flowControlMode" />
       <el-table-column label="流控效果" align="center" prop="flowControlEffect" />
@@ -120,14 +123,14 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改AI Prompt 限流/熔断规则（适配Sentinel框架）对话框 -->
+    <!-- 添加或修改调用规则对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="规则作用维度" prop="limitRuleDimension">
-          <el-input v-model="form.limitRuleDimension" placeholder="请输入规则作用维度" />
+        <el-form-item label="规则维度" prop="limitRuleDimension">
+          <el-input v-model="form.limitRuleDimension" placeholder="请输入规则维度" />
         </el-form-item>
-        <el-form-item label="规则作用目标ID" prop="limitRuleTargetId">
-          <el-input v-model="form.limitRuleTargetId" placeholder="请输入规则作用目标ID" />
+        <el-form-item label="规则目标" prop="limitRuleTargetId">
+          <el-input v-model="form.limitRuleTargetId" placeholder="请输入规则目标" />
         </el-form-item>
         <el-form-item label="流控模式" prop="flowControlMode">
           <el-input v-model="form.flowControlMode" placeholder="请输入流控模式" />
@@ -181,7 +184,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // AI Prompt 限流/熔断规则（适配Sentinel框架）表格数据
+      // 调用规则表格数据
       ruleList: [],
       // 弹出层标题
       title: "",
@@ -197,6 +200,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        limitRuleId: null,
         limitRuleDimension: null,
         limitRuleTargetId: null,
         limitRuleType: null,
@@ -220,10 +224,10 @@ export default {
       // 表单校验
       rules: {
         limitRuleDimension: [
-          { required: true, message: "规则作用维度不能为空", trigger: "blur" }
+          { required: true, message: "规则维度不能为空", trigger: "blur" }
         ],
         limitRuleTargetId: [
-          { required: true, message: "规则作用目标ID不能为空", trigger: "blur" }
+          { required: true, message: "规则目标不能为空", trigger: "blur" }
         ],
         limitRuleType: [
           { required: true, message: "规则类型不能为空", trigger: "change" }
@@ -245,7 +249,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询AI Prompt 限流/熔断规则（适配Sentinel框架）列表 */
+    /** 查询调用规则列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -316,7 +320,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加AI Prompt 限流/熔断规则（适配Sentinel框架）";
+      this.title = "添加调用规则";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -325,7 +329,7 @@ export default {
       getRule(limitRuleId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改AI Prompt 限流/熔断规则（适配Sentinel框架）";
+        this.title = "修改调用规则";
       });
     },
     /** 提交按钮 */
@@ -351,7 +355,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const limitRuleIds = row.limitRuleId || this.ids;
-      this.$modal.confirm('是否确认删除AI Prompt 限流/熔断规则（适配Sentinel框架）编号为"' + limitRuleIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除调用规则编号为"' + limitRuleIds + '"的数据项？').then(function () {
         return delRule(limitRuleIds);
       }).then(() => {
         this.getList();
