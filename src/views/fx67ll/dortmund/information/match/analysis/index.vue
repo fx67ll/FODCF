@@ -1,17 +1,20 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="关联比赛ID" prop="matchId">
-        <el-input v-model="queryParams.matchId" placeholder="请输入关联比赛ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="分析编号" prop="analysisId">
+        <el-input v-model="queryParams.analysisId" placeholder="请输入分析编号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="使用的模板ID" prop="promptId">
-        <el-input v-model="queryParams.promptId" placeholder="请输入使用的模板ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="目标比赛" prop="matchId">
+        <el-input v-model="queryParams.matchId" placeholder="请输入目标比赛" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="使用的模型ID" prop="modelId">
-        <el-input v-model="queryParams.modelId" placeholder="请输入使用的模型ID" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="分析模版" prop="promptId">
+        <el-input v-model="queryParams.promptId" placeholder="请输入分析模版" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="AI调用日志关联码" prop="requestLogCode">
-        <el-input v-model="queryParams.requestLogCode" placeholder="请输入AI调用日志关联码" clearable
+      <el-form-item label="分析模型" prop="modelId">
+        <el-input v-model="queryParams.modelId" placeholder="请输入分析模型" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="调用记录" prop="requestLogCode">
+        <el-input v-model="queryParams.requestLogCode" placeholder="请输入调用记录" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
@@ -54,15 +57,15 @@
 
     <el-table v-loading="loading" :data="analysisList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="分析唯一标识" align="center" prop="analysisId" />
-      <el-table-column label="关联比赛ID" align="center" prop="matchId" />
-      <el-table-column label="使用的模板ID" align="center" prop="promptId" />
-      <el-table-column label="使用的模型ID" align="center" prop="modelId" />
-      <el-table-column label="AI调用日志关联码" align="center" prop="requestLogCode" />
+      <el-table-column label="分析编号" align="center" prop="analysisId" width="80" fixed="left" />
+      <el-table-column label="目标比赛" align="center" prop="matchId" />
+      <el-table-column label="分析模版" align="center" prop="promptId" />
+      <el-table-column label="分析模型" align="center" prop="modelId" />
+      <el-table-column label="调用记录" align="center" prop="requestLogCode" />
       <el-table-column label="分析类型" align="center" prop="analysisType" />
-      <el-table-column label="最终请求Prompt" align="center" prop="rawPrompt" />
+      <el-table-column label="最终Prompt内容" align="center" prop="rawPrompt" />
       <el-table-column label="AI原始响应内容" align="center" prop="rawAiResponse" />
-      <el-table-column label="分析业务备注" align="center" prop="analysisRemark" />
+      <el-table-column label="分析备注" align="center" prop="analysisRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -88,28 +91,28 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改比赛AI分析原始结果对话框 -->
+    <!-- 添加或修改比赛分析日志记录对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="关联比赛ID" prop="matchId">
-          <el-input v-model="form.matchId" placeholder="请输入关联比赛ID" />
+        <el-form-item label="目标比赛" prop="matchId">
+          <el-input v-model="form.matchId" placeholder="请输入目标比赛" />
         </el-form-item>
-        <el-form-item label="使用的模板ID" prop="promptId">
-          <el-input v-model="form.promptId" placeholder="请输入使用的模板ID" />
+        <el-form-item label="分析模版" prop="promptId">
+          <el-input v-model="form.promptId" placeholder="请输入分析模版" />
         </el-form-item>
-        <el-form-item label="使用的模型ID" prop="modelId">
-          <el-input v-model="form.modelId" placeholder="请输入使用的模型ID" />
+        <el-form-item label="分析模型" prop="modelId">
+          <el-input v-model="form.modelId" placeholder="请输入分析模型" />
         </el-form-item>
-        <el-form-item label="AI调用日志关联码" prop="requestLogCode">
-          <el-input v-model="form.requestLogCode" placeholder="请输入AI调用日志关联码" />
+        <el-form-item label="调用记录" prop="requestLogCode">
+          <el-input v-model="form.requestLogCode" placeholder="请输入调用记录" />
         </el-form-item>
-        <el-form-item label="最终请求Prompt" prop="rawPrompt">
+        <el-form-item label="最终Prompt内容" prop="rawPrompt">
           <el-input v-model="form.rawPrompt" type="textarea" placeholder="请输入内容" />
         </el-form-item>
         <el-form-item label="AI原始响应内容" prop="rawAiResponse">
           <el-input v-model="form.rawAiResponse" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="分析业务备注" prop="analysisRemark">
+        <el-form-item label="分析备注" prop="analysisRemark">
           <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
@@ -140,7 +143,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // 比赛AI分析原始结果表格数据
+      // 比赛分析日志记录表格数据
       analysisList: [],
       // 弹出层标题
       title: "",
@@ -156,6 +159,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        analysisId: null,
         matchId: null,
         promptId: null,
         modelId: null,
@@ -174,13 +178,13 @@ export default {
       // 表单校验
       rules: {
         matchId: [
-          { required: true, message: "关联比赛ID不能为空", trigger: "blur" }
+          { required: true, message: "目标比赛不能为空", trigger: "blur" }
         ],
         modelId: [
-          { required: true, message: "使用的模型ID不能为空", trigger: "blur" }
+          { required: true, message: "分析模型不能为空", trigger: "blur" }
         ],
         rawPrompt: [
-          { required: true, message: "最终请求Prompt不能为空", trigger: "blur" }
+          { required: true, message: "最终Prompt内容不能为空", trigger: "blur" }
         ],
         rawAiResponse: [
           { required: true, message: "AI原始响应内容不能为空", trigger: "blur" }
@@ -199,7 +203,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询比赛AI分析原始结果列表 */
+    /** 查询比赛分析日志记录列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -265,7 +269,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加比赛AI分析原始结果";
+      this.title = "添加比赛分析日志记录";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -274,7 +278,7 @@ export default {
       getAnalysis(analysisId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改比赛AI分析原始结果";
+        this.title = "修改比赛分析日志记录";
       });
     },
     /** 提交按钮 */
@@ -300,7 +304,7 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const analysisIds = row.analysisId || this.ids;
-      this.$modal.confirm('是否确认删除比赛AI分析原始结果编号为"' + analysisIds + '"的数据项？').then(function () {
+      this.$modal.confirm('是否确认删除比赛分析日志记录编号为"' + analysisIds + '"的数据项？').then(function () {
         return delAnalysis(analysisIds);
       }).then(() => {
         this.getList();
