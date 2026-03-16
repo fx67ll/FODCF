@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
-        <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="比赛编号" prop="matchId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.matchId" placeholder="请输入比赛编号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
         <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
@@ -35,8 +35,15 @@
         </el-select>
       </el-form-item>
       <el-form-item label="分析次数" prop="analysisCount" v-if="isMoreQuery">
-        <el-input v-model="queryParams.analysisCount" type="number" min="0" max="1023" step="1" placeholder="请输入分析次数"
-          clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.analysisCount" style="width: 200px" type="number" min="0" max="1023" step="1"
+          placeholder="请输入分析次数" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="比赛结果" prop="matchResult" v-if="isMoreQuery">
+        <el-select v-model="queryParams.matchResult" style="width: 100%" placeholder="请选择比赛结果" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+            :value="dict.value"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
@@ -78,15 +85,7 @@
 
     <el-table v-loading="loading" :data="matchList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="比赛编码" align="center" width="100">
-        <template #default="scope">
-          {{
-            scope.row.matchCode
-              ? (scope.row.matchCode.length > 9 ? scope.row.matchCode.slice(-9) : scope.row.matchCode)
-              : '-'
-          }}
-        </template>
-      </el-table-column>
+      <el-table-column label="比赛编号" align="center" prop="matchId" width="80" fixed="left" />
       <el-table-column label="所属赛季" align="center" prop="seasonName" width="100" />
       <el-table-column label="主队名称" align="center" prop="homeTeamName" width="200" />
       <el-table-column label="客队名称" align="center" prop="awayTeamName" width="200" />
@@ -102,6 +101,11 @@
         </template>
       </el-table-column>
       <el-table-column label="分析次数" align="center" prop="analysisCount" />
+      <el-table-column label="比赛结果" align="center" prop="matchResult" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchResult" />
+        </template>
+      </el-table-column>
       <el-table-column label="比赛备注" align="center" prop="matchRemark" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
@@ -134,23 +138,6 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="比赛编码" prop="matchCode">
-              <el-input v-model="form.matchCode" placeholder="请输入比赛编码" :disabled="form.matchId">
-                <template #suffix v-if="!form.matchId">
-                  <el-button type="text" icon="el-icon-refresh" @click="generateMatchCode" title="生成比赛编码">
-                    生成
-                  </el-button>
-                </template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="所属赛季" prop="seasonId">
-              <common-enhanced-select ref="seasonSelect" v-model="form.seasonId" valueKey="seasonId"
-                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
             <el-form-item label="主队名称" prop="homeTeamId">
               <common-enhanced-select ref="homeTeamSelect" v-model="form.homeTeamId" valueKey="teamId"
                 labelKey="teamName" :api-func="listTeam" placeholder="请选择主队名称" />
@@ -163,18 +150,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="所属赛季" prop="seasonId">
+              <common-enhanced-select ref="seasonSelect" v-model="form.seasonId" valueKey="seasonId"
+                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker clearable v-model="form.matchTime" style="width: 100%" type="date"
                 value-format="yyyy-MM-dd" placeholder="请选择比赛时间">
               </el-date-picker>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="比赛场地" prop="matchVenue">
-              <el-select v-model="form.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
-                allow-create default-first-option>
-                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -186,8 +171,24 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="比赛场地" prop="matchVenue">
+              <el-select v-model="form.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
+                allow-create default-first-option>
+                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="分析次数" prop="analysisCount">
               <el-input v-model="form.analysisCount" type="number" min="0" max="1023" step="1" placeholder="请输入分析次数" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="比赛结果" prop="matchResult">
+              <el-select v-model="form.matchResult" style="width: 100%" placeholder="请选择比赛结果">
+                <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -216,25 +217,9 @@ import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Match",
-  dicts: ["sys_notice_status"],
+  dicts: ["sys_notice_status", "fx67ll_match_result"],
   components: { CommonEnhancedSelect },
   data() {
-    // 自定义校验规则：匹配 毫秒级时间戳 + 9位大写字母
-    const validateMatchCode = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error('请输入比赛编码'));
-      }
-      // 正则规则：
-      // ^\d+ : 以任意数字开头（毫秒级时间戳，长度13位左右）
-      // [A-Z]{9}$ : 以9位大写字母结尾
-      const reg = /^\d+[A-Z]{9}$/;
-      if (!reg.test(value)) {
-        callback(new Error('比赛编码格式错误，请点击生成按钮修复'));
-      } else {
-        callback();
-      }
-    };
-
     return {
       // 遮罩层
       loading: true,
@@ -266,30 +251,25 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        matchCode: null,
+        matchId: null,
         seasonId: null,
         homeTeamId: null,
         awayTeamId: null,
-        matchTime: null,
+        beginMatchTime: null,
+        endMatchTime: null,
         matchVenue: null,
         matchStatus: null,
         analysisCount: null,
-        matchRemark: null,
+        matchResult: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
         endUpdateTime: null,
-        beginMatchTime: null,
-        endMatchTime: null,
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
-        matchCode: [
-          { required: true, message: "比赛编码不能为空", trigger: "blur" },
-          { validator: validateMatchCode, trigger: ['blur', 'change'] }
-        ],
         seasonId: [
           { required: true, message: "所属赛季不能为空", trigger: "blur" }
         ],
@@ -321,21 +301,6 @@ export default {
     this.getList();
   },
   methods: {
-    // 生成比赛编码：当前timestamp(毫秒级) + 9位随机大写字母
-    generateMatchCode() {
-      // 1. 获取当前毫秒级时间戳（timestamp）
-      const timestamp = Date.now(); // 例如：1741898765432
-
-      // 2. 生成9位随机大写字母（严格保证长度）
-      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      let randomStr = '';
-      for (let i = 0; i < 9; i++) {
-        randomStr += letters[Math.floor(Math.random() * letters.length)];
-      }
-
-      // 3. 拼接时间戳和随机字母，赋值给表单字段
-      this.form.matchCode = timestamp + randomStr;
-    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
@@ -376,7 +341,6 @@ export default {
     reset() {
       this.form = {
         matchId: null,
-        matchCode: null,
         seasonId: null,
         homeTeamId: null,
         awayTeamId: null,
@@ -384,6 +348,7 @@ export default {
         matchVenue: null,
         matchStatus: null,
         analysisCount: null,
+        matchResult: null,
         matchRemark: null,
         createBy: null,
         createTime: null,
@@ -415,7 +380,6 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
-      this.generateMatchCode();
       this.open = true;
       this.title = "添加比赛记录";
     },
