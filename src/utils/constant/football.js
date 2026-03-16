@@ -163,8 +163,8 @@ export const teamVenueOptions = [
     team: "罗马",
   },
   {
-    label: "罗马奥林匹克球场",
-    value: "罗马奥林匹克球场",
+    label: "拉齐奥奥林匹克球场",
+    value: "拉齐奥奥林匹克球场",
     team: "拉齐奥",
   },
   {
