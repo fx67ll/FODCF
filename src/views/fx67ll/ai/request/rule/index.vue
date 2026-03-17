@@ -5,7 +5,7 @@
         <el-input v-model="queryParams.limitRuleId" type="number" min="1" step="1" placeholder="请输入规则编号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <!-- 规则维度下拉框：1-模型，2-模板，3-场景，4-分组 -->
+      <!-- 规则维度下拉框：1-模板，2-场景，3-分组，4-模型 -->
       <el-form-item label="规则维度" prop="limitRuleDimension" v-if="isMoreQuery">
         <el-select v-model="queryParams.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
           <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"
@@ -94,7 +94,7 @@
     <el-table v-loading="loading" :data="ruleList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="规则编号" align="center" prop="limitRuleId" width="80" fixed="left" />
-      <!-- 规则维度：1-模型，2-模板，3-场景，4-分组 -->
+      <!-- 规则维度：1-模板，2-场景，3-分组，4-模型 -->
       <el-table-column label="规则维度" align="center" prop="limitRuleDimension" width="80" fixed="left">
         <template slot-scope="scope">
           {{ limitRuleDimensionMap[scope.row.limitRuleDimension] || scope.row.limitRuleDimension }}
@@ -173,7 +173,7 @@
       <el-form ref="form" :model="form" :rules="fullRules" :validate-on-rule-change="false" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <!-- 规则维度下拉框：1-模型，2-模板，3-场景，4-分组 -->
+            <!-- 规则维度下拉框：1-模板，2-场景，3-分组，4-模型 -->
             <el-form-item label="规则维度" prop="limitRuleDimension">
               <el-select v-model="form.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
                 <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"

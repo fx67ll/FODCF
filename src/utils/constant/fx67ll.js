@@ -85,10 +85,10 @@ export const callStatusOptions = [
 
 // 规则维度选项
 export const limitRuleDimensionOptions = [
-  { value: "1", label: "模型" },
-  { value: "2", label: "模板" },
+  { value: "1", label: "模板" },
+  { value: "2", label: "分组" },
   { value: "3", label: "场景" },
-  { value: "4", label: "分组" },
+  { value: "4", label: "模型" },
 ];
 
 // 规则类型选项
