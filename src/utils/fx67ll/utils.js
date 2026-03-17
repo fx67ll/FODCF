@@ -438,7 +438,9 @@ export function validateLotteryString(lotteryType, lotteryStr) {
 
   try {
     // 4. 拆分字符串并校验拆分后的部分数量
-    let parts = rule.splitChar ? lotteryStr.split(rule.splitChar) : [lotteryStr];
+    let parts = rule.splitChar
+      ? lotteryStr.split(rule.splitChar)
+      : [lotteryStr];
 
     // 检查分隔符是否正确（防止多余的分隔符）
     if (rule.splitChar && lotteryStr.includes(rule.splitChar)) {
@@ -515,4 +517,12 @@ export function validateLotteryString(lotteryType, lotteryStr) {
     // 捕获异常，返回false
     return false;
   }
+}
+
+// 通用转换方法
+export function arrayToMap(arr) {
+  return arr.reduce((map, item) => {
+    map[item.value] = item.label;
+    return map;
+  }, {});
 }
