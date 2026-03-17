@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="分析编号" prop="analysisId">
-        <el-input v-model="queryParams.analysisId" placeholder="请输入分析编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.analysisId" type="number" min="1" step="1" placeholder="请输入分析编号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="目标比赛" prop="matchId">
         <el-input v-model="queryParams.matchId" placeholder="请输入目标比赛" clearable @keyup.enter.native="handleQuery" />
@@ -65,7 +65,7 @@
       <el-table-column label="分析类型" align="center" prop="analysisType" />
       <el-table-column label="最终Prompt内容" align="center" prop="rawPrompt" />
       <el-table-column label="AI原始响应内容" align="center" prop="rawAiResponse" />
-      <el-table-column label="分析备注" align="center" prop="analysisRemark" />
+      <el-table-column label="分析备注" align="center" prop="analysisRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -107,13 +107,13 @@
           <el-input v-model="form.requestLogCode" placeholder="请输入调用记录" />
         </el-form-item>
         <el-form-item label="最终Prompt内容" prop="rawPrompt">
-          <el-input v-model="form.rawPrompt" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.rawPrompt" type="textarea" placeholder="请输入最终Prompt内容" />
         </el-form-item>
         <el-form-item label="AI原始响应内容" prop="rawAiResponse">
-          <el-input v-model="form.rawAiResponse" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.rawAiResponse" type="textarea" placeholder="请输入AI原始响应内容" />
         </el-form-item>
         <el-form-item label="分析备注" prop="analysisRemark">
-          <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入分析备注内容" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
