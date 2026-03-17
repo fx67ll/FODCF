@@ -1,56 +1,65 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="规则编号" prop="limitRuleId">
-        <el-input v-model="queryParams.limitRuleId" placeholder="请输入规则编号" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="规则维度" prop="limitRuleDimension">
-        <el-input v-model="queryParams.limitRuleDimension" placeholder="请输入规则维度" clearable
+      <el-form-item label="规则编号" prop="limitRuleId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.limitRuleId" type="number" min="1" step="1" placeholder="请输入规则编号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="规则目标" prop="limitRuleTargetId">
-        <el-input v-model="queryParams.limitRuleTargetId" placeholder="请输入规则目标" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 规则维度下拉框：1-模型，2-模板，3-场景，4-分组 -->
+      <el-form-item label="规则维度" prop="limitRuleDimension" v-if="isMoreQuery">
+        <el-select v-model="queryParams.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
+          <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"
+            :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="流控模式" prop="flowControlMode">
-        <el-input v-model="queryParams.flowControlMode" placeholder="请输入流控模式" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="规则目标" prop="limitRuleTargetId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.limitRuleTargetId" type="number" min="1" step="1" placeholder="请输入规则维度目标编号"
+          clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="流控效果" prop="flowControlEffect">
-        <el-input v-model="queryParams.flowControlEffect" placeholder="请输入流控效果" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 规则类型下拉框：1-流量控制，2-熔断保护 -->
+      <el-form-item label="规则类型" prop="limitRuleType">
+        <el-select v-model="queryParams.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%">
+          <el-option v-for="item in limitRuleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="流控阈值" prop="flowThreshold">
-        <el-input v-model="queryParams.flowThreshold" placeholder="请输入流控阈值" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 流控模式下拉框：D-直接拒绝，A-关联控制，L-链路流控 -->
+      <el-form-item label="流控模式" prop="flowControlMode" v-if="isMoreQuery">
+        <el-select v-model="queryParams.flowControlMode" placeholder="请选择流控模式" clearable style="width: 100%">
+          <el-option v-for="item in flowControlModeOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="熔断策略" prop="circuitStrategy">
-        <el-input v-model="queryParams.circuitStrategy" placeholder="请输入熔断策略" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 流控效果下拉框：F-快速失败，W-预热启动，Q-匀速排队 -->
+      <el-form-item label="流控效果" prop="flowControlEffect" v-if="isMoreQuery">
+        <el-select v-model="queryParams.flowControlEffect" placeholder="请选择流控效果" clearable style="width: 100%">
+          <el-option v-for="item in flowControlEffectOptions" :key="item.value" :label="item.label"
+            :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="熔断触发阈值" prop="circuitThreshold">
-        <el-input v-model="queryParams.circuitThreshold" placeholder="请输入熔断触发阈值" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 流控类型下拉框：Q-QPS阈值，C-并发线程数 -->
+      <el-form-item label="流控类型" prop="flowRuleType" v-if="isMoreQuery">
+        <el-select v-model="queryParams.flowRuleType" placeholder="请选择流控指标类型" clearable style="width: 100%">
+          <el-option v-for="item in flowRuleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="慢调用判定阈值" prop="circuitGrade">
-        <el-input v-model="queryParams.circuitGrade" placeholder="请输入慢调用判定阈值" clearable
-          @keyup.enter.native="handleQuery" />
+      <!-- 熔断策略下拉框：S-慢调用比例，E-异常比例，N-异常数 -->
+      <el-form-item label="熔断策略" prop="circuitStrategy" v-if="isMoreQuery">
+        <el-select v-model="queryParams.circuitStrategy" placeholder="请选择熔断策略" clearable style="width: 100%">
+          <el-option v-for="item in circuitStrategyOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="熔断统计窗口时长" prop="circuitWindow">
-        <el-input v-model="queryParams.circuitWindow" placeholder="请输入熔断统计窗口时长" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="规则状态" prop="limitRuleStatus">
+        <el-select v-model="queryParams.limitRuleStatus" style="width: 100%" placeholder="请选择规则状态" clearable>
+          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="熔断恢复超时时间" prop="circuitTimeout">
-        <el-input v-model="queryParams.circuitTimeout" placeholder="请输入熔断恢复超时时间" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable />
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -85,19 +94,54 @@
     <el-table v-loading="loading" :data="ruleList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="规则编号" align="center" prop="limitRuleId" width="80" fixed="left" />
-      <el-table-column label="规则维度" align="center" prop="limitRuleDimension" />
-      <el-table-column label="规则目标" align="center" prop="limitRuleTargetId" />
-      <el-table-column label="规则类型" align="center" prop="limitRuleType" />
-      <el-table-column label="流控模式" align="center" prop="flowControlMode" />
-      <el-table-column label="流控效果" align="center" prop="flowControlEffect" />
-      <el-table-column label="流控指标类型" align="center" prop="flowRuleType" />
-      <el-table-column label="流控阈值" align="center" prop="flowThreshold" />
-      <el-table-column label="熔断策略" align="center" prop="circuitStrategy" />
-      <el-table-column label="熔断触发阈值" align="center" prop="circuitThreshold" />
-      <el-table-column label="慢调用判定阈值" align="center" prop="circuitGrade" />
-      <el-table-column label="熔断统计窗口时长" align="center" prop="circuitWindow" />
-      <el-table-column label="熔断恢复超时时间" align="center" prop="circuitTimeout" />
-      <el-table-column label="规则启用状态" align="center" prop="limitRuleStatus" />
+      <!-- 规则维度：1-模型，2-模板，3-场景，4-分组 -->
+      <el-table-column label="规则维度" align="center" prop="limitRuleDimension" width="80" fixed="left">
+        <template slot-scope="scope">
+          {{ limitRuleDimensionMap[scope.row.limitRuleDimension] || scope.row.limitRuleDimension }}
+        </template>
+      </el-table-column>
+      <el-table-column label="规则维度目标编号" align="center" prop="limitRuleTargetId" width="130" fixed="left" />
+      <!-- 规则类型：1-流量控制，2-熔断保护 -->
+      <el-table-column label="规则类型" align="center" prop="limitRuleType" width="100">
+        <template slot-scope="scope">
+          {{ limitRuleTypeMap[scope.row.limitRuleType] || scope.row.limitRuleType }}
+        </template>
+      </el-table-column>
+      <!-- 流控模式：D-直接拒绝，A-关联控制，L-链路流控 -->
+      <el-table-column label="流控模式" align="center" prop="flowControlMode" width="100">
+        <template slot-scope="scope">
+          {{ flowControlModeMap[scope.row.flowControlMode] || scope.row.flowControlMode }}
+        </template>
+      </el-table-column>
+      <!-- 流控效果：F-快速失败，W-预热启动，Q-匀速排队 -->
+      <el-table-column label="流控效果" align="center" prop="flowControlEffect" width="100">
+        <template slot-scope="scope">
+          {{ flowControlEffectMap[scope.row.flowControlEffect] || scope.row.flowControlEffect }}
+        </template>
+      </el-table-column>
+      <!-- 流控指标类型：Q-QPS阈值，C-并发线程数 -->
+      <el-table-column label="流控指标类型" align="center" prop="flowRuleType" width="120">
+        <template slot-scope="scope">
+          {{ flowRuleTypeMap[scope.row.flowRuleType] || scope.row.flowRuleType }}
+        </template>
+      </el-table-column>
+      <el-table-column label="流控阈值" align="center" prop="flowThreshold" width="80" />
+      <!-- 熔断策略：S-慢调用比例，E-异常比例，N-异常数 -->
+      <el-table-column label="熔断策略" align="center" prop="circuitStrategy" width="110">
+        <template slot-scope="scope">
+          {{ circuitStrategyMap[scope.row.circuitStrategy] || scope.row.circuitStrategy }}
+        </template>
+      </el-table-column>
+      <el-table-column label="熔断触发阈值" align="center" prop="circuitThreshold" width="120" />
+      <el-table-column label="慢调用判定阈值" align="center" prop="circuitGrade" width="130" />
+      <el-table-column label="熔断统计窗口时长" align="center" prop="circuitWindow" width="140" />
+      <el-table-column label="熔断恢复超时时间" align="center" prop="circuitTimeout" width="140" />
+      <el-table-column label="规则状态" align="center" prop="limitRuleStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.limitRuleStatus" />
+        </template>
+      </el-table-column>
+      <el-table-column label="规则备注" align="center" prop="limitRuleRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -124,38 +168,109 @@
       @pagination="getList" />
 
     <!-- 添加或修改调用规则对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="规则维度" prop="limitRuleDimension">
-          <el-input v-model="form.limitRuleDimension" placeholder="请输入规则维度" />
-        </el-form-item>
-        <el-form-item label="规则目标" prop="limitRuleTargetId">
-          <el-input v-model="form.limitRuleTargetId" placeholder="请输入规则目标" />
-        </el-form-item>
-        <el-form-item label="流控模式" prop="flowControlMode">
-          <el-input v-model="form.flowControlMode" placeholder="请输入流控模式" />
-        </el-form-item>
-        <el-form-item label="流控效果" prop="flowControlEffect">
-          <el-input v-model="form.flowControlEffect" placeholder="请输入流控效果" />
-        </el-form-item>
-        <el-form-item label="流控阈值" prop="flowThreshold">
-          <el-input v-model="form.flowThreshold" placeholder="请输入流控阈值" />
-        </el-form-item>
-        <el-form-item label="熔断策略" prop="circuitStrategy">
-          <el-input v-model="form.circuitStrategy" placeholder="请输入熔断策略" />
-        </el-form-item>
-        <el-form-item label="熔断触发阈值" prop="circuitThreshold">
-          <el-input v-model="form.circuitThreshold" placeholder="请输入熔断触发阈值" />
-        </el-form-item>
-        <el-form-item label="慢调用判定阈值" prop="circuitGrade">
-          <el-input v-model="form.circuitGrade" placeholder="请输入慢调用判定阈值" />
-        </el-form-item>
-        <el-form-item label="熔断统计窗口时长" prop="circuitWindow">
-          <el-input v-model="form.circuitWindow" placeholder="请输入熔断统计窗口时长" />
-        </el-form-item>
-        <el-form-item label="熔断恢复超时时间" prop="circuitTimeout">
-          <el-input v-model="form.circuitTimeout" placeholder="请输入熔断恢复超时时间" />
-        </el-form-item>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="900px" style="top: 8px"
+      append-to-body>
+      <el-form ref="form" :model="form" :rules="fullRules" :validate-on-rule-change="false" label-width="80px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <!-- 规则维度下拉框：1-模型，2-模板，3-场景，4-分组 -->
+            <el-form-item label="规则维度" prop="limitRuleDimension">
+              <el-select v-model="form.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
+                <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规则维度目标编号" prop="limitRuleTargetId" label-width="135px">
+              <el-input v-model="form.limitRuleTargetId" type="number" min="1" step="1" placeholder="请输入规则维度目标编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 规则类型下拉框：1-流量控制，2-熔断保护 -->
+            <el-form-item label="规则类型" prop="limitRuleType">
+              <el-select v-model="form.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%">
+                <el-option v-for="item in limitRuleTypeOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 流控模式下拉框：D-直接拒绝，A-关联控制，L-链路流控 -->
+            <el-form-item label="流控模式" prop="flowControlMode">
+              <el-select v-model="form.flowControlMode" placeholder="请选择流控模式" clearable style="width: 100%">
+                <el-option v-for="item in flowControlModeOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 流控效果下拉框：F-快速失败，W-预热启动，Q-匀速排队 -->
+            <el-form-item label="流控效果" prop="flowControlEffect">
+              <el-select v-model="form.flowControlEffect" placeholder="请选择流控效果" clearable style="width: 100%">
+                <el-option v-for="item in flowControlEffectOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 流控类型下拉框：Q-QPS阈值，C-并发线程数 -->
+            <el-form-item label="流控指标类型" prop="flowRuleType" label-width="107px">
+              <el-select v-model="form.flowRuleType" placeholder="请选择流控指标类型" clearable style="width: 100%">
+                <el-option v-for="item in flowRuleTypeOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="流控阈值" prop="flowThreshold">
+              <el-input v-model="form.flowThreshold" type="number" min="0" step="0.01"
+                placeholder="请输入流控阈值(QPS或并发数，保留2位小数)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 熔断策略下拉框：S-慢调用比例，E-异常比例，N-异常数 -->
+            <el-form-item label="熔断策略" prop="circuitStrategy">
+              <el-select v-model="form.circuitStrategy" placeholder="请选择熔断策略" clearable style="width: 100%">
+                <el-option v-for="item in circuitStrategyOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="熔断触发阈值" prop="circuitThreshold" label-width="107px">
+              <el-input v-model="form.circuitThreshold" type="number" min="0" placeholder="请输入熔断触发阈值" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="慢调用判定阈值" prop="circuitGrade" label-width="122px">
+              <el-input v-model="form.circuitGrade" type="number" min="0" step="1" placeholder="请输入慢调用判定阈值(毫秒数)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="熔断统计窗口时长" prop="circuitWindow" label-width="135px">
+              <el-input v-model="form.circuitWindow" type="number" min="0" step="1" placeholder="请输入熔断统计窗口时长(毫秒数)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="熔断恢复超时时间" prop="circuitTimeout" label-width="135px">
+              <el-input v-model="form.circuitTimeout" type="number" min="0" step="1" placeholder="请输入熔断恢复超时时间(毫秒数)" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规则状态" prop="limitRuleStatus">
+              <el-select v-model="form.limitRuleStatus" style="width: 100%" placeholder="请选择规则状态" clearable>
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规则备注" prop="limitRuleRemark">
+              <el-input v-model="form.limitRuleRemark" type="textarea" placeholder="请输入规则备注内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -168,8 +283,42 @@
 <script>
 import { listRule, getRule, delRule, addRule, updateRule } from "@/api/fx67ll/ai/rule";
 
+import { limitRuleDimensionOptions, limitRuleTypeOptions, flowControlModeOptions, flowControlEffectOptions, flowRuleTypeOptions, circuitStrategyOptions } from "@/utils/constant/fx67ll";
+import { arrayToMap } from "@/utils/fx67ll/utils";
+
 export default {
   name: "Rule",
+  dicts: ["sys_normal_disable"],
+  computed: {
+    // 将选项数组转换为 { value: label } 的映射对象
+    limitRuleDimensionMap() {
+      return arrayToMap(this.limitRuleDimensionOptions);
+    },
+    limitRuleTypeMap() {
+      return arrayToMap(this.limitRuleTypeOptions);
+    },
+    flowControlModeMap() {
+      return arrayToMap(this.flowControlModeOptions);
+    },
+    flowControlEffectMap() {
+      return arrayToMap(this.flowControlEffectOptions);
+    },
+    flowRuleTypeMap() {
+      return arrayToMap(this.flowRuleTypeOptions);
+    },
+    circuitStrategyMap() {
+      return arrayToMap(this.circuitStrategyOptions);
+    },
+    fullRules() {
+      const base = { ...this.baseRules };
+      if (this.form.limitRuleType === '1') {
+        return { ...base, ...this.flowRules };
+      } else if (this.form.limitRuleType === '2') {
+        return { ...base, ...this.circuitRules };
+      }
+      return base;
+    }
+  },
   data() {
     return {
       // 遮罩层
@@ -214,6 +363,7 @@ export default {
         circuitWindow: null,
         circuitTimeout: null,
         limitRuleStatus: null,
+        limitRuleRemark: null,
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -221,21 +371,63 @@ export default {
       },
       // 表单参数
       form: {},
-      // 表单校验
-      rules: {
+      // 基础表单校验
+      baseRules: {
         limitRuleDimension: [
           { required: true, message: "规则维度不能为空", trigger: "blur" }
         ],
         limitRuleTargetId: [
-          { required: true, message: "规则目标不能为空", trigger: "blur" }
+          { required: true, message: "规则维度目标编号不能为空", trigger: "blur" }
         ],
         limitRuleType: [
           { required: true, message: "规则类型不能为空", trigger: "change" }
         ],
+      },
+      // 流控表单校验
+      flowRules: {
+        flowControlMode: [
+          { required: true, message: "流控模式不能为空", trigger: "blur" }
+        ],
+        flowControlEffect: [
+          { required: true, message: "流控效果不能为空", trigger: "blur" }
+        ],
+        flowRuleType: [
+          { required: true, message: "流控指标类型不能为空", trigger: "blur" }
+        ],
         flowThreshold: [
           { required: true, message: "流控阈值不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 熔断表单校验
+      circuitRules: {
+        circuitStrategy: [
+          { required: true, message: "熔断策略不能为空", trigger: "blur" }
+        ],
+        circuitThreshold: [
+          { required: true, message: "熔断触发阈值不能为空", trigger: "blur" }
+        ],
+        circuitGrade: [
+          { required: true, message: "慢调用判定阈值不能为空", trigger: "blur" }
+        ],
+        circuitWindow: [
+          { required: true, message: "熔断统计窗口时长不能为空", trigger: "blur" }
+        ],
+        circuitTimeout: [
+          { required: true, message: "熔断恢复超时时间不能为空", trigger: "blur" }
+        ],
+      },
+      // 规则维度选项
+      limitRuleDimensionOptions,
+      // 规则类型选项
+      limitRuleTypeOptions,
+      // 流控模式选项
+      flowControlModeOptions,
+      // 流控效果选项
+      flowControlEffectOptions,
+      // 流控类型选项
+      flowRuleTypeOptions,
+      // 熔断策略选项
+      circuitStrategyOptions,
     };
   },
   created() {
@@ -289,6 +481,7 @@ export default {
         circuitWindow: null,
         circuitTimeout: null,
         limitRuleStatus: null,
+        limitRuleRemark: null,
         createBy: null,
         createTime: null,
         updateBy: null,
