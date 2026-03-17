@@ -100,7 +100,7 @@
         </el-form-item>
         <vue-json-viewer v-if="isViewJson" :value="form.lotterySetting ? JSON.parse(form.lotterySetting) : {}"
           :expand-depth="1" copyable boxed sort show-array-length show-object-size show-type></vue-json-viewer>
-        <el-form-item v-if="!isViewJson" label="编辑生成配置" prop="lotterySetting">
+        <el-form-item v-if="!isViewJson" label="彩票生成配置" prop="lotterySetting">
           <el-input v-model="form.lotterySetting" type="textarea" :rows="18" :maxlength="19999" show-word-limit
             placeholder="请输入个人彩票生成配置" />
         </el-form-item>

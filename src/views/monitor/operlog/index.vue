@@ -54,11 +54,11 @@
           v-hasPermi="['monitor:operlog:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean"
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" disabled @click="handleClean"
           v-hasPermi="['monitor:operlog:remove']">清空</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+        <el-button type="warning" plain icon="el-icon-download" size="mini" disabled @click="handleExport"
           v-hasPermi="['monitor:operlog:export']">导出</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -107,30 +107,30 @@
       @pagination="getList" />
 
     <!-- 操作日志详细 -->
-    <el-dialog title="操作日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px" append-to-body>
+    <el-dialog title="操作日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px" style="top: 80px"
+      append-to-body>
       <el-form ref="form" :model="form" label-width="100px" size="mini">
         <el-row>
           <el-col :span="12">
             <el-form-item label="操作模块：">{{ form.title }} / {{ typeFormat(form) }}</el-form-item>
-            <el-form-item label="登录信息：">{{ form.operName }} / {{ form.operIp }} /
-              {{ form.operLocation }}</el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="请求地址：">{{ form.operUrl }}</el-form-item>
-            <el-form-item label="请求方式：">{{
-              form.requestMethod
-            }}</el-form-item>
+            <el-form-item label="登录信息：">{{ form.operName }} / {{ form.operIp }} / {{ form.operLocation }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="操作方法：">{{ form.method }}</el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="请求方式：">{{ form.requestMethod }}</el-form-item>
+          </el-col>
+          <el-col :span="18">
+            <el-form-item label="请求地址：">{{ form.operUrl }}</el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="请求参数：">{{ form.operParam }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="返回参数：">{{
-              form.jsonResult
-            }}</el-form-item>
+            <el-form-item label="返回参数：">{{ form.jsonResult }}</el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="操作状态：">
@@ -142,14 +142,10 @@
             <el-form-item label="消耗时间：">{{ form.costTime }}毫秒</el-form-item>
           </el-col>
           <el-col :span="10">
-            <el-form-item label="操作时间：">{{
-              parseTime(form.operTime)
-            }}</el-form-item>
+            <el-form-item label="操作时间：">{{ parseTime(form.operTime) }}</el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="异常信息：" v-if="form.status === 1">{{
-              form.errorMsg
-            }}</el-form-item>
+            <el-form-item label="异常信息：" v-if="form.status === 1">{{ form.errorMsg }}</el-form-item>
           </el-col>
         </el-row>
       </el-form>
@@ -262,12 +258,15 @@ export default {
       const operIds = row.operId || this.ids;
       this.$modal
         .confirm('是否确认删除日志编号为"' + operIds + '"的数据项？')
-        .then(function () {
-          return delOperlog(operIds);
-        })
+        // .then(function () {
+        //   return delOperlog(operIds);
+        // })
+        // .then(() => {
+        //   this.getList();
+        //   this.$modal.msgSuccess("删除成功");
+        // })
         .then(() => {
-          this.getList();
-          this.$modal.msgSuccess("删除成功");
+          this.$modal.msgWarning("警告！！！管理员已禁止删除操作！");
         })
         .catch(() => { });
     },
@@ -282,6 +281,9 @@ export default {
           this.getList();
           this.$modal.msgSuccess("清空成功");
         })
+        // .then(() => {
+        //   this.$modal.msgWarning("警告！！！管理员已禁止清空操作！");
+        // })
         .catch(() => { });
     },
     /** 导出按钮操作 */

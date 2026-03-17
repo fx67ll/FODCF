@@ -407,11 +407,7 @@ import {
 
 // 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import {
-  decryptString,
-  checkLotteryResult,
-  validateLotteryString,
-} from "@/utils/fx67ll/utils";
+import { decryptString, checkLotteryResult, validateLotteryString } from "@/utils/fx67ll/utils";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 
 import axios from "axios";

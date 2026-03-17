@@ -62,8 +62,9 @@
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.sceneStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="场景排序" align="center" prop="sceneSort" />
-      <el-table-column label="场景备注" align="center" prop="sceneRemark" />
+      <el-table-column label="场景排序" align="center" prop="sceneSort" width="100" sortable="sceneSort"
+        :sort-orders="['descending', 'ascending']" />
+      <el-table-column label="场景备注" align="center" prop="sceneRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -119,12 +120,12 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="场景描述" prop="sceneDesc">
-              <el-input v-model="form.sceneDesc" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.sceneDesc" type="textarea" placeholder="请输入场景描述内容" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="场景备注" prop="sceneRemark">
-              <el-input v-model="form.sceneRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.sceneRemark" type="textarea" placeholder="请输入场景备注内容" />
             </el-form-item>
           </el-col>
         </el-row>

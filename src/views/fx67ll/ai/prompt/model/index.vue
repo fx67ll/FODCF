@@ -11,28 +11,27 @@
         <el-input v-model="queryParams.modelVendor" placeholder="请输入模型厂商" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="API密钥" prop="modelApiKey" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelApiKey" placeholder="请输入API密钥" clearable
-          @keyup.enter.native="handleQuery" />
+        <common-enhanced-select ref="keySelect" v-model="queryParams.modelApiKey" valueKey="secretKey"
+          labelKey="secretKey" :api-func="listKey" placeholder="请选择API密钥" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="Secret密钥" prop="modelSecretKey" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelSecretKey" placeholder="请输入Secret密钥" clearable
-          @keyup.enter.native="handleQuery" />
+        <common-enhanced-select ref="keySelect" v-model="queryParams.modelSecretKey" valueKey="secretKey"
+          labelKey="secretKey" :api-func="listKey" placeholder="请选择Secret密钥" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="调用地址" prop="modelApiUrl" v-if="isMoreQuery">
+      <el-form-item label="API地址" prop="modelApiUrl" v-if="isMoreQuery">
         <el-input v-model="queryParams.modelApiUrl" placeholder="请输入模型API调用地址" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="模型版本" prop="modelApiVersion" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelApiVersion" placeholder="请输入模型版本号" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="计费单价" prop="modelTokenPrice" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelTokenPrice" placeholder="请输入模型计费单价" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="API版本" prop="modelApiVersion" v-if="isMoreQuery">
+        <el-input v-model="queryParams.modelApiVersion" style="width: 205px" type="number" min="0" max="1023" step="1"
+          placeholder="请输入模型版本号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="货币类型" prop="modelTokenCurrency" v-if="isMoreQuery">
-        <el-input v-model="queryParams.modelTokenCurrency" placeholder="请输入计价货币类型" clearable
-          @keyup.enter.native="handleQuery" />
+        <el-select v-model="queryParams.modelTokenCurrency" style="width: 100%" placeholder="请选择或输入计价货币类型" clearable
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label"
+            :value="item.value" />
+        </el-select>
       </el-form-item>
       <el-form-item label="模型状态" prop="modelStatus">
         <el-select v-model="queryParams.modelStatus" style="width: 100%" placeholder="请选择模型状态" clearable
@@ -84,21 +83,28 @@
       <el-table-column label="模型编码" align="center" prop="modelCode" width="120" fixed="left" />
       <el-table-column label="模型名称" align="center" prop="modelName" width="120" fixed="left" />
       <el-table-column label="模型厂商" align="center" prop="modelVendor" />
-      <el-table-column label="API密钥" align="center" prop="modelApiKey" />
+      <el-table-column label="API 密钥" align="center" prop="modelApiKey" width="120" />
       <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" width="120" />
-      <el-table-column label="调用地址" align="center" prop="modelApiUrl" />
-      <el-table-column label="模型版本号" align="center" prop="modelApiVersion" />
-      <el-table-column label="调用参数" align="center" prop="modelConfigParams" />
-      <el-table-column label="Header配置" align="center" prop="modelRequestHeader" width="120" />
-      <el-table-column label="计费单价" align="center" prop="modelTokenPrice" />
-      <el-table-column label="货币类型" align="center" prop="modelTokenCurrency" />
-      <el-table-column label="模型状态" align="center" prop="modelStatus" width="80">
+      <el-table-column label="API 调用地址" align="center" prop="modelApiUrl" width="180" :show-overflow-tooltip="true" />
+      <el-table-column label="API 版本号" align="center" prop="modelApiVersion" width="90" />
+      <el-table-column label="模型默认调用参数" align="center" prop="modelConfigParams" width="150"
+        :show-overflow-tooltip="true" />
+      <el-table-column label="API 请求头扩展配置" align="center" prop="modelRequestHeader" width="160"
+        :show-overflow-tooltip="true" />
+      <el-table-column label="模型计费单价" align="center" prop="modelTokenPrice" width="100" />
+      <el-table-column label="计价货币类型" align="center" prop="modelTokenCurrency" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.groupStatus" />
+          {{ modelTokenCurrencyMap[scope.row.modelTokenCurrency] || scope.row.modelTokenCurrency }}
         </template>
       </el-table-column>
-      <el-table-column label="模型排序" align="center" prop="modelSort" />
-      <el-table-column label="模型备注" align="center" prop="modelRemark" />
+      <el-table-column label="模型状态" align="center" prop="modelStatus" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.modelStatus" />
+        </template>
+      </el-table-column>
+      <el-table-column label="模型排序" align="center" prop="modelSort" width="100" sortable="modelSort"
+        :sort-orders="['descending', 'ascending']" />
+      <el-table-column label="模型备注" align="center" prop="modelRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -145,18 +151,39 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="API密钥" prop="modelApiKey">
-              <el-input v-model="form.modelApiKey" placeholder="请输入API密钥" />
+            <el-form-item label="API 密钥" prop="modelApiKey">
+              <common-enhanced-select ref="keySelect" v-model="queryParams.modelApiKey" valueKey="secretKey"
+                labelKey="secretKey" :api-func="listKey" placeholder="请选择API密钥" :enter-callback="handleQuery" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="Secret密钥" prop="modelSecretKey">
-              <el-input v-model="form.modelSecretKey" placeholder="请输入Secret密钥" />
+              <common-enhanced-select ref="keySelect" v-model="queryParams.modelSecretKey" valueKey="secretKey"
+                labelKey="secretKey" :api-func="listKey" placeholder="请选择Secret密钥" :enter-callback="handleQuery" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="调用地址" prop="modelApiUrl">
-              <el-input v-model="form.modelApiUrl" placeholder="请输入模型API调用地址" />
+            <el-form-item label="API 地址" prop="modelApiUrl">
+              <el-input v-model="form.modelApiUrl" placeholder="请输入API 调用地址" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="API 版本" prop="modelApiVersion">
+              <el-input v-model="form.modelApiVersion" type="number" min="0" max="1023" step="1"
+                placeholder="请输入API版本号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="计费单价" prop="modelTokenPrice">
+              <el-input v-model="form.modelTokenPrice" placeholder="请输入模型计费单价" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="货币类型" prop="modelTokenCurrency">
+              <el-select v-model="form.modelTokenCurrency" style="width: 100%" placeholder="请选择计价货币类型" clearable>
+                <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -172,34 +199,19 @@
               <el-input v-model="form.modelSort" type="number" min="0" max="1023" step="1" placeholder="请输入模型排序" />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="模型版本" prop="modelApiVersion">
-              <el-input v-model="form.modelApiVersion" placeholder="请输入模型版本号" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="计费单价" prop="modelTokenPrice">
-              <el-input v-model="form.modelTokenPrice" placeholder="请输入模型计费单价" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="货币类型" prop="modelTokenCurrency">
-              <el-input v-model="form.modelTokenCurrency" placeholder="请输入计价货币类型" />
-            </el-form-item>
-          </el-col>
           <el-col :span="24">
             <el-form-item label="调用参数" prop="modelConfigParams">
-              <el-input v-model="form.modelConfigParams" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.modelConfigParams" type="textarea" placeholder="请输入模型默认调用参数内容" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="Header配置" prop="modelRequestHeader">
-              <el-input v-model="form.modelRequestHeader" type="textarea" placeholder="请输入内容" />
+            <el-form-item label="API 请求头" prop="modelRequestHeader">
+              <el-input v-model="form.modelRequestHeader" type="textarea" placeholder="请输入API 请求头扩展配置内容" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="模型备注" prop="modelRemark">
-              <el-input v-model="form.modelRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.modelRemark" type="textarea" placeholder="请输入模型备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -214,10 +226,23 @@
 
 <script>
 import { listModel, getModel, delModel, addModel, updateModel } from "@/api/fx67ll/ai/model";
+import { listKey } from "@/api/fx67ll/secret/key";
+
+import { modelTokenCurrencyOptions } from "@/utils/constant/fx67ll";
+import { arrayToMap } from "@/utils/fx67ll/utils";
+
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Model",
   dicts: ["sys_normal_disable"],
+  components: { CommonEnhancedSelect },
+  computed: {
+    // 将选项数组转换为 { value: label } 的映射对象
+    modelTokenCurrencyMap() {
+      return arrayToMap(this.modelTokenCurrencyOptions);
+    },
+  },
   data() {
     return {
       // 遮罩层
@@ -288,10 +313,15 @@ export default {
         modelStatus: [
           { required: true, message: "模型状态不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 货币类型选项
+      modelTokenCurrencyOptions,
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listKey = listKey;
+
     this.getList();
   },
   methods: {

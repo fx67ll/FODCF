@@ -61,8 +61,9 @@
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.groupStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="分组排序" align="center" prop="groupSort" />
-      <el-table-column label="分组备注" align="center" prop="groupRemark" />
+      <el-table-column label="分组排序" align="center" prop="groupSort" width="100" sortable="groupSort"
+        :sort-orders="['descending', 'ascending']" />
+      <el-table-column label="分组备注" align="center" prop="groupRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -118,7 +119,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="分组备注" prop="groupRemark">
-              <el-input v-model="form.groupRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.groupRemark" type="textarea" placeholder="请输入分组备注内容" />
             </el-form-item>
           </el-col>
         </el-row>

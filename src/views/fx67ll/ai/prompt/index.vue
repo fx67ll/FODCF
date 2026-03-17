@@ -63,19 +63,21 @@
 
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="模板名称" align="center" prop="promptName" width="120" fixed="left"/>
+      <el-table-column label="模板名称" align="center" prop="promptName" width="120" fixed="left" />
       <el-table-column label="所属分组" align="center" prop="groupName" width="120" />
       <el-table-column label="所属场景" align="center" prop="sceneName" width="120" />
       <el-table-column label="绑定模型" align="center" prop="modelName" width="120" />
-      <el-table-column label="模版内容" align="center" prop="promptContent" />
-      <el-table-column label="变量配置" align="center" prop="promptVariableConfig" />
-      <el-table-column label="调参配置" align="center" prop="promptCustomConfigParams" />
+      <el-table-column label="模版内容" align="center" prop="promptContent" width="230" :show-overflow-tooltip="true" />
+      <el-table-column label="模板变量元数据配置" align="center" prop="promptVariableConfig" width="180"
+        :show-overflow-tooltip="true" />
+      <el-table-column label="模型调用参数覆盖配置" align="center" prop="promptCustomConfigParams" width="180"
+        :show-overflow-tooltip="true" />
       <el-table-column label="模板状态" align="center" prop="promptStatus" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.promptStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="模板备注" align="center" prop="promptRemark" />
+      <el-table-column label="模板备注" align="center" prop="promptRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -135,12 +137,12 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="变量配置" prop="promptVariableConfig">
-              <el-input v-model="form.promptVariableConfig" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.promptVariableConfig" type="textarea" placeholder="请输入模板变量元数据配置内容" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="调参配置" prop="promptCustomConfigParams">
-              <el-input v-model="form.promptCustomConfigParams" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.promptCustomConfigParams" type="textarea" placeholder="请输入模型调用参数覆盖配置内容" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -153,7 +155,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="模板备注" prop="promptRemark">
-              <el-input v-model="form.promptRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.promptRemark" type="textarea" placeholder="请输入模板备注内容" />
             </el-form-item>
           </el-col>
         </el-row>

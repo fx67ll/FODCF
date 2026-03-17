@@ -36,8 +36,8 @@
 
     <el-table v-loading="loading" :data="keyList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" :selectable="(record) => {
-          return record.secretKey !== 'cryptoSaltKey';
-        }
+        return record.secretKey !== 'cryptoSaltKey';
+      }
         " />
       <!-- <el-table-column label="秘钥主键" align="center" prop="secretId" /> -->
       <el-table-column label="秘钥键" align="center" prop="secretKey" width="120" />
@@ -88,13 +88,7 @@
 </template>
 
 <script>
-import {
-  listKey,
-  getKey,
-  delKey,
-  addKey,
-  updateKey,
-} from "@/api/fx67ll/secret/key";
+import { listKey, getKey, delKey, addKey, updateKey } from "@/api/fx67ll/secret/key";
 import { encryptString, decryptString } from "@/utils/fx67ll/utils";
 
 export default {

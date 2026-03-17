@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="比赛编号" prop="matchId" v-if="isMoreQuery">
-        <el-input v-model="queryParams.matchId" placeholder="请输入比赛编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.matchId" type="number" min="1" step="1" placeholder="请输入比赛编号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
         <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
@@ -23,8 +23,7 @@
       <el-form-item label="比赛场地" prop="matchVenue" v-if="isMoreQuery">
         <el-select v-model="queryParams.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
           allow-create default-first-option>
-          <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value"
-            @keyup.enter.native="handleQuery" />
+          <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
@@ -106,7 +105,7 @@
           <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchResult" />
         </template>
       </el-table-column>
-      <el-table-column label="比赛备注" align="center" prop="matchRemark" />
+      <el-table-column label="比赛备注" align="center" prop="matchRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -193,7 +192,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="比赛备注" prop="matchRemark">
-              <el-input v-model="form.matchRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.matchRemark" type="textarea" placeholder="请输入比赛备注内容" />
             </el-form-item>
           </el-col>
         </el-row>

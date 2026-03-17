@@ -5,14 +5,15 @@
         <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
-      <el-form-item label="球队名称" prop="teamName">
-        <el-input v-model="queryParams.teamName" placeholder="请输入球队名称" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="搜索球队" prop="teamName">
+        <el-input v-model="queryParams.teamName" placeholder="请输入球队全称/昵称/简称/英文" clearable
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="球队全称" prop="teamName" v-if="isMoreQuery">
         <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="球队昵称" prop="teamNameShort" v-if="isMoreQuery">
-        <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称" clearable
+        <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称/简称" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="球队英文" prop="teamNameEn" v-if="isMoreQuery">
@@ -21,15 +22,19 @@
       <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
         <el-select v-model="queryParams.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
           allow-create default-first-option>
-          <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value"
-            @keyup.enter.native="handleQuery" />
+          <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="地区/联赛" prop="teamCountry">
         <el-select v-model="queryParams.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable filterable
           allow-create default-first-option>
-          <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value"
-            @keyup.enter.native="handleQuery" />
+          <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
+        <el-select v-model="queryParams.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
+          multiple allow-create default-first-option>
+          <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
@@ -79,10 +84,12 @@
 
     <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="球队编码" align="center" prop="teamCode" width="80" fixed="left" />
-      <el-table-column label="球队全称" align="center" prop="teamName" width="190" fixed="left" />
-      <el-table-column label="球队昵称" align="center" prop="teamNameShort" width="100" />
-      <el-table-column label="球队英文" align="center" prop="teamNameEn" width="150" />
+      <el-table-column label="球队编码" align="center" prop="teamCode" width="80" :show-overflow-tooltip="true"
+        fixed="left" />
+      <el-table-column label="球队全称" align="center" prop="teamName" width="190" :show-overflow-tooltip="true"
+        fixed="left" />
+      <el-table-column label="球队昵称" align="center" prop="teamNameShort" width="100" :show-overflow-tooltip="true" />
+      <el-table-column label="球队英文" align="center" prop="teamNameEn" width="150" :show-overflow-tooltip="true" />
       <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" width="80">
         <template slot-scope="scope">
           <!-- 判断Logo地址是否有效（非空、非'-'） -->
@@ -97,7 +104,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="球队主场" align="center" prop="teamVenue" width="190" />
+      <el-table-column label="球队主场" align="center" prop="teamVenue" width="190" :show-overflow-tooltip="true" />
       <el-table-column label="地区/联赛" align="center" prop="teamCountry" />
       <el-table-column label="球队标签" align="center" prop="teamTag" width="230">
         <template slot-scope="scope">
@@ -113,8 +120,9 @@
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.teamStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="球队排序" align="center" prop="teamSort" />
-      <el-table-column label="球队备注" align="center" prop="teamRemark" />
+      <el-table-column label="球队排序" align="center" prop="teamSort" width="100" sortable="teamSort"
+        :sort-orders="['descending', 'ascending']" />
+      <el-table-column label="球队备注" align="center" prop="teamRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -141,7 +149,7 @@
       @pagination="getList" />
 
     <!-- 添加或修改球队管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 40px"
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 10px"
       append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="85px">
         <el-row :gutter="20">
@@ -152,17 +160,17 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="球队全称" prop="teamName">
-              <el-input v-model="form.teamName" placeholder="请输入球队全称" />
+              <el-input v-model="form.teamName" placeholder="请输入球队中文全称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="球队昵称" prop="teamNameShort">
-              <el-input v-model="form.teamNameShort" placeholder="请输入球队昵称" />
+              <el-input v-model="form.teamNameShort" placeholder="请输入球队昵称/简称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="球队英文" prop="teamNameEn">
-              <el-input v-model="form.teamNameEn" placeholder="请输入球队英文" />
+              <el-input v-model="form.teamNameEn" placeholder="请输入球队英文名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -185,7 +193,7 @@
           <el-col :span="24">
             <!-- https://vip.fx67ll.com/vip-api/getRandomAvatar?isNeedMoreMosaic=Y&avatarBlockNum=6&avatarPadding=19 -->
             <el-form-item label="球队Logo" prop="teamLogoUrl">
-              <el-input v-model="form.teamLogoUrl" placeholder="请输入内容" />
+              <el-input v-model="form.teamLogoUrl" placeholder="请输入球队Logo图片的链接地址" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -211,7 +219,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="球队备注" prop="teamRemark">
-              <el-input v-model="form.teamRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.teamRemark" type="textarea" placeholder="请输入球队备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -226,6 +234,7 @@
 
 <script>
 import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/dortmund/team";
+
 import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
 
 export default {

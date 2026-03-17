@@ -16,7 +16,6 @@
       <el-form-item label="当前本金" prop="seedMoney" v-if="isMoreQuery">
         <el-input v-model="queryParams.seedMoney" placeholder="请输入当前投入本金" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-
       <el-form-item label="落袋金额" prop="saveMoney" v-if="isMoreQuery">
         <el-input v-model="queryParams.saveMoney" placeholder="请输入已经落袋为安的盈利金额" clearable
           @keyup.enter.native="handleQuery" />
@@ -110,7 +109,7 @@
       <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="100" />
       <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
-      <el-table-column label="备注" align="center" prop="extraRemark" />
+      <el-table-column label="外快备注" align="center" prop="extraRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
@@ -161,9 +160,9 @@
         <el-form-item label="目标金额" prop="targetMoney">
           <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
         </el-form-item>
-        <el-form-item label="备注" prop="extraRemark">
+        <el-form-item label="外快备注" prop="extraRemark">
           <el-input v-model="form.extraRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
-            placeholder="请输入内容" />
+            placeholder="请输入外快备注内容" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">

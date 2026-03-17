@@ -81,8 +81,9 @@
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.seasonStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="赛季排序" align="center" prop="seasonSort" />
-      <el-table-column label="赛季备注" align="center" prop="seasonRemark" />
+      <el-table-column label="赛季排序" align="center" prop="seasonSort" width="100" sortable="seasonSort"
+        :sort-orders="['descending', 'ascending']" />
+      <el-table-column label="赛季备注" align="center" prop="seasonRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -152,7 +153,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="赛季备注" prop="seasonRemark">
-              <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入赛季备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
