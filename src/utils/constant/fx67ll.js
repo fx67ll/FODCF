@@ -13,7 +13,7 @@ export const httpStatusOptions = [
   { value: "100", label: "100 Continue" },
   { value: "101", label: "101 Switching Protocols" },
   { value: "102", label: "102 Processing" },
-  
+
   // 2xx 成功状态码
   { value: "200", label: "200 OK" },
   { value: "201", label: "201 Created" },
@@ -22,7 +22,7 @@ export const httpStatusOptions = [
   { value: "204", label: "204 No Content" },
   { value: "205", label: "205 Reset Content" },
   { value: "206", label: "206 Partial Content" },
-  
+
   // 3xx 重定向状态码
   { value: "300", label: "300 Multiple Choices" },
   { value: "301", label: "301 Moved Permanently" },
@@ -32,7 +32,7 @@ export const httpStatusOptions = [
   { value: "305", label: "305 Use Proxy" },
   { value: "307", label: "307 Temporary Redirect" },
   { value: "308", label: "308 Permanent Redirect" },
-  
+
   // 4xx 客户端错误状态码
   { value: "400", label: "400 Bad Request" },
   { value: "401", label: "401 Unauthorized" },
@@ -60,7 +60,7 @@ export const httpStatusOptions = [
   { value: "429", label: "429 Too Many Requests" },
   { value: "431", label: "431 Request Header Fields Too Large" },
   { value: "451", label: "451 Unavailable For Legal Reasons" },
-  
+
   // 5xx 服务器错误状态码
   { value: "500", label: "500 Internal Server Error" },
   { value: "501", label: "501 Not Implemented" },
@@ -122,4 +122,10 @@ export const circuitStrategyOptions = [
   { value: "S", label: "慢调用比例" },
   { value: "E", label: "异常比例" },
   { value: "N", label: "异常数" },
+];
+
+// 分析类型选项
+export const analysisTypeOptions = [
+  { value: "0", label: "模板分析" },
+  { value: "1", label: "自定义文本分析" },
 ];

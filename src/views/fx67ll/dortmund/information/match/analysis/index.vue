@@ -1,27 +1,38 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="分析编号" prop="analysisId">
-        <el-input v-model="queryParams.analysisId" type="number" min="1" step="1" placeholder="请输入分析编号" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="分析编号" prop="analysisId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.analysisId" type="number" min="1" step="1" placeholder="请输入分析编号" clearable
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="目标比赛" prop="matchId">
-        <el-input v-model="queryParams.matchId" placeholder="请输入目标比赛" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="关联比赛" prop="matchId" v-if="isMoreQuery">
+        <el-input v-model="queryParams.matchId" placeholder="请输入分析的关联比赛编号" clearable
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="分析模版" prop="promptId">
-        <el-input v-model="queryParams.promptId" placeholder="请输入分析模版" clearable @keyup.enter.native="handleQuery" />
+      <!-- 字典码：0-模板分析，1-自定义文本分析  -->
+      <el-form-item label="分析类型" prop="analysisType" v-if="isMoreQuery">
+        <el-select v-model="queryParams.analysisType" placeholder="请选择分析类型" clearable style="width: 100%"
+          @keyup.enter.native="handleQuery">
+          <el-option v-for="item in analysisTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="分析模型" prop="modelId">
-        <el-input v-model="queryParams.modelId" placeholder="请输入分析模型" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="请求模版" prop="promptId" v-if="isMoreQuery && queryParams.analysisType === '0'">
+        <common-enhanced-select ref="promptSelect" v-model="queryParams.promptId" valueKey="promptId"
+          labelKey="promptName" :api-func="listTemplate" placeholder="请选择使用的提示语模板" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="调用记录" prop="requestLogCode">
-        <el-input v-model="queryParams.requestLogCode" placeholder="请输入调用记录" clearable
+      <el-form-item label="绑定模型" prop="modelId" v-if="isMoreQuery">
+        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
+          :api-func="listModel" placeholder="请选择使用的绑定模型" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="请求记录" prop="requestLogCode" v-if="isMoreQuery">
+        <el-input v-model="queryParams.requestLogCode" placeholder="请输入请求记录编码" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
           range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
@@ -58,13 +69,23 @@
     <el-table v-loading="loading" :data="analysisList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="分析编号" align="center" prop="analysisId" width="80" fixed="left" />
-      <el-table-column label="目标比赛" align="center" prop="matchId" />
-      <el-table-column label="分析模版" align="center" prop="promptId" />
-      <el-table-column label="分析模型" align="center" prop="modelId" />
-      <el-table-column label="调用记录" align="center" prop="requestLogCode" />
-      <el-table-column label="分析类型" align="center" prop="analysisType" />
-      <el-table-column label="最终Prompt内容" align="center" prop="rawPrompt" />
-      <el-table-column label="AI原始响应内容" align="center" prop="rawAiResponse" />
+      <el-table-column label="关联比赛" align="center" width="150">
+        <template slot-scope="scope">
+          <span>{{ scope.row.homeTeamName && scope.row.awayTeamName ? `${scope.row.homeTeamName} VS
+            ${scope.row.awayTeamName}` : '' }}</span>
+        </template>
+      </el-table-column>
+      <!-- 字典码：0-模板分析，1-自定义文本分析 -->
+      <el-table-column label="分析类型" align="center" prop="analysisType" width="100">
+        <template slot-scope="scope">
+          {{ analysisTypeMap[scope.row.analysisType] || scope.row.analysisType }}
+        </template>
+      </el-table-column>
+      <el-table-column label="请求模版" align="center" prop="promptName" width="120" />
+      <el-table-column label="绑定模型" align="center" prop="modelName" width="120" />
+      <el-table-column label="请求记录" align="center" prop="requestLogCode" width="180" />
+      <el-table-column label="提示语模板内容" align="center" prop="rawPrompt" width="230" :show-overflow-tooltip="true" />
+      <el-table-column label="AI原始响应内容" align="center" prop="rawAiResponse" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="分析备注" align="center" prop="analysisRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
@@ -92,29 +113,59 @@
       @pagination="getList" />
 
     <!-- 添加或修改比赛分析日志记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="目标比赛" prop="matchId">
-          <el-input v-model="form.matchId" placeholder="请输入目标比赛" />
-        </el-form-item>
-        <el-form-item label="分析模版" prop="promptId">
-          <el-input v-model="form.promptId" placeholder="请输入分析模版" />
-        </el-form-item>
-        <el-form-item label="分析模型" prop="modelId">
-          <el-input v-model="form.modelId" placeholder="请输入分析模型" />
-        </el-form-item>
-        <el-form-item label="调用记录" prop="requestLogCode">
-          <el-input v-model="form.requestLogCode" placeholder="请输入调用记录" />
-        </el-form-item>
-        <el-form-item label="最终Prompt内容" prop="rawPrompt">
-          <el-input v-model="form.rawPrompt" type="textarea" placeholder="请输入最终Prompt内容" />
-        </el-form-item>
-        <el-form-item label="AI原始响应内容" prop="rawAiResponse">
-          <el-input v-model="form.rawAiResponse" type="textarea" placeholder="请输入AI原始响应内容" />
-        </el-form-item>
-        <el-form-item label="分析备注" prop="analysisRemark">
-          <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入分析备注内容" />
-        </el-form-item>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 100px"
+      append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="82px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="关联比赛" prop="matchId">
+              {{
+                form.homeTeamName && form.awayTeamName ? `${form.homeTeamName} VS ${form.awayTeamName}` : '-- 暂无数据 --'
+              }}
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="请求记录" prop="requestLogCode">
+              {{ form.requestLogCode || '-- 暂无数据 --' }}
+            </el-form-item>
+          </el-col>
+          <!-- 字典码：0-模板分析，1-自定义文本分析 -->
+          <el-col :span="12">
+            <el-form-item label="分析类型" prop="analysisType">
+              <el-select v-model="form.analysisType" placeholder="请选择分析类型" clearable filterable style="width: 100%">
+                <el-option v-for="item in analysisTypeOptions" :key="item.value" :label="item.label"
+                  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12"">
+            <el-form-item label=" 绑定模型" prop="modelId">
+            <common-enhanced-select ref="modelSelect" v-model="form.modelId" valueKey="modelId" labelKey="modelName"
+              :api-func="listModel" placeholder="请选择使用的绑定模型" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12" v-if="form.analysisType === '0'">
+            <el-form-item label="请求模版" prop="promptId">
+              <common-enhanced-select ref="promptSelect" v-model="form.promptId" valueKey="promptId"
+                labelKey="promptName" :api-func="listTemplate" placeholder="请选择使用的提示语模板" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="提示语模板内容" prop="rawPrompt" label-width="124px">
+              <el-input v-model="form.rawPrompt" type="textarea" placeholder="请输入提示语模板内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="分析备注" prop="analysisRemark">
+              <el-input v-model="form.analysisRemark" type="textarea" placeholder="请输入分析备注内容" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="AI原始响应内容" prop="rawAiResponse" label-width="124px">
+              <el-input v-model="form.rawAiResponse" type="textarea" placeholder="请输入AI原始响应内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -126,9 +177,23 @@
 
 <script>
 import { listAnalysis, getAnalysis, delAnalysis, addAnalysis, updateAnalysis } from "@/api/fx67ll/dortmund/analysis";
+import { listTemplate } from "@/api/fx67ll/ai/template";
+import { listModel } from "@/api/fx67ll/ai/model";
+
+import { analysisTypeOptions } from "@/utils/constant/fx67ll";
+import { arrayToMap } from "@/utils/fx67ll/utils";
+
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "Analysis",
+  components: { CommonEnhancedSelect },
+  computed: {
+    // 分析类型映射
+    analysisTypeMap() {
+      return arrayToMap(this.analysisTypeOptions);
+    }
+  },
   data() {
     return {
       // 遮罩层
@@ -178,21 +243,27 @@ export default {
       // 表单校验
       rules: {
         matchId: [
-          { required: true, message: "目标比赛不能为空", trigger: "blur" }
+          { required: true, message: "关联比赛不能为空", trigger: "blur" }
         ],
         modelId: [
-          { required: true, message: "分析模型不能为空", trigger: "blur" }
+          { required: true, message: "绑定模型不能为空", trigger: "blur" }
         ],
         rawPrompt: [
-          { required: true, message: "最终Prompt内容不能为空", trigger: "blur" }
+          { required: true, message: "提示语模板内容不能为空", trigger: "blur" }
         ],
         rawAiResponse: [
           { required: true, message: "AI原始响应内容不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 分析类型选项
+      analysisTypeOptions,
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listTemplate = listTemplate;
+    this.listModel = listModel;
+
     this.getList();
   },
   methods: {
