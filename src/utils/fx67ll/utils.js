@@ -526,3 +526,36 @@ export function arrayToMap(arr) {
     return map;
   }, {});
 }
+
+/**
+ * 通用字符串处理方法：如果字符串末尾存在指定后缀（不区分大小写），截取后缀之前的字符串
+ * @param {string} str - 待处理的原始字符串
+ * @param {string} suffix - 要匹配的后缀（如 "Id"、"Name"）
+ * @returns {string} 处理后的字符串（无匹配后缀/非字符串/截取后为空则返回原字符串）
+ */
+export function trimSuffixFromEnd(str, suffix) {
+  // 1. 入参校验：非字符串/空字符串/后缀为空，直接返回原字符串
+  if (
+    typeof str !== "string" ||
+    str.trim() === "" ||
+    typeof suffix !== "string" ||
+    suffix.trim() === ""
+  ) {
+    return str;
+  }
+
+  const trimmedStr = str.trim();
+  const trimmedSuffix = suffix.trim();
+  // 2. 构造不区分大小写的正则（匹配字符串末尾的指定后缀）
+  const suffixRegex = new RegExp(trimmedSuffix + "$", "i");
+
+  // 3. 匹配后缀并截取
+  if (suffixRegex.test(trimmedStr)) {
+    const result = trimmedStr.replace(suffixRegex, "");
+    // 防止截取后为空（如 str="Id"，suffix="Id"），返回原字符串
+    return result || trimmedStr;
+  }
+
+  // 4. 无匹配后缀，返回原字符串
+  return trimmedStr;
+}

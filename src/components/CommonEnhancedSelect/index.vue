@@ -1,12 +1,14 @@
 <template>
   <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调，并支持自定义宽度 -->
   <el-select v-model="innerValue" :placeholder="placeholder" clearable filterable :filter-method="handleFilter"
-    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle">
+    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle" :disabled="disabled">
     <el-option v-for="item in options" :key="item[valueKey]" :label="item[labelKey]" :value="item[valueKey]" />
   </el-select>
 </template>
 
 <script>
+import { trimSuffixFromEnd } from "@/utils/fx67ll/utils";
+
 export default {
   name: "CommonEnhancedSelect", // 通用增强下拉组件
   props: {
@@ -46,11 +48,16 @@ export default {
       type: Function,
       default: null
     },
-    // 【新增】自定义宽度：可传入数字（px）或带单位的字符串（如 '200px', '50%'）
+    // 自定义宽度：可传入数字（px）或带单位的字符串（如 '200px', '50%'）
     // 若不传，则默认宽度为100%，跟随父组件宽度
     width: {
       type: [String, Number],
       default: null
+    },
+    // 只读参数：为 true 时禁用下拉框，用户无法交互
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -61,7 +68,7 @@ export default {
     };
   },
   computed: {
-    // 【新增】计算select样式：若传入了width则使用，否则默认宽度100%
+    // 计算select样式：若传入了width则使用，否则默认宽度100%
     selectStyle() {
       if (this.width) {
         // 数字类型自动添加px单位
@@ -88,22 +95,23 @@ export default {
   methods: {
     /** 加载下拉选项数据（直接调用传入的原生接口函数） */
     async loadOptions() {
+      const self = this;
       try {
         // 构造接口参数：分页（拉全量）+ 自定义传参
+        const statusObjKey = trimSuffixFromEnd(self.valueKey, 'Id') + 'Status';
         const params = {
           pageNum: 1,
           pageSize: 1023, // 后期如果不够再修改调用接口方式
-          ...this.queryParams
+          ...this.queryParams,
+          [statusObjKey]: '0',
+          isNeedSort: 'Y',
         };
-        console.log('params', params, this.apiFunc);
         // 直接调用传入的原生接口函数
         const response = await this.apiFunc(params);
-        console.log('response', response);
         // 适配返回格式：{rows: 数组, total: 数字}
         this.originOptions = response.rows || [];
         this.options = [...this.originOptions];
       } catch (error) {
-        console.error("通用增强下拉加载数据失败：", error);
         this.options = [];
         this.originOptions = [];
       }
