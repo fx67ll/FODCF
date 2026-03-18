@@ -5,30 +5,30 @@
         <el-input v-model="queryParams.requestLogId" type="number" min="1" step="1" placeholder="请输入日志编号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属模板" prop="promptId" v-if="isMoreQuery">
+      <el-form-item label="请求模板" prop="promptId" v-if="isMoreQuery">
         <common-enhanced-select ref="promptSelect" v-model="queryParams.promptId" valueKey="promptId"
-          labelKey="promptName" :api-func="listTemplate" placeholder="请选择所属模板" :enter-callback="handleQuery" />
+          labelKey="promptName" :api-func="listTemplate" placeholder="请选择请求模板" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属分组" prop="groupId" v-if="isMoreQuery">
+      <el-form-item label="模版分组" prop="groupId" v-if="isMoreQuery">
         <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" valueKey="groupId" labelKey="groupName"
-          :api-func="listGroup" placeholder="请选择所属分组" :enter-callback="handleQuery" />
+          :api-func="listGroup" placeholder="请选择模版分组" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属场景" prop="sceneId" v-if="isMoreQuery">
+      <el-form-item label="模版场景" prop="sceneId" v-if="isMoreQuery">
         <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" valueKey="sceneId" labelKey="sceneName"
-          :api-func="listScene" placeholder="请选择所属场景" :enter-callback="handleQuery" />
+          :api-func="listScene" placeholder="请选择模版场景" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="调用模型" prop="modelId">
+      <el-form-item label="绑定模型" prop="modelId">
         <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
-          :api-func="listModel" placeholder="请选择调用模型" :enter-callback="handleQuery" />
+          :api-func="listModel" placeholder="请选择绑定模型" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="预估费用" prop="cost" v-if="isMoreQuery">
         <el-input v-model="queryParams.cost" placeholder="请输入本次请求预估总费用" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="货币类型" prop="modelTokenCurrency" v-if="isMoreQuery">
-        <el-select v-model="queryParams.modelTokenCurrency" style="width: 100%" placeholder="请选择或输入计价货币类型" clearable
+      <el-form-item label="货币类型" prop="costCurrency" v-if="isMoreQuery">
+        <el-select v-model="queryParams.costCurrency" style="width: 100%" placeholder="请选择或输入计价货币类型" clearable
           @keyup.enter.native="handleQuery">
-          <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label"
-            :value="item.value" />
+          <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label" :value="item.value"
+            :enter-callback="handleQuery" />
         </el-select>
       </el-form-item>
       <el-form-item label="请求耗时" prop="durationMs" v-if="isMoreQuery">
@@ -55,8 +55,7 @@
       </el-form-item>
       <!-- 字典码：200、400、500等等 -->
       <el-form-item label="HTTP状态码" prop="httpStatus" label-width="92px" v-if="isMoreQuery">
-        <el-select v-model="queryParams.httpStatus" style="width: 100%" placeholder="请选择HTTP响应状态码" clearable filterable
-          @keyup.enter.native="handleQuery">
+        <el-select v-model="queryParams.httpStatus" style="width: 100%" placeholder="请选择HTTP响应状态码" clearable filterable>
           <el-option v-for="item in httpStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
@@ -93,19 +92,19 @@
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="日志编号" align="center" prop="requestLogId" width="80" fixed="left" />
-      <el-table-column label="所属模板" align="center" prop="promptName" width="120" />
-      <el-table-column label="所属分组" align="center" prop="groupName" width="120" />
-      <el-table-column label="所属场景" align="center" prop="sceneName" width="120" />
-      <el-table-column label="调用模型" align="center" prop="modelName" width="120" />
+      <el-table-column label="请求模板" align="center" prop="promptName" width="120" />
+      <el-table-column label="模版分组" align="center" prop="groupName" width="120" />
+      <el-table-column label="模版场景" align="center" prop="sceneName" width="120" />
+      <el-table-column label="绑定模型" align="center" prop="modelName" width="120" />
       <el-table-column label="请求完整内容" align="center" prop="requestContent" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="响应完整内容" align="center" prop="responseContent" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="输入Token消耗量" align="center" prop="promptTokens" width="130" />
       <el-table-column label="输出Token消耗量" align="center" prop="completionTokens" width="130" />
       <el-table-column label="总Token消耗量" align="center" prop="totalTokens" width="110" />
       <el-table-column label="本次调用预估费用" align="center" prop="cost" width="140" />
-      <el-table-column label="计价货币类型" align="center" prop="modelTokenCurrency" width="100">
+      <el-table-column label="计价货币类型" align="center" prop="costCurrency" width="100">
         <template slot-scope="scope">
-          {{ modelTokenCurrencyMap[scope.row.modelTokenCurrency] || scope.row.modelTokenCurrency }}
+          {{ modelTokenCurrencyMap[scope.row.costCurrency] || scope.row.costCurrency }}
         </template>
       </el-table-column>
       <el-table-column label="请求耗时" align="center" prop="durationMs" width="80">
@@ -154,27 +153,34 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="68px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="所属模板" prop="promptName">
-              <el-input v-model="form.promptName" placeholder="请输入所属模板" disabled v-if="false" />
-              {{ form.promptName || '暂无数据' }}
+            <el-form-item label="请求模板" prop="promptName">
+              <common-enhanced-select ref="promptSelect" v-model="form.promptId" valueKey="promptId"
+                labelKey="promptName" :api-func="listTemplate" placeholder="请选择请求模板" disabled v-if="false" />
+              {{ form.promptName || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="所属分组" prop="groupName">
-              <el-input v-model="form.groupName" placeholder="请输入所属分组" disabled v-if="false" />
-              {{ form.groupName || '暂无数据' }}
+            <el-form-item label="模版分组" prop="groupName">
+              <el-input v-model="form.groupName" placeholder="请输入模版分组" disabled v-if="false" />
+              <common-enhanced-select ref="groupSelect" v-model="form.groupId" valueKey="groupId" labelKey="groupName"
+                :api-func="listGroup" placeholder="请选择模版分组" disabled v-if="false" />
+              {{ form.groupName || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="所属场景" prop="sceneName">
-              <el-input v-model="form.sceneName" placeholder="请输入所属场景" disabled v-if="false" />
-              {{ form.sceneName || '暂无数据' }}
+            <el-form-item label="模版场景" prop="sceneName">
+              <el-input v-model="form.sceneName" placeholder="请输入模版场景" disabled v-if="false" />
+              <common-enhanced-select ref="sceneSelect" v-model="form.sceneId" valueKey="sceneId" labelKey="sceneName"
+                :api-func="listScene" placeholder="请选择模版场景" disabled v-if="false" />
+              {{ form.sceneName || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="调用模型" prop="modelName">
-              <el-input v-model="form.modelName" placeholder="请输入调用模型" disabled v-if="false" />
-              {{ form.modelName || '暂无数据' }}
+            <el-form-item label="绑定模型" prop="modelName">
+              <el-input v-model="form.modelName" placeholder="请输入绑定模型" disabled v-if="false" />
+              <common-enhanced-select ref="modelSelect" v-model="form.modelId" valueKey="modelId" labelKey="modelName"
+                :api-func="listModel" placeholder="请选择绑定模型" disabled v-if="false" />
+              {{ form.modelName || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -184,37 +190,37 @@
             <el-form-item label="输入Token消耗量" prop="promptTokens" label-width="124px">
               <el-input v-model="form.promptTokens" type="number" min="0" placeholder="请输入输入Token消耗量" disabled
                 v-if="false" />
-              {{ form.promptTokens || '暂无数据' }}
+              {{ form.promptTokens || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="输出Token消耗量" prop="completionTokens" label-width="124px">
               <el-input v-model="form.completionTokens" type="number" min="0" placeholder="请输入输出Token消耗量" disabled
                 v-if="false" />
-              {{ form.completionTokens || '暂无数据' }}
+              {{ form.completionTokens || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="总Token消耗量" prop="totalTokens" label-width="110px">
               <el-input v-model="form.totalTokens" type="number" min="0" placeholder="请输入总Token消耗量" disabled
                 v-if="false" />
-              {{ form.totalTokens || '暂无数据' }}
+              {{ form.totalTokens || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="本次请求预估总费用" prop="cost" label-width="138px">
               <el-input v-model="form.cost" type="number" min="0" placeholder="请输入本次请求预估总费用" disabled v-if="false" />
-              {{ form.cost || '暂无数据' }}
+              {{ form.cost || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="16">
             <el-form-item label="计价货币类型" prop="costCurrency" label-width="96px">
-              <el-select v-model="form.modelTokenCurrency" style="width: 100%" placeholder="请选择计价货币类型" clearable
-                disabled v-if="false">
+              <el-select v-model="form.costCurrency" style="width: 100%" placeholder="请选择计价货币类型" clearable disabled
+                v-if="false">
                 <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
-              {{ form.costCurrency || '暂无数据' }}
+              {{ modelTokenCurrencyMap[form.costCurrency] || form.costCurrency || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -223,13 +229,13 @@
           <el-col :span="8">
             <el-form-item label="请求IP" prop="callerIp" label-width="54px">
               <el-input v-model="form.callerIp" placeholder="请输入请求IP地址" disabled v-if="false" />
-              {{ form.callerIp || '暂无数据' }}
+              {{ form.callerIp || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="请求发起用户" prop="createBy" label-width="96px">
               <el-input v-model="form.createBy" placeholder="请输入调用请求的用户用户名" disabled v-if="false" />
-              {{ form.createBy || '暂无数据' }}
+              {{ form.createBy || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -237,26 +243,26 @@
               <el-date-picker clearable v-model="form.requestTime" style="width: 100%" type="date"
                 value-format="yyyy-MM-dd" placeholder="请选择请求发起时间" disabled v-if="false">
               </el-date-picker>
-              {{ form.requestTime ? parseTime(form.requestTime, "{y}-{m}-{d} {h}:{i}:{s}") : '暂无数据' }}
+              {{ form.requestTime ? parseTime(form.requestTime, "{y}-{m}-{d} {h}:{i}:{s}") : '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="请求耗时" prop="durationMs">
               <el-input v-model="form.durationMs" type="number" min="1" step="1" placeholder="请输入请求耗时" disabled
                 v-if="false" />
-              {{ form.durationMs || '暂无数据' }}ms
+              {{ form.durationMs || '-- 暂无数据 --' }}ms
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="请求业务状态" prop="callStatus" label-width="96px">
               <el-input v-model="form.callStatus" placeholder="请输入请求业务状态" disabled v-if="false" />
-              {{ callStatusMap[form.callStatus] || form.callStatus || '暂无数据' }}
+              {{ callStatusMap[form.callStatus] || form.callStatus || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="HTTP响应状态码" prop="httpStatus" label-width="123px">
               <el-input v-model="form.httpStatus" placeholder="请输入HTTP响应状态码" disabled v-if="false" />
-              {{ httpStatusMap[form.httpStatus] || form.httpStatus || '暂无数据' }}
+              {{ httpStatusMap[form.httpStatus] || form.httpStatus || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -265,13 +271,13 @@
           <el-col :span="24">
             <el-form-item label="请求内容">
               <editor v-model="form.requestContent" :min-height="192" disabled v-if="false" />
-              {{ form.requestContent || '暂无数据' }}
+              {{ form.requestContent || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="响应内容">
               <editor v-model="form.responseContent" :min-height="192" disabled v-if="false" />
-              {{ form.responseContent || '暂无数据' }}
+              {{ form.responseContent || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -280,7 +286,7 @@
           <el-col :span="24">
             <el-form-item label="错误信息" prop="errorMsg">
               <el-input v-model="form.errorMsg" type="textarea" placeholder="请输入错误堆栈信息内容" disabled v-if="false" />
-              {{ form.errorMsg || '暂无数据' }}
+              {{ form.errorMsg || '-- 暂无数据 --' }}
             </el-form-item>
           </el-col>
         </el-row>
@@ -376,7 +382,7 @@ export default {
       // 表单校验
       rules: {
         modelId: [
-          { required: true, message: "调用模型不能为空", trigger: "blur" }
+          { required: true, message: "绑定模型不能为空", trigger: "blur" }
         ],
       },
       // 货币类型选项

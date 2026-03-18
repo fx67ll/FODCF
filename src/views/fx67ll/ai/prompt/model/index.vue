@@ -29,8 +29,8 @@
       <el-form-item label="货币类型" prop="modelTokenCurrency" v-if="isMoreQuery">
         <el-select v-model="queryParams.modelTokenCurrency" style="width: 100%" placeholder="请选择或输入计价货币类型" clearable
           @keyup.enter.native="handleQuery">
-          <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label"
-            :value="item.value" />
+          <el-option v-for="item in modelTokenCurrencyOptions" :key="item.value" :label="item.label" :value="item.value"
+            :enter-callback="handleQuery" />
         </el-select>
       </el-form-item>
       <el-form-item label="模型状态" prop="modelStatus">
@@ -83,8 +83,16 @@
       <el-table-column label="模型编码" align="center" prop="modelCode" width="120" fixed="left" />
       <el-table-column label="模型名称" align="center" prop="modelName" width="120" fixed="left" />
       <el-table-column label="模型厂商" align="center" prop="modelVendor" width="120" />
-      <el-table-column label="API 密钥" align="center" prop="modelApiKey" width="120" />
-      <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" width="120" />
+      <el-table-column label="API 密钥" align="center" prop="modelApiKey" width="100">
+        <template slot-scope="scope">
+          {{ scope.row.modelApiKey !== '-' ? '**********' : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Secret密钥" align="center" prop="modelSecretKey" width="100" >
+        <template slot-scope="scope">
+          {{ scope.row.modelSecretKey !== '-' ? '**********' : '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="API 调用地址" align="center" prop="modelApiUrl" width="180" :show-overflow-tooltip="true" />
       <el-table-column label="API 版本号" align="center" prop="modelApiVersion" width="90" />
       <el-table-column label="模型默认调用参数" align="center" prop="modelConfigParams" width="150"
@@ -153,13 +161,13 @@
           <el-col :span="8">
             <el-form-item label="API 密钥" prop="modelApiKey">
               <common-enhanced-select ref="keySelect" v-model="form.modelApiKey" valueKey="secretId"
-                labelKey="secretKey" :api-func="listKey" placeholder="请选择API密钥" :enter-callback="handleQuery" />
+                labelKey="secretKey" :api-func="listKey" placeholder="请选择API密钥" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="Secret密钥" prop="modelSecretKey">
               <common-enhanced-select ref="keySelect" v-model="form.modelSecretKey" valueKey="secretId"
-                labelKey="secretKey" :api-func="listKey" placeholder="请选择Secret密钥" :enter-callback="handleQuery" />
+                labelKey="secretKey" :api-func="listKey" placeholder="请选择Secret密钥" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -188,10 +196,11 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="模型状态" prop="modelStatus">
-              <el-select v-model="form.modelStatus" style="width: 100%" placeholder="请选择模型状态">
+              <!-- <el-select v-model="form.modelStatus" style="width: 100%" placeholder="请选择模型状态">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
-              </el-select>
+              </el-select> -->
+              <el-switch v-model="form.modelStatus" active-value="0" inactive-value="2" />
             </el-form-item>
           </el-col>
           <el-col :span="8">

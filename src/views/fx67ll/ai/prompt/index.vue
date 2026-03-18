@@ -4,13 +4,13 @@
       <el-form-item label="模板名称" prop="promptName" v-if="isMoreQuery">
         <el-input v-model="queryParams.promptName" placeholder="请输入模板名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属分组" prop="groupId">
+      <el-form-item label="模版分组" prop="groupId">
         <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" valueKey="groupId" labelKey="groupName"
-          :api-func="listGroup" placeholder="请选择所属分组" :enter-callback="handleQuery" />
+          :api-func="listGroup" placeholder="请选择模版分组" :enter-callback="handleQuery" />
       </el-form-item>
-      <el-form-item label="所属场景" prop="sceneId">
+      <el-form-item label="模版场景" prop="sceneId">
         <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" valueKey="sceneId" labelKey="sceneName"
-          :api-func="listScene" placeholder="请选择所属场景" :enter-callback="handleQuery" />
+          :api-func="listScene" placeholder="请选择模版场景" :enter-callback="handleQuery" />
       </el-form-item>
       <el-form-item label="绑定模型" prop="modelId">
         <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
@@ -64,8 +64,8 @@
     <el-table v-loading="loading" :data="templateList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="模板名称" align="center" prop="promptName" width="120" fixed="left" />
-      <el-table-column label="所属分组" align="center" prop="groupName" width="120" />
-      <el-table-column label="所属场景" align="center" prop="sceneName" width="120" />
+      <el-table-column label="模版分组" align="center" prop="groupName" width="120" />
+      <el-table-column label="模版场景" align="center" prop="sceneName" width="120" />
       <el-table-column label="绑定模型" align="center" prop="modelName" width="120" />
       <el-table-column label="模版内容" align="center" prop="promptContent" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="模板变量元数据配置" align="center" prop="promptVariableConfig" width="180"
@@ -113,15 +113,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="所属分组" prop="groupId">
+            <el-form-item label="模版分组" prop="groupId">
               <common-enhanced-select ref="groupSelect" v-model="form.groupId" valueKey="groupId" labelKey="groupName"
-                :api-func="listGroup" placeholder="请选择所属分组" />
+                :api-func="listGroup" placeholder="请选择模版分组" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="所属场景" prop="sceneId">
+            <el-form-item label="模版场景" prop="sceneId">
               <common-enhanced-select ref="sceneSelect" v-model="form.sceneId" valueKey="sceneId" labelKey="sceneName"
-                :api-func="listScene" placeholder="请选择所属场景" />
+                :api-func="listScene" placeholder="请选择模版场景" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -147,10 +147,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="模版状态" prop="promptStatus">
-              <el-select v-model="form.promptStatus" style="width: 100%" placeholder="请选择模版状态">
+              <!-- <el-select v-model="form.promptStatus" style="width: 100%" placeholder="请选择模版状态">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
-              </el-select>
+              </el-select> -->
+              <el-switch v-model="form.promptStatus" active-value="0" inactive-value="2" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -232,10 +233,10 @@ export default {
           { required: true, message: "模板名称不能为空", trigger: "blur" }
         ],
         groupId: [
-          { required: true, message: "所属分组不能为空", trigger: "blur" }
+          { required: true, message: "模版分组不能为空", trigger: "blur" }
         ],
         sceneId: [
-          { required: true, message: "所属场景不能为空", trigger: "blur" }
+          { required: true, message: "模版场景不能为空", trigger: "blur" }
         ],
         modelId: [
           { required: true, message: "绑定模型不能为空", trigger: "blur" }

@@ -8,42 +8,59 @@
       <!-- 规则维度下拉框：1-模板，2-场景，3-分组，4-模型 -->
       <el-form-item label="规则维度" prop="limitRuleDimension" v-if="isMoreQuery">
         <el-select v-model="queryParams.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
-          <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"
-            :value="item.value" />
+          <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label" :value="item.value"
+            :enter-callback="handleQuery" />
         </el-select>
       </el-form-item>
-      <el-form-item label="规则目标" prop="limitRuleTargetId" v-if="isMoreQuery">
-        <el-input v-model="queryParams.limitRuleTargetId" type="number" min="1" step="1" placeholder="请输入规则维度目标编号"
-          clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="模板名称" prop="limitRuleTargetId" v-if="isMoreQuery && queryParams.limitRuleDimension === '1'">
+        <common-enhanced-select ref="promptSelect" v-model="queryParams.promptId" valueKey="promptId"
+          labelKey="promptName" :api-func="listTemplate" placeholder="请选择请求模板" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="模版分组" prop="limitRuleTargetId" v-if="isMoreQuery && queryParams.limitRuleDimension === '2'">
+        <common-enhanced-select ref="groupSelect" v-model="queryParams.groupId" valueKey="groupId" labelKey="groupName"
+          :api-func="listGroup" placeholder="请选择模版分组" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="模版场景" prop="limitRuleTargetId" v-if="isMoreQuery && queryParams.limitRuleDimension === '3'">
+        <common-enhanced-select ref="sceneSelect" v-model="queryParams.sceneId" valueKey="sceneId" labelKey="sceneName"
+          :api-func="listScene" placeholder="请选择模版场景" :enter-callback="handleQuery" />
+      </el-form-item>
+      <el-form-item label="绑定模型" prop="limitRuleTargetId" v-if="isMoreQuery && queryParams.limitRuleDimension === '4'">
+        <common-enhanced-select ref="modelSelect" v-model="queryParams.modelId" valueKey="modelId" labelKey="modelName"
+          :api-func="listModel" placeholder="请选择绑定模型" :enter-callback="handleQuery" />
       </el-form-item>
       <!-- 规则类型下拉框：1-流量控制，2-熔断保护 -->
       <el-form-item label="规则类型" prop="limitRuleType">
-        <el-select v-model="queryParams.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%">
+        <el-select v-model="queryParams.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%"
+          :enter-callback="handleQuery">
           <el-option v-for="item in limitRuleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <!-- 流控模式下拉框：D-直接拒绝，A-关联控制，L-链路流控 -->
-      <el-form-item label="流控模式" prop="flowControlMode" v-if="isMoreQuery">
-        <el-select v-model="queryParams.flowControlMode" placeholder="请选择流控模式" clearable style="width: 100%">
+      <el-form-item label="流控模式" prop="flowControlMode" v-if="isMoreQuery && queryParams.limitRuleType === '1'">
+        <el-select v-model="queryParams.flowControlMode" placeholder="请选择流控模式" clearable style="width: 100%"
+          :enter-callback="handleQuery">
           <el-option v-for="item in flowControlModeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <!-- 流控效果下拉框：F-快速失败，W-预热启动，Q-匀速排队 -->
-      <el-form-item label="流控效果" prop="flowControlEffect" v-if="isMoreQuery">
-        <el-select v-model="queryParams.flowControlEffect" placeholder="请选择流控效果" clearable style="width: 100%">
+      <el-form-item label="流控效果" prop="flowControlEffect" v-if="isMoreQuery && queryParams.limitRuleType === '1'">
+        <el-select v-model="queryParams.flowControlEffect" placeholder="请选择流控效果" clearable style="width: 100%"
+          :enter-callback="handleQuery">
           <el-option v-for="item in flowControlEffectOptions" :key="item.value" :label="item.label"
             :value="item.value" />
         </el-select>
       </el-form-item>
       <!-- 流控类型下拉框：Q-QPS阈值，C-并发线程数 -->
-      <el-form-item label="流控类型" prop="flowRuleType" v-if="isMoreQuery">
-        <el-select v-model="queryParams.flowRuleType" placeholder="请选择流控指标类型" clearable style="width: 100%">
+      <el-form-item label="流控类型" prop="flowRuleType" v-if="isMoreQuery && queryParams.limitRuleType === '1'">
+        <el-select v-model="queryParams.flowRuleType" placeholder="请选择流控指标类型" clearable style="width: 100%"
+          :enter-callback="handleQuery">
           <el-option v-for="item in flowRuleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <!-- 熔断策略下拉框：S-慢调用比例，E-异常比例，N-异常数 -->
-      <el-form-item label="熔断策略" prop="circuitStrategy" v-if="isMoreQuery">
-        <el-select v-model="queryParams.circuitStrategy" placeholder="请选择熔断策略" clearable style="width: 100%">
+      <el-form-item label="熔断策略" prop="circuitStrategy" v-if="isMoreQuery && queryParams.limitRuleType === '2'">
+        <el-select v-model="queryParams.circuitStrategy" placeholder="请选择熔断策略" clearable style="width: 100%"
+          :enter-callback="handleQuery">
           <el-option v-for="item in circuitStrategyOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
@@ -100,7 +117,7 @@
           {{ limitRuleDimensionMap[scope.row.limitRuleDimension] || scope.row.limitRuleDimension }}
         </template>
       </el-table-column>
-      <el-table-column label="规则维度目标编号" align="center" prop="limitRuleTargetId" width="130" fixed="left" />
+      <el-table-column label="维度目标名称" align="center" prop="limitRuleTargetName" width="120" fixed="left" />
       <!-- 规则类型：1-流量控制，2-熔断保护 -->
       <el-table-column label="规则类型" align="center" prop="limitRuleType" width="100">
         <template slot-scope="scope">
@@ -168,34 +185,49 @@
       @pagination="getList" />
 
     <!-- 添加或修改调用规则对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="900px" style="top: 8px"
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="900px" style="top: 60px"
       append-to-body>
       <el-form ref="form" :model="form" :rules="fullRules" :validate-on-rule-change="false" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
             <!-- 规则维度下拉框：1-模板，2-场景，3-分组，4-模型 -->
             <el-form-item label="规则维度" prop="limitRuleDimension">
-              <el-select v-model="form.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%">
+              <el-select v-model="form.limitRuleDimension" placeholder="请选择规则维度" clearable style="width: 100%"
+                :disabled="!isAdd">
                 <el-option v-for="item in limitRuleDimensionOptions" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="规则维度目标编号" prop="limitRuleTargetId" label-width="135px">
-              <el-input v-model="form.limitRuleTargetId" type="number" min="1" step="1" placeholder="请输入规则维度目标编号" />
+            <el-form-item label="请求模板" prop="limitRuleTargetId" v-if="form.limitRuleDimension === '1'">
+              <common-enhanced-select ref="promptSelect" v-model="form.limitRuleTargetId" valueKey="promptId"
+                labelKey="promptName" :api-func="listTemplate" placeholder="请选择请求模板" />
+            </el-form-item>
+            <el-form-item label="模版分组" prop="limitRuleTargetId" v-if="form.limitRuleDimension === '2'">
+              <common-enhanced-select ref="groupSelect" v-model="form.limitRuleTargetId" valueKey="groupId"
+                labelKey="groupName" :api-func="listGroup" placeholder="请选择模版分组" />
+            </el-form-item>
+            <el-form-item label="模版场景" prop="limitRuleTargetId" v-if="form.limitRuleDimension === '3'">
+              <common-enhanced-select ref="sceneSelect" v-model="form.limitRuleTargetId" valueKey="sceneId"
+                labelKey="sceneName" :api-func="listScene" placeholder="请选择模版场景" />
+            </el-form-item>
+            <el-form-item label="绑定模型" prop="limitRuleTargetId" v-if="form.limitRuleDimension === '4'">
+              <common-enhanced-select ref="modelSelect" v-model="form.limitRuleTargetId" valueKey="modelId"
+                labelKey="modelName" :api-func="listModel" placeholder="请选择绑定模型" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <!-- 规则类型下拉框：1-流量控制，2-熔断保护 -->
             <el-form-item label="规则类型" prop="limitRuleType">
-              <el-select v-model="form.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%">
+              <el-select v-model="form.limitRuleType" placeholder="请选择规则类型" clearable style="width: 100%"
+                :disabled="!isAdd">
                 <el-option v-for="item in limitRuleTypeOptions" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '1'">
             <!-- 流控模式下拉框：D-直接拒绝，A-关联控制，L-链路流控 -->
             <el-form-item label="流控模式" prop="flowControlMode">
               <el-select v-model="form.flowControlMode" placeholder="请选择流控模式" clearable style="width: 100%">
@@ -204,7 +236,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '1'">
             <!-- 流控效果下拉框：F-快速失败，W-预热启动，Q-匀速排队 -->
             <el-form-item label="流控效果" prop="flowControlEffect">
               <el-select v-model="form.flowControlEffect" placeholder="请选择流控效果" clearable style="width: 100%">
@@ -213,7 +245,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '1'">
             <!-- 流控类型下拉框：Q-QPS阈值，C-并发线程数 -->
             <el-form-item label="流控指标类型" prop="flowRuleType" label-width="107px">
               <el-select v-model="form.flowRuleType" placeholder="请选择流控指标类型" clearable style="width: 100%">
@@ -222,13 +254,13 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '1'">
             <el-form-item label="流控阈值" prop="flowThreshold">
               <el-input v-model="form.flowThreshold" type="number" min="0" step="0.01"
                 placeholder="请输入流控阈值(QPS或并发数，保留2位小数)" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '2'">
             <!-- 熔断策略下拉框：S-慢调用比例，E-异常比例，N-异常数 -->
             <el-form-item label="熔断策略" prop="circuitStrategy">
               <el-select v-model="form.circuitStrategy" placeholder="请选择熔断策略" clearable style="width: 100%">
@@ -237,35 +269,36 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '2'">
             <el-form-item label="熔断触发阈值" prop="circuitThreshold" label-width="107px">
               <el-input v-model="form.circuitThreshold" type="number" min="0" placeholder="请输入熔断触发阈值" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '2'">
             <el-form-item label="慢调用判定阈值" prop="circuitGrade" label-width="122px">
               <el-input v-model="form.circuitGrade" type="number" min="0" step="1" placeholder="请输入慢调用判定阈值(毫秒数)" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '2'">
             <el-form-item label="熔断统计窗口时长" prop="circuitWindow" label-width="135px">
               <el-input v-model="form.circuitWindow" type="number" min="0" step="1" placeholder="请输入熔断统计窗口时长(毫秒数)" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.limitRuleType === '2'">
             <el-form-item label="熔断恢复超时时间" prop="circuitTimeout" label-width="135px">
               <el-input v-model="form.circuitTimeout" type="number" min="0" step="1" placeholder="请输入熔断恢复超时时间(毫秒数)" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="规则状态" prop="limitRuleStatus">
-              <el-select v-model="form.limitRuleStatus" style="width: 100%" placeholder="请选择规则状态" clearable>
+              <!-- <el-select v-model="form.limitRuleStatus" style="width: 100%" placeholder="请选择规则状态" clearable>
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value" />
-              </el-select>
+              </el-select> -->
+              <el-switch v-model="form.limitRuleStatus" active-value="0" inactive-value="2" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="form.limitRuleType === '1' ? 24 : 12">
             <el-form-item label="规则备注" prop="limitRuleRemark">
               <el-input v-model="form.limitRuleRemark" type="textarea" placeholder="请输入规则备注内容" />
             </el-form-item>
@@ -282,13 +315,20 @@
 
 <script>
 import { listRule, getRule, delRule, addRule, updateRule } from "@/api/fx67ll/ai/rule";
+import { listTemplate } from "@/api/fx67ll/ai/template";
+import { listGroup } from "@/api/fx67ll/ai/group";
+import { listScene } from "@/api/fx67ll/ai/scene";
+import { listModel } from "@/api/fx67ll/ai/model";
 
 import { limitRuleDimensionOptions, limitRuleTypeOptions, flowControlModeOptions, flowControlEffectOptions, flowRuleTypeOptions, circuitStrategyOptions } from "@/utils/constant/fx67ll";
 import { arrayToMap } from "@/utils/fx67ll/utils";
 
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+
 export default {
   name: "Rule",
   dicts: ["sys_normal_disable"],
+  components: { CommonEnhancedSelect },
   computed: {
     // 将选项数组转换为 { value: label } 的映射对象
     limitRuleDimensionMap() {
@@ -371,6 +411,8 @@ export default {
       },
       // 表单参数
       form: {},
+      // 是否是新增
+      isAdd: false,
       // 基础表单校验
       baseRules: {
         limitRuleDimension: [
@@ -431,6 +473,12 @@ export default {
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listTemplate = listTemplate;
+    this.listGroup = listGroup;
+    this.listScene = listScene;
+    this.listModel = listModel;
+
     this.getList();
   },
   methods: {
@@ -512,12 +560,14 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.isAdd = true;
       this.open = true;
       this.title = "添加调用规则";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
+      this.isAdd = false;
       const limitRuleId = row.limitRuleId || this.ids
       getRule(limitRuleId).then(response => {
         this.form = response.data;

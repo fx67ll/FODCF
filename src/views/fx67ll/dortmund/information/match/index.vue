@@ -2,7 +2,8 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="比赛编号" prop="matchId" v-if="isMoreQuery">
-        <el-input v-model="queryParams.matchId" type="number" min="1" step="1" placeholder="请输入比赛编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.matchId" type="number" min="1" step="1" placeholder="请输入比赛编号" clearable
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
         <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
@@ -85,9 +86,9 @@
     <el-table v-loading="loading" :data="matchList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="比赛编号" align="center" prop="matchId" width="80" fixed="left" />
-      <el-table-column label="所属赛季" align="center" prop="seasonName" width="100" />
-      <el-table-column label="主队名称" align="center" prop="homeTeamName" width="200" />
-      <el-table-column label="客队名称" align="center" prop="awayTeamName" width="200" />
+      <el-table-column label="所属赛季" align="center" prop="seasonName" width="80" fixed="left" />
+      <el-table-column label="主队名称" align="center" prop="homeTeamName" width="190" fixed="left" />
+      <el-table-column label="客队名称" align="center" prop="awayTeamName" width="190" fixed="left" />
       <el-table-column label="比赛时间" align="center" prop="matchTime" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d}') }}</span>
@@ -102,7 +103,7 @@
       <el-table-column label="分析次数" align="center" prop="analysisCount" />
       <el-table-column label="比赛结果" align="center" prop="matchResult" width="80">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchResult" />
+          <dict-tag :options="dict.type.fx67ll_match_result" :value="scope.row.matchResult" />
         </template>
       </el-table-column>
       <el-table-column label="比赛备注" align="center" prop="matchRemark" width="230" :show-overflow-tooltip="true" />

@@ -61,8 +61,13 @@
     <el-table v-loading="loading" :data="scoreList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="评分编号" align="center" prop="scoreId" width="80" fixed="left" />
-      <el-table-column label="关联的分析日志编号" align="center" prop="analysisId" width="140" />
-      <el-table-column label="关联的评分比赛编号" align="center" prop="matchId" width="140" />
+      <el-table-column label="分析编号" align="center" prop="analysisId" width="80" fixed="left" />
+      <el-table-column label="关联比赛" align="center" width="150" fixed="left">
+        <template slot-scope="scope">
+          <span>{{ scope.row.homeTeamName && scope.row.awayTeamName ? `${scope.row.homeTeamName} VS
+            ${scope.row.awayTeamName}` : '' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="主队进攻能力标准化评分" align="center" prop="homeAttackScore" width="170" />
       <el-table-column label="主队防守能力标准化评分" align="center" prop="homeDefenseScore" width="170" />
       <el-table-column label="主队健康状况评分" align="center" prop="homeInjuryScore" width="130" />
@@ -73,10 +78,14 @@
       <el-table-column label="客队健康状况评分" align="center" prop="awayInjuryScore" width="130" />
       <el-table-column label="客队历史交锋评分" align="center" prop="awayHistoryScore" width="130" />
       <el-table-column label="客队综合能力总评分" align="center" prop="awayTotalScore" width="140" />
-      <el-table-column label="比赛预测结果" align="center" prop="predictedResult" width="100" />
+      <el-table-column label="比赛预测结果" align="center" prop="predictedResult" width="100">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.fx67ll_match_result" :value="scope.row.predictedResult" />
+        </template>
+      </el-table-column>
       <el-table-column label="预测结果置信度" align="center" prop="predictedConfidence" width="120" />
       <el-table-column label="比赛评分版本号" align="center" prop="scoreCalcRuleVersion" width="120" />
-      <el-table-column label="比赛扩展评分" align="center" prop="extraScoreStr" width="100" :show-overflow-tooltip="true" />
+      <el-table-column label="比赛扩展评分" align="center" prop="extraScoreStr" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="比赛评分备注" align="center" prop="scoreRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
@@ -107,13 +116,21 @@
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="20" :align="middle">
+          <el-col :span="6">
+            <el-form-item label="评分编号" prop="scoreId" label-width="68px" v-if="!isAdd">
+              {{ form.scoreId || '-- 暂无数据 --' }}
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="分析编号" prop="analysisId" label-width="68px" v-if="!isAdd">
+              {{ form.analysisId || '-- 暂无数据 --' }}
+            </el-form-item>
+          </el-col>
           <el-col :span="12">
-            <el-form-item label="关联的分析日志编号" prop="analysisId" label-width="150px" v-if="!isAdd">
-              <el-input v-model="form.analysisId" type="number" min="1" step="1" placeholder="请输入关联的分析日志编号" disabled />
-            </el-form-item></el-col>
-          <el-col :span="12">
-            <el-form-item label="关联的评分比赛编号" prop="matchId" label-width="150px" v-if="!isAdd">
-              <el-input v-model="form.matchId" type="number" min="1" step="1" placeholder="请输入关联的评分比赛编号" disabled />
+            <el-form-item label="关联比赛" prop="matchId" label-width="72px" v-if="!isAdd">
+              {{
+                form.homeTeamName && form.awayTeamName ? `${form.homeTeamName} VS ${form.awayTeamName}` : '-- 暂无数据 --'
+              }}
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -187,7 +204,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="比赛预测结果" prop="predictedResult">
-              <el-select v-model="queryParams.predictedResult" style="width: 100%" placeholder="请选择比赛预测结果" clearable
+              <el-select v-model="form.predictedResult" style="width: 100%" placeholder="请选择比赛预测结果" clearable
                 @keyup.enter.native="handleQuery">
                 <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
@@ -207,7 +224,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="额外扩展评分" prop="extraScoreStr">
+            <el-form-item label="额外扩展评分" prop="extraScoreStr" label-width="104px">
               <el-input v-model="form.extraScoreStr" type="textarea" placeholder="请输入比赛额外扩展评分内容" />
             </el-form-item>
           </el-col>
@@ -273,17 +290,17 @@ export default {
       },
       // 表单参数
       form: {},
-      // 表单校验
-      rules: {
-        analysisId: [
-          { required: true, message: "关联的分析日志编号不能为空", trigger: "blur" }
-        ],
-        matchId: [
-          { required: true, message: "关联的评分比赛编号不能为空", trigger: "blur" }
-        ],
-      },
       // 是否是新增
       isAdd: false,
+      // 表单校验
+      rules: {
+        // analysisId: [
+        //   { required: true, message: "关联的分析日志编号不能为空", trigger: "blur" }
+        // ],
+        // matchId: [
+        //   { required: true, message: "关联的评分比赛编号不能为空", trigger: "blur" }
+        // ],
+      },
     };
   },
   created() {

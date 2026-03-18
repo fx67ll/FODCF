@@ -56,7 +56,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="场景编码" align="center" prop="sceneCode" width="120" />
       <el-table-column label="场景名称" align="center" prop="sceneName" width="120" />
-      <el-table-column label="场景描述" align="center" prop="sceneDesc" />
+      <el-table-column label="场景描述" align="center" prop="sceneDesc" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="场景状态" align="center" prop="sceneStatus" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.sceneStatus" />
@@ -107,10 +107,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="场景状态" prop="sceneStatus">
-              <el-select v-model="form.sceneStatus" style="width: 100%" placeholder="请选择场景状态">
+              <!-- <el-select v-model="form.sceneStatus" style="width: 100%" placeholder="请选择场景状态">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
-              </el-select>
+              </el-select> -->
+              <el-switch v-model="form.sceneStatus" active-value="0" inactive-value="2" />
             </el-form-item>
           </el-col>
           <el-col :span="12">

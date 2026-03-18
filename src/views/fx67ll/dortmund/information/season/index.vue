@@ -140,10 +140,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="赛季状态" prop="seasonStatus">
-              <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
+              <!-- <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
-              </el-select>
+              </el-select> -->
+              <el-switch v-model="form.seasonStatus" active-value="0" inactive-value="2" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
