@@ -117,7 +117,7 @@
           {{ limitRuleDimensionMap[scope.row.limitRuleDimension] || scope.row.limitRuleDimension }}
         </template>
       </el-table-column>
-      <el-table-column label="维度目标名称" align="center" prop="limitRuleTargetName" width="120" fixed="left" />
+      <el-table-column label="维度名称" align="center" prop="limitRuleTargetName" width="120" fixed="left" />
       <!-- 规则类型：1-流量控制，2-熔断保护 -->
       <el-table-column label="规则类型" align="center" prop="limitRuleType" width="100">
         <template slot-scope="scope">
