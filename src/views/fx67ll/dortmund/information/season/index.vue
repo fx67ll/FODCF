@@ -20,7 +20,7 @@
       <el-form-item label="赛季状态" prop="seasonStatus" v-if="isMoreQuery">
         <el-select v-model="queryParams.seasonStatus" style="width: 100%" placeholder="请选择赛季状态" clearable
           @keyup.enter.native="handleQuery">
-          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+          <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
             :value="dict.value"></el-option>
         </el-select>
       </el-form-item>
@@ -78,7 +78,7 @@
       </el-table-column>
       <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="80">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.seasonStatus" />
+          <dict-tag :options="dict.type.fx67ll_dortmund_status" :value="scope.row.seasonStatus" />
         </template>
       </el-table-column>
       <el-table-column label="赛季排序" align="center" prop="seasonSort" width="100" sortable="seasonSort"
@@ -140,11 +140,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="赛季状态" prop="seasonStatus">
-              <!-- <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
-                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+              <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
+                <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
-              </el-select> -->
-              <el-switch v-model="form.seasonStatus" active-value="0" inactive-value="2" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -172,7 +171,7 @@ import { listSeason, getSeason, delSeason, addSeason, updateSeason } from "@/api
 
 export default {
   name: "Season",
-  dicts: ["sys_normal_disable"],
+  dicts: ["fx67ll_dortmund_status"],
   data() {
     return {
       // 遮罩层
