@@ -93,7 +93,8 @@
         <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">
           重置
         </el-button>
-        <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo">
+        <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo"
+          v-if="isResetStatus">
           只查未开奖
         </el-button>
         <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
@@ -533,7 +534,10 @@ export default {
           ggImg: "https://test.fx67ll.com/fx67ll-img-collection/kuzan.jpg",
         },
       },
+      // 彩票类型包含的数据
       lotteryTypeList: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"],
+      // 是否是重置后所有搜索条件的状态
+      isResetStatus: false,
     };
   },
   created() {
@@ -628,6 +632,7 @@ export default {
       const self = this;
       this.reset();
       this.resetQuery();
+      this.isResetStatus = false;
       setTimeout(() => {
         self.queryParams = {
           ...self.queryParams,
@@ -653,6 +658,7 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       const self = this;
+      this.isResetStatus = true;
       this.daterangeCreateTime = [];
       this.daterangeUpdateTime = [];
       this.queryParams = {
