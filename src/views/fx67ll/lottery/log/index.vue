@@ -90,7 +90,7 @@
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
           搜索
         </el-button>
-        <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">
+        <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery(false)">
           重置
         </el-button>
         <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo"
@@ -181,8 +181,26 @@
             scope.row.recordNumber
           }}</span>
           <div v-if="scope.row.recordNumberList.length > 0">
-            <div v-for="(num, index) in scope.row.recordNumberList" :key="index">
-              <div>{{ num }}</div>
+            <div v-for="(num, index) in scope.row.recordNumberList" :key="index" style="line-height: 1.8">
+              <template v-if="scope.row.recordNumberHighlightList && scope.row.recordNumberHighlightList[index]">
+                <span v-if="scope.row.recordNumberHighlightList[index].type === 'zone'">
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].front" :key="'rf' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                  <span style="margin-right: 3px">-</span>
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].back" :key="'rb' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                </span>
+                <span v-else>
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].nums" :key="'rn' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                </span>
+              </template>
+              <template v-else>
+                <span>{{ formatNumDisplay(num) }}</span>
+              </template>
             </div>
           </div>
         </template>
@@ -193,13 +211,35 @@
             scope.row.chaseNumber
           }}</span>
           <div v-if="scope.row.chaseNumberList.length > 0">
-            <div v-for="(num, index) in scope.row.chaseNumberList" :key="index">
-              <div>{{ num }}</div>
+            <div v-for="(num, index) in scope.row.chaseNumberList" :key="index" style="line-height: 1.8">
+              <template v-if="scope.row.chaseNumberHighlightList && scope.row.chaseNumberHighlightList[index]">
+                <span v-if="scope.row.chaseNumberHighlightList[index].type === 'zone'">
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].front" :key="'cf' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                  <span style="margin-right: 3px">-</span>
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].back" :key="'cb' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                </span>
+                <span v-else>
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].nums" :key="'cn' + ni" style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  </span>
+                </span>
+              </template>
+              <template v-else>
+                <span>{{ formatNumDisplay(num) }}</span>
+              </template>
             </div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="当日中奖号码" align="center" prop="winningNumber" width="160" />
+      <el-table-column label="当日中奖号码" align="center" prop="winningNumber" width="160">
+        <template slot-scope="scope">
+          <span>{{ formatNumDisplay(scope.row.winningNumber) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="是否中奖" align="center" prop="isWin" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" v-if="scope.row.winningNumber !== '-'" />
@@ -545,6 +585,35 @@ export default {
     this.handleQueryNoRewardInfo();
   },
   methods: {
+    /** 格式化号码字符串展示，逗号换空格，横杠前后加空格 */
+    formatNumDisplay(numStr) {
+      if (!numStr || numStr === "-") return numStr;
+      return numStr.replace(/,/g, " ").replace(/-/g, " - ");
+    },
+    /** 构建号码高亮信息，用于标识匹配中奖号码的数字 */
+    buildHighlightInfo(numStr, winningNumber, numberType) {
+      const numType = Number(numberType);
+      if (numType === 1 || numType === 2) {
+        const wParts = winningNumber.split("-");
+        const wFront = wParts[0] ? wParts[0].split(",").map((n) => n.trim()) : [];
+        const wBack = wParts[1] ? wParts[1].split(",").map((n) => n.trim()) : [];
+        const nParts = numStr.split("-");
+        const nFront = nParts[0] ? nParts[0].split(",").map((n) => n.trim()) : [];
+        const nBack = nParts[1] ? nParts[1].split(",").map((n) => n.trim()) : [];
+        return {
+          type: "zone",
+          front: nFront.map((n) => ({ value: n, matched: wFront.includes(n) })),
+          back: nBack.map((n) => ({ value: n, matched: wBack.includes(n) })),
+        };
+      } else {
+        const wNums = winningNumber.split(",").map((n) => n.trim());
+        const nNums = numStr.split(",").map((n) => n.trim());
+        return {
+          type: "positional",
+          nums: nNums.map((n, i) => ({ value: n, matched: wNums[i] !== undefined && wNums[i] === n })),
+        };
+      }
+    },
     // 查询历史号码中奖金额统计
     getTotalReward() {
       const self = this;
@@ -593,6 +662,17 @@ export default {
           item.chaseNumberList = item?.chaseNumber
             ? item.chaseNumber?.split("/")
             : [];
+          const hasWinning = item.winningNumber && item.winningNumber !== "-";
+          item.recordNumberHighlightList = hasWinning
+            ? item.recordNumberList.map((num) =>
+              this.buildHighlightInfo(num, item.winningNumber, item.numberType)
+            )
+            : [];
+          item.chaseNumberHighlightList = hasWinning
+            ? item.chaseNumberList.map((num) =>
+              this.buildHighlightInfo(num, item.winningNumber, item.numberType)
+            )
+            : [];
           return item;
         });
         this.logList = this.formatObjectArrayNullProperty(logRows);
@@ -631,7 +711,7 @@ export default {
     handleQueryNoRewardInfo() {
       const self = this;
       this.reset();
-      this.resetQuery();
+      this.resetQuery(true);
       this.isResetStatus = false;
       setTimeout(() => {
         self.queryParams = {
@@ -643,8 +723,8 @@ export default {
         }
         setTimeout(() => {
           self.getList();
-        }, 1);
-      }, 1);
+        }, 10);
+      }, 23);
     },
     /** 高级搜索按钮操作 */
     handleMoreQuery() {
@@ -656,7 +736,7 @@ export default {
       this.getList();
     },
     /** 重置按钮操作 */
-    resetQuery() {
+    resetQuery(noNeedQuery) {
       const self = this;
       this.isResetStatus = true;
       this.daterangeCreateTime = [];
@@ -678,7 +758,9 @@ export default {
         hasMorePurchases: null,
       };
       this.resetForm("queryForm");
-      this.handleQuery();
+      if (!noNeedQuery) {
+        this.handleQuery();
+      }
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
