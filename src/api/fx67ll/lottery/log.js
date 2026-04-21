@@ -51,3 +51,13 @@ export function listTotalReward(query) {
     params: query
   })
 }
+
+
+// 查询历史号码记录中奖数据统计
+export function listHistoryStatistics(query) {
+  return request({
+    url: '/lottery/log/getLotteryHistoryStatistics',
+    method: 'get',
+    params: query
+  })
+}

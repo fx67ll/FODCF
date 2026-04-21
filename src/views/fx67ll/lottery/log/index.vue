@@ -131,8 +131,14 @@
       </el-col> -->
       <el-col :span="1.5">
         <el-button type="info" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
-          v-hasPermi="['punch:log:total']">
+          v-hasPermi="['lottery:log:total']">
           查看历史号码中奖金额统计
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="info" plain icon="el-icon-date" size="mini" @click="handleHistoryStatisticsOpen()"
+          v-hasPermi="['lottery:log:statistics']">
+          历史号码出现频率统计
         </el-button>
       </el-col>
       <el-col :span="1.5">
@@ -146,7 +152,8 @@
                 大乐透
               </el-link>
             </el-dropdown-item>
-            <el-dropdown-item><el-link href="https://www.cwl.gov.cn/ygkj/wqkjgg/ssq/" target="_blank" type="danger">
+            <el-dropdown-item>
+              <el-link href="https://www.cwl.gov.cn/ygkj/wqkjgg/ssq/" target="_blank" type="danger">
                 双色球
               </el-link>
             </el-dropdown-item>
@@ -184,17 +191,23 @@
             <div v-for="(num, index) in scope.row.recordNumberList" :key="index" style="line-height: 1.8">
               <template v-if="scope.row.recordNumberHighlightList && scope.row.recordNumberHighlightList[index]">
                 <span v-if="scope.row.recordNumberHighlightList[index].type === 'zone'">
-                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].front" :key="'rf' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].front" :key="'rf' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                   <span style="margin-right: 3px">-</span>
-                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].back" :key="'rb' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].back" :key="'rb' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                 </span>
                 <span v-else>
-                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].nums" :key="'rn' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.recordNumberHighlightList[index].nums" :key="'rn' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                 </span>
               </template>
@@ -214,17 +227,23 @@
             <div v-for="(num, index) in scope.row.chaseNumberList" :key="index" style="line-height: 1.8">
               <template v-if="scope.row.chaseNumberHighlightList && scope.row.chaseNumberHighlightList[index]">
                 <span v-if="scope.row.chaseNumberHighlightList[index].type === 'zone'">
-                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].front" :key="'cf' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].front" :key="'cf' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                   <span style="margin-right: 3px">-</span>
-                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].back" :key="'cb' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].back" :key="'cb' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                 </span>
                 <span v-else>
-                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].nums" :key="'cn' + ni" style="margin-right: 3px">
-                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{ n.value }}</span>
+                  <span v-for="(n, ni) in scope.row.chaseNumberHighlightList[index].nums" :key="'cn' + ni"
+                    style="margin-right: 3px">
+                    <span :style="n.matched ? { color: '#2ecc71', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                      n.value }}</span>
                   </span>
                 </span>
               </template>
@@ -371,8 +390,8 @@
     </el-dialog>
 
     <!-- 查看历史号码中奖金额统计的弹窗 -->
-    <el-dialog title="历史号码中奖金额统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="800px"
-      style="top: 130px" append-to-body>
+    <el-dialog title="历史号码中奖金额统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="900px"
+      style="top: 60px; left: 20px;" append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="logTotalLoading" :data="logTotalList">
           <el-table-column label="统计类型" align="center" prop="lotteryType" />
@@ -433,6 +452,9 @@
         <el-button @click="handleLogTotalClose">关闭</el-button>
       </div>
     </el-dialog>
+
+    <!-- 历史号码出现频率统计弹窗 -->
+    <LotteryHistoryStatistics :visible.sync="historyStatisticsOpen" />
   </div>
 </template>
 
@@ -454,8 +476,11 @@ import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 import axios from "axios";
 import _ from "underscore";
 
+import LotteryHistoryStatistics from "./components/LotteryHistoryStatistics/LotteryHistoryStatistics.vue";
+
 export default {
   name: "Log",
+  components: { LotteryHistoryStatistics },
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
@@ -578,6 +603,8 @@ export default {
       lotteryTypeList: [1, 2, 3, 4, 5, "1", "2", "3", "4", "5"],
       // 是否是重置后所有搜索条件的状态
       isResetStatus: false,
+      // 控制频率统计弹窗显示
+      historyStatisticsOpen: false,
     };
   },
   created() {
@@ -634,6 +661,10 @@ export default {
     // 关闭历史号码中奖金额统计弹窗
     handleLogTotalClose() {
       this.logTotalOpen = false;
+    },
+    /** 打开历史号码出现频率统计弹窗 */
+    handleHistoryStatisticsOpen(type) {
+      this.historyStatisticsOpen = true;
     },
     // 重置时间段查询
     clearDateQueryParams() {
