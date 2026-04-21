@@ -13,6 +13,7 @@ selenium-debug.log
 .idea
 .vscode
 .history
+.claude
 .hintrc
 *.suo
 *.ntvs*
