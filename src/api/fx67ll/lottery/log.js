@@ -52,8 +52,7 @@ export function listTotalReward(query) {
   })
 }
 
-
-// 查询历史号码记录中奖数据统计
+// 查询历史号码出现频率统计
 export function listHistoryStatistics(query) {
   return request({
     url: '/lottery/log/getLotteryHistoryStatistics',
