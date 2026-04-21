@@ -559,3 +559,88 @@ export function trimSuffixFromEnd(str, suffix) {
   // 4. 无匹配后缀，返回原字符串
   return trimmedStr;
 }
+
+/**
+ * 从指定分组中选取指定位数的号码
+ * @param {Array} group - 数据分组（同一numberType和zone的条目数组）
+ * @param {number} needCount - 需要选取的号码数量
+ * @param {string} sortOrder - 排序方式 ('desc'为高频, 'asc'为低频)
+ * @returns {Array} 排序后的号码数组
+ */
+function getLotteryNumberByTypeZone(group, needCount, sortOrder) {
+  // 按出现次数排序（高频降序，低频升序）
+  const sortedGroup = [...group].sort((a, b) => {
+    return sortOrder === 'desc' ? b.occurrenceCount - a.occurrenceCount : a.occurrenceCount - b.occurrenceCount;
+  });
+
+  const result = [];
+  for (const item of sortedGroup) {
+    if (result.length >= needCount) break;
+
+    const numbers = item.numbers.split(',').map(n => n.trim());
+    const remaining = needCount - result.length;
+
+    if (numbers.length <= remaining) {
+      // 当前条目号码数量不足，全部加入
+      result.push(...numbers);
+    } else {
+      // 当前条目号码数量充足，随机选取
+      const shuffled = [...numbers].sort(() => Math.random() - 0.5);
+      result.push(...shuffled.slice(0, remaining));
+    }
+  }
+
+  // 转换为数字并从小到大排序
+  return result.map(n => parseInt(n)).sort((a, b) => a - b);
+}
+
+/**
+ * 生成高频/低频号码组合
+ * @param {Object} data - 接口返回的原始数据
+ * @returns {Object} 包含四组号码的结果对象
+ */
+export function getLotteryNumberByFrequency(data) {
+  // 数据分组：按彩种 + 前后区拆分
+  const groups = {
+    DLTFront: [], // 大乐透前区
+    DLTBack: [], // 大乐透后区
+    SSQFront: [], // 双色球前区
+    SSQBack: [], // 双色球后区
+  };
+
+  data.rows.forEach(item => {
+    if (item.numberType === 1) {
+      item.zone === '前区' ? groups.DLTFront.push(item) : groups.DLTBack.push(item);
+    } else {
+      item.zone === '前区' ? groups.SSQFront.push(item) : groups.SSQBack.push(item);
+    }
+  });
+
+  // 生成大乐透组合（前区5个 + 后区2个）
+  const lotteryDLTHighFrequency = [
+    ...getLotteryNumberByTypeZone(groups.DLTFront, 5, 'desc'),
+    ...getLotteryNumberByTypeZone(groups.DLTBack, 2, 'desc'),
+  ];
+  const lotteryDLTLowFrequency = [
+    ...getLotteryNumberByTypeZone(groups.DLTFront, 5, 'asc'),
+    ...getLotteryNumberByTypeZone(groups.DLTBack, 2, 'asc'),
+  ];
+
+  // 生成双色球组合（前区6个 + 后区1个）
+  const lotterySSQHighFrequency = [
+    ...getLotteryNumberByTypeZone(groups.SSQFront, 6, 'desc'),
+    ...getLotteryNumberByTypeZone(groups.SSQBack, 1, 'desc'),
+  ];
+  const lotterySSQLowFrequency = [
+    ...getLotteryNumberByTypeZone(groups.SSQFront, 6, 'asc'),
+    ...getLotteryNumberByTypeZone(groups.SSQBack, 1, 'asc'),
+  ];
+
+  return {
+    lotteryDLTHighFrequency,
+    lotteryDLTLowFrequency,
+    lotterySSQHighFrequency,
+    lotterySSQLowFrequency,
+  };
+}
+
