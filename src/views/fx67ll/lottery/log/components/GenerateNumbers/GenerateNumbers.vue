@@ -90,6 +90,9 @@
 import { listHistoryStatistics } from "@/api/fx67ll/lottery/log";
 // 引入根据频率生成号码的核心工具函数
 import { getLotteryNumberByFrequency } from "@/utils/fx67ll/utils";
+import { create } from "sortablejs";
+// 引入日期时间工具类
+import moment from 'moment';
 
 export default {
     name: "GenerateNumbers",
@@ -107,7 +110,7 @@ export default {
                 lotteryDLTLowFrequency: [],  // 大乐透低频号码
                 lotterySSQHighFrequency: [], // 双色球高频号码（前6后1数组）
                 lotterySSQLowFrequency: [],  // 双色球低频号码
-            }
+            },
         };
     },
     computed: {
@@ -220,7 +223,8 @@ export default {
                 };
                 // 下一帧更新真实数据，结合 CSS 动画呈现出现效果
                 this.$nextTick(() => {
-                    this.generatedResult = getLotteryNumberByFrequency({ rows: this.rawData });
+                    const dayOfYear = moment().dayOfYear();
+                    this.generatedResult = getLotteryNumberByFrequency({ rows: this.rawData }, dayOfYear);
                 });
             } catch (error) {
                 this.$message.error('生成号码失败');
