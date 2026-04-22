@@ -41,8 +41,6 @@
 <script>
 import { listHistoryStatistics } from "@/api/fx67ll/lottery/log";
 
-import { getLotteryNumberByFrequency } from "@/utils/fx67ll/utils";
-
 import CircleView from './components/CircleView.vue';
 import SquareView from './components/SquareView.vue';
 
@@ -90,8 +88,6 @@ export default {
             listHistoryStatistics().then(res => {
                 if (res && res.code === 200) {
                     this.rawData = res.rows || [];
-                    // TODO: 显示统计后的号码组
-                    console.log(getLotteryNumberByFrequency(res));
                 }
                 this.loading = false;
             }).catch(() => {
@@ -130,6 +126,7 @@ export default {
 <style scoped>
 /* 父组件只需要写很少的样式，主要是标题和布局 */
 .dialog-title-clickable {
+    font-size: 18px;
     cursor: pointer;
     user-select: none;
     transition: color 0.3s;

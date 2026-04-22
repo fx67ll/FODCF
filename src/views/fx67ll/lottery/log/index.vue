@@ -130,15 +130,21 @@
         </el-button>
       </el-col> -->
       <el-col :span="1.5">
-        <el-button type="info" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
+        <el-button type="success" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
           v-hasPermi="['lottery:log:total']">
           查看历史号码中奖金额统计
         </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="info" plain icon="el-icon-date" size="mini" @click="handleHistoryStatisticsOpen()"
+        <el-button type="warning" plain icon="el-icon-date" size="mini" @click="handleHistoryStatisticsOpen()"
           v-hasPermi="['lottery:log:statistics']">
-          历史号码出现频率统计
+          查看历史号码出现频率统计
+        </el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain icon="el-icon-trophy" size="mini" @click="handleGenerateNumbersOpen()"
+          v-hasPermi="['lottery:log:statistics']">
+          查看历史开奖号码组合
         </el-button>
       </el-col>
       <el-col :span="1.5">
@@ -453,8 +459,11 @@
       </div>
     </el-dialog>
 
-    <!-- 历史号码出现频率统计弹窗 -->
+    <!-- 查看历史号码出现频率统计弹窗 -->
     <LotteryHistoryStatistics :visible.sync="historyStatisticsOpen" />
+
+    <!-- 查看历史号码组合弹窗 -->
+    <GenerateNumbers :visible.sync="generateNumbersOpen" />
   </div>
 </template>
 
@@ -477,10 +486,11 @@ import axios from "axios";
 import _ from "underscore";
 
 import LotteryHistoryStatistics from "./components/LotteryHistoryStatistics/LotteryHistoryStatistics.vue";
+import GenerateNumbers from "./components/GenerateNumbers/GenerateNumbers.vue";
 
 export default {
   name: "Log",
-  components: { LotteryHistoryStatistics },
+  components: { LotteryHistoryStatistics, GenerateNumbers },
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
@@ -605,6 +615,8 @@ export default {
       isResetStatus: false,
       // 控制频率统计弹窗显示
       historyStatisticsOpen: false,
+      // 控制号码组合弹窗显示
+      generateNumbersOpen: false,
     };
   },
   created() {
@@ -662,9 +674,13 @@ export default {
     handleLogTotalClose() {
       this.logTotalOpen = false;
     },
-    /** 打开历史号码出现频率统计弹窗 */
+    // 打开历史号码出现频率统计弹窗
     handleHistoryStatisticsOpen(type) {
       this.historyStatisticsOpen = true;
+    },
+    // 打开历史号码组合弹窗
+    handleGenerateNumbersOpen() {
+      this.generateNumbersOpen = true;
     },
     // 重置时间段查询
     clearDateQueryParams() {
