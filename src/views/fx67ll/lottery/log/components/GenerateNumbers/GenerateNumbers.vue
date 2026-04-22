@@ -70,10 +70,18 @@
         </div>
 
         <!-- 底部操作栏 -->
-        <span slot="footer" class="dialog-footer">
-            <el-button type="danger" icon="el-icon-document-copy" @click="copyAll">拷 贝</el-button>
-            <el-button plain @click="dialogVisible = false">关 闭</el-button>
-        </span>
+        <div slot="footer" class="dialog-footer">
+            <!-- 左下角 Tip 提示 -->
+            <div class="footer-tip">
+                <span class="tip-emoji">💡</span>
+                <span class="tip-text">当频率排名并列之时，会随机选取组合，所以此处结果可能与移动端不完全一致</span>
+            </div>
+            <!-- 右侧按钮组 -->
+            <div class="footer-buttons">
+                <el-button type="danger" icon="el-icon-document-copy" @click="copyAll">拷 贝</el-button>
+                <el-button plain @click="dialogVisible = false">关 闭</el-button>
+            </div>
+        </div>
     </el-dialog>
 </template>
 
@@ -356,6 +364,7 @@ export default {
     opacity: 0;
     /* 初始透明，等待动画触发 */
     animation-fill-mode: forwards;
+    cursor: pointer;
 }
 
 /* 高频卡片专用样式（暖色调） */
@@ -419,7 +428,7 @@ export default {
 }
 
 .copy-emoji-btn:hover {
-    color: #409EFF;
+    color: #2ecc71;
     transform: scale(1.2);
 }
 
@@ -572,9 +581,72 @@ export default {
     font-weight: 500;
 }
 
+/* ---------- 底部 Footer 布局调整 ---------- */
 .dialog-footer {
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding-top: 8px;
+    gap: 20px;
+}
+
+/* ---------- Tip 提示框样式 - 现代化改造 ---------- */
+.footer-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    /* 去除背景、边框、阴影 */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 8px 0;
+    flex: 1;
+    /* 左侧装饰线，替代传统背景框 */
+    padding-left: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.tip-emoji {
+    font-size: 18px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+}
+
+.tip-text {
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    /* 关键：加过渡动画，让所有属性变化都丝滑 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 可选：让文字居中，放大时更优雅 */
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.tip-text:hover {
+    cursor: pointer;
+    color: #2ecc71;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+/* 响应式微调：小屏时左边距和内边距适当缩小 */
+@media (max-width: 600px) {
+    .footer-tip {
+        padding-left: 10px;
+        gap: 8px;
+    }
+
+    .tip-emoji {
+        font-size: 18px;
+    }
+
+    .tip-text {
+        font-size: 11px;
+    }
 }
 
 /* ---------- 动画定义 ---------- */
