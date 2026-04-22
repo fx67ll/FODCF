@@ -288,6 +288,7 @@ export default {
 
 /* 鼠标悬停上浮效果 */
 .number-card:hover {
+    cursor: pointer;
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }

@@ -354,6 +354,7 @@ export default {
 
 /* 悬停交互：放大并增加阴影 */
 .ball-item:hover {
+    cursor: pointer;
     transform: scale(1.15);
     z-index: 10;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
