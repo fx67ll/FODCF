@@ -1,13 +1,13 @@
 <template>
     <el-dialog :visible.sync="dialogVisible" width="950px" style="top: 20px" :close-on-click-modal="false"
-        :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'" @close="handleClose" v-loading="loading">
+        :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'" @close="handleClose" append-to-body>
         <!-- 彩蛋：可点击的标题 -->
         <span slot="title" class="dialog-title-clickable" @click="toggleView">
             历史号码出现频率统计
         </span>
 
         <!-- 内容区域：通过 v-if 切换两个子组件，共用一份数据 -->
-        <div class="dialog-body-content">
+        <div class="dialog-body-content" v-loading="loading">
             <!-- 子组件 1：圆形球 -->
             <circle-view v-if="showCircle" ref="circleRef" :raw-data="rawData" />
 
@@ -62,24 +62,43 @@ export default {
 
             // 为了能在父组件控制 Footer，我们把部分状态提到父级
             circleSortByFreq: true,
-            squareSortByFreq: true
+            squareSortByFreq: true,
+
+            // 防抖定时器
+            visibleDebounceTimer: null
         };
     },
     watch: {
         visible(val) {
-            this.dialogVisible = val;
-            if (val) {
-                this.initData();
-            }
+            // 防抖处理，避免短时间内 visible 频繁变化导致动画冲突
+            if (this.visibleDebounceTimer) clearTimeout(this.visibleDebounceTimer);
+            this.visibleDebounceTimer = setTimeout(() => {
+                this.dialogVisible = val;
+                if (val) {
+                    // 弹窗打开后，再请求数据（延迟到动画开始后，避免渲染抖动）
+                    this.$nextTick(() => {
+                        this.initData();
+                    });
+                }
+            }, 20);
         },
         dialogVisible(val) {
             this.$emit('update:visible', val);
+            // 弹窗完全关闭后，重置数据（可选，释放内存）
+            if (!val) {
+                this.resetDialogState();
+            }
         }
+    },
+    beforeDestroy() {
+        if (this.visibleDebounceTimer) {
+            clearTimeout(this.visibleDebounceTimer)
+        };
     },
     methods: {
         initData() {
             // 每次打开，如果没数据才请求，或者可以选择强制刷新
-            if (this.rawData.length === 0) {
+            if (this.rawData.length === 0 && this.dialogVisible) {
                 this.fetchData();
             }
         },
@@ -106,6 +125,11 @@ export default {
             // 调用子组件的重置方法，通过 ref
             if (this.$refs.circleRef) this.$refs.circleRef.resetState();
             if (this.$refs.squareRef) this.$refs.squareRef.resetState();
+        },
+        resetDialogState() {
+            // 可选：关闭后清空数据，下次打开重新加载（避免旧数据残留）
+            // 如果希望保留数据，可以注释掉下一行
+            this.rawData = [];
         },
         syncCircleSort(val) {
             // 父组件状态改变时，强制更新子组件视图（因为子组件用了 $forceUpdate，这里只需要同步数据逻辑）

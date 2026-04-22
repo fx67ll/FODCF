@@ -2,7 +2,7 @@
     <el-dialog :visible.sync="dialogVisible" width="900px" :close-on-click-modal="false"
         :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'" @close="handleClose" v-loading="loading"
         element-loading-text="正在加载统计数据..." element-loading-spinner="el-icon-loading"
-        element-loading-background="rgba(255, 255, 255, 0.8)">
+        element-loading-background="rgba(255, 255, 255, 0.8)" append-to-body>
 
         <!-- 自定义标题：点击切换彩蛋 -->
         <span slot="title" class="dialog-title-clickable" @click="toggleView">

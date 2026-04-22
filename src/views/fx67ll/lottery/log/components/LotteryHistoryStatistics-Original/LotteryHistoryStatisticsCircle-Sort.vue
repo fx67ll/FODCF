@@ -1,6 +1,6 @@
 <template>
     <el-dialog title="历史号码出现频率统计" :visible.sync="dialogVisible" width="900px" style="top: 20px"
-        :close-on-click-modal="false" class="lottery-stats-dialog" @close="handleClose">
+        :close-on-click-modal="false" class="lottery-stats-dialog" @close="handleClose" append-to-body>
 
         <div v-loading="loading" class="stats-container">
             <!-- 顶部切换 Tab -->

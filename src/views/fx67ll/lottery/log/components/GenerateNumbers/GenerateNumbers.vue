@@ -1,6 +1,6 @@
 <template>
     <el-dialog title="历史开奖号码组合" :visible.sync="dialogVisible" width="950px" style="top: 20px" class="generate-dialog"
-        :close-on-click-modal="false" @close="handleClose">
+        :close-on-click-modal="false" @close="handleClose" append-to-body>
         <div class="generate-result-container" v-loading="loading">
             <div class="result-row" v-for="(row, rowIdx) in resultRows" :key="rowIdx">
                 <div class="result-card" v-for="(item, idx) in row" :key="idx"

@@ -1,7 +1,7 @@
 <template>
     <el-dialog title="历史号码出现频率统计" :visible.sync="dialogVisible" width="80%" :close-on-click-modal="false" top="5vh"
         custom-class="frequency-dialog" @close="handleClose" v-loading="loading" element-loading-text="正在加载统计数据..."
-        element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.8)">
+        element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.8)" append-to-body>
         <el-tabs v-model="activeTab" type="border-card">
             <!-- 大乐透 -->
             <el-tab-pane label="大乐透" name="dlt">
