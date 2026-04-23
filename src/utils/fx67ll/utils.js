@@ -437,7 +437,17 @@ export function validateLotteryString(lotteryType, lotteryStr) {
   if (!rule) return false;
 
   try {
-    // 4. 拆分字符串并校验拆分后的部分数量
+    // 4. 【优化】提前拦截首尾带分隔符的情况（如 "1,2,3-" 或 "-1,2,3"）
+    if (rule.splitChar) {
+      if (
+        lotteryStr.startsWith(rule.splitChar) ||
+        lotteryStr.endsWith(rule.splitChar)
+      ) {
+        return false;
+      }
+    }
+
+    // 5. 拆分字符串并校验拆分后的部分数量
     let parts = rule.splitChar
       ? lotteryStr.split(rule.splitChar)
       : [lotteryStr];
@@ -457,7 +467,7 @@ export function validateLotteryString(lotteryType, lotteryStr) {
       return false;
     }
 
-    // 5. 遍历每个部分，校验数字合法性
+    // 6. 遍历每个部分，校验数字合法性
     for (let i = 0; i < parts.length; i++) {
       // 清理空格并分割
       const partStr = parts[i].trim();
@@ -473,15 +483,15 @@ export function validateLotteryString(lotteryType, lotteryStr) {
         return false;
       }
 
-      // 转换为数字并校验是否为有效整数
+      // 【优化】强化数字校验：禁止前导零（如 "01" 视为非法）
       const numList = numStrList.map((numStr) => {
-        // 检查是否包含非数字字符
-        if (!/^-?\d+$/.test(numStr)) {
-          throw new Error("包含非数字字符");
+        // 正则：要么是单个"0"，要么是不以"0"开头的数字
+        if (!/^(0|[1-9]\d*)$/.test(numStr)) {
+          throw new Error("非法数字格式");
         }
         const num = parseInt(numStr, 10);
-        if (isNaN(num) || !Number.isInteger(num) || numStr !== num.toString()) {
-          throw new Error("不是有效的整数");
+        if (isNaN(num) || !Number.isInteger(num)) {
+          throw new Error("非有效整数");
         }
         return num;
       });
@@ -669,4 +679,18 @@ export function getLotteryNumberByFrequency(data, dayOfYear) {
       ...getLotteryNumberByTypeZone(groups.SSQBack, 1, "asc", normalized),
     ],
   };
+}
+
+/**
+ * 计算垂直居中偏移高度
+ * @param {number} fixedHeight - 固定高度参数
+ * @returns {string} 计算后带px单位的字符串
+ */
+export function getDialogVerticalOffset(fixedHeight) {
+  // 🔥 这就是：当前浏览器页面的纯可视高度（不含浏览器边框/地址栏）
+  const viewHeight = document.documentElement.clientHeight;
+  console.log("getDialogVerticalOffset", viewHeight, fixedHeight);
+
+  // 计算：(页面可视高度 - 固定高度) / 2，100是弹窗固定的上下margin
+  return `${(viewHeight - fixedHeight - 86) / 2}px`;
 }
