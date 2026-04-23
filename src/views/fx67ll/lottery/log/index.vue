@@ -493,7 +493,7 @@ import {
 
 // 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { decryptString, checkLotteryResult, validateLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import { decryptString, checkLotteryResult, validateLotteryString, validateMultiLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 
 import axios from "axios";
@@ -889,9 +889,14 @@ export default {
         this.title = "修改每日号码记录";
       });
     },
-    /** 校验不同类型号码的字符串格式 */
-    checkFormNumber(checkNumType, checkNumStr) {
-      // 强制转换类型
+    /**
+ * 校验表单中的号码字段
+ * @param {number} checkNumType - 彩票类型
+ * @param {string} checkNumStr - 号码字符串
+ * @param {string} fieldName - 字段名 ('recordNumber' | 'chaseNumber' | 'winningNumber')
+ * @returns {boolean}
+ */
+    checkFormNumber(checkNumType, checkNumStr, fieldName) {
       const numType = Number(checkNumType);
       const referenceFormat = {
         1: { numType: "大乐透", numStr: "4,7,8,10,23-4,9" },
@@ -901,38 +906,45 @@ export default {
         5: { numType: "七星彩", numStr: "1,2,3,4,5,6,7" },
       };
 
-      // 【修改】明确空数据判定：null/undefined/空字符串/全空格 → 不校验直接通过
-      const isEmpty =
-        checkNumStr === null ||
-        checkNumStr === undefined ||
-        String(checkNumStr).trim() === "";
+      // 1. 空值处理逻辑
+      const isEmpty = checkNumStr === null || checkNumStr === undefined || String(checkNumStr).trim() === "";
 
-      if (!isEmpty) {
-        const checkRecord = validateLotteryString(numType, checkNumStr);
-        if (!checkRecord) {
-          this.$modal.msgError(
-            `${referenceFormat?.[numType]?.numType}号码格式错误！参考格式：${referenceFormat?.[numType]?.numStr}`
-          );
-          return false;
-        }
+      // recordNumber 不允许为空
+      if (fieldName === 'recordNumber' && isEmpty) {
+        this.$modal.msgError("投注记录号码不能为空！");
+        return false;
       }
+
+      // chaseNumber 和 winningNumber 允许为空，为空直接通过
+      if (isEmpty) {
+        return true;
+      }
+
+      // 2. 非空时进行格式校验（支持多注 / 分隔）
+      const isValid = validateMultiLotteryString(numType, checkNumStr);
+
+      if (!isValid) {
+        const baseMsg = `${referenceFormat?.[numType]?.numType}号码格式错误！`;
+        const formatTip = `参考单注格式：${referenceFormat?.[numType]?.numStr}，多注请用 / 拼接。`;
+        this.$modal.msgError(baseMsg + formatTip);
+        return false;
+      }
+
       return true;
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          this.form.winningPrice =
-            this.form.isWin === "Y" ? this.form.winningPrice : 0;
+          this.form.winningPrice = this.form.isWin === "Y" ? this.form.winningPrice : 0;
 
-          // 强制转换类型
           const nType = Number(this.form.numberType);
+
+          // 传入字段名以区分校验策略
           if (
-            !(
-              this.checkFormNumber(nType, this.form.recordNumber) &&
-              this.checkFormNumber(nType, this.form.chaseNumber) &&
-              this.checkFormNumber(nType, this.form.winningNumber)
-            )
+            !this.checkFormNumber(nType, this.form.recordNumber, 'recordNumber') ||
+            !this.checkFormNumber(nType, this.form.chaseNumber, 'chaseNumber') ||
+            !this.checkFormNumber(nType, this.form.winningNumber, 'winningNumber')
           ) {
             return;
           }

@@ -357,9 +357,9 @@ export function checkLotteryResult(lotteryType, recordNumStr, winNumStr) {
 }
 
 /**
- * 校验彩票字符串是否符合对应格式
+ * 校验单注彩票字符串是否符合对应格式
  * @param {number} lotteryType - 彩票类型：1(大乐透)、2(双色球)、3(排列三)、4(排列五)、5(七星彩)
- * @param {string} lotteryStr - 待校验的彩票字符串
+ * @param {string} lotteryStr - 待校验的单注彩票字符串
  * @returns {boolean} 校验结果：true=符合，false=不符合
  */
 export function validateLotteryString(lotteryType, lotteryStr) {
@@ -376,7 +376,7 @@ export function validateLotteryString(lotteryType, lotteryStr) {
   const lotteryRules = {
     1: {
       // 大乐透
-      splitChar: "-", // 分隔符
+      splitChar: "-", // 前后区分隔符
       partCount: 2, // 分隔后部分数量
       numCounts: [5, 2], // 每部分的数字数量
       numRanges: [
@@ -385,8 +385,6 @@ export function validateLotteryString(lotteryType, lotteryStr) {
       ], // 每部分数字的范围
       noRepeat: [true, true], // 每部分是否禁止数字重复
       ascending: [true, true], // 每部分是否必须升序排列
-      description:
-        "大乐透: 5个前区数字(1-35) + 2个后区数字(1-12)，格式: 1,2,3,4,5-6,7",
     },
     2: {
       // 双色球
@@ -397,19 +395,17 @@ export function validateLotteryString(lotteryType, lotteryStr) {
         [1, 33],
         [1, 16],
       ],
-      noRepeat: [true, false], // 蓝球只有1个，无需校验重复
-      ascending: [true, false], // 红球需升序，蓝球只有一个无需校验
-      description: "双色球: 6个红球(1-33) + 1个蓝球(1-16)，格式: 1,2,3,4,5,6-7",
+      noRepeat: [true, false],
+      ascending: [true, false],
     },
     3: {
       // 排列三
-      splitChar: null, // 无分隔符
+      splitChar: null,
       partCount: 1,
       numCounts: [3],
       numRanges: [[0, 9]],
       noRepeat: [false],
       ascending: [false],
-      description: "排列三: 3个数字(0-9)，格式: 1,2,3",
     },
     4: {
       // 排列五
@@ -419,7 +415,6 @@ export function validateLotteryString(lotteryType, lotteryStr) {
       numRanges: [[0, 9]],
       noRepeat: [false],
       ascending: [false],
-      description: "排列五: 5个数字(0-9)，格式: 1,2,3,4,5",
     },
     5: {
       // 七星彩
@@ -429,7 +424,6 @@ export function validateLotteryString(lotteryType, lotteryStr) {
       numRanges: [[0, 9]],
       noRepeat: [false],
       ascending: [false],
-      description: "七星彩: 7个数字(0-9)，格式: 1,2,3,4,5,6,7",
     },
   };
 
@@ -437,7 +431,7 @@ export function validateLotteryString(lotteryType, lotteryStr) {
   if (!rule) return false;
 
   try {
-    // 4. 【优化】提前拦截首尾带分隔符的情况（如 "1,2,3-" 或 "-1,2,3"）
+    // 4. 拦截首尾带分隔符的情况
     if (rule.splitChar) {
       if (
         lotteryStr.startsWith(rule.splitChar) ||
@@ -447,29 +441,23 @@ export function validateLotteryString(lotteryType, lotteryStr) {
       }
     }
 
-    // 5. 拆分字符串并校验拆分后的部分数量
+    // 5. 拆分字符串
     let parts = rule.splitChar
       ? lotteryStr.split(rule.splitChar)
       : [lotteryStr];
 
-    // 检查分隔符是否正确（防止多余的分隔符）
-    if (rule.splitChar && lotteryStr.includes(rule.splitChar)) {
-      // 确保分隔符两侧没有多余的分隔符
+    // 检查分隔符数量
+    if (rule.splitChar) {
       const splitCount = (
         lotteryStr.match(new RegExp(`\\${rule.splitChar}`, "g")) || []
       ).length;
-      if (splitCount !== rule.partCount - 1) {
-        return false;
-      }
+      if (splitCount !== rule.partCount - 1) return false;
     }
 
-    if (parts.length !== rule.partCount) {
-      return false;
-    }
+    if (parts.length !== rule.partCount) return false;
 
-    // 6. 遍历每个部分，校验数字合法性
+    // 6. 遍历校验每个部分
     for (let i = 0; i < parts.length; i++) {
-      // 清理空格并分割
       const partStr = parts[i].trim();
       if (partStr === "") return false;
 
@@ -477,56 +465,67 @@ export function validateLotteryString(lotteryType, lotteryStr) {
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s !== "");
+      if (numStrList.length !== rule.numCounts[i]) return false;
 
-      // 校验数字数量是否匹配
-      if (numStrList.length !== rule.numCounts[i]) {
-        return false;
-      }
-
-      // 【优化】强化数字校验：禁止前导零（如 "01" 视为非法）
+      // 校验数字格式（禁止前导零）
       const numList = numStrList.map((numStr) => {
-        // 正则：要么是单个"0"，要么是不以"0"开头的数字
-        if (!/^(0|[1-9]\d*)$/.test(numStr)) {
-          throw new Error("非法数字格式");
-        }
+        if (!/^(0|[1-9]\d*)$/.test(numStr))
+          throw new Error("Invalid number format");
         const num = parseInt(numStr, 10);
-        if (isNaN(num) || !Number.isInteger(num)) {
-          throw new Error("非有效整数");
-        }
+        if (isNaN(num) || !Number.isInteger(num))
+          throw new Error("Not an integer");
         return num;
       });
 
-      // 校验数字范围
+      // 校验范围
       const [min, max] = rule.numRanges[i];
-      const isInRange = numList.every((num) => num >= min && num <= max);
-      if (!isInRange) {
-        return false;
-      }
+      if (!numList.every((num) => num >= min && num <= max)) return false;
 
-      // 校验数字是否重复（如果规则要求）
+      // 校验重复
       if (rule.noRepeat[i]) {
-        const uniqueNums = new Set(numList);
-        if (uniqueNums.size !== numList.length) {
-          return false;
-        }
+        if (new Set(numList).size !== numList.length) return false;
       }
 
-      // 校验是否升序排列（如果规则要求）
+      // 校验升序
       if (rule.ascending[i]) {
         for (let j = 1; j < numList.length; j++) {
-          if (numList[j] <= numList[j - 1]) {
-            return false;
-          }
+          if (numList[j] <= numList[j - 1]) return false;
         }
       }
     }
 
-    // 所有校验通过
     return true;
   } catch (error) {
-    // 捕获异常，返回false
     return false;
   }
+}
+
+/**
+ * 校验多注彩票字符串（使用 / 拼接）
+ * @param {number} lotteryType - 彩票类型
+ * @param {string} multiLotteryStr - 待校验的多注字符串
+ * @returns {boolean} 校验结果
+ */
+export function validateMultiLotteryString(lotteryType, multiLotteryStr) {
+  if (!multiLotteryStr || typeof multiLotteryStr !== "string") return false;
+
+  const trimmedStr = multiLotteryStr.trim();
+  if (trimmedStr.length === 0) return false;
+
+  // 拦截首尾的 /
+  if (trimmedStr.startsWith("/") || trimmedStr.endsWith("/")) return false;
+
+  // 拆分多注
+  const tickets = trimmedStr
+    .split("/")
+    .map((s) => s.trim())
+    .filter((s) => s !== "");
+
+  // 必须至少有一注
+  if (tickets.length === 0) return false;
+
+  // 逐注校验
+  return tickets.every((ticket) => validateLotteryString(lotteryType, ticket));
 }
 
 // 通用转换方法
