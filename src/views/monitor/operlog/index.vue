@@ -107,8 +107,8 @@
       @pagination="getList" />
 
     <!-- 操作日志详细 -->
-    <el-dialog title="操作日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px" style="top: 80px"
-      append-to-body>
+    <el-dialog title="操作日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px"
+      :style="`top: ${getDialogVerticalOffset(455)}`" append-to-body>
       <el-form ref="form" :model="form" label-width="100px" size="mini">
         <el-row>
           <el-col :span="12">
@@ -159,6 +159,8 @@
 <script>
 import { list, delOperlog, cleanOperlog } from "@/api/monitor/operlog";
 
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 export default {
   name: "Operlog",
   dicts: ["sys_oper_type", "sys_common_status"],
@@ -203,6 +205,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询登录日志 */
     getList() {
       this.loading = true;

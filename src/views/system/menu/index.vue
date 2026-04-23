@@ -65,7 +65,8 @@
     </el-table>
 
     <!-- 添加或修改菜单对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="680px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="680px"
+      :style="`top: ${getDialogVerticalOffset(529)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -223,6 +224,9 @@ import {
   addMenu,
   updateMenu,
 } from "@/api/system/menu";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import IconSelect from "@/components/IconSelect";
@@ -274,6 +278,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 选择图标
     selected(name) {
       this.form.icon = name;

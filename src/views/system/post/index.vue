@@ -73,7 +73,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改岗位对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px"
+      :style="`top: ${getDialogVerticalOffset(487)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="岗位名称" prop="postName">
           <el-input v-model="form.postName" placeholder="请输入岗位名称" />
@@ -110,6 +111,8 @@ import {
   addPost,
   updatePost,
 } from "@/api/system/post";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Post",
@@ -162,6 +165,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询岗位列表 */
     getList() {
       this.loading = true;

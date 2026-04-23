@@ -73,7 +73,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改公告对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="780px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="780px"
+      :style="`top: ${getDialogVerticalOffset(575)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -121,6 +122,8 @@ import {
   addNotice,
   updateNotice,
 } from "@/api/system/notice";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Notice",
@@ -170,6 +173,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询公告列表 */
     getList() {
       this.loading = true;

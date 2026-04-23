@@ -1,6 +1,7 @@
 <template>
   <!-- 导入表 -->
-  <el-dialog title="导入表" :visible.sync="visible" :close-on-click-modal="false" width="800px" top="5vh" append-to-body>
+  <el-dialog title="导入表" :visible.sync="visible" :close-on-click-modal="false" width="800px"
+    :style="`top: ${getDialogVerticalOffset(539)}`" append-to-body>
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true">
       <el-form-item label="表名称" prop="tableName">
         <el-input v-model="queryParams.tableName" placeholder="请输入表名称" clearable @keyup.enter.native="handleQuery" />
@@ -38,6 +39,9 @@
 
 <script>
 import { listDbTable, importTable } from "@/api/tool/gen";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 export default {
   data() {
     return {
@@ -59,6 +63,10 @@ export default {
     };
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 显示弹框
     show() {
       this.getList();

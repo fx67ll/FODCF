@@ -1,22 +1,9 @@
 <template>
   <div class="component-upload-image">
-    <el-upload
-      multiple
-      :action="uploadImgUrl"
-      list-type="picture-card"
-      :on-success="handleUploadSuccess"
-      :before-upload="handleBeforeUpload"
-      :limit="limit"
-      :on-error="handleUploadError"
-      :on-exceed="handleExceed"
-      ref="imageUpload"
-      :on-remove="handleDelete"
-      :show-file-list="true"
-      :headers="headers"
-      :file-list="fileList"
-      :on-preview="handlePictureCardPreview"
-      :class="{ hide: this.fileList.length >= this.limit }"
-    >
+    <el-upload multiple :action="uploadImgUrl" list-type="picture-card" :on-success="handleUploadSuccess"
+      :before-upload="handleBeforeUpload" :limit="limit" :on-error="handleUploadError" :on-exceed="handleExceed"
+      ref="imageUpload" :on-remove="handleDelete" :show-file-list="true" :headers="headers" :file-list="fileList"
+      :on-preview="handlePictureCardPreview" :class="{ hide: this.fileList.length >= this.limit }">
       <i class="el-icon-plus"></i>
     </el-upload>
 
@@ -32,22 +19,16 @@
       的文件
     </div>
 
-    <el-dialog
-      title="预览"
-      :visible.sync="dialogVisible"
-      :close-on-click-modal="false"
-      width="800"
-      append-to-body
-    >
-      <img
-        :src="dialogImageUrl"
-        style="display: block; max-width: 100%; margin: 0 auto"
-      />
+    <!-- 此处的getDialogVerticalOffset还没有实际查看过效果 -->
+    <el-dialog title="预览" :visible.sync="dialogVisible" :close-on-click-modal="false" width="800"
+      :style="`top: ${getDialogVerticalOffset(444)}`" append-to-body>
+      <img :src="dialogImageUrl" style="display: block; max-width: 100%; margin: 0 auto" />
     </el-dialog>
   </div>
 </template>
 
 <script>
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { getToken } from "@/utils/common/auth";
 
 export default {
@@ -123,6 +104,10 @@ export default {
     },
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 上传前loading加载
     handleBeforeUpload(file) {
       let isImg = false;
@@ -220,6 +205,7 @@ export default {
 ::v-deep.hide .el-upload--picture-card {
   display: none;
 }
+
 // 去掉动画效果
 ::v-deep .el-list-enter-active,
 ::v-deep .el-list-leave-active {

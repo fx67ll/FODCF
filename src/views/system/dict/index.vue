@@ -96,7 +96,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px"
+      :style="`top: ${getDialogVerticalOffset(429)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="字典名称" prop="dictName">
           <el-input v-model="form.dictName" placeholder="请输入字典名称" />
@@ -131,6 +132,8 @@ import {
   updateType,
   refreshCache,
 } from "@/api/system/dict/type";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Dict",
@@ -182,6 +185,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询字典类型列表 */
     getList() {
       this.loading = true;

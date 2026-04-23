@@ -85,35 +85,64 @@
       @pagination="getList" />
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="610px"
+      :style="`top: ${getDialogVerticalOffset(487)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+        <!-- 字典类型（单独一行，因为是禁用展示） -->
         <el-form-item label="字典类型">
           <el-input v-model="form.dictType" :disabled="true" />
         </el-form-item>
-        <el-form-item label="数据标签" prop="dictLabel">
-          <el-input v-model="form.dictLabel" placeholder="请输入数据标签" />
-        </el-form-item>
-        <el-form-item label="数据键值" prop="dictValue">
-          <el-input v-model="form.dictValue" placeholder="请输入数据键值" />
-        </el-form-item>
-        <el-form-item label="样式属性" prop="cssClass">
-          <el-input v-model="form.cssClass" placeholder="请输入样式属性" />
-        </el-form-item>
-        <el-form-item label="显示排序" prop="dictSort">
-          <el-input-number v-model="form.dictSort" controls-position="right" :min="0" />
-        </el-form-item>
-        <el-form-item label="回显样式" prop="listClass">
-          <el-select v-model="form.listClass">
-            <el-option v-for="item in listClassOptions" :key="item.value" :label="item.label + '(' + item.value + ')'"
-              :value="item.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{ dict.label
-            }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
+
+        <!-- 一行两列：数据标签 + 数据键值 -->
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="数据标签" prop="dictLabel">
+              <el-input v-model="form.dictLabel" placeholder="请输入数据标签" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="数据键值" prop="dictValue">
+              <el-input v-model="form.dictValue" placeholder="请输入数据键值" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 一行两列：样式属性 + 显示排序 -->
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="样式属性" prop="cssClass">
+              <el-input v-model="form.cssClass" placeholder="请输入样式属性" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="显示排序" prop="dictSort">
+              <el-input-number v-model="form.dictSort" controls-position="right" :min="0" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 一行两列：回显样式 + 状态 -->
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="回显样式" prop="listClass">
+              <el-select v-model="form.listClass">
+                <el-option v-for="item in listClassOptions" :key="item.value"
+                  :label="item.label + '(' + item.value + ')'" :value="item.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="form.status">
+                <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{
+                  dict.label
+                }}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 备注单独一行 -->
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
         </el-form-item>
@@ -138,6 +167,8 @@ import {
   optionselect as getDictOptionselect,
   getType,
 } from "@/api/system/dict/type";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Data",
@@ -223,6 +254,10 @@ export default {
     this.getTypeList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询字典类型详细 */
     getType(dictId) {
       getType(dictId).then((response) => {

@@ -2,82 +2,38 @@
   <div class="app-container">
     <el-row :gutter="20">
       <el-col :span="24" :xs="24">
-        <el-form
-          :model="queryParams"
-          ref="queryForm"
-          size="small"
-          :inline="true"
-          v-show="showSearch"
-          label-width="68px"
-        >
+        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
+          label-width="68px">
           <el-form-item label="用户名称" prop="userName" v-if="isMoreQuery">
-            <el-input
-              v-model="queryParams.userName"
-              placeholder="请输入用户名称"
-              clearable
-              style="width: 240px"
-              @keyup.enter.native="handleQuery"
-            />
+            <el-input v-model="queryParams.userName" placeholder="请输入用户名称" clearable style="width: 240px"
+              @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="用户昵称" prop="nickName">
-            <el-input
-              v-model="queryParams.nickName"
-              placeholder="请输入用户昵称"
-              clearable
-              style="width: 240px"
-              @keyup.enter.native="handleQuery"
-            />
+            <el-input v-model="queryParams.nickName" placeholder="请输入用户昵称" clearable style="width: 240px"
+              @keyup.enter.native="handleQuery" />
           </el-form-item>
           <!-- <el-form-item label="电子邮箱" prop="email">
             <el-input v-model="queryParams.email" placeholder="请输入电子邮箱" clearable style="width: 240px"
               @keyup.enter.native="handleQuery" />
           </el-form-item> -->
           <el-form-item label="联系方式" prop="contactInfo" v-if="isMoreQuery">
-            <el-input
-              v-model="queryParams.contactInfo"
-              placeholder="请输入联系方式"
-              clearable
-              style="width: 240px"
-              @keyup.enter.native="handleQuery"
-            />
+            <el-input v-model="queryParams.contactInfo" placeholder="请输入联系方式" clearable style="width: 240px"
+              @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="用户备注" prop="remark">
-            <el-input
-              v-model="queryParams.remark"
-              placeholder="请输入用户备注"
-              clearable
-              style="width: 240px"
-              @keyup.enter.native="handleQuery"
-            />
+            <el-input v-model="queryParams.remark" placeholder="请输入用户备注" clearable style="width: 240px"
+              @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="用户性别" prop="sex" v-if="isMoreQuery">
-            <el-select
-              v-model="queryParams.sex"
-              placeholder="请选择用户性别"
-              clearable
-              style="width: 240px"
-            >
-              <el-option
-                v-for="dict in dict.type.sys_user_sex"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              ></el-option>
+            <el-select v-model="queryParams.sex" placeholder="请选择用户性别" clearable style="width: 240px">
+              <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
+                :value="dict.value"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="账户状态" prop="status">
-            <el-select
-              v-model="queryParams.status"
-              placeholder="请选择账户状态"
-              clearable
-              style="width: 240px"
-            >
-              <el-option
-                v-for="dict in dict.type.sys_normal_disable"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-              />
+            <el-select v-model="queryParams.status" placeholder="请选择账户状态" clearable style="width: 240px">
+              <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                :value="dict.value" />
             </el-select>
           </el-form-item>
           <!-- <el-form-item label="创建时间">
@@ -85,23 +41,14 @@
               range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
           </el-form-item> -->
           <el-form-item>
-            <el-button
-              type="primary"
-              icon="el-icon-search"
-              size="mini"
-              @click="handleQuery"
-            >
+            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
               搜索
             </el-button>
             <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
               重置
             </el-button>
-            <el-button
-              type="info"
-              :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
-              size="mini"
-              @click="handleMoreQuery"
-            >
+            <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+              @click="handleMoreQuery">
               {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
             </el-button>
           </el-form-item>
@@ -109,103 +56,33 @@
 
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button
-              type="success"
-              plain
-              icon="el-icon-edit"
-              size="mini"
-              :disabled="single"
-              @click="handleUpdate"
-              v-hasPermi="['system:user:chaoshen:edit']"
-              >修改</el-button
-            >
+            <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+              v-hasPermi="['system:user:chaoshen:edit']">修改</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button
-              type="danger"
-              plain
-              icon="el-icon-delete"
-              size="mini"
-              :disabled="multiple"
-              @click="handleDelete"
-              v-hasPermi="['system:user:chaoshen:remove']"
-              >删除</el-button
-            >
+            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+              v-hasPermi="['system:user:chaoshen:remove']">删除</el-button>
           </el-col>
-          <right-toolbar
-            :showSearch.sync="showSearch"
-            @queryTable="getList"
-            :columns="columns"
-          ></right-toolbar>
+          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
         </el-row>
 
-        <el-table
-          v-loading="loading"
-          :data="userList"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column
-            type="selection"
-            width="50"
-            align="center"
-            :selectable="handleSelectable"
-          />
-          <el-table-column
-            label="用户名称"
-            align="center"
-            key="userName"
-            prop="userName"
-            :show-overflow-tooltip="true"
-          />
-          <el-table-column
-            label="用户昵称"
-            align="center"
-            key="nickName"
-            prop="nickName"
-            :show-overflow-tooltip="true"
-          />
-          <el-table-column
-            label="性别"
-            align="center"
-            key="sex"
-            prop="sex"
-            width="80"
-          >
+        <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="50" align="center" :selectable="handleSelectable" />
+          <el-table-column label="用户名称" align="center" key="userName" prop="userName" :show-overflow-tooltip="true" />
+          <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" :show-overflow-tooltip="true" />
+          <el-table-column label="性别" align="center" key="sex" prop="sex" width="80">
             <template slot-scope="scope">
-              <dict-tag
-                :options="dict.type.sys_user_sex"
-                :value="scope.row.sex"
-              />
+              <dict-tag :options="dict.type.sys_user_sex" :value="scope.row.sex" />
             </template>
           </el-table-column>
           <!-- <el-table-column label="电子邮箱" align="center" key="email" prop="email" /> -->
-          <el-table-column
-            label="联系方式"
-            align="center"
-            key="contactInfo"
-            prop="contactInfo"
-          />
-          <el-table-column
-            label="备注"
-            align="center"
-            key="remark"
-            prop="remark"
-            :show-overflow-tooltip="true"
-          />
-          <el-table-column
-            label="账户状态"
-            align="center"
-            key="status"
-            width="80"
-          >
+          <el-table-column label="联系方式" align="center" key="contactInfo" prop="contactInfo" />
+          <el-table-column label="备注" align="center" key="remark" prop="remark" :show-overflow-tooltip="true" />
+          <el-table-column label="账户状态" align="center" key="status" width="80">
             <template slot-scope="scope">
-              <el-switch
-                v-model="scope.row.status"
-                active-value="0"
-                inactive-value="1"
+              <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
                 @change="handleStatusChange(scope.row)"
-                :disabled="parseInt(scope.row.userId, 10) === 1000001"
-              ></el-switch>
+                :disabled="parseInt(scope.row.userId, 10) === 1000001"></el-switch>
             </template>
           </el-table-column>
           <!-- <el-table-column label="创建时间" align="center" prop="createTime" width="160">
@@ -213,61 +90,27 @@
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
           </el-table-column> -->
-          <el-table-column
-            label="操作"
-            align="center"
-            width="200"
-            class-name="small-padding fixed-width"
-          >
+          <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
             <template slot-scope="scope">
-              <el-button
-                size="mini"
-                type="text"
-                icon="el-icon-edit"
-                @click="handleUpdate(scope.row)"
-                v-hasPermi="['system:user:chaoshen:edit']"
-                >修改</el-button
-              >
-              <el-button
-                size="mini"
-                type="text"
-                icon="el-icon-delete"
-                @click="handleDelete(scope.row)"
+              <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+                v-hasPermi="['system:user:chaoshen:edit']">修改</el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
                 v-hasPermi="['system:user:chaoshen:remove']"
-                v-if="parseInt(scope.row.userId, 10) > 1000001"
-                >删除</el-button
-              >
-              <el-button
-                size="mini"
-                type="text"
-                icon="el-icon-key"
-                @click="handleResetPwd(scope.row)"
-                v-hasPermi="['system:user:chaoshen:resetPwd']"
-                >重置密码</el-button
-              >
+                v-if="parseInt(scope.row.userId, 10) > 1000001">删除</el-button>
+              <el-button size="mini" type="text" icon="el-icon-key" @click="handleResetPwd(scope.row)"
+                v-hasPermi="['system:user:chaoshen:resetPwd']">重置密码</el-button>
             </template>
           </el-table-column>
         </el-table>
 
-        <pagination
-          v-show="total > 0"
-          :total="total"
-          :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize"
-          @pagination="getList"
-        />
+        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
+          :limit.sync="queryParams.pageSize" @pagination="getList" />
       </el-col>
     </el-row>
 
     <!-- 添加或修改用户配置对话框 -->
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      width="600px"
-      append-to-body
-      style="top: 100px"
-    >
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="600px"
+      :style="`top: ${getDialogVerticalOffset(488)}`" append-to-body style="top: 100px">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -277,11 +120,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="用户昵称" prop="nickName">
-              <el-input
-                v-model="form.nickName"
-                placeholder="请输入用户昵称"
-                maxlength="30"
-              />
+              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -289,27 +128,17 @@
           <el-col :span="12">
             <el-form-item label="性别">
               <el-select v-model="form.sex" placeholder="请选择性别">
-                <el-option
-                  v-for="dict in dict.type.sys_user_sex"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                ></el-option>
+                <el-option v-for="dict in dict.type.sys_user_sex" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="账户状态">
-              <el-radio-group
-                v-model="form.status"
-                :disabled="parseInt(form.userId, 10) === 1000001"
-              >
-                <el-radio
-                  v-for="dict in dict.type.sys_normal_disable"
-                  :key="dict.value"
-                  :label="dict.value"
-                  >{{ dict.label }}</el-radio
-                >
+              <el-radio-group v-model="form.status" :disabled="parseInt(form.userId, 10) === 1000001">
+                <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{
+                  dict.label
+                }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -323,11 +152,7 @@
           </el-col> -->
           <el-col :span="24">
             <el-form-item label="联系方式" prop="contactInfo">
-              <el-input
-                v-model="form.contactInfo"
-                placeholder="请输入联系方式"
-                maxlength="50"
-              />
+              <el-input v-model="form.contactInfo" placeholder="请输入联系方式" maxlength="50" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -335,12 +160,7 @@
           <el-col :span="24">
             <!-- 保留原有备注表单项，确保修改功能正常 -->
             <el-form-item label="备注" prop="remark">
-              <el-input
-                v-model="form.remark"
-                type="textarea"
-                placeholder="请输入内容"
-                maxlength="200"
-              />
+              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" maxlength="200" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -362,6 +182,9 @@ import {
   resetUserPwd,
   changeUserStatus,
 } from "@/api/system/userChaoshen";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -463,6 +286,10 @@ export default {
     });
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 新增：控制表格复选框是否可选中
     handleSelectable(row) {
       // userId为1000001时返回false（禁止选中），其他返回true（允许选中）
@@ -571,7 +398,7 @@ export default {
             this.$modal.msgSuccess("修改成功，新密码是：" + value);
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     /** 提交按钮 */
     submitForm: function () {
@@ -601,7 +428,7 @@ export default {
           this.getList();
           this.$modal.msgSuccess("删除成功");
         })
-        .catch(() => {});
+        .catch(() => { });
     },
   },
 };

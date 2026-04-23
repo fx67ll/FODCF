@@ -1,21 +1,9 @@
 <template>
   <div>
-    <el-dialog
-      v-bind="$attrs"
-      v-on="$listeners"
-      :modal-append-to-body="false"
-      :close-on-click-modal="false"
-      @open="onOpen"
-      @close="onClose"
-    >
+    <el-dialog v-bind="$attrs" v-on="$listeners" :modal-append-to-body="false" :close-on-click-modal="false"
+      @open="onOpen" @close="onClose" :style="`top: ${getDialogVerticalOffset(279)}`">
       <el-row :gutter="0">
-        <el-form
-          ref="elForm"
-          :model="formData"
-          :rules="rules"
-          size="small"
-          label-width="100px"
-        >
+        <el-form ref="elForm" :model="formData" :rules="rules" size="small" label-width="100px">
           <el-col :span="24">
             <el-form-item label="选项名" prop="label">
               <el-input v-model="formData.label" placeholder="请输入选项名" clearable />
@@ -25,13 +13,8 @@
             <el-form-item label="选项值" prop="value">
               <el-input v-model="formData.value" placeholder="请输入选项值" clearable>
                 <el-select slot="append" v-model="dataType" :style="{ width: '100px' }">
-                  <el-option
-                    v-for="(item, index) in dataTypeOptions"
-                    :key="index"
-                    :label="item.label"
-                    :value="item.value"
-                    :disabled="item.disabled"
-                  />
+                  <el-option v-for="(item, index) in dataTypeOptions" :key="index" :label="item.label"
+                    :value="item.value" :disabled="item.disabled" />
                 </el-select>
               </el-input>
             </el-form-item>
@@ -45,7 +28,9 @@
     </el-dialog>
   </div>
 </template>
+
 <script>
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { isNumberStr } from "@/utils/common/index-ruoyi";
 
 export default {
@@ -95,16 +80,20 @@ export default {
       this.dataType = isNumberStr(val) ? "number" : "string";
     },
   },
-  created() {},
-  mounted() {},
+  created() { },
+  mounted() { },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     onOpen() {
       this.formData = {
         label: undefined,
         value: undefined,
       };
     },
-    onClose() {},
+    onClose() { },
     close() {
       this.$emit("update:visible", false);
     },

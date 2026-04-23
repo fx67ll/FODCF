@@ -3,29 +3,13 @@
     <div class="user-info-head" @click="editCropper()">
       <img v-bind:src="options.img" title="点击上传头像" class="img-circle img-lg" />
     </div>
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      width="800px"
-      append-to-body
-      @opened="modalOpened"
-      @close="closeDialog"
-    >
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(512)}`" append-to-body @opened="modalOpened" @close="closeDialog">
       <el-row>
         <el-col :xs="24" :md="12" :style="{ height: '350px' }">
-          <vue-cropper
-            ref="cropper"
-            :img="options.img"
-            :info="true"
-            :autoCrop="options.autoCrop"
-            :autoCropWidth="options.autoCropWidth"
-            :autoCropHeight="options.autoCropHeight"
-            :fixedBox="options.fixedBox"
-            :outputType="options.outputType"
-            @realTime="realTime"
-            v-if="visible"
-          />
+          <vue-cropper ref="cropper" :img="options.img" :info="true" :autoCrop="options.autoCrop"
+            :autoCropWidth="options.autoCropWidth" :autoCropHeight="options.autoCropHeight" :fixedBox="options.fixedBox"
+            :outputType="options.outputType" @realTime="realTime" v-if="visible" />
         </el-col>
         <el-col :xs="24" :md="12" :style="{ height: '350px' }">
           <div class="avatar-upload-preview">
@@ -36,12 +20,7 @@
       <br />
       <el-row>
         <el-col :lg="2" :sm="3" :xs="3">
-          <el-upload
-            action="#"
-            :http-request="requestUpload"
-            :show-file-list="false"
-            :before-upload="beforeUpload"
-          >
+          <el-upload action="#" :http-request="requestUpload" :show-file-list="false" :before-upload="beforeUpload">
             <el-button size="small">
               选择
               <i class="el-icon-upload el-icon--right"></i>
@@ -52,25 +31,13 @@
           <el-button icon="el-icon-plus" size="small" @click="changeScale(1)"></el-button>
         </el-col>
         <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button
-            icon="el-icon-minus"
-            size="small"
-            @click="changeScale(-1)"
-          ></el-button>
+          <el-button icon="el-icon-minus" size="small" @click="changeScale(-1)"></el-button>
         </el-col>
         <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button
-            icon="el-icon-refresh-left"
-            size="small"
-            @click="rotateLeft()"
-          ></el-button>
+          <el-button icon="el-icon-refresh-left" size="small" @click="rotateLeft()"></el-button>
         </el-col>
         <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button
-            icon="el-icon-refresh-right"
-            size="small"
-            @click="rotateRight()"
-          ></el-button>
+          <el-button icon="el-icon-refresh-right" size="small" @click="rotateRight()"></el-button>
         </el-col>
         <el-col :lg="{ span: 2, offset: 6 }" :sm="2" :xs="2">
           <el-button type="primary" size="small" @click="uploadImg()">提 交</el-button>
@@ -83,7 +50,10 @@
 <script>
 import store from "@/store";
 import { VueCropper } from "vue-cropper";
+
 import { uploadAvatar } from "@/api/system/user";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { debounce } from "@/utils/common/index-ruoyi";
 
 export default {
@@ -114,6 +84,10 @@ export default {
     };
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 编辑头像
     editCropper() {
       this.open = true;
@@ -133,7 +107,7 @@ export default {
       this.$refs.cropper.refresh();
     },
     // 覆盖默认的上传行为
-    requestUpload() {},
+    requestUpload() { },
     // 向左旋转
     rotateLeft() {
       this.$refs.cropper.rotateLeft();

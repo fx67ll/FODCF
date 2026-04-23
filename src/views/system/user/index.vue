@@ -125,7 +125,8 @@
     </el-row>
 
     <!-- 添加或修改用户配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="600px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="600px"
+      :style="`top: ${getDialogVerticalOffset(488)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
@@ -216,7 +217,7 @@
 
     <!-- 用户导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" :close-on-click-modal="false" width="400px"
-      append-to-body>
+      :style="`top: ${getDialogVerticalOffset(404)}`" append-to-body>
       <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers"
         :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
         :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
@@ -251,7 +252,10 @@ import {
   changeUserStatus,
   deptTreeSelect,
 } from "@/api/system/user";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { getToken } from "@/utils/common/auth";
+
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -388,6 +392,10 @@ export default {
     });
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询用户列表 */
     getList() {
       this.loading = true;

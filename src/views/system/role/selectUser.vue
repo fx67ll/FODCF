@@ -1,6 +1,7 @@
 <template>
   <!-- 授权用户 -->
-  <el-dialog title="选择用户" :visible.sync="visible" :close-on-click-modal="false" width="800px" top="5vh" append-to-body>
+  <el-dialog title="选择用户" :visible.sync="visible" :close-on-click-modal="false" width="800px"
+    :style="`top: ${getDialogVerticalOffset(539)}`" append-to-body>
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true">
       <el-form-item label="用户名称" prop="userName">
         <el-input v-model="queryParams.userName" placeholder="请输入用户名称" clearable @keyup.enter.native="handleQuery" />
@@ -48,6 +49,9 @@
 
 <script>
 import { unallocatedUserList, authUserSelectAll } from "@/api/system/role";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 export default {
   dicts: ["sys_normal_disable"],
   props: {
@@ -77,6 +81,10 @@ export default {
     };
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 显示弹框
     show() {
       this.queryParams.roleId = this.roleId;

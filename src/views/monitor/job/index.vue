@@ -93,7 +93,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改定时任务对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(469)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
           <el-col :span="12">
@@ -158,7 +159,7 @@
             <el-form-item label="状态">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.sys_job_status" :key="dict.value" :label="dict.value">{{ dict.label
-                  }}</el-radio>
+                }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -170,13 +171,14 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="Cron表达式生成器" :visible.sync="openCron" :close-on-click-modal="false" append-to-body destroy-on-close
-      class="scrollbar">
+    <el-dialog title="Cron表达式生成器" :visible.sync="openCron" :close-on-click-modal="false"
+      :style="`top: ${getDialogVerticalOffset(546)}`" append-to-body destroy-on-close class="scrollbar">
       <crontab @hide="openCron = false" @fill="crontabFill" :expression="expression"></crontab>
     </el-dialog>
 
     <!-- 任务日志详细 -->
-    <el-dialog title="任务详细" :visible.sync="openView" :close-on-click-modal="false" width="700px" append-to-body>
+    <el-dialog title="任务详细" :visible.sync="openView" :close-on-click-modal="false" width="700px"
+      :style="`top: ${getDialogVerticalOffset(455)}`" append-to-body>
       <el-form ref="form" :model="form" label-width="120px" size="mini">
         <el-row>
           <el-col :span="12">
@@ -245,6 +247,9 @@ import {
   runJob,
   changeJobStatus,
 } from "@/api/monitor/job";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 import Crontab from "@/components/Crontab";
 
 export default {
@@ -313,6 +318,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询定时任务列表 */
     getList() {
       this.loading = true;

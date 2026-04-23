@@ -1,52 +1,27 @@
 <template>
   <div class="top-right-btn" :style="style">
     <el-row>
-      <el-tooltip
-        class="item"
-        :content="showSearch ? '隐藏搜索' : '显示搜索'"
-        placement="top"
-        v-if="search"
-      >
-        <el-button
-          size="mini"
-          circle
-          icon="el-icon-search"
-          @click="toggleSearch()"
-        />
+      <el-tooltip class="item" :content="showSearch ? '隐藏搜索' : '显示搜索'" placement="top" v-if="search">
+        <el-button size="mini" circle icon="el-icon-search" @click="toggleSearch()" />
       </el-tooltip>
       <el-tooltip class="item" content="刷新" placement="top">
-        <el-button
-          size="mini"
-          circle
-          icon="el-icon-refresh"
-          @click="refresh()"
-        />
+        <el-button size="mini" circle icon="el-icon-refresh" @click="refresh()" />
       </el-tooltip>
       <el-tooltip class="item" content="显隐列" placement="top" v-if="columns">
-        <el-button
-          size="mini"
-          circle
-          icon="el-icon-menu"
-          @click="showColumn()"
-        />
+        <el-button size="mini" circle icon="el-icon-menu" @click="showColumn()" />
       </el-tooltip>
     </el-row>
-    <el-dialog
-      :title="title"
-      :visible.sync="open"
-      :close-on-click-modal="false"
-      append-to-body
-    >
-      <el-transfer
-        :titles="['显示', '隐藏']"
-        v-model="value"
-        :data="columns"
-        @change="dataChange"
-      ></el-transfer>
+    <!-- 此处的getDialogVerticalOffset还没有实际查看过效果 -->
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false"
+      :style="`top: ${getDialogVerticalOffset(444)}`" append-to-body>
+      <el-transfer :titles="['显示', '隐藏']" v-model="value" :data="columns" @change="dataChange"></el-transfer>
     </el-dialog>
   </div>
 </template>
+
 <script>
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 export default {
   name: "RightToolbar",
   data() {
@@ -94,6 +69,10 @@ export default {
     }
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 搜索
     toggleSearch() {
       this.$emit("update:showSearch", !this.showSearch);
@@ -123,6 +102,7 @@ export default {
   display: block;
   margin-left: 0px;
 }
+
 ::v-deep .el-transfer__button:first-child {
   margin-bottom: 10px;
 }

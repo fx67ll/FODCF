@@ -73,8 +73,8 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
     <!-- 预览界面 -->
-    <el-dialog :title="preview.title" :visible.sync="preview.open" :close-on-click-modal="false" width="80%" top="5vh"
-      append-to-body class="scrollbar">
+    <el-dialog :title="preview.title" :visible.sync="preview.open" :close-on-click-modal="false" width="80%"
+      :style="`top: ${getDialogVerticalOffset(546)}`" append-to-body class="scrollbar">
       <el-tabs v-model="preview.activeName">
         <el-tab-pane v-for="(value, key) in preview.data"
           :label="key.substring(key.lastIndexOf('/') + 1, key.indexOf('.vm'))"
@@ -109,6 +109,8 @@ hljs.registerLanguage(
   require("highlight.js/lib/languages/javascript")
 );
 hljs.registerLanguage("sql", require("highlight.js/lib/languages/sql"));
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Gen",
@@ -163,6 +165,10 @@ export default {
     }
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询表集合 */
     getList() {
       this.loading = true;

@@ -83,7 +83,8 @@
       @pagination="getList" />
 
     <!-- 调度日志详细 -->
-    <el-dialog title="调度日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px" append-to-body>
+    <el-dialog title="调度日志详细" :visible.sync="open" :close-on-click-modal="false" width="700px"
+      :style="`top: ${getDialogVerticalOffset(409)}`" append-to-body>
       <el-form ref="form" :model="form" label-width="100px" size="mini">
         <el-row>
           <el-col :span="12">
@@ -129,6 +130,8 @@
 <script>
 import { getJob } from "@/api/monitor/job";
 import { listJobLog, delJobLog, cleanJobLog } from "@/api/monitor/jobLog";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "JobLog",
@@ -176,6 +179,10 @@ export default {
     }
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询调度日志列表 */
     getList() {
       this.loading = true;

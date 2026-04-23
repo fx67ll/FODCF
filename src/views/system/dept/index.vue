@@ -58,7 +58,8 @@
     </el-table>
 
     <!-- 添加或修改部门对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="600px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="600px"
+      :style="`top: ${getDialogVerticalOffset(413)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="24" v-if="form.parentId !== 0">
@@ -103,7 +104,7 @@
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">{{
                   dict.label
-                  }}</el-radio>
+                }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -126,6 +127,9 @@ import {
   updateDept,
   listDeptExcludeChild,
 } from "@/api/system/dept";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -190,6 +194,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 查询部门列表 */
     getList() {
       this.loading = true;
