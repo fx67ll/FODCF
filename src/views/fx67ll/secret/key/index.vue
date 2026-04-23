@@ -15,19 +15,19 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['secret:key:add']">新增</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['secret:key:edit']">修改</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['secret:key:remove']">删除</el-button>
       </el-col>
-      <!-- <el-col :span="1.5">
+      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['secret:key:export']">导出</el-button>
       </el-col> -->
@@ -68,8 +68,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改秘钥配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 140px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px"
+      :style="`top: ${getDialogVerticalOffset(376)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="秘钥键" prop="secretKey">
           <el-input v-model="form.secretKey" placeholder="请输入秘钥键" />
@@ -89,7 +89,8 @@
 
 <script>
 import { listKey, getKey, delKey, addKey, updateKey } from "@/api/fx67ll/secret/key";
-import { encryptString, decryptString } from "@/utils/fx67ll/utils";
+
+import { encryptString, decryptString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Key",
@@ -137,6 +138,10 @@ export default {
     this.qryCryptoSaltKey();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     qryCryptoSaltKey() {
       listKey({ secretKey: "cryptoSaltKey" }).then((res) => {
         if (res && res?.rows && res?.rows.length > 0) {

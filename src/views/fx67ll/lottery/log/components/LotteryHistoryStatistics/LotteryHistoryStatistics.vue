@@ -9,8 +9,9 @@
       @close 关闭时触发 handleClose 方法
       append-to-body 将对话框插入到 body 元素下，避免层级/定位问题
     -->
-    <el-dialog :visible.sync="dialogVisible" width="950px" style="top: 20px" :close-on-click-modal="false"
-        :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'" @close="handleClose" append-to-body>
+    <el-dialog :visible.sync="dialogVisible" width="950px" :style="`top: ${getDialogVerticalOffset(584)}`"
+        :close-on-click-modal="false" :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'"
+        @close="handleClose" append-to-body>
 
         <!-- 
           彩蛋：可点击的标题 
@@ -88,7 +89,8 @@
 <script>
 // 引入 API 方法：获取历史统计数据
 import { listHistoryStatistics } from "@/api/fx67ll/lottery/log";
-
+// 引入核心工具函数
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 // 引入两个子组件
 import CircleView from './components/CircleView.vue';
 import SquareView from './components/SquareView.vue';
@@ -164,6 +166,10 @@ export default {
     },
 
     methods: {
+        // 代理工具函数
+        getDialogVerticalOffset(offset) {
+            return getDialogVerticalOffset(offset);
+        },
         /**
          * 初始化数据
          * 如果 rawData 为空且对话框可见，则请求数据

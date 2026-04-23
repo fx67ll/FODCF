@@ -133,8 +133,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 110px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px"
+      :style="`top: ${getDialogVerticalOffset(412)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="固定追号" prop="chaseNumber">
           <el-input v-model="form.chaseNumber" placeholder="请输入每日固定追号" clearable />
@@ -186,6 +186,8 @@ import {
   addChase,
   updateChase,
 } from "@/api/fx67ll/lottery/chase";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Chase",
@@ -272,6 +274,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;

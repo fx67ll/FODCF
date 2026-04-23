@@ -72,7 +72,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改富文本记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(534)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="内容">
           <editor v-model="form.noteContent" :min-height="192" />
@@ -97,6 +98,8 @@ import {
   addNoteLog,
   updateNoteLog,
 } from "@/api/fx67ll/note/log";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Log",
@@ -146,6 +149,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;

@@ -54,23 +54,23 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['punch:log:add']">新增</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['punch:log:edit']">修改</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['punch:log:remove']">删除</el-button>
       </el-col>
-      <!-- <el-col :span="1.5">
+      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['punch:log:export']">导出</el-button>
       </el-col> -->
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="info" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
           v-hasPermi="['punch:log:total']">查看月度工时统计</el-button>
       </el-col>
@@ -115,8 +115,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改打卡记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 130px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px"
+      :style="`top: ${getDialogVerticalOffset(414)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="打卡类型" prop="punchType">
           <el-select v-model="form.punchType" style="width: 100%" placeholder="请选择打卡类型">
@@ -153,7 +153,7 @@
 
     <!-- 查看工时统计数据的弹窗 -->
     <el-dialog title="月度工时统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="930px"
-      style="top: 130px" append-to-body>
+      :style="`top: ${getDialogVerticalOffset(398)}`" append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="logTotalLoading" :data="logTotalList">
           <el-table-column label="打卡人" align="center" prop="punchUser" />
@@ -266,8 +266,8 @@
     </el-dialog>
 
     <!-- 查看缺卡记录数据的弹窗 -->
-    <el-dialog title="缺卡记录" :visible.sync="lostLogOpen" :close-on-click-modal="false" width="600px" style="top: 180px"
-      append-to-body>
+    <el-dialog title="缺卡记录" :visible.sync="lostLogOpen" :close-on-click-modal="false" width="600px"
+      :style="`top: ${getDialogVerticalOffset(267)}`" append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="lostLogLoading" :data="lostLogList">
           <el-table-column label="缺卡人" align="center" prop="punchUser" />
@@ -303,6 +303,8 @@ import {
   getPunchLostLog,
 } from "@/api/fx67ll/punch/log";
 import { getUserProfile } from "@/api/system/user";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Log",
@@ -374,6 +376,10 @@ export default {
     this.getUser();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 查询用户信息
     getUser() {
       getUserProfile().then((response) => {

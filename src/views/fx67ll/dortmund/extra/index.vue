@@ -49,24 +49,24 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['dortmund:extra:add']">新增</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['dortmund:extra:edit']">修改</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['dortmund:extra:remove']">删除</el-button>
       </el-col>
-      <!-- <el-col :span="1.5">
+      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dortmund:extra:export']">
           导出</el-button>
       </el-col> -->
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="info" plain icon="el-icon-data-line" size="mini"
           @click="handleOpenDataAnalysis">查看外快盈亏历史数据走势图</el-button>
       </el-col>
@@ -136,30 +136,53 @@
       :page-sizes="[5, 10, 23, 50, 100]" @pagination="getList" />
 
     <!-- 添加或修改外快盈亏记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="500px" style="top: 40px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(450)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" v-loading="formLoading" label-width="80px">
-        <el-form-item label="总金额" prop="extraMoney">
-          <el-input v-model="form.extraMoney" placeholder="请输入当前外快总金额" @input="handleExtraMoneyChangeDubounce" />
-        </el-form-item>
-        <el-form-item label="是否盈利" prop="isWin">
-          <el-select v-model="form.isWin" style="width: 100%" placeholder="请选择是否盈利">
-            <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-              :value="dict.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="盈亏金额" prop="winMoney">
-          <el-input v-model="form.winMoney" placeholder="请输入外快盈亏金额" />
-        </el-form-item>
-        <el-form-item label="当前本金" prop="seedMoney">
-          <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" @input="handleSeedMoneyChangeDubounce" />
-        </el-form-item>
-        <el-form-item label="落袋金额" prop="saveMoney">
-          <el-input v-model="form.saveMoney" placeholder="请输入已经落袋为安的盈利金额" />
-        </el-form-item>
-        <el-form-item label="目标金额" prop="targetMoney">
-          <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
-        </el-form-item>
+        <!-- 一行两列 -->
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="总金额" prop="extraMoney">
+              <el-input v-model="form.extraMoney" placeholder="请输入当前外快总金额" @input="handleExtraMoneyChangeDubounce" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="是否盈利" prop="isWin">
+              <el-select v-model="form.isWin" style="width: 100%" placeholder="请选择是否盈利">
+                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="盈亏金额" prop="winMoney">
+              <el-input v-model="form.winMoney" placeholder="请输入外快盈亏金额" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="当前本金" prop="seedMoney">
+              <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" @input="handleSeedMoneyChangeDubounce" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="落袋金额" prop="saveMoney">
+              <el-input v-model="form.saveMoney" placeholder="请输入已经落袋为安的盈利金额" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="目标金额" prop="targetMoney">
+              <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 备注单独一行 -->
         <el-form-item label="外快备注" prop="extraRemark">
           <el-input v-model="form.extraRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
             placeholder="请输入外快备注内容" />
@@ -190,6 +213,8 @@ import {
   addExtra,
   updateExtra,
 } from "@/api/fx67ll/dortmund/extra";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import * as echarts from "echarts";
 import _ from "underscore";
@@ -296,6 +321,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 打开外快盈亏历史数据走势图弹窗
     handleOpenDataAnalysis() {
       const self = this;

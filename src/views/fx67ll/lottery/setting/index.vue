@@ -91,8 +91,8 @@
       @pagination="getList" />
 
     <!-- 添加或修改固定追号配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 30px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(591)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="格式化配置" class="formatButton">
           <el-switch v-model="isViewJson" active-color="#2ecc71" @change="handleIsViewJson">
@@ -131,6 +131,8 @@ import {
   addSetting,
   updateSetting,
 } from "@/api/fx67ll/lottery/setting";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import VueJsonViewer from "vue-json-viewer";
 
@@ -194,6 +196,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 切换查看状态
     handleIsViewJson(val) {
       this.isViewJson = val;

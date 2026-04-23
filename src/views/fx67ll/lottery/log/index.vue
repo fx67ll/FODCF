@@ -105,49 +105,49 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['lottery:log:add']">
           新增
         </el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['lottery:log:edit']">
           修改
         </el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['lottery:log:remove']">
           删除
         </el-button>
       </el-col>
-      <!-- <el-col :span="1.5">
+      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['lottery:log:export']">
           导出
         </el-button>
       </el-col> -->
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
           v-hasPermi="['lottery:log:total']">
           查看历史号码中奖金额统计
         </el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-date" size="mini" @click="handleHistoryStatisticsOpen()"
           v-hasPermi="['lottery:log:statistics']">
           查看历史号码出现频率统计
         </el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-trophy" size="mini" @click="handleGenerateNumbersOpen()"
           v-hasPermi="['lottery:log:statistics']">
           查看历史开奖号码组合
         </el-button>
       </el-col>
-      <el-col :span="1.5">
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-dropdown>
           <el-button type="info" plain icon="el-icon-bell" size="mini">
             官方开奖信息查询
@@ -397,7 +397,7 @@
 
     <!-- 查看历史号码中奖金额统计的弹窗 -->
     <el-dialog title="历史号码中奖金额统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="900px"
-      style="top: 60px; left: 20px;" append-to-body>
+      :style="`top: ${getDialogVerticalOffset(486)}; left: 20px;`" append-to-body>
       <div id="logTotalContainer">
         <el-table v-loading="logTotalLoading" :data="logTotalList">
           <el-table-column label="统计类型" align="center" prop="lotteryType" />
@@ -479,7 +479,7 @@ import {
 
 // 中奖查询相关工具
 import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { decryptString, checkLotteryResult, validateLotteryString } from "@/utils/fx67ll/utils";
+import { decryptString, checkLotteryResult, validateLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { getCryptoSaltKey } from "@@/neverUploadToGithub";
 
 import axios from "axios";
@@ -624,6 +624,10 @@ export default {
     this.handleQueryNoRewardInfo();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 格式化号码字符串展示，逗号换空格，横杠前后加空格 */
     formatNumDisplay(numStr) {
       if (!numStr || numStr === "-") return numStr;
@@ -876,28 +880,20 @@ export default {
       // 强制转换类型
       const numType = Number(checkNumType);
       const referenceFormat = {
-        1: {
-          numType: "大乐透",
-          numStr: "4,7,8,10,23-4,9",
-        },
-        2: {
-          numType: "双色球",
-          numStr: "1,4,5,8,10,23-5",
-        },
-        3: {
-          numType: "排列三",
-          numStr: "1,2,3",
-        },
-        4: {
-          numType: "排列五",
-          numStr: "1,2,3,4,5",
-        },
-        5: {
-          numType: "七星彩",
-          numStr: "1,2,3,4,5,6,7",
-        },
+        1: { numType: "大乐透", numStr: "4,7,8,10,23-4,9" },
+        2: { numType: "双色球", numStr: "1,4,5,8,10,23-5" },
+        3: { numType: "排列三", numStr: "1,2,3" },
+        4: { numType: "排列五", numStr: "1,2,3,4,5" },
+        5: { numType: "七星彩", numStr: "1,2,3,4,5,6,7" },
       };
-      if (checkNumStr) {
+
+      // 【修改】明确空数据判定：null/undefined/空字符串/全空格 → 不校验直接通过
+      const isEmpty =
+        checkNumStr === null ||
+        checkNumStr === undefined ||
+        String(checkNumStr).trim() === "";
+
+      if (!isEmpty) {
         const checkRecord = validateLotteryString(numType, checkNumStr);
         if (!checkRecord) {
           this.$modal.msgError(
@@ -905,7 +901,6 @@ export default {
           );
           return false;
         }
-        return true;
       }
       return true;
     },

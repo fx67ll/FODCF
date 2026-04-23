@@ -4,8 +4,9 @@
       功能：展示大乐透/双色球的高频与低频号码组合，支持单独复制和全部复制
       设计：卡片式布局，红蓝渐变区分高频/低频，带入场动画及悬停效果
     -->
-    <el-dialog title="历史开奖号码组合" :visible.sync="dialogVisible" width="950px" style="top: 20px" class="generate-dialog"
-        :close-on-click-modal="false" @close="handleClose" append-to-body>
+    <el-dialog title="历史开奖号码组合" :visible.sync="dialogVisible" width="950px"
+        :style="`top: ${getDialogVerticalOffset(584)}`" class="generate-dialog" :close-on-click-modal="false"
+        @close="handleClose" append-to-body>
         <!-- 加载状态容器 -->
         <div class="generate-result-container" v-loading="loading">
             <!-- 
@@ -89,7 +90,7 @@
 // 引入历史统计数据接口
 import { listHistoryStatistics } from "@/api/fx67ll/lottery/log";
 // 引入根据频率生成号码的核心工具函数
-import { getLotteryNumberByFrequency } from "@/utils/fx67ll/utils";
+import { getLotteryNumberByFrequency, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import { create } from "sortablejs";
 // 引入日期时间工具类
 import moment from 'moment';
@@ -175,6 +176,10 @@ export default {
         }
     },
     methods: {
+        // 代理工具函数
+        getDialogVerticalOffset(offset) {
+            return getDialogVerticalOffset(offset);
+        },
         /**
          * 初始化数据逻辑：
          * - 若未拉取过历史数据则请求接口
