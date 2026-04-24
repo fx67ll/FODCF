@@ -693,5 +693,5 @@ export function getDialogVerticalOffset(fixedHeight) {
   }
 
   // 计算：(页面可视高度 - 固定高度) / 2，100是弹窗固定的上下margin
-  return `${(viewHeight - fixedHeight - 90) / 2 - 23}px`;
+  return `${(viewHeight - fixedHeight - 90) / 2 - 10}px`;
 }
