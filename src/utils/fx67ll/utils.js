@@ -688,10 +688,10 @@ export function getLotteryNumberByFrequency(data, dayOfYear) {
 export function getDialogVerticalOffset(fixedHeight) {
   // 🔥 这就是：当前浏览器页面的纯可视高度（不含浏览器边框/地址栏）
   const viewHeight = document.documentElement.clientHeight || 0;
-  if (viewHeight <= fixedHeight + 86) {
+  if (viewHeight <= fixedHeight + 90) {
     return "23px";
   }
 
   // 计算：(页面可视高度 - 固定高度) / 2，100是弹窗固定的上下margin
-  return `${(viewHeight - fixedHeight - 86) / 2}px`;
+  return `${(viewHeight - fixedHeight - 90) / 2 - 23}px`;
 }
