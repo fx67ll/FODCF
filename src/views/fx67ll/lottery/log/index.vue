@@ -95,7 +95,7 @@
         </el-button>
         <el-button type="warning" icon="el-icon-scissors" size="mini" @click="handleQueryNoRewardInfo"
           v-if="isResetStatus">
-          只查未开奖
+          查未开奖
         </el-button>
         <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
           @click="handleMoreQuery">
@@ -260,9 +260,33 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="当日中奖号码" align="center" prop="winningNumber" width="160">
+      <el-table-column label="当日中奖号码" align="center" prop="winningNumber" width="170">
         <template slot-scope="scope">
-          <span>{{ formatNumDisplay(scope.row.winningNumber) }}</span>
+          <template v-if="scope.row.winningNumberHighlightInfo && scope.row.winningNumber && scope.row.winningNumber !== '-'">
+            <span v-if="scope.row.winningNumberHighlightInfo.type === 'zone'">
+              <span v-for="(n, ni) in scope.row.winningNumberHighlightInfo.front" :key="'wf' + ni"
+                style="margin-right: 3px">
+                <span :style="n.matched ? { color: '#ff5a5f', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                  n.value }}</span>
+              </span>
+              <span style="margin-right: 3px">-</span>
+              <span v-for="(n, ni) in scope.row.winningNumberHighlightInfo.back" :key="'wb' + ni"
+                style="margin-right: 3px">
+                <span :style="n.matched ? { color: '#ff5a5f', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                  n.value }}</span>
+              </span>
+            </span>
+            <span v-else>
+              <span v-for="(n, ni) in scope.row.winningNumberHighlightInfo.nums" :key="'wn' + ni"
+                style="margin-right: 3px">
+                <span :style="n.matched ? { color: '#ff5a5f', fontWeight: 'bold', fontSize: '1.15em' } : {}">{{
+                  n.value }}</span>
+              </span>
+            </span>
+          </template>
+          <template v-else>
+            <span>{{ formatNumDisplay(scope.row.winningNumber) }}</span>
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="是否中奖" align="center" prop="isWin" width="80">
@@ -671,6 +695,51 @@ export default {
         };
       }
     },
+    /** 构建中奖号码高亮信息，将购买号码和固定追号中出现过的数字标红 */
+    buildWinningNumberHighlightInfo(winningNumber, recordNumberList, chaseNumberList, numberType) {
+      const numType = Number(numberType);
+      // 收集所有购买号码和追号中出现的数字（分前区/后区）
+      const collectNums = (numStrList) => {
+        const frontSet = new Set();
+        const backSet = new Set();
+        const allSet = new Set();
+        numStrList.forEach((numStr) => {
+          if (!numStr || numStr === '-') return;
+          if (numType === 1 || numType === 2) {
+            const parts = numStr.split('-');
+            const front = parts[0] ? parts[0].split(',').map((n) => n.trim()) : [];
+            const back = parts[1] ? parts[1].split(',').map((n) => n.trim()) : [];
+            front.forEach((n) => frontSet.add(n));
+            back.forEach((n) => backSet.add(n));
+          } else {
+            const nums = numStr.split(',').map((n) => n.trim());
+            nums.forEach((n) => allSet.add(n));
+          }
+        });
+        return { frontSet, backSet, allSet };
+      };
+
+      const allLists = [...recordNumberList, ...chaseNumberList].filter(Boolean);
+
+      if (numType === 1 || numType === 2) {
+        const { frontSet, backSet } = collectNums(allLists);
+        const wParts = winningNumber.split('-');
+        const wFront = wParts[0] ? wParts[0].split(',').map((n) => n.trim()) : [];
+        const wBack = wParts[1] ? wParts[1].split(',').map((n) => n.trim()) : [];
+        return {
+          type: 'zone',
+          front: wFront.map((n) => ({ value: n, matched: frontSet.has(n) })),
+          back: wBack.map((n) => ({ value: n, matched: backSet.has(n) })),
+        };
+      } else {
+        const { allSet } = collectNums(allLists);
+        const wNums = winningNumber.split(',').map((n) => n.trim());
+        return {
+          type: 'positional',
+          nums: wNums.map((n) => ({ value: n, matched: allSet.has(n) })),
+        };
+      }
+    },
     // 查询历史号码中奖金额统计
     getTotalReward() {
       const self = this;
@@ -738,6 +807,9 @@ export default {
               this.buildHighlightInfo(num, item.winningNumber, item.numberType)
             )
             : [];
+          item.winningNumberHighlightInfo = hasWinning
+            ? this.buildWinningNumberHighlightInfo(item.winningNumber, item.recordNumberList, item.chaseNumberList, item.numberType)
+            : null;
           return item;
         });
         this.logList = this.formatObjectArrayNullProperty(logRows);
