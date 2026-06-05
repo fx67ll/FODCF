@@ -702,7 +702,6 @@ export default {
       const collectNums = (numStrList) => {
         const frontSet = new Set();
         const backSet = new Set();
-        const allSet = new Set();
         numStrList.forEach((numStr) => {
           if (!numStr || numStr === '-') return;
           if (numType === 1 || numType === 2) {
@@ -711,12 +710,9 @@ export default {
             const back = parts[1] ? parts[1].split(',').map((n) => n.trim()) : [];
             front.forEach((n) => frontSet.add(n));
             back.forEach((n) => backSet.add(n));
-          } else {
-            const nums = numStr.split(',').map((n) => n.trim());
-            nums.forEach((n) => allSet.add(n));
           }
         });
-        return { frontSet, backSet, allSet };
+        return { frontSet, backSet };
       };
 
       const allLists = [...recordNumberList, ...chaseNumberList].filter(Boolean);
@@ -732,11 +728,19 @@ export default {
           back: wBack.map((n) => ({ value: n, matched: backSet.has(n) })),
         };
       } else {
-        const { allSet } = collectNums(allLists);
         const wNums = winningNumber.split(',').map((n) => n.trim());
+        // 按位置匹配：收集每个位置上购买号码和追号中出现过的数字集合
+        const positionSets = wNums.map(() => new Set());
+        allLists.forEach((numStr) => {
+          if (!numStr || numStr === '-') return;
+          const nums = numStr.split(',').map((n) => n.trim());
+          nums.forEach((n, i) => {
+            if (i < positionSets.length) positionSets[i].add(n);
+          });
+        });
         return {
           type: 'positional',
-          nums: wNums.map((n) => ({ value: n, matched: allSet.has(n) })),
+          nums: wNums.map((n, i) => ({ value: n, matched: positionSets[i].has(n) })),
         };
       }
     },
