@@ -1282,42 +1282,95 @@ export default {
       // 确保类型正确
       const numType = Number(numTp);
 
+      // 浮动奖金的彩种+等级，弹窗里加备注
+      const dynamicPrizeLevels = {
+        1: [1, 2],   // 大乐透一、二等奖
+        2: [1, 2],   // 双色球一、二等奖
+        5: [1, 2],   // 七星彩一、二等奖
+      };
+      const isDynamic = (type, level) =>
+        !!(dynamicPrizeLevels[type] && dynamicPrizeLevels[type].includes(level));
+
       getLog(logId)
         .then((res) => {
           if (res?.code === 200) {
             if (res?.data) {
-              const recordNumStrList =
-                res?.data?.recordNumber?.split("/") || [];
+              const recordNumStrList = res?.data?.recordNumber?.split("/") || [];
               const chaseNumStrList = res?.data?.chaseNumber?.split("/") || [];
-              let totalRewardCount = 0;
-              let totalRewardPrize = 0;
+
+              // 收集每注中奖明细：{ source, num, prizeText, prizeAmount, isDynamic }
+              const winDetails = [];
+
               recordNumStrList.forEach((item) => {
                 const resultTmp = checkLotteryResult(numType, item, winNum);
                 if (resultTmp?.prizeLevel > 0) {
-                  totalRewardCount = totalRewardCount + 1;
-                  totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
+                  winDetails.push({
+                    source: "购买号码",
+                    num: item,
+                    prizeText: resultTmp.prizeText,
+                    prizeAmount: resultTmp.prizeAmount,
+                    dynamic: isDynamic(numType, resultTmp.prizeLevel),
+                  });
                 }
               });
               chaseNumStrList.forEach((item) => {
                 const resultTmp = checkLotteryResult(numType, item, winNum);
                 if (resultTmp?.prizeLevel > 0) {
-                  totalRewardCount = totalRewardCount + 1;
-                  totalRewardPrize = totalRewardPrize + resultTmp?.prizeAmount;
+                  winDetails.push({
+                    source: "固定追号",
+                    num: item,
+                    prizeText: resultTmp.prizeText,
+                    prizeAmount: resultTmp.prizeAmount,
+                    dynamic: isDynamic(numType, resultTmp.prizeLevel),
+                  });
                 }
               });
+
+              const totalRewardCount = winDetails.length;
+              const totalRewardPrize = winDetails.reduce((sum, d) => sum + d.prizeAmount, 0);
+              const hasDynamic = winDetails.some((d) => d.dynamic);
+
               if (totalRewardCount > 0) {
                 const numTypeText = self.lotteryTypeMap[numType].text || "";
+                const detailRows = winDetails
+                  .map((d, i) => `
+                    <li style="padding:4px 0;border-bottom:1px dashed #eee;">
+                      <span style="color:#909399;font-size:12px;">${i + 1}.</span>
+                      <span style="color:#2ecc71;font-weight:bold;margin:0 4px;">[${d.source}]</span>
+                      <span style="color:#606266;">${self.formatNumDisplay(d.num)}</span>
+                      <span style="margin:0 4px;">—</span>
+                      <span style="color:#e6a23c;font-weight:bold;">${d.prizeText}</span>
+                      <span style="margin-left:6px;color:#ff5a5f;font-weight:bold;">￥${d.prizeAmount}</span>
+                      ${d.dynamic ? '<span style="color:#909399;font-size:11px;">（动态）</span>' : ""}
+                    </li>`)
+                  .join("");
+                const dynamicTip = hasDynamic
+                  ? `<p style="color:#e6a23c;font-size:12px;margin:6px 0 0;">* 动态奖金为行情参考值，实际以官方公布为准</p>`
+                  : "";
                 self
                   .$confirm("", "恭喜您中奖了！", {
                     confirmButtonText: "保存",
                     cancelButtonText: "取消",
-                    // type: "success",
-                    dangerouslyUseHTMLString: true, // 允许使用 HTML 字符串
+                    dangerouslyUseHTMLString: true,
                     message: `
-                                <p>本期所购 <strong>${numTypeText}</strong> 中共计 <strong>${totalRewardCount}</strong> 注号码中奖</p>
-                                <p>初步预计奖金 <strong>￥${totalRewardPrize}</strong></p>
-                                <p>是否需要为您记录中奖信息？</p>
-                              `,
+                      <div style="font-size:14px;">
+                        <p style="margin:0 0 10px;">
+                          本期所购
+                          <strong style="color:#2ecc71;">${numTypeText}</strong>
+                          共
+                          <strong style="color:#ff5a5f;font-size:16px;">${totalRewardCount}</strong>
+                          注号码中奖
+                        </p>
+                        <ul style="padding-left:12px;margin:0 0 10px;list-style:none;">${detailRows}</ul>
+                        <p style="margin:8px 0 4px;">
+                          合计预计奖金
+                          <strong style="color:#ff5a5f;font-size:18px;margin-left:4px;">￥${totalRewardPrize}</strong>
+                          ${hasDynamic ? '<span style="color:#e6a23c;font-size:12px;">（含动态奖金）</span>' : ""}
+                        </p>
+                        ${dynamicTip}
+                        <p style="margin:10px 0 0;color:#909399;font-size:13px;">是否需要为您记录中奖信息？</p>
+                      </div>
+                    `,
                   })
                   .then(() => {
                     self.saveRewardInfo(logId, "Y", totalRewardPrize);
