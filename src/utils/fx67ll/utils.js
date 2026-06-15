@@ -45,10 +45,22 @@ export function checkLotteryResultForSSQDLT(
   recordNumStr,
   winNumStr
 ) {
-  const frontNumbers = recordNumStr.split("-")[0].split(",").map(n => n.trim());
-  const backNumbers = recordNumStr.split("-")[1].split(",").map(n => n.trim());
-  const winningFrontNumbers = winNumStr.split("-")[0].split(",").map(n => n.trim());
-  const winningBackNumbers = winNumStr.split("-")[1].split(",").map(n => n.trim());
+  const frontNumbers = recordNumStr
+    .split("-")[0]
+    .split(",")
+    .map((n) => n.trim());
+  const backNumbers = recordNumStr
+    .split("-")[1]
+    .split(",")
+    .map((n) => n.trim());
+  const winningFrontNumbers = winNumStr
+    .split("-")[0]
+    .split(",")
+    .map((n) => n.trim());
+  const winningBackNumbers = winNumStr
+    .split("-")[1]
+    .split(",")
+    .map((n) => n.trim());
 
   // console.log(lotteryType, frontNumbers, backNumbers, winningFrontNumbers, winningBackNumbers);
 
@@ -64,63 +76,106 @@ export function checkLotteryResultForSSQDLT(
   const backMatchCount = backNumbers.filter((num) =>
     winningBackNumbers.includes(num)
   ).length;
-  const totalMatchCount = frontMatchCount + backMatchCount;
 
   if (lotteryType === 1) {
-    // 大乐透官方中奖规则（前区5个0-35，后区2个1-12）
+    // 超级大乐透中奖规则（前区5个1-35，后区2个1-12）
     // 一等奖：前5+后2（浮动，参考行情约1000万）
     // 二等奖：前5+后1（浮动，参考行情约50万）
-    // 三等奖：前5+后0，固定10000元
-    // 四等奖：前4+后2，固定3000元
-    // 五等奖：前4+后1，固定300元
-    // 六等奖：前3+后2 / 前4+后0，固定200元
-    // 七等奖：前3+后1 / 前2+后2，固定100元
-    // 八等奖：前3+后0 / 前1+后2 / 前2+后1，固定15元
-    // 九等奖：前0+后2 / 前1+后1 / 前2+后0（仅前2后0不中），固定5元
-    //   实际九等奖：前2+后0不中，前0/1+后2中，前1+后1中
+    // 三等奖：前5+后0 / 前4+后2，固定5000元
+    // 四等奖：前4+后1，固定300元
+    // 五等奖：前4+后0 / 前3+后2，固定150元
+    // 六等奖：前3+后1 / 前2+后2，固定15元
+    // 七等奖：前3+后0 / 前2+后1 / 前1+后2 / 前0+后2，固定5元
     if (frontMatchCount === 5 && backMatchCount === 2) {
-      result.prizeLevel = 1; result.prizeText = "一等奖"; result.prizeAmount = 10000000;
+      result.prizeLevel = 1;
+      result.prizeText = "一等奖";
+      result.prizeAmount = 10000000;
     } else if (frontMatchCount === 5 && backMatchCount === 1) {
-      result.prizeLevel = 2; result.prizeText = "二等奖"; result.prizeAmount = 500000;
-    } else if (frontMatchCount === 5 && backMatchCount === 0) {
-      result.prizeLevel = 3; result.prizeText = "三等奖"; result.prizeAmount = 10000;
-    } else if (frontMatchCount === 4 && backMatchCount === 2) {
-      result.prizeLevel = 4; result.prizeText = "四等奖"; result.prizeAmount = 3000;
+      result.prizeLevel = 2;
+      result.prizeText = "二等奖";
+      result.prizeAmount = 500000;
+    } else if (
+      (frontMatchCount === 5 && backMatchCount === 0) ||
+      (frontMatchCount === 4 && backMatchCount === 2)
+    ) {
+      result.prizeLevel = 3;
+      result.prizeText = "三等奖";
+      result.prizeAmount = 5000;
     } else if (frontMatchCount === 4 && backMatchCount === 1) {
-      result.prizeLevel = 5; result.prizeText = "五等奖"; result.prizeAmount = 300;
-    } else if ((frontMatchCount === 3 && backMatchCount === 2) || (frontMatchCount === 4 && backMatchCount === 0)) {
-      result.prizeLevel = 6; result.prizeText = "六等奖"; result.prizeAmount = 200;
-    } else if ((frontMatchCount === 3 && backMatchCount === 1) || (frontMatchCount === 2 && backMatchCount === 2)) {
-      result.prizeLevel = 7; result.prizeText = "七等奖"; result.prizeAmount = 100;
-    } else if ((frontMatchCount === 3 && backMatchCount === 0) || (frontMatchCount === 1 && backMatchCount === 2) || (frontMatchCount === 2 && backMatchCount === 1)) {
-      result.prizeLevel = 8; result.prizeText = "八等奖"; result.prizeAmount = 15;
-    } else if ((frontMatchCount === 0 && backMatchCount === 2) || (frontMatchCount === 1 && backMatchCount === 1)) {
-      result.prizeLevel = 9; result.prizeText = "九等奖"; result.prizeAmount = 5;
+      result.prizeLevel = 4;
+      result.prizeText = "四等奖";
+      result.prizeAmount = 300;
+    } else if (
+      (frontMatchCount === 4 && backMatchCount === 0) ||
+      (frontMatchCount === 3 && backMatchCount === 2)
+    ) {
+      result.prizeLevel = 5;
+      result.prizeText = "五等奖";
+      result.prizeAmount = 150;
+    } else if (
+      (frontMatchCount === 3 && backMatchCount === 1) ||
+      (frontMatchCount === 2 && backMatchCount === 2)
+    ) {
+      result.prizeLevel = 6;
+      result.prizeText = "六等奖";
+      result.prizeAmount = 15;
+    } else if (
+      (frontMatchCount === 3 && backMatchCount === 0) ||
+      (frontMatchCount === 2 && backMatchCount === 1) ||
+      (frontMatchCount === 1 && backMatchCount === 2) ||
+      (frontMatchCount === 0 && backMatchCount === 2)
+    ) {
+      result.prizeLevel = 7;
+      result.prizeText = "七等奖";
+      result.prizeAmount = 5;
     } else {
       result.prizeText = "未中奖";
     }
   }
 
   if (lotteryType === 2) {
-    // 双色球官方中奖规则（前区6个1-33，后区1个1-16）
+    // 双色球中奖规则（前区6个1-33，后区1个1-16）
     // 一等奖：前6+后1（浮动，参考行情约500万）
     // 二等奖：前6+后0（浮动，参考行情约10万）
     // 三等奖：前5+后1，固定3000元
     // 四等奖：前5+后0 / 前4+后1，固定200元
     // 五等奖：前4+后0 / 前3+后1，固定10元
     // 六等奖：前2+后1 / 前1+后1 / 前0+后1，固定5元
+    // 福运奖：前3+后0，固定5元
     if (frontMatchCount === 6 && backMatchCount === 1) {
-      result.prizeLevel = 1; result.prizeText = "一等奖"; result.prizeAmount = 5000000;
+      result.prizeLevel = 1;
+      result.prizeText = "一等奖";
+      result.prizeAmount = 5000000;
     } else if (frontMatchCount === 6 && backMatchCount === 0) {
-      result.prizeLevel = 2; result.prizeText = "二等奖"; result.prizeAmount = 100000;
+      result.prizeLevel = 2;
+      result.prizeText = "二等奖";
+      result.prizeAmount = 100000;
     } else if (frontMatchCount === 5 && backMatchCount === 1) {
-      result.prizeLevel = 3; result.prizeText = "三等奖"; result.prizeAmount = 3000;
-    } else if ((frontMatchCount === 5 && backMatchCount === 0) || (frontMatchCount === 4 && backMatchCount === 1)) {
-      result.prizeLevel = 4; result.prizeText = "四等奖"; result.prizeAmount = 200;
-    } else if ((frontMatchCount === 4 && backMatchCount === 0) || (frontMatchCount === 3 && backMatchCount === 1)) {
-      result.prizeLevel = 5; result.prizeText = "五等奖"; result.prizeAmount = 10;
+      result.prizeLevel = 3;
+      result.prizeText = "三等奖";
+      result.prizeAmount = 3000;
+    } else if (
+      (frontMatchCount === 5 && backMatchCount === 0) ||
+      (frontMatchCount === 4 && backMatchCount === 1)
+    ) {
+      result.prizeLevel = 4;
+      result.prizeText = "四等奖";
+      result.prizeAmount = 200;
+    } else if (
+      (frontMatchCount === 4 && backMatchCount === 0) ||
+      (frontMatchCount === 3 && backMatchCount === 1)
+    ) {
+      result.prizeLevel = 5;
+      result.prizeText = "五等奖";
+      result.prizeAmount = 10;
     } else if (backMatchCount === 1 && frontMatchCount <= 2) {
-      result.prizeLevel = 6; result.prizeText = "六等奖"; result.prizeAmount = 5;
+      result.prizeLevel = 6;
+      result.prizeText = "六等奖";
+      result.prizeAmount = 5;
+    } else if (frontMatchCount === 3 && backMatchCount === 0) {
+      result.prizeLevel = 7;
+      result.prizeText = "福运奖";
+      result.prizeAmount = 5;
     } else {
       result.prizeText = "未中奖";
     }
