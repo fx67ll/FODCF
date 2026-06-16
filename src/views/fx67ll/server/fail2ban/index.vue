@@ -63,7 +63,7 @@
                 <el-table :data="trendData" border stripe style="width: 100%" size="small">
                     <el-table-column prop="hour" label="时间" width="80" align="center" />
                     <el-table-column prop="count" label="攻击次数" align="center">
-                        <template slot-scope="scope">
+                        <template v-slot="scope">
                             <el-progress :percentage="Math.min(scope.row.count * 2, 100)" :show-text="true"
                                 :stroke-width="10" :status="scope.row.count > 50 ? 'exception' : 'warning'" />
                         </template>
@@ -88,7 +88,7 @@
                 <el-table-column prop="totalBanned" label="累计封禁" width="100" align="center" />
                 <el-table-column prop="totalFailed" label="失败尝试" width="100" align="center" />
                 <el-table-column label="操作" width="80" align="center">
-                    <template slot-scope="scope">
+                    <template v-slot="scope">
                         <el-button type="text"
                             :icon="expandedJails.includes(scope.row.name) ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
                             @click.stop="toggleJailDetail(scope.row)">
@@ -106,16 +106,16 @@
                     <el-descriptions-item label="当前封禁">{{ jail.currentlyBanned }}</el-descriptions-item>
                     <el-descriptions-item label="累计封禁">{{ jail.totalBanned }}</el-descriptions-item>
                     <el-descriptions-item label="失败尝试">{{ jail.totalFailed }}</el-descriptions-item>
-                    <el-descriptions-item label="封禁时间">{{ jail.config?.bantime || '未知' }}秒</el-descriptions-item>
-                    <el-descriptions-item label="检测窗口">{{ jail.config?.findtime || '未知' }}秒</el-descriptions-item>
-                    <el-descriptions-item label="最大失败">{{ jail.config?.maxretry || '未知' }}</el-descriptions-item>
-                    <el-descriptions-item label="监控端口">{{ jail.config?.port || '未知' }}</el-descriptions-item>
-                    <el-descriptions-item label="日志路径">{{ jail.config?.logpath || '未知' }}</el-descriptions-item>
+                    <el-descriptions-item label="封禁时间">{{ jail.config.bantime || '未知' }}秒</el-descriptions-item>
+                    <el-descriptions-item label="检测窗口">{{ jail.config.findtime || '未知' }}秒</el-descriptions-item>
+                    <el-descriptions-item label="最大失败">{{ jail.config.maxretry || '未知' }}</el-descriptions-item>
+                    <el-descriptions-item label="监控端口">{{ jail.config.port || '未知' }}</el-descriptions-item>
+                    <el-descriptions-item label="日志路径">{{ jail.config.logpath || '未知' }}</el-descriptions-item>
                 </el-descriptions>
 
                 <div class="banned-ips-section">
                     <div class="section-header">
-                        <h4>当前被封禁IP ({{ jail.bannedIps?.length || 0 }})</h4>
+                        <h4>当前被封禁IP ({{ jail.bannedIps.length || 0 }})</h4>
                         <div class="ip-actions">
                             <el-button type="primary" size="small" icon="el-icon-document-copy"
                                 @click="copyAllIps(jail.bannedIps)"
@@ -165,21 +165,21 @@
 
             <el-table :data="topAttackIps" border stripe style="width: 100%">
                 <el-table-column width="50" align="center">
-                    <template slot-scope="scope">
+                    <template v-slot="scope">
                         <el-checkbox v-model="selectedTopIps" :label="scope.row.ip" @change="handleTopIpSelect" />
                     </template>
                 </el-table-column>
                 <el-table-column prop="ip" label="攻击IP" width="150" />
                 <el-table-column prop="count" label="攻击次数" width="100" align="center" />
                 <el-table-column label="威胁等级" width="120" align="center">
-                    <template slot-scope="scope">
+                    <template v-slot="scope">
                         <el-tag :type="getThreatLevel(scope.row.count)">
                             {{ getThreatLevelText(scope.row.count) }}
                         </el-tag>
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" width="100" align="center">
-                    <template slot-scope="scope">
+                    <template v-slot="scope">
                         <el-button type="text" icon="el-icon-document-copy" @click="copySingleIp(scope.row.ip)">
                             复制IP
                         </el-button>
@@ -219,7 +219,7 @@
             </div>
         </div>
 
-        <!-- 最近攻击日志卡片 -->
+        <!-- 最近攻击日志卡片（已移除pre标签） -->
         <div class="status-card">
             <div class="status-header">
                 <h2>最近攻击日志</h2>
@@ -249,9 +249,15 @@
             </div>
 
             <div class="log-container">
-                <pre v-for="(log, index) in paginatedLogs" :key="index" :class="getLogClass(log.level)">[{{ log.date }} {{ log.time }}] [{{ log.level }}] {{ log.message }}
-                    <el-button v-if="log.ip" type="text" icon="el-icon-document-copy" size="mini" @click="copySingleIp(log.ip)" class="copy-btn-inline">复制IP</el-button>
-                </pre>
+                <!-- 替换pre为普通行容器，使用div+span实现等宽日志 -->
+                <div v-for="(log, index) in paginatedLogs" :key="index" class="log-line"
+                    :class="getLogClass(log.level)">
+                    <span>[{{ log.date }} {{ log.time }}] [{{ log.level }}] {{ log.message }}</span>
+                    <el-button v-if="log.ip" type="text" icon="el-icon-document-copy" size="mini"
+                        @click="copySingleIp(log.ip)" class="copy-btn-inline">
+                        复制IP
+                    </el-button>
+                </div>
                 <div v-if="filteredLogs.length === 0" class="empty-text">
                     暂无符合条件的日志
                 </div>
@@ -449,14 +455,11 @@ export default {
          */
         async loadAttackStats() {
             const response = await getAttackStats();
-            this.topAttackIps = response.data?.topAttackIps || [];
+            this.topAttackIps = response.data.topAttackIps || [];
 
             // 转换趋势数据格式为表格所需格式
-            const trend = response.data?.hourlyTrend || {};
-            this.trendData = Object.entries(trend).map(([hour, count]) => ({
-                hour,
-                count
-            }));
+            const trend = response.data.hourlyTrend || {};
+            this.trendData = Object.entries(trend).map(([hour, count]) => ({ hour, count }));
         },
 
         /**
@@ -493,7 +496,7 @@ export default {
 
         /**
          * 切换监狱详情展开/收起
-         * @param {Object} row 监狱行数据
+         * param {Object} row 监狱行数据
          */
         async toggleJailDetail(row) {
             const index = this.expandedJails.indexOf(row.name);
@@ -521,37 +524,37 @@ export default {
 
         /**
          * 复制单个IP到剪贴板
-         * @param {String} ip IP地址
+         * param {String} ip IP地址
          */
-        copySingleIp(ip) {
-            this.copyToClipboard(ip);
+        async copySingleIp(ip) {
+            await this.copyToClipboard(ip);
             this.$message.success(`已复制IP: ${ip}`);
         },
 
         /**
          * 复制全部IP到剪贴板
-         * @param {Array} ips IP地址数组
+         * param {Array} ips IP地址数组
          */
-        copyAllIps(ips) {
+        async copyAllIps(ips) {
             if (!ips || ips.length === 0) {
                 this.$message.warning("没有可复制的IP");
                 return;
             }
             const ipText = ips.join("\n");
-            this.copyToClipboard(ipText);
+            await this.copyToClipboard(ipText);
             this.$message.success(`已复制 ${ips.length} 个IP`);
         },
 
         /**
          * 复制选中的IP到剪贴板
          */
-        copySelectedIps() {
+        async copySelectedIps() {
             if (this.selectedIps.length === 0) {
                 this.$message.warning("请先选择要复制的IP");
                 return;
             }
             const ipText = this.selectedIps.join("\n");
-            this.copyToClipboard(ipText);
+            await this.copyToClipboard(ipText);
             this.$message.success(`已复制 ${this.selectedIps.length} 个选中的IP`);
         },
 
@@ -560,19 +563,19 @@ export default {
          */
         copyAllTopIps() {
             const ips = this.topAttackIps.map(item => item.ip);
-            this.copyAllIps(ips);
+            return this.copyAllIps(ips);
         },
 
         /**
          * 复制选中的Top攻击IP到剪贴板
          */
-        copySelectedTopIps() {
+        async copySelectedTopIps() {
             if (this.selectedTopIps.length === 0) {
                 this.$message.warning("请先选择要复制的IP");
                 return;
             }
             const ipText = this.selectedTopIps.join("\n");
-            this.copyToClipboard(ipText);
+            await this.copyToClipboard(ipText);
             this.$message.success(`已复制 ${this.selectedTopIps.length} 个选中的IP`);
         },
 
@@ -580,22 +583,28 @@ export default {
          * 复制所有封禁IP到剪贴板
          */
         copyAllBannedIps() {
-            this.copyAllIps(this.allBannedIps);
+            return this.copyAllIps(this.allBannedIps);
         },
 
         /**
-         * 通用剪贴板复制方法
-         * @param {String} text 要复制的文本
+         * 通用剪贴板复制方法（兼容现代Clipboard API + 旧浏览器降级）
+         * param {String} text 要复制的文本
          */
-        copyToClipboard(text) {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
+        async copyToClipboard(text) {
+            try {
+                // 现代浏览器优先
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                // 降级兼容方案
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+            }
         },
 
         /**
@@ -607,7 +616,7 @@ export default {
 
         /**
          * 从列表中移除IP（仅前端显示，不影响实际封禁）
-         * @param {String} ip IP地址
+         * param {String} ip IP地址
          */
         removeIpFromList(ip) {
             this.allBannedIps = this.allBannedIps.filter(item => item !== ip);
@@ -617,7 +626,7 @@ export default {
 
         /**
          * 日志每页条数改变事件
-         * @param {Number} size 新的每页条数
+         * param {Number} size 新的每页条数
          */
         handleLogSizeChange(size) {
             this.logPageSize = size;
@@ -626,7 +635,7 @@ export default {
 
         /**
          * 日志页码改变事件
-         * @param {Number} page 新的页码
+         * param {Number} page 新的页码
          */
         handleLogCurrentChange(page) {
             this.logCurrentPage = page;
@@ -636,7 +645,7 @@ export default {
 
         /**
          * IP列表每页条数改变事件
-         * @param {Number} size 新的每页条数
+         * param {Number} size 新的每页条数
          */
         handleIpSizeChange(size) {
             this.ipPageSize = size;
@@ -645,7 +654,7 @@ export default {
 
         /**
          * IP列表页码改变事件
-         * @param {Number} page 新的页码
+         * param {Number} page 新的页码
          */
         handleIpCurrentChange(page) {
             this.ipCurrentPage = page;
@@ -655,8 +664,8 @@ export default {
 
         /**
          * 根据攻击次数获取威胁等级类型
-         * @param {Number} count 攻击次数
-         * @returns {String} ElementUI标签类型
+         * param {Number} count 攻击次数
+         * returns {String} ElementUI标签类型
          */
         getThreatLevel(count) {
             if (count > 200) return "danger";
@@ -666,8 +675,8 @@ export default {
 
         /**
          * 根据攻击次数获取威胁等级文本
-         * @param {Number} count 攻击次数
-         * @returns {String} 威胁等级文本
+         * param {Number} count 攻击次数
+         * returns {String} 威胁等级文本
          */
         getThreatLevelText(count) {
             if (count > 200) return "极高危";
@@ -678,8 +687,8 @@ export default {
 
         /**
          * 根据日志级别获取对应的CSS类
-         * @param {String} level 日志级别
-         * @returns {String} CSS类名
+         * param {String} level 日志级别
+         * returns {String} CSS类名
          */
         getLogClass(level) {
             const classMap = {
@@ -693,8 +702,8 @@ export default {
 
         /**
          * 格式化日期时间为字符串
-         * @param {Date} date 日期对象
-         * @returns {String} 格式化后的日期字符串
+         * param {Date} date 日期对象
+         * returns {String} 格式化后的日期字符串
          */
         formatDateTime(date) {
             const year = date.getFullYear();
@@ -708,8 +717,8 @@ export default {
 
         /**
          * 数字补零函数（用于日期格式化）
-         * @param {Number} num 数字
-         * @returns {String} 补零后的两位字符串
+         * param {Number} num 数字
+         * returns {String} 补零后的两位字符串
          */
         padZero(num) {
             return num < 10 ? `0${num}` : num;
@@ -934,21 +943,23 @@ export default {
     margin-top: 20px;
 }
 
-/* 日志容器 */
+/* 日志容器（替换pre后的样式） */
 .log-container {
     background-color: #1f2d3d;
     border-radius: 4px;
     padding: 15px;
     max-height: 400px;
     overflow-y: auto;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
 }
 
-.log-container pre {
-    margin: 0;
+.log-line {
+    line-height: 1.6;
+    word-break: break-all;
     padding: 2px 0;
-    font-size: 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
+    display: flex;
+    align-items: center;
 }
 
 .log-error {
