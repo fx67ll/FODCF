@@ -31,7 +31,7 @@
                     <div class="info-item">
                         <span class="info-label">防火墙：</span>
                         <span class="info-value"
-                            :class="serviceInfo.firewallStatus === '运行中' ? 'text-success' : 'text-danger'">
+                            :class="serviceInfo.firewallStatus.startsWith('运行中') ? 'text-success' : 'text-danger'">
                             {{ serviceInfo.firewallStatus }}
                         </span>
                     </div>
@@ -90,6 +90,7 @@
 
             <el-table :data="filteredJailList" border stripe style="width: 100%">
                 <el-table-column prop="name" label="监狱名称" width="150" />
+                <el-table-column prop="currentlyFailed" label="当前失败" width="100" align="center" />
                 <el-table-column prop="currentlyBanned" label="当前封禁" width="100" align="center" />
                 <el-table-column prop="totalBanned" label="累计封禁" width="100" align="center" />
                 <el-table-column prop="totalFailed" label="失败尝试" width="100" align="center" />
@@ -103,36 +104,27 @@
             </el-table>
         </div>
 
-        <!-- ==================== 监狱详情弹窗（新增） ==================== -->
+        <!-- ==================== 监狱详情弹窗（适配新后端） ==================== -->
         <el-dialog :title="'监狱详情 - ' + (currentJailDetail ? currentJailDetail.name : '')" :visible.sync="dialogVisible"
             width="60%" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
-            :style="`top: ${getDialogVerticalOffset(400)}`" append-to-body>
+            :style="`top: ${getDialogVerticalOffset(391)}`" append-to-body>
             <div v-if="currentJailDetail">
-                <!-- 监狱配置信息展示（使用 el-descriptions），对 config 进行判空保护 -->
+                <!-- 监狱基本信息展示（适配新后端返回结构） -->
                 <el-descriptions :column="4" border size="small">
+                    <el-descriptions-item label="当前失败">
+                        {{ currentJailDetail.currentlyFailed || '0' }}
+                    </el-descriptions-item>
                     <el-descriptions-item label="当前封禁">
-                        {{ currentJailDetail.currentlyBanned || '未知' }}
+                        {{ currentJailDetail.currentlyBanned || '0' }}
                     </el-descriptions-item>
                     <el-descriptions-item label="累计封禁">
-                        {{ currentJailDetail.totalBanned || '未知' }}
+                        {{ currentJailDetail.totalBanned || '0' }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="失败尝试">
-                        {{ currentJailDetail.totalFailed || '未知' }}
+                    <el-descriptions-item label="总失败尝试">
+                        {{ currentJailDetail.totalFailed || '0' }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="最大失败">
-                        {{ (currentJailDetail.config || {}).maxretry || '未知' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="封禁时间">
-                        {{ (currentJailDetail.config || {}).bantime || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="检测窗口">
-                        {{ (currentJailDetail.config || {}).findtime || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="监控端口">
-                        {{ (currentJailDetail.config || {}).port || '未知' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="日志路径">
-                        {{ (currentJailDetail.config || {}).logpath || '未知' }}
+                    <el-descriptions-item label="日志路径" :span="4">
+                        {{ currentJailDetail.logPath || '未知' }}
                     </el-descriptions-item>
                 </el-descriptions>
 
@@ -193,9 +185,10 @@
             </div>
 
             <el-table :data="topAttackIps" border stripe style="width: 100%">
-                <el-table-column width="50" align="center">
+                <el-table-column width="35" align="center">
                     <template v-slot="scope">
-                        <el-checkbox v-model="selectedTopIps" @change="handleTopIpSelect" />
+                        <el-checkbox v-model="selectedTopIps" :label="scope.row.ip" @change="handleTopIpSelect">
+                        </el-checkbox>
                     </template>
                 </el-table-column>
                 <el-table-column prop="ip" label="攻击IP" width="150" />
@@ -416,7 +409,7 @@ export default {
     created() {
         // 组件创建时加载所有数据
         this.loadAllData();
-        // 设置自动刷新，每30秒更新一次
+        // 设置自动刷新，每30秒更新一次（与后端缓存TTL一致）
         this.refreshInterval = setInterval(() => {
             this.loadAllData();
         }, 30000);
@@ -534,7 +527,7 @@ export default {
             this.logCurrentPage = 1;
         },
 
-        // ==================== 监狱详情弹窗相关方法（新增） ====================
+        // ==================== 监狱详情弹窗相关方法（适配新后端） ====================
 
         /**
          * 打开监狱详情弹窗
@@ -542,7 +535,7 @@ export default {
          */
         async openJailDetail(row) {
             try {
-                // 调用API获取该监狱的详细配置和封禁IP列表
+                // 调用API获取该监狱的详细信息和封禁IP列表
                 const res = await getJailDetail(row.name);
                 this.currentJailDetail = res.data;
                 // 清空弹窗内的IP选择
