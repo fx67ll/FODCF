@@ -4,7 +4,8 @@ fx67ll One Data Center Front
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
 ## 0.9.1.20260617
-* 优化`Fail2Ban`相关功能
+* 优化`Fail2Ban`相关功能  
+* 新增相关打开关闭，封禁解封功能，仅限白名单IP&超级管理员  
 
 ## 0.9.0.20260616
 * 新增`Fail2Ban`相关功能  
