@@ -44,7 +44,7 @@ export function getAllBannedIps() {
 /**
  * 获取最近的Fail2ban日志（支持参数化）
  * @param {Object} params 查询参数
- * @param {Number} params.limit 返回日志条数（1-1000，默认200）
+ * @param {Number} params.limit 返回日志条数（1-1023，默认200）
  * @param {String} params.level 日志级别筛选（ERROR/WARN/INFO/DEBUG）
  * @param {String} params.jail 监狱名称筛选
  */
@@ -58,11 +58,96 @@ export function getRecentLogs(params) {
 
 /**
  * 获取攻击统计数据
- * 包含按监狱统计的攻击次数、攻击来源Top 20和最近24小时攻击趋势
+ * @param {Object} params 查询参数
+ * @param {Number} params.logLines 统计日志行数（默认10000）
  */
-export function getAttackStats() {
+export function getAttackStats(params) {
   return request({
     url: "/server/fail2ban/stats",
     method: "get",
+    params: params,
+  });
+}
+/**
+ * 手动封禁指定IP
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ * @param {String} jailName 监狱名称
+ * @param {String} ip 要封禁的IP地址
+ */
+export function banIp(jailName, ip) {
+  return request({
+    url: `/server/fail2ban/jail/${jailName}/ban`,
+    method: "post",
+    params: { ip },
+  });
+}
+
+/**
+ * 手动解封指定IP
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ * @param {String} jailName 监狱名称
+ * @param {String} ip 要解封的IP地址
+ */
+export function unbanIp(jailName, ip) {
+  return request({
+    url: `/server/fail2ban/jail/${jailName}/unban`,
+    method: "post",
+    params: { ip },
+  });
+}
+
+/**
+ * 获取当前访问IP
+ */
+export function getCurrentIp() {
+  return request({
+    url: "/server/fail2ban/current-ip",
+    method: "get",
+  });
+}
+
+/**
+ * 启动Fail2ban服务
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ */
+export function startService() {
+  return request({
+    url: "/server/fail2ban/service/start",
+    method: "post",
+  });
+}
+
+/**
+ * 停止Fail2ban服务
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ */
+export function stopService() {
+  return request({
+    url: "/server/fail2ban/service/stop",
+    method: "post",
+  });
+}
+
+/**
+ * 启动指定监狱
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ * @param {String} jailName 监狱名称
+ */
+export function startJail(jailName) {
+  return request({
+    url: `/server/fail2ban/jail/${jailName}/start`,
+    method: "post",
+  });
+}
+
+/**
+ * 停止指定监狱
+ * 【安全限制】仅超级管理员且IP在白名单中可执行
+ * @param {String} jailName 监狱名称
+ */
+export function stopJail(jailName) {
+  return request({
+    url: `/server/fail2ban/jail/${jailName}/stop`,
+    method: "post",
   });
 }
