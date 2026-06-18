@@ -1,20 +1,33 @@
 <template>
     <div class="app-container">
-        <!-- Fail2ban服务状态卡片 -->
-        <div class="status-card">
+        <!-- Fail2ban服务状态卡片（始终显示，异常状态显示上锁样式） -->
+        <div class="status-card" :class="{ 'locked-card': isSystemLocked }">
+            <!-- 上锁遮罩（优化：显示具体错误原因） -->
+            <div v-if="isSystemLocked" class="lock-overlay">
+                <div class="lock-icon" :class="lockIconClass">
+                    <i class="el-icon-lock"></i>
+                </div>
+                <div class="lock-text">
+                    <div class="lock-title">{{ serviceStatus }}</div>
+                    <div class="lock-desc">{{ lockMessage }}</div>
+                </div>
+            </div>
+
             <div class="status-header">
                 <h2>Fail2ban 防护状态</h2>
                 <div class="refresh-container">
                     <el-button v-if="serviceStatus === '运行中'" type="text" icon="el-icon-video-pause"
-                        @click="openConfirmDialog('stopService', '')" class="startstop-btn" style="color: #f56c6c;">
+                        @click="openConfirmDialog('stopService', '')" class="startstop-btn" style="color: #f56c6c;"
+                        :disabled="isSystemLocked">
                         停止服务
                     </el-button>
                     <el-button v-else type="text" icon="el-icon-video-play"
-                        @click="openConfirmDialog('startService', '')" class="startstop-btn" style="color: #67c23a;">
+                        @click="openConfirmDialog('startService', '')" class="startstop-btn" style="color: #67c23a;"
+                        :disabled="isSystemLocked">
                         启动服务
                     </el-button>
                     <el-button type="text" icon="el-icon-refresh" @click="handleRefresh" :loading="isRefreshing"
-                        class="refresh-btn">
+                        class="refresh-btn" :disabled="isSystemLocked">
                         手动刷新
                     </el-button>
                     <span class="refresh-time">最后刷新: {{ lastRefreshTime }}</span>
@@ -23,7 +36,9 @@
 
             <div class="status-content">
                 <div class="status-indicator">
-                    <div class="indicator-dot" :class="serviceStatus === '运行中' ? 'running' : 'stopped'"></div>
+                    <div class="indicator-dot"
+                        :class="serviceStatus === '运行中' ? 'running' : serviceStatus === '系统不匹配' ? 'unknown' : serviceStatus === '未安装' ? 'unknown' : 'stopped'">
+                    </div>
                     <div class="status-text">{{ serviceStatus }}</div>
                 </div>
 
@@ -62,388 +77,406 @@
             </div>
         </div>
 
-        <!-- IP防护操作台卡片 -->
-        <div class="status-card operation-card">
-            <div class="status-header">
-                <h2>IP防护操作台</h2>
-                <el-tag size="small" type="info" effect="plain">仅白名单授权IP可执行操作</el-tag>
-            </div>
-
-            <div class="operation-panel">
-                <!-- 操作类型：卡片切换 -->
-                <div class="type-card-group">
-                    <div class="type-card ban-card" :class="{ active: operationForm.type === 'ban' }"
-                        @click="operationForm.type = 'ban'">
-                        <i class="el-icon-close"></i>
-                        <div class="card-text">
-                            <div class="card-title">封禁IP</div>
-                            <div class="card-desc">加入黑名单，拒绝访问</div>
-                        </div>
-                    </div>
-                    <div class="type-card unban-card" :class="{ active: operationForm.type === 'unban' }"
-                        @click="operationForm.type = 'unban'">
-                        <i class="el-icon-check"></i>
-                        <div class="card-text">
-                            <div class="card-title">解封IP</div>
-                            <div class="card-desc">移出黑名单，恢复访问</div>
-                        </div>
-                    </div>
+        <!-- 以下所有卡片仅在系统正常时显示 -->
+        <template v-if="!isSystemLocked">
+            <!-- IP防护操作台卡片 -->
+            <div class="status-card operation-card">
+                <div class="status-header">
+                    <h2>IP防护操作台</h2>
+                    <el-tag size="small" type="info" effect="plain">仅白名单授权IP可执行操作</el-tag>
                 </div>
 
-                <div class="input-row">
-                    <!-- 当前操作IP显示 -->
-                    <div class="current-ip-wrap">
-                        <span class="ip-label">当前操作台 IP：</span>
-                        <span class="ip-value">{{ currentIp }}</span>
-                        <el-button type="text" icon="el-icon-document-copy" size="mini" @click="copySingleIp(currentIp)"
-                            class="ip-copy-btn" :disabled="currentIp === '获取中...'">
+                <div class="operation-panel">
+                    <!-- 操作类型：卡片切换 -->
+                    <div class="type-card-group">
+                        <div class="type-card ban-card" :class="{ active: operationForm.type === 'ban' }"
+                            @click="operationForm.type = 'ban'">
+                            <i class="el-icon-close"></i>
+                            <div class="card-text">
+                                <div class="card-title">封禁IP</div>
+                                <div class="card-desc">加入黑名单，拒绝访问</div>
+                            </div>
+                        </div>
+                        <div class="type-card unban-card" :class="{ active: operationForm.type === 'unban' }"
+                            @click="operationForm.type = 'unban'">
+                            <i class="el-icon-check"></i>
+                            <div class="card-text">
+                                <div class="card-title">解封IP</div>
+                                <div class="card-desc">移出黑名单，恢复访问</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <!-- 当前操作IP显示 -->
+                        <div class="current-ip-wrap">
+                            <span class="ip-label">当前操作台 IP：</span>
+                            <span class="ip-value">{{ currentIp }}</span>
+                            <el-button type="text" icon="el-icon-document-copy" size="mini"
+                                @click="copySingleIp(currentIp)" class="ip-copy-btn" :disabled="currentIp === '获取中...'">
+                            </el-button>
+                        </div>
+
+                        <el-select v-model="operationForm.jailName" placeholder="选择目标监狱" prefix-icon="el-icon-menu"
+                            style="width: 180px;">
+                            <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name"
+                                :value="jail.name" />
+                        </el-select>
+
+                        <el-input v-model="operationForm.ip" placeholder="请输入IPv4地址" prefix-icon="el-icon-monitor"
+                            style="width: 260px;" clearable>
+                        </el-input>
+
+                        <el-button :type="operationForm.type === 'ban' ? 'danger' : 'success'"
+                            icon="el-icon-caret-right" @click="submitOperation" :disabled="!canSubmitOperation"
+                            class="execute-btn-v2">
+                            立即执行
                         </el-button>
                     </div>
-
-                    <el-select v-model="operationForm.jailName" placeholder="选择目标监狱" prefix-icon="el-icon-menu"
-                        style="width: 180px;">
-                        <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name" :value="jail.name" />
-                    </el-select>
-
-                    <el-input v-model="operationForm.ip" placeholder="请输入IPv4地址" prefix-icon="el-icon-monitor"
-                        style="width: 260px;" clearable>
-                    </el-input>
-
-                    <el-button :type="operationForm.type === 'ban' ? 'danger' : 'success'" icon="el-icon-caret-right"
-                        @click="submitOperation" :disabled="!canSubmitOperation" class="execute-btn-v2">
-                        立即执行
-                    </el-button>
                 </div>
             </div>
-        </div>
 
-        <!-- 最近24小时攻击趋势卡片 -->
-        <div class="status-card">
-            <div class="status-header">
-                <h2>最近24小时攻击趋势</h2>
-            </div>
-            <div class="chart-container">
-                <el-table :data="trendData" border stripe style="width: 100%" size="small">
-                    <el-table-column prop="dateTime" label="时间" width="130" align="center" />
-                    <el-table-column label="攻击进度" align="center">
+            <!-- ==================== 监狱防护状态列表 ==================== -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>监狱防护状态</h2>
+                    <div class="filter-container">
+                        <el-input v-model="jailFilter" placeholder="搜索监狱" size="small"
+                            style="width: 200px; margin-left: 16px;" prefix-icon="el-icon-search" />
+                    </div>
+                </div>
+
+                <el-table :data="paginatedJailList" border stripe style="width: 100%">
+                    <el-table-column prop="name" label="监狱名称" width="180" />
+                    <el-table-column label="运行状态" width="120" align="center">
                         <template v-slot="scope">
-                            <div style="display:flex;align-items:center;gap:10px;width:100%;">
-                                <el-progress :percentage="Math.round((scope.row.count / maxTrendCount) * 100)"
-                                    :show-text="false" :stroke-width="10"
-                                    :status="scope.row.count > maxTrendCount * 0.5 ? 'exception' : 'warning'"
-                                    style="flex:1" />
-                                <span style="width:60px;text-align:right;font-weight:bold;">
-                                    {{ scope.row.count }} 次
+                            <el-tag :type="scope.row.status === '运行中' ? 'success' : 'info'" size="small">
+                                {{ scope.row.status }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="currentlyFailed" label="当前失败" align="center" />
+                    <el-table-column prop="currentlyBanned" label="当前封禁" align="center" />
+                    <el-table-column prop="totalBanned" label="累计封禁" align="center" />
+                    <el-table-column prop="totalFailed" label="失败尝试" align="center" />
+                    <el-table-column label="操作" width="180" align="center">
+                        <template v-slot="scope">
+                            <el-button type="primary" size="small" @click="openJailDetail(scope.row)">
+                                详情
+                            </el-button>
+                            <el-button v-if="scope.row.status === '运行中'" type="danger" size="small"
+                                @click="openConfirmDialog('stopJail', '', scope.row.name)">
+                                停止
+                            </el-button>
+                            <el-button v-else type="success" size="small"
+                                @click="openConfirmDialog('startJail', '', scope.row.name)">
+                                启动
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <!-- 监狱列表分页 -->
+                <div class="pagination-container" v-if="filteredJailList.length > jailPageSize">
+                    <el-pagination @size-change="handleJailSizeChange" @current-change="handleJailCurrentChange"
+                        :current-page="jailCurrentPage" :page-sizes="[5, 10, 20]" :page-size="jailPageSize"
+                        layout="total, sizes, prev, pager, next, jumper" :total="filteredJailList.length" background>
+                    </el-pagination>
+                </div>
+            </div>
+
+            <!-- ==================== 监狱详情弹窗（新增配置区域） ==================== -->
+            <el-dialog :title="'监狱详情 - ' + (currentJailDetail ? currentJailDetail.name : '')"
+                :visible.sync="dialogVisible" width="700px" :close-on-click-modal="false"
+                @close="dialogVisible = false; dialogSelectedIps = []" custom-class="jail-detail-dialog"
+                :style="`top: ${getDialogVerticalOffset(570)}`" append-to-body>
+                <div v-if="currentJailDetail">
+                    <!-- 监狱基本信息 -->
+                    <div class="config-section">
+                        <div class="section-title">监狱基本信息</div>
+                        <el-descriptions :column="4" border size="small">
+                            <el-descriptions-item label="运行状态">
+                                <el-tag :type="currentJailDetail.status === '运行中' ? 'success' : 'info'" size="small">
+                                    {{ currentJailDetail.status }}
+                                </el-tag>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="当前失败">
+                                {{ currentJailDetail.currentlyFailed || '0' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="当前封禁">
+                                {{ currentJailDetail.currentlyBanned || '0' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="累计封禁">
+                                {{ currentJailDetail.totalBanned || '0' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="总失败尝试">
+                                {{ currentJailDetail.totalFailed || '0' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="日志路径" :span="3">
+                                {{ currentJailDetail.logPath || '未知' }}
+                            </el-descriptions-item>
+                        </el-descriptions>
+                    </div>
+
+                    <!-- 监狱只读配置信息 -->
+                    <div class="config-section">
+                        <div class="section-title">监狱配置参数</div>
+                        <el-descriptions :column="4" border size="small">
+                            <el-descriptions-item label="封禁时长">
+                                {{ currentJailDetail.config.bantime || '未知' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="检测窗口">
+                                {{ currentJailDetail.config.findtime || '未知' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="最大重试次数">
+                                {{ currentJailDetail.config.maxretry || currentJailDetail.config.maxretry === 0 ?
+                                    `${currentJailDetail.config.maxretry}次` : '未知' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="白名单IP数量">
+                                {{ (currentJailDetail.config.ignoreIpList || []).length }} 个
+                            </el-descriptions-item>
+                            <el-descriptions-item label="监狱白名单" :span="2">
+                                <el-tag v-for="ip in (currentJailDetail.config.ignoreIpList || [])" :key="ip"
+                                    size="mini" style="margin: 3px;">
+                                    {{ ip }}
+                                </el-tag>
+                                <span v-if="!currentJailDetail.config.ignoreIpList.length" style="color: #909399;">
+                                    无白名单配置
                                 </span>
+                            </el-descriptions-item>
+                        </el-descriptions>
+                    </div>
+
+                    <!-- 封禁IP列表区域 -->
+                    <div class="banned-ips-section">
+                        <div class="section-header">
+                            <h4>当前被封禁IP ({{ (currentJailDetail.bannedIps || []).length }})</h4>
+                            <div class="ip-actions">
+                                <el-button type="primary" size="small" icon="el-icon-document-copy"
+                                    @click="copyDialogAllIps"
+                                    :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
+                                    复制全部
+                                </el-button>
+                                <el-button type="success" size="small" icon="el-icon-check"
+                                    @click="copyDialogSelectedIps" :disabled="dialogSelectedIps.length === 0">
+                                    复制选中 ({{ dialogSelectedIps.length }})
+                                </el-button>
                             </div>
+                        </div>
+
+                        <div class="banned-ips-list">
+                            <el-checkbox v-for="ip in (currentJailDetail.bannedIps || [])" :key="ip"
+                                v-model="dialogSelectedIps" :label="ip" class="ip-checkbox">
+                                {{ ip }}
+                                <el-button type="text" icon="el-icon-document-copy" size="mini"
+                                    @click.stop="copySingleIp(ip)" class="copy-btn">
+                                    复制
+                                </el-button>
+                                <el-button type="text" icon="el-icon-check" size="mini"
+                                    @click.stop="openConfirmDialog('unban', ip, currentJailDetail.name)"
+                                    class="copy-btn">
+                                    解封
+                                </el-button>
+                            </el-checkbox>
+                        </div>
+
+                        <div v-if="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0"
+                            class="empty-text">
+                            暂无被封禁的IP
+                        </div>
+                    </div>
+                </div>
+                <span slot="footer" class="dialog-footer">
+                    <el-button @click="dialogVisible = false; dialogSelectedIps = []">关闭</el-button>
+                </span>
+            </el-dialog>
+
+            <!-- 最近24小时攻击趋势卡片（优化：替换为ECharts柱状图） -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>最近24小时攻击趋势</h2>
+                    <div class="trend-stats">
+                        <span class="stat-item">
+                            <span class="stat-label">总攻击：</span>
+                            <span class="stat-value">{{ totalTrendAttacks }} 次</span>
+                        </span>
+                        <span class="stat-item">
+                            <span class="stat-label">峰值：</span>
+                            <span class="stat-value">{{ maxTrendCount }} 次/小时</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div id="trendChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- 攻击来源统计卡片 -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>攻击来源统计 (Top {{ topIpLimit }})</h2>
+                    <div class="ip-actions">
+                        <!-- Top条数选择 -->
+                        <el-select v-model="topIpLimit" size="small" style="width: 120px;" @change="loadAttackStats">
+                            <el-option label="Top10" :value="10" />
+                            <el-option label="Top20" :value="20" />
+                            <el-option label="Top50" :value="50" />
+                            <el-option label="Top100" :value="100" />
+                        </el-select>
+                        <!-- 新增：统计行数选择 -->
+                        <el-select v-model="statsLogLines" size="small" style="width: 140px;" @change="loadAttackStats">
+                            <el-option label="最近5千行" :value="5000" />
+                            <el-option label="最近1万行" :value="10000" />
+                            <el-option label="最近5万行" :value="50000" />
+                            <el-option label="最近10万行" :value="100000" />
+                        </el-select>
+                        <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllTopIps"
+                            :disabled="topAttackIps.length === 0">
+                            复制全部
+                        </el-button>
+                        <el-button type="success" size="small" icon="el-icon-check" @click="copySelectedTopIps"
+                            :disabled="selectedTopIps.length === 0">
+                            复制选中 ({{ selectedTopIps.length }})
+                        </el-button>
+                    </div>
+                </div>
+
+                <el-table :data="topAttackIps" border stripe style="width: 100%">
+                    <el-table-column width="35" align="center">
+                        <template v-slot="scope">
+                            <el-checkbox v-model="selectedTopIps" :label="scope.row.ip" @change="handleTopIpSelect">
+                            </el-checkbox>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="ip" label="攻击IP" width="150" />
+                    <el-table-column prop="count" label="攻击次数" width="100" align="center" />
+                    <!-- 新增：来源监狱列 -->
+                    <el-table-column label="来源监狱" width="160" align="center">
+                        <template v-slot="scope">
+                            <el-tag v-for="jail in scope.row.jails.split(', ')" :key="jail" size="mini" type="info"
+                                style="margin: 2px;">
+                                {{ jail }}
+                            </el-tag>
+                            <span v-if="!scope.row.jails" style="color: #909399;">未知</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="威胁等级" width="120" align="center">
+                        <template v-slot="scope">
+                            <el-tag :type="getThreatLevel(scope.row.count)">
+                                {{ getThreatLevelText(scope.row.count) }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="封禁状态" width="90" align="center">
+                        <template v-slot="scope">
+                            <el-tag :type="isIpBanned(scope.row.ip) ? 'danger' : 'success'" size="small">
+                                {{ isIpBanned(scope.row.ip) ? '已封禁' : '未封禁' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="120" align="center">
+                        <template v-slot="scope">
+                            <el-button v-if="!isIpBanned(scope.row.ip)" type="danger" size="mini" icon="el-icon-close"
+                                @click="openConfirmDialog('ban', scope.row.ip)">
+                                封禁
+                            </el-button>
+                            <el-button v-else type="success" size="mini" icon="el-icon-check"
+                                @click="openConfirmDialog('unban', scope.row.ip)">
+                                解封
+                            </el-button>
                         </template>
                     </el-table-column>
                 </el-table>
             </div>
-        </div>
 
-        <!-- ==================== 监狱防护状态列表 ==================== -->
-        <div class="status-card">
-            <div class="status-header">
-                <h2>监狱防护状态</h2>
-                <div class="filter-container">
-                    <el-input v-model="jailFilter" placeholder="搜索监狱" size="small" style="width: 200px;"
-                        prefix-icon="el-icon-search" />
-                </div>
-            </div>
-
-            <el-table :data="filteredJailList" border stripe style="width: 100%">
-                <el-table-column prop="name" label="监狱名称" width="150" />
-                <el-table-column label="运行状态" width="100" align="center">
-                    <template v-slot="scope">
-                        <el-tag :type="scope.row.status === '运行中' ? 'success' : 'info'" size="small">
-                            {{ scope.row.status }}
-                        </el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="currentlyFailed" label="当前失败" width="100" align="center" />
-                <el-table-column prop="currentlyBanned" label="当前封禁" width="100" align="center" />
-                <el-table-column prop="totalBanned" label="累计封禁" width="100" align="center" />
-                <el-table-column prop="totalFailed" label="失败尝试" width="100" align="center" />
-                <el-table-column label="操作" width="180" align="center">
-                    <template v-slot="scope">
-                        <el-button type="primary" size="small" @click="openJailDetail(scope.row)">
-                            详情
-                        </el-button>
-                        <el-button v-if="scope.row.status === '运行中'" type="danger" size="small"
-                            @click="openConfirmDialog('stopJail', scope.row.name)">
-                            停止
-                        </el-button>
-                        <el-button v-else type="success" size="small"
-                            @click="openConfirmDialog('startJail', scope.row.name)">
-                            启动
-                        </el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </div>
-
-        <!-- ==================== 监狱详情弹窗（新增配置区域） ==================== -->
-        <el-dialog :title="'监狱详情 - ' + (currentJailDetail ? currentJailDetail.name : '')" :visible.sync="dialogVisible"
-            width="700px" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
-            custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(570)}`" append-to-body>
-            <div v-if="currentJailDetail">
-                <!-- 监狱基本信息 -->
-                <div class="config-section">
-                    <div class="section-title">监狱基本信息</div>
-                    <el-descriptions :column="4" border size="small">
-                        <el-descriptions-item label="运行状态">
-                            <el-tag :type="currentJailDetail.status === '运行中' ? 'success' : 'info'" size="small">
-                                {{ currentJailDetail.status }}
-                            </el-tag>
-                        </el-descriptions-item>
-                        <el-descriptions-item label="当前失败">
-                            {{ currentJailDetail.currentlyFailed || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="当前封禁">
-                            {{ currentJailDetail.currentlyBanned || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="累计封禁">
-                            {{ currentJailDetail.totalBanned || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="总失败尝试">
-                            {{ currentJailDetail.totalFailed || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="日志路径" :span="3">
-                            {{ currentJailDetail.logPath || '未知' }}
-                        </el-descriptions-item>
-                    </el-descriptions>
+            <!-- 全量封禁IP列表卡片 -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>全量封禁IP列表 (共 {{ allBannedIps.length }} 个)</h2>
+                    <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllBannedIps"
+                        :disabled="allBannedIps.length === 0">
+                        复制全部封禁IP
+                    </el-button>
                 </div>
 
-                <!-- 监狱只读配置信息 -->
-                <div class="config-section">
-                    <div class="section-title">监狱配置参数</div>
-                    <el-descriptions :column="4" border size="small">
-                        <el-descriptions-item label="封禁时长">
-                            {{ currentJailDetail.config.bantime || '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="检测窗口">
-                            {{ currentJailDetail.config.findtime || '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="最大重试次数">
-                            {{ currentJailDetail.config.maxretry || currentJailDetail.config.maxretry === 0 ?
-                                `${currentJailDetail.config.maxretry}次` : '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="白名单IP数量">
-                            {{ (currentJailDetail.config.ignoreIpList || []).length }} 个
-                        </el-descriptions-item>
-                        <el-descriptions-item label="监狱白名单" :span="2">
-                            <el-tag v-for="ip in (currentJailDetail.config.ignoreIpList || [])" :key="ip" size="mini"
-                                style="margin: 3px;">
-                                {{ ip }}
-                            </el-tag>
-                            <span v-if="!currentJailDetail.config.ignoreIpList.length" style="color: #909399;">
-                                无白名单配置
-                            </span>
-                        </el-descriptions-item>
-                    </el-descriptions>
-                </div>
-
-                <!-- 封禁IP列表区域 -->
-                <div class="banned-ips-section">
-                    <div class="section-header">
-                        <h4>当前被封禁IP ({{ (currentJailDetail.bannedIps || []).length }})</h4>
-                        <div class="ip-actions">
-                            <el-button type="primary" size="small" icon="el-icon-document-copy"
-                                @click="copyDialogAllIps"
-                                :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
-                                复制全部
-                            </el-button>
-                            <el-button type="success" size="small" icon="el-icon-check" @click="copyDialogSelectedIps"
-                                :disabled="dialogSelectedIps.length === 0">
-                                复制选中 ({{ dialogSelectedIps.length }})
-                            </el-button>
-                        </div>
-                    </div>
-
-                    <div class="banned-ips-list">
-                        <el-checkbox v-for="ip in (currentJailDetail.bannedIps || [])" :key="ip"
-                            v-model="dialogSelectedIps" :label="ip" class="ip-checkbox">
-                            {{ ip }}
-                            <el-button type="text" icon="el-icon-document-copy" size="mini"
-                                @click.stop="copySingleIp(ip)" class="copy-btn">
-                                复制
-                            </el-button>
-                            <el-button type="text" icon="el-icon-check" size="mini"
-                                @click.stop="openConfirmDialog('unban', ip, currentJailDetail.name)" class="copy-btn">
-                                解封
-                            </el-button>
-                        </el-checkbox>
-                    </div>
-
-                    <div v-if="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0"
-                        class="empty-text">
+                <div class="all-banned-ips">
+                    <el-tag v-for="ip in paginatedBannedIps" :key="ip" type="danger" style="margin: 5px;">
+                        {{ ip }}
+                        <el-button type="text" icon="el-icon-check" size="mini"
+                            @click.stop="openConfirmDialog('unban', ip)" class="copy-btn">
+                            解封
+                        </el-button>
+                        <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copySingleIp(ip)"
+                            class="copy-btn" />
+                    </el-tag>
+                    <div v-if="allBannedIps.length === 0" class="empty-text">
                         暂无被封禁的IP
                     </div>
                 </div>
-            </div>
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="dialogVisible = false; dialogSelectedIps = []">关闭</el-button>
-            </span>
-        </el-dialog>
 
-        <!-- 攻击来源统计卡片 -->
-        <div class="status-card">
-            <div class="status-header">
-                <h2>攻击来源统计 (Top 20)</h2>
-                <div class="ip-actions">
-                    <!-- 新增：统计行数选择 -->
-                    <el-select v-model="statsLogLines" size="small" style="width: 140px;" @change="loadAttackStats">
-                        <el-option label="最近5千行" :value="5000" />
-                        <el-option label="最近1万行" :value="10000" />
-                        <el-option label="最近5万行" :value="50000" />
-                        <el-option label="最近10万行" :value="100000" />
-                    </el-select>
-                    <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllTopIps"
-                        :disabled="topAttackIps.length === 0">
-                        复制全部
-                    </el-button>
-                    <el-button type="success" size="small" icon="el-icon-check" @click="copySelectedTopIps"
-                        :disabled="selectedTopIps.length === 0">
-                        复制选中 ({{ selectedTopIps.length }})
-                    </el-button>
+                <!-- 全量IP分页 -->
+                <div class="pagination-container" v-if="allBannedIps.length > ipPageSize">
+                    <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
+                        :current-page="ipCurrentPage" :page-sizes="[50, 100, 200]" :page-size="ipPageSize"
+                        layout="total, sizes, prev, pager, next, jumper" :total="allBannedIps.length" background>
+                    </el-pagination>
                 </div>
             </div>
 
-            <el-table :data="topAttackIps" border stripe style="width: 100%">
-                <el-table-column width="35" align="center">
-                    <template v-slot="scope">
-                        <el-checkbox v-model="selectedTopIps" :label="scope.row.ip" @change="handleTopIpSelect">
-                        </el-checkbox>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="ip" label="攻击IP" width="150" />
-                <el-table-column prop="count" label="攻击次数" width="100" align="center" />
-                <!-- 新增：来源监狱列 -->
-                <el-table-column label="来源监狱" width="160" align="center">
-                    <template v-slot="scope">
-                        <el-tag v-for="jail in scope.row.jails.split(', ')" :key="jail" size="mini" type="info"
-                            style="margin: 2px;">
-                            {{ jail }}
-                        </el-tag>
-                        <span v-if="!scope.row.jails" style="color: #909399;">未知</span>
-                    </template>
-                </el-table-column>
-                <el-table-column label="威胁等级" width="120" align="center">
-                    <template v-slot="scope">
-                        <el-tag :type="getThreatLevel(scope.row.count)">
-                            {{ getThreatLevelText(scope.row.count) }}
-                        </el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column label="封禁状态" width="90" align="center">
-                    <template v-slot="scope">
-                        <el-tag :type="isIpBanned(scope.row.ip) ? 'danger' : 'success'" size="small">
-                            {{ isIpBanned(scope.row.ip) ? '已封禁' : '未封禁' }}
-                        </el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column label="操作" width="120" align="center">
-                    <template v-slot="scope">
-                        <el-button v-if="!isIpBanned(scope.row.ip)" type="danger" size="mini" icon="el-icon-close"
-                            @click="openConfirmDialog('ban', scope.row.ip)">
-                            封禁
+            <!-- 最近攻击日志卡片 -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>最近攻击日志</h2>
+                    <div class="filter-container">
+                        <el-select v-model="logLevelFilter" placeholder="日志级别" size="small" style="width: 120px;">
+                            <el-option label="全部" value="" />
+                            <el-option label="ERROR" value="ERROR" />
+                            <el-option label="WARN" value="WARN" />
+                            <el-option label="INFO" value="INFO" />
+                        </el-select>
+                        <el-select v-model="logJailFilter" placeholder="监狱" size="small" style="width: 120px;">
+                            <el-option label="全部" value="" />
+                            <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name"
+                                :value="jail.name" />
+                        </el-select>
+                        <el-select v-model="logLimit" placeholder="日志条数" size="small" style="width: 120px;">
+                            <el-option label="50条" :value="50" />
+                            <el-option label="100条" :value="100" />
+                            <el-option label="200条" :value="200" />
+                            <el-option label="500条" :value="500" />
+                            <el-option label="1000条" :value="1000" />
+                        </el-select>
+                        <el-button type="text" icon="el-icon-refresh" @click="refreshLogs" :loading="isLoadingLogs"
+                            class="refresh-btn">
+                            刷新日志
                         </el-button>
-                        <el-button v-else type="success" size="mini" icon="el-icon-check"
-                            @click="openConfirmDialog('unban', scope.row.ip)">
-                            解封
+                        <span class="refresh-time">日志刷新: {{ logLastRefreshTime }}</span>
+                    </div>
+                </div>
+
+                <div class="log-container">
+                    <div v-for="(log, index) in paginatedLogs" :key="index" class="log-line"
+                        :class="getLogClass(log.level)">
+                        <span>[{{ log.date }} {{ log.time }}] [{{ log.level }}] {{ log.message }}</span>
+                        <el-button v-if="log.ip" type="text" icon="el-icon-document-copy" size="mini"
+                            @click="copySingleIp(log.ip)" class="copy-btn-inline">
+                            复制IP
                         </el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </div>
+                    </div>
+                    <div v-if="filteredLogs.length === 0" class="empty-text">
+                        暂无符合条件的日志
+                    </div>
+                </div>
 
-        <!-- 全量封禁IP列表卡片 -->
-        <div class="status-card">
-            <div class="status-header">
-                <h2>全量封禁IP列表 (共 {{ allBannedIps.length }} 个)</h2>
-                <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllBannedIps"
-                    :disabled="allBannedIps.length === 0">
-                    复制全部封禁IP
-                </el-button>
-            </div>
-
-            <div class="all-banned-ips">
-                <el-tag v-for="ip in paginatedBannedIps" :key="ip" type="danger" style="margin: 5px;">
-                    {{ ip }}
-                    <el-button type="text" icon="el-icon-check" size="mini" @click.stop="openConfirmDialog('unban', ip)"
-                        class="copy-btn">
-                        解封
-                    </el-button>
-                    <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copySingleIp(ip)"
-                        class="copy-btn" />
-                </el-tag>
-                <div v-if="allBannedIps.length === 0" class="empty-text">
-                    暂无被封禁的IP
+                <!-- 日志分页 -->
+                <div class="pagination-container" v-if="filteredLogs.length > logPageSize">
+                    <el-pagination @size-change="handleLogSizeChange" @current-change="handleLogCurrentChange"
+                        :current-page="logCurrentPage" :page-sizes="[20, 50, 100]" :page-size="logPageSize"
+                        layout="total, sizes, prev, pager, next, jumper" :total="filteredLogs.length" background>
+                    </el-pagination>
                 </div>
             </div>
-
-            <!-- 全量IP分页 -->
-            <div class="pagination-container" v-if="allBannedIps.length > ipPageSize">
-                <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
-                    :current-page="ipCurrentPage" :page-sizes="[50, 100, 200]" :page-size="ipPageSize"
-                    layout="total, sizes, prev, pager, next, jumper" :total="allBannedIps.length" background>
-                </el-pagination>
-            </div>
-        </div>
-
-        <!-- 最近攻击日志卡片 -->
-        <div class="status-card">
-            <div class="status-header">
-                <h2>最近攻击日志</h2>
-                <div class="filter-container">
-                    <el-select v-model="logLevelFilter" placeholder="日志级别" size="small" style="width: 120px;">
-                        <el-option label="全部" value="" />
-                        <el-option label="ERROR" value="ERROR" />
-                        <el-option label="WARN" value="WARN" />
-                        <el-option label="INFO" value="INFO" />
-                    </el-select>
-                    <el-select v-model="logJailFilter" placeholder="监狱" size="small" style="width: 120px;">
-                        <el-option label="全部" value="" />
-                        <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name" :value="jail.name" />
-                    </el-select>
-                    <el-select v-model="logLimit" placeholder="日志条数" size="small" style="width: 120px;">
-                        <el-option label="50条" :value="50" />
-                        <el-option label="100条" :value="100" />
-                        <el-option label="200条" :value="200" />
-                        <el-option label="500条" :value="500" />
-                        <el-option label="1000条" :value="1000" />
-                    </el-select>
-                    <el-button type="text" icon="el-icon-refresh" @click="refreshLogs" :loading="isLoadingLogs"
-                        class="refresh-btn">
-                        刷新日志
-                    </el-button>
-                    <span class="refresh-time">日志刷新: {{ logLastRefreshTime }}</span>
-                </div>
-            </div>
-
-            <div class="log-container">
-                <div v-for="(log, index) in paginatedLogs" :key="index" class="log-line"
-                    :class="getLogClass(log.level)">
-                    <span>[{{ log.date }} {{ log.time }}] [{{ log.level }}] {{ log.message }}</span>
-                    <el-button v-if="log.ip" type="text" icon="el-icon-document-copy" size="mini"
-                        @click="copySingleIp(log.ip)" class="copy-btn-inline">
-                        复制IP
-                    </el-button>
-                </div>
-                <div v-if="filteredLogs.length === 0" class="empty-text">
-                    暂无符合条件的日志
-                </div>
-            </div>
-
-            <!-- 日志分页 -->
-            <div class="pagination-container" v-if="filteredLogs.length > logPageSize">
-                <el-pagination @size-change="handleLogSizeChange" @current-change="handleLogCurrentChange"
-                    :current-page="logCurrentPage" :page-sizes="[20, 50, 100]" :page-size="logPageSize"
-                    layout="total, sizes, prev, pager, next, jumper" :total="filteredLogs.length" background>
-                </el-pagination>
-            </div>
-        </div>
+        </template>
 
         <!-- 统一操作确认弹窗 -->
         <el-dialog title="操作安全确认" :visible.sync="confirmDialogVisible" width="480px" :close-on-click-modal="false"
@@ -463,7 +496,7 @@
                     </el-descriptions-item>
                     <el-descriptions-item v-if="confirmInfo.ip" label="目标IP地址">
                         <span style="font-family: Consolas; font-weight: bold; font-size: 14px;">{{ confirmInfo.ip
-                            }}</span>
+                        }}</span>
                     </el-descriptions-item>
                     <el-descriptions-item v-if="confirmInfo.jailName" label="目标监狱">
                         {{ confirmInfo.jailName }}
@@ -476,8 +509,8 @@
                     若执行失败，请确认当前访问IP已加入系统白名单。
                 </div>
 
-                <el-form v-if="confirmInfo.type === 'ban' && !confirmInfo.jailName" style="margin-top: 15px;"
-                    size="small">
+                <el-form v-if="['ban', 'unban'].includes(confirmInfo.type) && !confirmInfo.jailName"
+                    style="margin-top: 15px;" size="small">
                     <el-form-item label="选择监狱" required style="margin-bottom: 0;">
                         <el-select v-model="confirmInfo.jailName" placeholder="请选择要操作的监狱" style="width: 100%;">
                             <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name"
@@ -517,11 +550,17 @@ import {
 } from "@/api/fx67ll/server/fail2ban";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+// 新增：导入ECharts
+import * as echarts from 'echarts';
 
 export default {
     name: "Fail2banManager",
     data() {
         return {
+            // ==================== 系统检测状态（新增） ====================
+            isSystemLocked: false,    // 系统是否被锁定（不匹配/未安装）
+            lockMessage: "",          // 锁定状态提示信息
+
             // ==================== 服务状态 ====================
             serviceStatus: "加载中...",
             serviceInfo: {
@@ -535,7 +574,9 @@ export default {
 
             // ==================== 监狱管理 ====================
             jailList: [],           // 所有监狱列表
-            jailFilter: "",         // 监狱搜索过滤关键字
+            jailFilter: "",        // 监狱搜索过滤关键字
+            jailCurrentPage: 1,    // 监狱列表当前页码
+            jailPageSize: 5,       // 监狱列表每页条数
 
             // ==================== 弹窗控制 ====================
             dialogVisible: false,           // 弹窗显示状态
@@ -546,8 +587,11 @@ export default {
             topAttackIps: [],       // 攻击来源Top 20
             trendData: [],          // 24小时攻击趋势数据
             maxTrendCount: 1,       // 趋势最大攻击数
+            totalTrendAttacks: 0,   // 24小时总攻击数
             baselineMaxRetry: 5,    // 动态威胁等级基准阈值
-            statsLogLines: 10000,  // 统计日志行数，默认10000行
+            statsLogLines: 10000,   // 统计日志行数，默认10000行
+            topIpLimit: 20,         // 新增：攻击IP展示Top数量，默认20，最大100
+            trendChart: null,       // 趋势图实例
 
             // ==================== 全量封禁IP ====================
             allBannedIps: [],       // 所有被封禁的IP（去重后）
@@ -594,13 +638,30 @@ export default {
     },
     computed: {
         /**
-         * 过滤后的监狱列表（支持搜索）
+         * 过滤后的监狱列表（支持搜索，运行中排最前）
          */
         filteredJailList() {
-            if (!this.jailFilter) return this.jailList;
-            return this.jailList.filter(jail =>
-                jail.name.toLowerCase().includes(this.jailFilter.toLowerCase())
-            );
+            let list = this.jailList;
+            if (this.jailFilter) {
+                list = list.filter(jail =>
+                    jail.name.toLowerCase().includes(this.jailFilter.toLowerCase())
+                );
+            }
+            // 运行中的监狱排在最前面
+            return [...list].sort((a, b) => {
+                if (a.status === '运行中' && b.status !== '运行中') return -1;
+                if (a.status !== '运行中' && b.status === '运行中') return 1;
+                return 0;
+            });
+        },
+
+        /**
+         * 分页后的监狱列表
+         */
+        paginatedJailList() {
+            const start = (this.jailCurrentPage - 1) * this.jailPageSize;
+            const end = start + this.jailPageSize;
+            return this.filteredJailList.slice(start, end);
         },
 
         /**
@@ -639,8 +700,28 @@ export default {
          * 操作台提交按钮是否可用
          */
         canSubmitOperation() {
-            const ipReg = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            const ipReg = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
             return this.operationForm.jailName && ipReg.test(this.operationForm.ip);
+        },
+
+        /**
+         * 锁定状态图标颜色类（新增）
+         */
+        lockIconClass() {
+            if (this.serviceStatus === "系统不匹配") {
+                return "warning-icon";
+            } else if (this.serviceStatus === "未安装") {
+                return "info-icon";
+            }
+            return "";
+        }
+    },
+    watch: {
+        /**
+         * 监狱搜索关键字变化时重置分页到第一页
+         */
+        jailFilter() {
+            this.jailCurrentPage = 1;
         }
     },
     created() {
@@ -651,11 +732,21 @@ export default {
             this.loadAllData();
         }, 30000);
     },
+    mounted() {
+        // 组件挂载后初始化图表
+        this.initTrendChart();
+        // 监听窗口大小变化，自适应图表
+        window.addEventListener('resize', this.handleResize);
+    },
     beforeDestroy() {
-        // 组件销毁时清除定时器，防止内存泄漏
+        // 组件销毁时清除定时器和图表实例，防止内存泄漏
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
+        if (this.trendChart) {
+            this.trendChart.dispose();
+        }
+        window.removeEventListener('resize', this.handleResize);
     },
     methods: {
         // 代理工具函数
@@ -664,19 +755,141 @@ export default {
         },
 
         /**
+         * 初始化攻击趋势图（新增）
+         */
+        initTrendChart() {
+            const chartDom = document.getElementById('trendChart');
+            this.trendChart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}<br/>攻击次数：{c} 次'
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: [],
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '攻击次数',
+                    nameTextStyle: {
+                        fontSize: 12
+                    }
+                },
+                series: [
+                    {
+                        data: [],
+                        type: 'bar',
+                        barWidth: '60%',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#409eff' },
+                                { offset: 1, color: '#66b1ff' }
+                            ])
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: '#337ecc' },
+                                    { offset: 1, color: '#409eff' }
+                                ])
+                            }
+                        }
+                    }
+                ]
+            };
+            this.trendChart.setOption(option);
+        },
+
+        /**
+         * 更新攻击趋势图数据（新增）
+         */
+        updateTrendChart() {
+            if (!this.trendChart || this.trendData.length === 0) return;
+
+            const xAxisData = this.trendData.map(item => item.dateTime);
+            const seriesData = this.trendData.map(item => item.count);
+
+            // 计算阈值（平均值的2倍）
+            const avgCount = this.totalTrendAttacks / this.trendData.length;
+            const threshold = avgCount * 2;
+
+            // 为超过阈值的柱子设置红色
+            const itemStyles = seriesData.map(count => {
+                if (count > threshold) {
+                    return {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#f56c6c' },
+                            { offset: 1, color: '#f78989' }
+                        ])
+                    };
+                }
+                return {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#409eff' },
+                        { offset: 1, color: '#66b1ff' }
+                    ])
+                };
+            });
+
+            this.trendChart.setOption({
+                xAxis: {
+                    data: xAxisData
+                },
+                series: [
+                    {
+                        data: seriesData.map((value, index) => ({
+                            value,
+                            itemStyle: itemStyles[index]
+                        }))
+                    }
+                ]
+            });
+        },
+
+        /**
+         * 窗口大小变化时自适应图表（新增）
+         */
+        handleResize() {
+            if (this.trendChart) {
+                this.trendChart.resize();
+            }
+        },
+
+        /**
          * 加载所有数据
          * 并行加载所有接口，提升加载速度
          */
         async loadAllData() {
             try {
-                await Promise.all([
-                    this.loadServiceStatus(),
-                    this.loadJailList(),
-                    this.loadAttackStats(),
-                    this.loadRecentLogs(),
-                    this.loadAllBannedIps(),
-                    this.loadCurrentIp()
-                ]);
+                // 优先加载服务状态（包含系统检测）
+                await this.loadServiceStatus();
+
+                // 只有系统正常时才加载其他数据
+                if (!this.isSystemLocked) {
+                    await Promise.all([
+                        this.loadJailList(),
+                        this.loadAttackStats(),
+                        this.loadRecentLogs(),
+                        this.loadAllBannedIps(),
+                        this.loadCurrentIp()
+                    ]);
+                    // 更新图表数据
+                    this.$nextTick(() => {
+                        this.updateTrendChart();
+                    });
+                }
+
                 const now = this.formatDateTime(new Date());
                 this.lastRefreshTime = now;
                 this.logLastRefreshTime = now;
@@ -699,6 +912,9 @@ export default {
          * 刷新日志数据
          */
         refreshLogs() {
+            // 系统锁定时不执行刷新
+            if (this.isSystemLocked) return;
+
             this.isLoadingLogs = true;
             this.loadRecentLogs().finally(() => {
                 this.isLoadingLogs = false;
@@ -708,12 +924,22 @@ export default {
 
         /**
          * 加载Fail2ban服务状态
+         * 【新增】：处理系统不匹配和未安装状态
          */
         async loadServiceStatus() {
             const response = await getFail2banStatus();
             const data = response.data || {};
             this.serviceStatus = data.status || "未知";
             this.serviceInfo = data;
+
+            // 检测系统是否需要锁定
+            if (data.status === "系统不匹配" || data.status === "未安装") {
+                this.isSystemLocked = true;
+                this.lockMessage = data.error || "该功能不可用";
+            } else {
+                this.isSystemLocked = false;
+                this.lockMessage = "";
+            }
         },
 
         /**
@@ -742,7 +968,10 @@ export default {
  * 【新增】：支持自定义统计日志行数
  */
         async loadAttackStats() {
-            const response = await getAttackStats({ logLines: this.statsLogLines });
+            const response = await getAttackStats({
+                logLines: this.statsLogLines,
+                topIpLimit: this.topIpLimit
+            });
             this.topAttackIps = response.data.topAttackIps || [];
             this.baselineMaxRetry = response.data.baselineMaxRetry || 5;
 
@@ -761,8 +990,9 @@ export default {
                 };
             }).reverse();
 
-            // 计算24小时内最大攻击次数
+            // 计算24小时内最大攻击次数和总攻击次数
             this.maxTrendCount = Math.max(...this.trendData.map(item => item.count), 1);
+            this.totalTrendAttacks = this.trendData.reduce((sum, item) => sum + item.count, 0);
         },
 
         /**
@@ -943,6 +1173,12 @@ export default {
          * @param {String} jailName 监狱名称
          */
         openConfirmDialog(type, ip = '', jailName = '') {
+            // 系统锁定时禁止打开操作弹窗
+            if (this.isSystemLocked) {
+                this.$message.warning("系统状态异常，无法执行操作");
+                return;
+            }
+
             this.confirmInfo = { type, ip, jailName };
             this.confirmDialogVisible = true;
         },
@@ -1056,6 +1292,23 @@ export default {
         },
 
         // ==================== 分页事件处理 ====================
+
+        /**
+         * 监狱每页条数改变事件
+         * @param {Number} size 新的每页条数
+         */
+        handleJailSizeChange(size) {
+            this.jailPageSize = size;
+            this.jailCurrentPage = 1;
+        },
+
+        /**
+         * 监狱页码改变事件
+         * @param {Number} page 新的页码
+         */
+        handleJailCurrentChange(page) {
+            this.jailCurrentPage = page;
+        },
 
         /**
          * 日志每页条数改变事件
@@ -1177,6 +1430,81 @@ export default {
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     padding: 20px;
     margin-bottom: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* ==================== 新增：上锁状态卡片样式 ==================== */
+.locked-card {
+    filter: grayscale(50%);
+    opacity: 0.9;
+}
+
+.lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.lock-icon {
+    font-size: 64px;
+    color: #909399;
+    margin-bottom: 20px;
+}
+
+.lock-icon.warning-icon {
+    color: #e6a23c;
+}
+
+.lock-icon.info-icon {
+    color: #409eff;
+}
+
+.lock-text {
+    text-align: center;
+    line-height: 1.6;
+    max-width: 80%;
+}
+
+.lock-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 8px;
+}
+
+.lock-desc {
+    font-size: 14px;
+    color: #606266;
+}
+
+/* ==================== 新增：趋势统计样式 ==================== */
+.trend-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.trend-stats .stat-item {
+    font-size: 13px;
+}
+
+.trend-stats .stat-label {
+    color: #909399;
+}
+
+.trend-stats .stat-value {
+    color: #303133;
+    font-weight: 600;
 }
 
 .status-header {
@@ -1256,6 +1584,12 @@ export default {
 .indicator-dot.stopped {
     background-color: #f5222d;
     box-shadow: 0 0 10px rgba(245, 34, 45, 0.5);
+}
+
+/* 新增：未知/系统不匹配状态指示器 */
+.indicator-dot.unknown {
+    background-color: #909399;
+    box-shadow: 0 0 10px rgba(144, 147, 153, 0.5);
 }
 
 .status-text {
@@ -1446,10 +1780,10 @@ export default {
 /* ==================== 分页容器 ==================== */
 .pagination-container {
     margin-top: 20px;
-    text-align: right;
+    text-align: left;
 }
 
-/* ==================== IP防护操作台样式（方案二） ==================== */
+/* ==================== IP防护操作台样式 ==================== */
 .operation-card .status-header {
     margin-bottom: 18px;
 }
@@ -1655,6 +1989,10 @@ export default {
     .ip-actions {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .trend-stats {
+        margin-top: 10px;
     }
 }
 
