@@ -60,6 +60,7 @@ export function getRecentLogs(params) {
  * 获取攻击统计数据
  * @param {Object} params 查询参数
  * @param {Number} params.logLines 统计日志行数（默认10000）
+ * @param {Number} params.topIpLimit 攻击IP展示Top数量，可选范围1-100，默认20
  */
 export function getAttackStats(params) {
   return request({
@@ -68,6 +69,7 @@ export function getAttackStats(params) {
     params: params,
   });
 }
+
 /**
  * 手动封禁指定IP
  * 【安全限制】仅超级管理员且IP在白名单中可执行
