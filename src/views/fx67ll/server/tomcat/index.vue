@@ -1,13 +1,24 @@
 <template>
   <div class="app-container">
-    <!-- Tomcat 服务管理卡片 -->
-    <div class="status-card">
+    <!-- Tomcat 服务管理卡片（始终显示，异常状态显示上锁样式） -->
+    <div class="status-card" :class="{ 'locked-card': isSystemLocked }">
+      <!-- 上锁遮罩（优化：显示具体错误原因） -->
+      <div v-if="isSystemLocked" class="lock-overlay">
+        <div class="lock-icon" :class="lockIconClass">
+          <i class="el-icon-lock"></i>
+        </div>
+        <div class="lock-text">
+          <div class="lock-title">{{ status }}</div>
+          <div class="lock-desc">{{ lockMessage }}</div>
+        </div>
+      </div>
+
       <div class="status-header">
         <h2>Tomcat 服务管理</h2>
         <!-- 手动刷新按钮及最后刷新时间显示 -->
         <div class="refresh-container">
           <el-button type="text" icon="el-icon-refresh" @click="handleRefresh" :loading="isRefreshing"
-            class="refresh-btn">
+            class="refresh-btn" :disabled="isSystemLocked">
             手动刷新
           </el-button>
           <span class="refresh-time">最后刷新: {{ lastRefreshTime }}</span>
@@ -16,17 +27,19 @@
 
       <div class="status-content">
         <div class="status-indicator">
-          <!-- 状态指示灯，根据 status 动态添加 running 或 stopped 类 -->
-          <div class="indicator-dot" :class="status === '运行中' ? 'running' : 'stopped'"></div>
+          <div class="indicator-dot"
+            :class="status === '运行中' ? 'running' : status === '系统不匹配' ? 'unknown' : status === '未安装' ? 'unknown' : 'stopped'">
+          </div>
           <div class="status-text">{{ status }}</div>
         </div>
 
         <div class="operation-buttons">
           <el-button type="success" icon="el-icon-play" @click="startTomcat"
-            :disabled="status === '运行中' || isOperating">
+            :disabled="status === '运行中' || isOperating || isSystemLocked">
             启动服务
           </el-button>
-          <el-button type="danger" icon="el-icon-stop" @click="stopTomcat" :disabled="status === '已停止' || isOperating">
+          <el-button type="danger" icon="el-icon-stop" @click="stopTomcat"
+            :disabled="status === '已停止' || isOperating || isSystemLocked">
             停止服务
           </el-button>
         </div>
@@ -38,165 +51,172 @@
       </div>
     </div>
 
-    <!-- 系统内存信息卡片 -->
-    <div class="status-card">
-      <div class="status-header">
-        <h2>系统内存信息</h2>
-        <div class="refresh-container">
-          <el-button type="text" icon="el-icon-refresh" @click="queryStatus" :loading="isRefreshing" class="refresh-btn">
-            手动刷新
+    <!-- 以下所有卡片仅在系统正常时显示 -->
+    <template v-if="!isSystemLocked">
+      <!-- 系统内存信息卡片 -->
+      <div class="status-card">
+        <div class="status-header">
+          <h2>系统内存信息</h2>
+          <div class="refresh-container">
+            <el-button type="text" icon="el-icon-refresh" @click="queryStatus" :loading="isRefreshing"
+              class="refresh-btn">
+              手动刷新
+            </el-button>
+            <span class="refresh-time">最后更新: {{ lastRefreshTime }}</span>
+          </div>
+        </div>
+
+        <div class="memory-grid">
+          <div class="memory-item total-memory">
+            <div class="memory-label">总内存</div>
+            <div class="memory-value">{{ formatMemory(memoryInfo.totalMemoryMb) }} MB</div>
+            <div class="memory-progress">
+              <el-progress :percentage="100" :show-text="false" status="success"></el-progress>
+            </div>
+          </div>
+          <div class="memory-item used-memory">
+            <div class="memory-label">已用内存</div>
+            <div class="memory-value">{{ formatMemory(memoryInfo.usedMemoryMb) }} MB</div>
+            <div class="memory-progress">
+              <el-progress :percentage="(memoryInfo.usedMemoryMb / memoryInfo.totalMemoryMb * 100) || 0"
+                :show-text="false" status="exception"></el-progress>
+            </div>
+          </div>
+          <div class="memory-item available-memory">
+            <div class="memory-label">可用内存</div>
+            <div class="memory-value">{{ formatMemory(memoryInfo.availableMemoryMb) }} MB</div>
+            <div class="memory-progress">
+              <el-progress :percentage="(memoryInfo.availableMemoryMb / memoryInfo.totalMemoryMb * 100) || 0"
+                :show-text="false" status="success"></el-progress>
+            </div>
+          </div>
+          <div class="memory-item tomcat-memory">
+            <div class="memory-label">Tomcat占用</div>
+            <div class="memory-value">{{ formatMemory(memoryInfo.tomcatResidentMemoryMb) }} MB</div>
+            <div class="memory-progress">
+              <el-progress :percentage="(memoryInfo.tomcatResidentMemoryMb / memoryInfo.totalMemoryMb * 100) || 0"
+                :show-text="false" status="warning"></el-progress>
+            </div>
+          </div>
+        </div>
+
+        <div class="cache-clear-section">
+          <el-button type="warning" icon="el-icon-delete" @click="handleClearCache" :loading="clearingCache">
+            清理系统缓存
           </el-button>
-          <span class="refresh-time">最后更新: {{ lastRefreshTime }}</span>
+          <span class="cache-tip">执行 sync; echo 3 > /proc/sys/vm/drop_caches 释放内存缓存</span>
         </div>
       </div>
 
-      <div class="memory-grid">
-        <div class="memory-item total-memory">
-          <div class="memory-label">总内存</div>
-          <div class="memory-value">{{ formatMemory(memoryInfo.totalMemoryMb) }} MB</div>
-          <div class="memory-progress">
-            <el-progress :percentage="100" :show-text="false" status="success"></el-progress>
+      <!-- GitHub 连接状态检测卡片 -->
+      <div class="status-card">
+        <div class="status-header">
+          <h2>GitHub 连通性检测</h2>
+          <div class="refresh-container">
+            <el-button type="text" icon="el-icon-switch-button" @click="handleRefreshGithub"
+              :loading="isRefreshingGithub" class="refresh-btn">
+              重置检测
+            </el-button>
+            <span class="refresh-time" v-if="lastGithubTestTime">最后检测: {{ lastGithubTestTime }}</span>
           </div>
         </div>
-        <div class="memory-item used-memory">
-          <div class="memory-label">已用内存</div>
-          <div class="memory-value">{{ formatMemory(memoryInfo.usedMemoryMb) }} MB</div>
-          <div class="memory-progress">
-            <el-progress :percentage="(memoryInfo.usedMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="exception"></el-progress>
-          </div>
-        </div>
-        <div class="memory-item available-memory">
-          <div class="memory-label">可用内存</div>
-          <div class="memory-value">{{ formatMemory(memoryInfo.availableMemoryMb) }} MB</div>
-          <div class="memory-progress">
-            <el-progress :percentage="(memoryInfo.availableMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="success"></el-progress>
-          </div>
-        </div>
-        <div class="memory-item tomcat-memory">
-          <div class="memory-label">Tomcat占用</div>
-          <div class="memory-value">{{ formatMemory(memoryInfo.tomcatResidentMemoryMb) }} MB</div>
-          <div class="memory-progress">
-            <el-progress :percentage="(memoryInfo.tomcatResidentMemoryMb / memoryInfo.totalMemoryMb * 100) || 0" :show-text="false" status="warning"></el-progress>
-          </div>
-        </div>
-      </div>
 
-      <div class="cache-clear-section">
-        <el-button type="warning" icon="el-icon-delete" @click="handleClearCache" :loading="clearingCache">
-          清理系统缓存
-        </el-button>
-        <span class="cache-tip">执行 sync; echo 3 > /proc/sys/vm/drop_caches 释放内存缓存</span>
-      </div>
-    </div>
-
-    <!-- GitHub 连接状态检测卡片 -->
-    <div class="status-card">
-      <div class="status-header">
-        <h2>GitHub 连通性检测</h2>
-        <div class="refresh-container">
-          <el-button type="text" icon="el-icon-switch-button" @click="handleRefreshGithub" :loading="isRefreshingGithub"
-            class="refresh-btn">
-            重置检测
-          </el-button>
-          <span class="refresh-time" v-if="lastGithubTestTime">最后检测: {{ lastGithubTestTime }}</span>
-        </div>
-      </div>
-
-      <div class="github-content">
-        <div class="detection-methods">
-          <!-- TCP 网络层检测卡片 -->
-          <div class="method-card">
-            <div class="method-header">
-              <h4>TCP 网络层检测</h4>
-              <div class="method-status" :class="getStatusClass(tcpStatus)">
-                {{ getStatusText(tcpStatus) }}
+        <div class="github-content">
+          <div class="detection-methods">
+            <!-- TCP 网络层检测卡片 -->
+            <div class="method-card">
+              <div class="method-header">
+                <h4>TCP 网络层检测</h4>
+                <div class="method-status" :class="getStatusClass(tcpStatus)">
+                  {{ getStatusText(tcpStatus) }}
+                </div>
+              </div>
+              <div class="method-desc">
+                <p>检测与 GitHub 的网络连通性（TCP 443端口）</p>
+                <p class="desc-detail">仅验证网络层是否可达，不涉及HTTP协议</p>
+              </div>
+              <div class="method-action">
+                <el-button type="primary" size="small" @click="testTcpConnectivity" :loading="testingTcp"
+                  :disabled="testingHttp">
+                  {{ testingTcp ? '检测中...' : '开始检测' }}
+                </el-button>
               </div>
             </div>
-            <div class="method-desc">
-              <p>检测与 GitHub 的网络连通性（TCP 443端口）</p>
-              <p class="desc-detail">仅验证网络层是否可达，不涉及HTTP协议</p>
-            </div>
-            <div class="method-action">
-              <el-button type="primary" size="small" @click="testTcpConnectivity" :loading="testingTcp"
-                :disabled="testingHttp">
-                {{ testingTcp ? '检测中...' : '开始检测' }}
-              </el-button>
-            </div>
-          </div>
 
-          <!-- HTTP 应用层检测卡片 -->
-          <div class="method-card">
-            <div class="method-header">
-              <h4>HTTP 应用层检测</h4>
-              <div class="method-status" :class="getStatusClass(httpStatus)">
-                {{ getStatusText(httpStatus) }}
+            <!-- HTTP 应用层检测卡片 -->
+            <div class="method-card">
+              <div class="method-header">
+                <h4>HTTP 应用层检测</h4>
+                <div class="method-status" :class="getStatusClass(httpStatus)">
+                  {{ getStatusText(httpStatus) }}
+                </div>
+              </div>
+              <div class="method-desc">
+                <p>完整检测 HTTPS 连接（包含SSL握手）</p>
+                <p class="desc-detail">验证完整的HTTP协议栈和证书链</p>
+              </div>
+              <div class="method-action">
+                <el-button type="primary" size="small" @click="testHttpConnectivity" :loading="testingHttp"
+                  :disabled="testingTcp">
+                  {{ testingHttp ? '检测中...' : '开始检测' }}
+                </el-button>
               </div>
             </div>
-            <div class="method-desc">
-              <p>完整检测 HTTPS 连接（包含SSL握手）</p>
-              <p class="desc-detail">验证完整的HTTP协议栈和证书链</p>
+          </div>
+
+          <div class="detection-result" v-if="githubLogInfo">
+            <h3>检测结果</h3>
+            <pre>{{ githubLogInfo || 未知问题 }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 常用服务快速访问卡片 -->
+      <div class="status-card">
+        <div class="status-header">
+          <h2>常用服务快速访问</h2>
+          <div class="refresh-container">
+            <span class="refresh-time">快捷入口</span>
+          </div>
+        </div>
+
+        <div class="service-grid">
+          <!-- Jenkins 服务入口卡片 -->
+          <div class="service-item  service-item-jenkins" @click="goToJenkins">
+            <div class="service-icon jenkins-icon">
+              <i class="el-icon-s-promotion"></i>
             </div>
-            <div class="method-action">
-              <el-button type="primary" size="small" @click="testHttpConnectivity" :loading="testingHttp"
-                :disabled="testingTcp">
-                {{ testingHttp ? '检测中...' : '开始检测' }}
-              </el-button>
+            <div class="service-info">
+              <h4>Jenkins 服务</h4>
+              <p>持续集成与部署平台</p>
+              <div class="service-link">run.fx67ll.com/jenkins</div>
+            </div>
+            <div class="service-action">
+              <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-jenkins"></el-button>
+            </div>
+          </div>
+
+          <!-- 宝塔面板入口卡片 -->
+          <div class="service-item service-item-baota" @click="goToBaota">
+            <div class="service-icon baota-icon">
+              <i class="el-icon-monitor"></i>
+            </div>
+            <div class="service-info">
+              <h4>宝塔面板</h4>
+              <p>服务器运维管理</p>
+              <div class="service-link">baota.fx67ll.com</div>
+            </div>
+            <div class="service-action">
+              <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-baota"></el-button>
             </div>
           </div>
         </div>
 
-        <div class="detection-result" v-if="githubLogInfo">
-          <h3>检测结果</h3>
-          <pre>{{ githubLogInfo || 未知问题 }}</pre>
+        <div class="service-footer">
+          <span class="tip-text">点击上方卡片快速访问对应服务</span>
         </div>
       </div>
-    </div>
-
-    <!-- 常用服务快速访问卡片 -->
-    <div class="status-card">
-      <div class="status-header">
-        <h2>常用服务快速访问</h2>
-        <div class="refresh-container">
-          <span class="refresh-time">快捷入口</span>
-        </div>
-      </div>
-
-      <div class="service-grid">
-        <!-- Jenkins 服务入口卡片 -->
-        <div class="service-item  service-item-jenkins" @click="goToJenkins">
-          <div class="service-icon jenkins-icon">
-            <i class="el-icon-s-promotion"></i>
-          </div>
-          <div class="service-info">
-            <h4>Jenkins 服务</h4>
-            <p>持续集成与部署平台</p>
-            <div class="service-link">run.fx67ll.com/jenkins</div>
-          </div>
-          <div class="service-action">
-            <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-jenkins"></el-button>
-          </div>
-        </div>
-
-        <!-- 宝塔面板入口卡片 -->
-        <div class="service-item service-item-baota" @click="goToBaota">
-          <div class="service-icon baota-icon">
-            <i class="el-icon-monitor"></i>
-          </div>
-          <div class="service-info">
-            <h4>宝塔面板</h4>
-            <p>服务器运维管理</p>
-            <div class="service-link">baota.fx67ll.com</div>
-          </div>
-          <div class="service-action">
-            <el-button type="text" icon="el-icon-right" class="goto-btn goto-btn-baota"></el-button>
-          </div>
-        </div>
-      </div>
-
-      <div class="service-footer">
-        <span class="tip-text">点击上方卡片快速访问对应服务</span>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -218,7 +238,11 @@ export default {
   name: "TomcatManager",
   data() {
     return {
-      // Tomcat 服务状态文本，如“运行中”、“已停止”、“加载中...”、“未知”
+      // ==================== 系统检测状态（新增） ====================
+      isSystemLocked: false,    // 系统是否被锁定（不匹配/未安装）
+      lockMessage: "",          // 锁定状态提示信息
+
+      // Tomcat 服务状态文本，如”运行中”、”已停止”、”加载中...”、”未知”
       status: "加载中...",
       // 内存信息对象，包含各项内存指标（单位：MB）
       memoryInfo: {
@@ -250,6 +274,19 @@ export default {
       // 清理缓存操作状态
       clearingCache: false
     };
+  },
+  computed: {
+    /**
+     * 锁定状态图标颜色类（新增）
+     */
+    lockIconClass() {
+      if (this.status === "系统不匹配") {
+        return "warning-icon";
+      } else if (this.status === "未安装") {
+        return "info-icon";
+      }
+      return "";
+    }
   },
   created() {
     // 组件创建后立即查询一次 Tomcat 状态和内存信息
@@ -287,12 +324,25 @@ export default {
       return getTomcatStatus().then(response => {
         const data = response.data || {};
         this.status = data.status || "未知";
-        this.memoryInfo = data.memoryInfo || {
-          totalMemoryMb: 0,
-          availableMemoryMb: 0,
-          usedMemoryMb: 0,
-          tomcatResidentMemoryMb: 0
-        };
+
+        // 检测系统是否需要锁定
+        if (data.status === "系统不匹配" || data.status === "未安装") {
+          this.isSystemLocked = true;
+          this.lockMessage = data.error || "该功能不可用";
+        } else {
+          this.isSystemLocked = false;
+          this.lockMessage = "";
+        }
+
+        // 只有系统正常时才更新内存信息
+        if (!this.isSystemLocked) {
+          this.memoryInfo = data.memoryInfo || {
+            totalMemoryMb: 0,
+            availableMemoryMb: 0,
+            usedMemoryMb: 0,
+            tomcatResidentMemoryMb: 0
+          };
+        }
         this.lastRefreshTime = this.formatDateTime(new Date());
       }).catch(error => {
         this.$message.error("查询状态失败: " + (error.msg || error.message));
@@ -305,6 +355,10 @@ export default {
      * 弹出确认对话框，调用 startTomcat 接口，更新操作日志，并轮询状态确保更新
      */
     startTomcat() {
+      if (this.isSystemLocked) {
+        this.$message.warning("系统状态异常，无法执行操作");
+        return;
+      }
       this.$confirm('确定要启动Tomcat服务吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -316,17 +370,53 @@ export default {
         startTomcat().then(response => {
           this.$message.success(response.msg);
           this.logInfo = response.data || response.msg;
+
+          // 启动成功后弹出带Jenkins跳转的通知（使用$createElement创建原生HTML，兼容Vue2）
+          const h = this.$createElement;
+          this.$notify({
+            title: 'Jenkins小助手',
+            message: h('div', { style: 'line-height: 1.6;' }, [
+              h('p', {
+                style: 'margin: 0 0 12px; color: #606266; font-size: 13px;'
+              }, 'Jenkins 服务正在初始化，点击立刻前往'),
+              h('a', {
+                style: 'display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #eb5656 0%, #FAB6B6 100%); color: #fff; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(235, 86, 86, 0.3); letter-spacing: 0.5px; transition: all 0.3s ease;',
+                on: {
+                  click: () => {
+                    window.open('https://run.fx67ll.com/jenkins', '_blank');
+                  },
+                  mouseenter: (e) => {
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(235, 86, 86, 0.4)';
+                  },
+                  mouseleave: (e) => {
+                    e.target.style.transform = 'none';
+                    e.target.style.boxShadow = '0 2px 8px rgba(235, 86, 86, 0.3)';
+                  }
+                }
+              }, '🚀 前往 Jenkins')
+            ]),
+            duration: 6666,
+            type: 'success',
+            position: 'top-right'
+          });
+
           // 启动后立即查询一次状态，然后等待3秒再查一次（确保服务完全启动）
-          setTimeout(() => {
-            this.queryStatus();
+          if (response.msg !== 'Tomcat启动成功') {
             setTimeout(() => {
               this.queryStatus();
-              this.isOperating = false;
-            }, 3000);
-          }, 1000);
+              setTimeout(() => {
+                this.queryStatus();
+                this.isOperating = false;
+              }, 3000);
+            }, 1000);
+          } else {
+            this.isOperating = false;
+            this.queryStatus();
+          }
         }).catch(error => {
-          this.$message.error(error.msg || "启动失败");
-          this.logInfo = error.msg || "启动失败";
+          this.$message.error(error.msg || "启动失败，启动接口异常");
+          this.logInfo = error.msg || "启动失败，启动接口异常";
           this.isOperating = false;
           this.queryStatus();
         });
@@ -340,6 +430,10 @@ export default {
      * 弹出警告对话框，调用 stopTomcat 接口，更新操作日志，并轮询状态确保更新
      */
     stopTomcat() {
+      if (this.isSystemLocked) {
+        this.$message.warning("系统状态异常，无法执行操作");
+        return;
+      }
       this.$confirm('确定要停止Tomcat服务吗？停止后可能导致相关应用无法访问。', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -375,6 +469,10 @@ export default {
      * 弹出警告对话框，调用 clearSystemCache 接口，成功后刷新内存信息
      */
     handleClearCache() {
+      if (this.isSystemLocked) {
+        this.$message.warning("系统状态异常，无法执行操作");
+        return;
+      }
       this.$confirm('清理系统缓存将释放被占用的内存，但可能导致短时间内磁盘IO升高。确定继续吗？', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -423,6 +521,7 @@ export default {
      * 调用 testConnectToGithubByTcp 接口，更新状态和日志
      */
     testTcpConnectivity() {
+      if (this.isSystemLocked) return;
       this.testingTcp = true;
       this.tcpStatus = "testing";
       this.githubLogInfo = "正在检测 GitHub TCP 连通性...";
@@ -447,6 +546,7 @@ export default {
      * 调用 testConnectToGithubByHttp 接口，更新状态和日志
      */
     testHttpConnectivity() {
+      if (this.isSystemLocked) return;
       this.testingHttp = true;
       this.httpStatus = "testing";
       this.githubLogInfo = "正在检测 GitHub HTTP 连通性...";
@@ -545,6 +645,61 @@ export default {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin-bottom: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* ==================== 新增：上锁状态卡片样式 ==================== */
+.locked-card {
+  filter: grayscale(50%);
+  opacity: 0.9;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.lock-icon {
+  font-size: 64px;
+  color: #909399;
+  margin-bottom: 20px;
+}
+
+.lock-icon.warning-icon {
+  color: #e6a23c;
+}
+
+.lock-icon.info-icon {
+  color: #409eff;
+}
+
+.lock-text {
+  text-align: center;
+  line-height: 1.6;
+  max-width: 80%;
+}
+
+.lock-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.lock-desc {
+  font-size: 14px;
+  color: #606266;
 }
 
 /* 卡片头部：标题和刷新区域布局 */
@@ -618,6 +773,12 @@ export default {
   box-shadow: 0 0 10px rgba(245, 34, 45, 0.5);
 }
 
+/* 新增：未知/系统不匹配状态指示器 */
+.indicator-dot.unknown {
+  background-color: #909399;
+  box-shadow: 0 0 10px rgba(144, 147, 153, 0.5);
+}
+
 .status-text {
   font-size: 24px;
   font-weight: 500;
@@ -687,22 +848,34 @@ export default {
 .total-memory {
   border-left-color: #409eff;
 }
-.total-memory .memory-label { color: #409eff; }
+
+.total-memory .memory-label {
+  color: #409eff;
+}
 
 .used-memory {
   border-left-color: #f56c6c;
 }
-.used-memory .memory-label { color: #f56c6c; }
+
+.used-memory .memory-label {
+  color: #f56c6c;
+}
 
 .available-memory {
   border-left-color: #67c23a;
 }
-.available-memory .memory-label { color: #67c23a; }
+
+.available-memory .memory-label {
+  color: #67c23a;
+}
 
 .tomcat-memory {
   border-left-color: #e6a23c;
 }
-.tomcat-memory .memory-label { color: #e6a23c; }
+
+.tomcat-memory .memory-label {
+  color: #e6a23c;
+}
 
 .memory-label {
   font-size: 14px;
@@ -965,6 +1138,7 @@ export default {
   0% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
   }
+
   100% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
   }
@@ -974,6 +1148,7 @@ export default {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
