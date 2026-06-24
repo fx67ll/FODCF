@@ -124,7 +124,7 @@
                 <!-- 封禁IP列表区域 -->
                 <div class="banned-ips-section">
                     <div class="section-header">
-                        <h4>当前被封禁IP ({{ (currentJailDetail.bannedIps || []).length }})</h4>
+                        <h4>当前被封禁IP列表 (共 {{ (currentJailDetail.bannedIps || []).length }} 个)</h4>
                         <div class="ip-actions">
                             <el-button type="primary" size="small" icon="el-icon-document-copy"
                                 @click="copyDialogAllIps"
@@ -142,14 +142,16 @@
                         <el-checkbox v-for="ip in (currentJailDetail.bannedIps || [])" :key="ip"
                             v-model="dialogSelectedIps" :label="ip" class="ip-checkbox">
                             {{ ip }}
-                            <el-button type="text" icon="el-icon-document-copy" size="mini"
-                                @click.stop="copySingleIp(ip)" class="copy-btn">
-                                复制
-                            </el-button>
                             <el-button type="text" icon="el-icon-check" size="mini"
                                 @click.stop="handleOpenConfirm('unban', ip, currentJailDetail.name)" class="copy-btn">
                                 解封
                             </el-button>
+                            <!-- <el-button type="text" icon="el-icon-document-copy" size="mini"
+                                @click.stop="copySingleIp(ip)" class="copy-btn">
+                                复制
+                            </el-button> -->
+                            <el-button type="text" icon="el-icon-document-copy" size="mini"
+                                @click.stop="copySingleIp(ip)" class="copy-btn" />
                         </el-checkbox>
                     </div>
 
