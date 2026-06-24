@@ -188,7 +188,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <!-- <el-table-column label="号码日志主键" align="center" prop="lotteryId" width="120" /> -->
       <el-table-column label="彩票期号" align="center" prop="dateCode" fixed="left" width="100" />
-      <el-table-column label="当日购买号码" align="center" prop="recordNumber" fixed="left" width="160">
+      <el-table-column label="当日购买号码" align="center" prop="recordNumber" fixed="left" width="170">
         <template slot-scope="scope">
           <span v-if="scope.row.recordNumber === '-'">{{
             scope.row.recordNumber
