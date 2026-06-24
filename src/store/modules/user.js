@@ -112,6 +112,8 @@ const user = {
             commit("SET_ROLES", []);
             commit("SET_PERMISSIONS", []);
             removeToken();
+            // 清除与登录会话绑定的本地配置
+            localStorage.removeItem("fail2ban-refresh-interval");
             resolve();
           })
           .catch((error) => {
@@ -125,6 +127,8 @@ const user = {
       return new Promise((resolve) => {
         commit("SET_TOKEN", "");
         removeToken();
+        // 清除与登录会话绑定的本地配置
+        localStorage.removeItem("fail2ban-refresh-interval");
         resolve();
       });
     },
