@@ -30,10 +30,36 @@
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="currentlyFailed" label="当前失败" align="center" />
-                <el-table-column prop="currentlyBanned" label="当前封禁" align="center" />
-                <el-table-column prop="totalBanned" label="累计封禁" align="center" />
-                <el-table-column prop="totalFailed" label="失败尝试" align="center" />
+                <el-table-column label="当前失败" align="center">
+                    <template v-slot="scope">
+                        <span
+                            :class="{ 'num-highlight': scope.row.currentlyFailed && scope.row.currentlyFailed !== 0 }">
+                            {{ scope.row.currentlyFailed }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="当前封禁" align="center">
+                    <template v-slot="scope">
+                        <span
+                            :class="{ 'num-highlight': scope.row.currentlyBanned && scope.row.currentlyBanned !== 0 }">
+                            {{ scope.row.currentlyBanned }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="累计封禁" align="center">
+                    <template v-slot="scope">
+                        <span :class="{ 'num-highlight': scope.row.totalBanned && scope.row.totalBanned !== 0 }">
+                            {{ scope.row.totalBanned }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="失败尝试" align="center">
+                    <template v-slot="scope">
+                        <span :class="{ 'num-highlight': scope.row.totalFailed && scope.row.totalFailed !== 0 }">
+                            {{ scope.row.totalFailed }}
+                        </span>
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="180" align="center">
                     <template v-slot="scope">
                         <el-button type="primary" size="small" @click="openJailDetail(scope.row)">
@@ -430,6 +456,14 @@ export default {
 .pagination-container {
     margin-top: 20px;
     text-align: left;
+}
+
+/* ==================== 列表数字高亮样式 - 非零值红色放大加粗 ==================== */
+.num-highlight {
+    color: #f56c6c;
+    font-weight: bold;
+    font-size: 28px;
+    cursor: pointer;
 }
 
 /* ==================== IP列表区域（通用） ==================== */
