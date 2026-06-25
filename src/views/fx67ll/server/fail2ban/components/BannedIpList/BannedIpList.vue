@@ -11,6 +11,10 @@
                 <span v-if="lastRefreshTime" class="refresh-time">最后刷新: {{ lastRefreshTime }}</span>
             </h2>
             <div class="header-actions">
+                <el-button type="danger" size="small" icon="el-icon-delete" @click="handleUnbanAll"
+                    :disabled="allBannedIps.length === 0">
+                    一键全部解封
+                </el-button>
                 <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllBannedIps"
                     :disabled="allBannedIps.length === 0">
                     复制全部封禁IP
@@ -19,13 +23,13 @@
         </div>
 
         <div class="all-banned-ips">
-            <el-tag v-for="ip in paginatedBannedIps" :key="ip" type="danger" style="margin: 5px;">
-                {{ ip }}
-                <el-button type="text" icon="el-icon-check" size="mini" @click.stop="handleOpenConfirm('unban', ip)"
-                    class="unban-btn">
+            <el-tag v-for="item in paginatedBannedIps" :key="item.ip" type="danger" style="margin: 5px;">
+                {{ item.ip }}
+                <el-button type="text" icon="el-icon-check" size="mini"
+                    @click.stop="handleOpenConfirm('unban', item.ip, item.jailName)" class="unban-btn">
                     解封
                 </el-button>
-                <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copySingleIp(ip)"
+                <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copySingleIp(item.ip)"
                     class="copy-btn" />
             </el-tag>
             <div v-if="allBannedIps.length === 0" class="empty-text">
@@ -69,12 +73,24 @@ export default {
     },
     computed: {
         /**
+         * 归一化IP列表：兼容纯字符串数组和带监狱信息的对象数组
+         * 统一转为 { ip: 'xxx', jailName: 'xxx' } 格式
+         */
+        normalizedIps() {
+            return this.allBannedIps.map(item => {
+                if (typeof item === 'string') {
+                    return { ip: item, jailName: '' };
+                }
+                return item;
+            });
+        },
+        /**
          * 分页后的全量封禁IP列表
          */
         paginatedBannedIps() {
             const start = (this.ipCurrentPage - 1) * this.ipPageSize;
             const end = start + this.ipPageSize;
-            return this.allBannedIps.slice(start, end);
+            return this.normalizedIps.slice(start, end);
         }
     },
     methods: {
@@ -86,6 +102,14 @@ export default {
         },
 
         /**
+         * 点击一键全部解封按钮
+         * 通知父组件打开全局解封确认弹窗
+         */
+        handleUnbanAll() {
+            this.$emit('open-confirm', 'unban-all', '', '');
+        },
+
+        /**
          * 复制所有封禁IP到剪贴板
          */
         async copyAllBannedIps() {
@@ -93,7 +117,8 @@ export default {
                 this.$message.warning("没有可复制的IP");
                 return;
             }
-            await this.copyToClipboard(this.allBannedIps.join("\n"));
+            const ipTexts = this.normalizedIps.map(item => item.ip);
+            await this.copyToClipboard(ipTexts.join("\n"));
             this.$message.success(`已复制 ${this.allBannedIps.length} 个IP`);
         },
 
@@ -127,7 +152,7 @@ export default {
 
         /**
          * 通知父组件打开确认弹窗
-         * @param {String} type 操作类型
+         * @param {String} type 操作类型 unban / unban-all
          * @param {String} ip 目标IP地址
          * @param {String} jailName 监狱名称
          */
