@@ -345,7 +345,9 @@ export default {
         }
         this.lastRefreshTime = this.formatDateTime(new Date());
       }).catch(error => {
-        this.$message.error("查询状态失败: " + (error.msg || error.message));
+        if (!error._isHandled) {
+          this.$message.error("查询状态失败: " + (error.msg || error.message));
+        }
         this.status = "未知";
       });
     },
@@ -415,7 +417,9 @@ export default {
             this.queryStatus();
           }
         }).catch(error => {
-          this.$message.error(error.msg || "启动失败，启动接口异常");
+          if (!error._isHandled) {
+            this.$message.error(error.msg || "启动失败，启动接口异常");
+          }
           this.logInfo = error.msg || "启动失败，启动接口异常";
           this.isOperating = false;
           this.queryStatus();
@@ -454,7 +458,9 @@ export default {
             }, 3000);
           }, 1000);
         }).catch(error => {
-          this.$message.error(error.msg || "停止失败");
+          if (!error._isHandled) {
+            this.$message.error(error.msg || "停止失败");
+          }
           this.logInfo = error.msg || "停止失败";
           this.isOperating = false;
           this.queryStatus();
@@ -483,7 +489,9 @@ export default {
           this.$message.success(response.msg || '缓存清理成功');
           this.queryStatus(); // 刷新内存信息
         }).catch(error => {
-          this.$message.error(error.msg || '缓存清理失败');
+          if (!error._isHandled) {
+            this.$message.error(error.msg || '缓存清理失败');
+          }
         }).finally(() => {
           this.clearingCache = false;
         });
@@ -535,7 +543,9 @@ export default {
         this.tcpStatus = "error";
         this.githubLogInfo = `TCP检测失败：${error.msg || error.message}`;
         this.lastGithubTestTime = this.formatDateTime(new Date());
-        this.$message.error('GitHub TCP连通性检测失败');
+        if (!error._isHandled) {
+          this.$message.error('GitHub TCP连通性检测失败');
+        }
       }).finally(() => {
         this.testingTcp = false;
       });
@@ -560,7 +570,9 @@ export default {
         this.httpStatus = "error";
         this.githubLogInfo = `HTTP检测失败：${error.msg || error.message}`;
         this.lastGithubTestTime = this.formatDateTime(new Date());
-        this.$message.error('GitHub HTTP连通性检测失败');
+        if (!error._isHandled) {
+          this.$message.error('GitHub HTTP连通性检测失败');
+        }
       }).finally(() => {
         this.testingHttp = false;
       });

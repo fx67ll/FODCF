@@ -64,7 +64,7 @@ service.interceptors.request.use(
   },
   error => {
     console.log(error);
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 );
 
@@ -100,13 +100,19 @@ service.interceptors.response.use(
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。');
     } else if (code === 500) {
       Message({ message: msg, type: 'error' });
-      return Promise.reject(new Error(msg));
+      const err = new Error(msg);
+      err._isHandled = true; // 标记拦截器已弹出提示，组件无需重复弹
+      return Promise.reject(err);
     } else if (code === 601) {
       Message({ message: msg, type: 'warning' });
-      return Promise.reject('error');
+      const err = new Error(msg);
+      err._isHandled = true;
+      return Promise.reject(err);
     } else if (code !== 200) {
       Notification.error({ title: msg });
-      return Promise.reject('error');
+      const err = new Error(msg);
+      err._isHandled = true;
+      return Promise.reject(err);
     } else {
       return res.data;
     }
@@ -122,6 +128,7 @@ service.interceptors.response.use(
       message = '系统接口' + message.substr(message.length - 3) + '异常';
     }
     Message({ message: message, type: 'error', duration: 5 * 1000 });
+    error._isHandled = true; // 标记拦截器已弹出提示，组件无需重复弹
     return Promise.reject(error);
   }
 );

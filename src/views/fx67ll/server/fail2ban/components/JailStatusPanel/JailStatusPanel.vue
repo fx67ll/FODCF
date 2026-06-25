@@ -287,7 +287,9 @@ export default {
                 this.dialogSelectedIps = [];
                 this.dialogVisible = true;
             } catch (err) {
-                this.$message.error("获取监狱详情失败：" + (err.msg || err.message));
+                if (!err._isHandled) {
+                    this.$message.error("获取监狱详情失败：" + (err.msg || err.message));
+                }
             }
         },
 

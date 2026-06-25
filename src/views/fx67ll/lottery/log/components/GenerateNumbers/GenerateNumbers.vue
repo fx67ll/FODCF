@@ -206,9 +206,11 @@ export default {
                     this.$message.warning('获取历史数据失败');
                 }
                 this.loading = false;
-            }).catch(() => {
+            }).catch((error) => {
                 this.loading = false;
-                this.$message.error('网络请求异常');
+                if (!error._isHandled) {
+                    this.$message.error('网络请求异常');
+                }
             });
         },
 
@@ -232,7 +234,9 @@ export default {
                     this.generatedResult = getLotteryNumberByFrequency({ rows: this.rawData }, dayOfYear);
                 });
             } catch (error) {
-                this.$message.error('生成号码失败');
+                if (!error._isHandled) {
+                    this.$message.error('生成号码失败');
+                }
                 console.error(error);
             }
         },
