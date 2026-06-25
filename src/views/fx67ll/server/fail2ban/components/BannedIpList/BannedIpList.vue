@@ -236,7 +236,11 @@ export default {
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+}
+
+::v-deep .header-actions .el-button+.el-button, .el-checkbox.is-bordered+.el-checkbox.is-bordered {
+    margin-left: 0;
 }
 
 /* ==================== 刷新按钮 ==================== */
