@@ -1,6 +1,6 @@
 <template>
     <el-dialog title="操作安全确认" :visible.sync="dialogVisible" width="480px" :close-on-click-modal="false"
-        :style="`top: ${['ban', 'unban'].includes(confirmInfo.type) && confirmInfo.jailName ? 423 : getDialogVerticalOffset(getConfirmTypeHeight())}`"
+        :style="`top: ${['ban', 'unban', 'ban-batch', 'unban-batch'].includes(confirmInfo.type) && confirmInfo.jailName ? 423 : getDialogVerticalOffset(getConfirmTypeHeight())}`"
         append-to-body>
         <div class="confirm-content">
             <div class="confirm-warning">
@@ -14,10 +14,26 @@
                         {{ getConfirmTypeText() }}
                     </el-tag>
                 </el-descriptions-item>
-                <el-descriptions-item v-if="confirmInfo.ip" label="目标IP地址">
-                    <span style="font-family: Consolas; font-weight: bold; font-size: 14px;">{{ confirmInfo.ip
-                    }}</span>
+
+                <!-- 单IP操作：展示目标IP -->
+                <el-descriptions-item v-if="confirmInfo.ip && ['ban', 'unban'].includes(confirmInfo.type)"
+                    label="目标IP地址">
+                    <span style="font-family: Consolas; font-weight: bold; font-size: 14px;">{{ confirmInfo.ip }}</span>
                 </el-descriptions-item>
+
+                <!-- 批量操作：展示IP数量 -->
+                <el-descriptions-item v-if="confirmInfo.ips && confirmInfo.ips.length > 0" label="操作IP数量">
+                    <span style="font-family: Consolas; font-weight: bold; font-size: 14px; color: #f56c6c;">
+                        {{ confirmInfo.ips.length }} 个
+                    </span>
+                </el-descriptions-item>
+
+                <!-- 全局一键解封：展示操作范围 -->
+                <el-descriptions-item v-if="confirmInfo.type === 'unban-all'" label="操作范围">
+                    <span style="color: #e6a23c; font-weight: 500;">所有运行中监狱的全部封禁IP</span>
+                </el-descriptions-item>
+
+                <!-- 目标监狱：需要监狱的操作展示 -->
                 <el-descriptions-item v-if="confirmInfo.jailName" label="目标监狱">
                     {{ confirmInfo.jailName }}
                 </el-descriptions-item>
@@ -29,21 +45,19 @@
                 若执行失败，请确认当前访问IP已加入系统白名单。
             </div>
 
-            <el-form v-if="['ban', 'unban'].includes(confirmInfo.type) && !confirmInfo.jailName"
-                style="margin-top: 15px;" size="small">
+            <!-- 需要选择监狱的场景：单IP操作/批量操作/单监狱全解封，且未传入监狱名 -->
+            <el-form v-if="needSelectJail && !confirmInfo.jailName" style="margin-top: 15px;" size="small">
                 <el-form-item label="选择监狱" required style="margin-bottom: 0;">
                     <el-select :value="confirmInfo.jailName" placeholder="请选择要操作的监狱" style="width: 100%;"
                         @change="handleJailNameChange">
-                        <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name"
-                            :value="jail.name" />
+                        <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name" :value="jail.name" />
                     </el-select>
                 </el-form-item>
             </el-form>
         </div>
         <span slot="footer" class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" :loading="confirmLoading"
-                :disabled="confirmInfo.type !== 'startService' && confirmInfo.type !== 'stopService' && !confirmInfo.jailName"
+            <el-button type="primary" :loading="confirmLoading" :disabled="needSelectJail && !confirmInfo.jailName"
                 @click="handleExecute">
                 确认执行
             </el-button>
@@ -63,7 +77,7 @@ export default {
         },
         confirmInfo: {
             type: Object,
-            default: () => ({ type: 'ban', ip: '', jailName: '' })
+            default: () => ({ type: 'ban', ip: '', jailName: '', ips: [] })
         },
         jailList: {
             type: Array,
@@ -82,6 +96,14 @@ export default {
             set(val) {
                 this.$emit('update:visible', val);
             }
+        },
+        /**
+         * 是否需要选择监狱
+         * 全局一键解封不需要监狱，其余操作均需指定目标监狱
+         */
+        needSelectJail() {
+            const noJailTypes = ['unban-all', 'startService', 'stopService'];
+            return !noJailTypes.includes(this.confirmInfo.type);
         }
     },
     methods: {
@@ -114,6 +136,10 @@ export default {
             const typeMap = {
                 'ban': '封禁IP',
                 'unban': '解封IP',
+                'ban-batch': '批量封禁IP',
+                'unban-batch': '批量解封IP',
+                'unban-all-jail': '一键清空监狱封禁IP',
+                'unban-all': '全局一键解封所有IP',
                 'startService': '启动Fail2ban服务',
                 'stopService': '停止Fail2ban服务',
                 'startJail': '启动监狱',
@@ -129,6 +155,10 @@ export default {
             const typeMap = {
                 'ban': 'danger',
                 'unban': 'success',
+                'ban-batch': 'danger',
+                'unban-batch': 'success',
+                'unban-all-jail': 'warning',
+                'unban-all': 'warning',
                 'startService': 'success',
                 'stopService': 'warning',
                 'startJail': 'success',
@@ -144,12 +174,16 @@ export default {
             const typeMap = {
                 'ban': 467,
                 'unban': 467,
+                'ban-batch': 480,
+                'unban-batch': 480,
+                'unban-all-jail': 380,
+                'unban-all': 360,
                 'startService': 350,
                 'stopService': 350,
                 'startJail': 350,
                 'stopJail': 350
             };
-            return typeMap[this.confirmInfo.type] || 'startService';
+            return typeMap[this.confirmInfo.type] || 350;
         }
     }
 };
