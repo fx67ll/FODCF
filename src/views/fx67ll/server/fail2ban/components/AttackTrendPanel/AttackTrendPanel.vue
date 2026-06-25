@@ -29,8 +29,15 @@
         <el-dialog :title="`${currentHourLabel} 攻击次数 Top5 IP`" :visible.sync="dialogVisible"
             :close-on-click-modal="false" width="700px"
             :style="`top: ${getDialogVerticalOffset(300 + ((currentTopIps.length - 2) * 50))}`" append-to-body
-            @close="dialogVisible = false">
+            @close="handleDialogClose">
             <el-table :data="currentTopIps" border stripe style="width: 100%">
+                <el-table-column width="35" align="center">
+                    <template v-slot="scope">
+                        <el-checkbox v-model="selectedDialogIps" :label="scope.row.ip"
+                            @change="handleDialogIpSelect">
+                        </el-checkbox>
+                    </template>
+                </el-table-column>
                 <el-table-column label="排名" width="60" align="center">
                     <template v-slot="scope">
                         {{ scope.$index + 1 }}
@@ -74,6 +81,14 @@
                 </el-table-column>
             </el-table>
             <span slot="footer" class="dialog-footer">
+                <el-button type="primary" size="small" icon="el-icon-document-copy"
+                    @click="copyAllDialogIps" :disabled="currentTopIps.length === 0">
+                    复制全部
+                </el-button>
+                <el-button type="success" size="small" icon="el-icon-check"
+                    @click="copySelectedDialogIps" :disabled="selectedDialogIps.length === 0">
+                    复制选中 ({{ selectedDialogIps.length }})
+                </el-button>
                 <el-button @click="dialogVisible = false">关闭</el-button>
             </span>
         </el-dialog>
@@ -129,7 +144,9 @@ export default {
             trendChart: null,          // 趋势图实例
             dialogVisible: false,      // 时段IP详情弹窗开关
             currentHourLabel: "",      // 当前选中时段标签
-            currentTopIps: []          // 当前时段Top5 IP列表
+            currentTopIps: [],         // 当前时段Top5 IP列表
+            selectedDialogIps: [],     // 弹窗中选中的IP列表
+            threshold: 0               // 攻击次数超标阈值（均值2倍）
         };
     },
     watch: {
@@ -191,7 +208,14 @@ export default {
                         lineHeight: 1.6
                     },
                     extraCssText: 'box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);',
-                    formatter: '{b}<br/>攻击次数：{c} 次<br/><span style="color:#86909c;font-size:11px;">点击查看该时段攻击IP</span>'
+                    formatter: (params) => {
+                        const val = params[0];
+                        const isExceed = val.value > this.threshold;
+                        const tagHtml = isExceed
+                            ? '<span style="color:#f56c6c;font-size:11px;">● 攻击水平超标</span>'
+                            : '<span style="color:#67c23a;font-size:11px;">● 攻击水平正常</span>';
+                        return `${val.name}<br/>攻击次数：${val.value} 次<br/>${tagHtml}<br/><span style="color:#86909c;font-size:11px;">点击查看该时段攻击IP</span>`;
+                    }
                 },
                 grid: {
                     left: '1%',
@@ -303,13 +327,13 @@ export default {
             const xAxisData = this.trendData.map(item => item.dateTime);
             const seriesData = this.trendData.map(item => item.count);
 
-            // 计算阈值（平均值的2倍）
+            // 计算阈值（平均值的2倍），存到组件 data 供 tooltip formatter 使用
             const avgCount = this.totalTrendAttacks / this.trendData.length;
-            const threshold = avgCount * 2;
+            this.threshold = avgCount * 2;
 
             // 为超过阈值的柱子设置红色渐变
             const itemStyles = seriesData.map(count => {
-                if (count > threshold) {
+                if (count > this.threshold) {
                     // 超标：浅蜜桃粉渐变，温柔不刺眼
                     return {
                         borderRadius: [12, 12, 0, 0],
@@ -420,6 +444,46 @@ export default {
          */
         handleOpenConfirm(type, ip = '', jailName = '') {
             this.$emit('open-confirm', type, ip, jailName);
+        },
+
+        /**
+         * 关闭时段IP详情弹窗时重置选中状态
+         */
+        handleDialogClose() {
+            this.dialogVisible = false;
+            this.selectedDialogIps = [];
+        },
+
+        /**
+         * 复制弹窗中所有IP到剪贴板
+         */
+        async copyAllDialogIps() {
+            const ips = this.currentTopIps.map(item => item.ip);
+            if (!ips || ips.length === 0) {
+                this.$message.warning("没有可复制的IP");
+                return;
+            }
+            await this.copyToClipboard(ips.join("\n"));
+            this.$message.success(`已复制 ${ips.length} 个IP`);
+        },
+
+        /**
+         * 复制弹窗中选中的IP到剪贴板
+         */
+        async copySelectedDialogIps() {
+            if (this.selectedDialogIps.length === 0) {
+                this.$message.warning("请先选择要复制的IP");
+                return;
+            }
+            await this.copyToClipboard(this.selectedDialogIps.join("\n"));
+            this.$message.success(`已复制 ${this.selectedDialogIps.length} 个选中的IP`);
+        },
+
+        /**
+         * 处理弹窗中IP选择事件（自动去重）
+         */
+        handleDialogIpSelect() {
+            this.selectedDialogIps = [...new Set(this.selectedDialogIps)];
         },
 
         /**
