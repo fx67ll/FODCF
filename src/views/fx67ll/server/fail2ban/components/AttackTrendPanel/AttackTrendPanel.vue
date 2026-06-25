@@ -30,14 +30,9 @@
             :close-on-click-modal="false" width="700px"
             :style="`top: ${getDialogVerticalOffset(300 + ((currentTopIps.length - 2) * 50))}`" append-to-body
             @close="handleDialogClose">
-            <el-table :data="currentTopIps" border stripe style="width: 100%">
-                <el-table-column width="35" align="center">
-                    <template v-slot="scope">
-                        <el-checkbox v-model="selectedDialogIps" :label="scope.row.ip"
-                            @change="handleDialogIpSelect">
-                        </el-checkbox>
-                    </template>
-                </el-table-column>
+            <el-table :data="currentTopIps" border stripe style="width: 100%"
+                @selection-change="handleDialogSelectionChange">
+                <el-table-column type="selection" width="55" align="center" />
                 <el-table-column label="排名" width="60" align="center">
                     <template v-slot="scope">
                         {{ scope.$index + 1 }}
@@ -50,7 +45,7 @@
                             @click="handleCopyIp(scope.row.ip)" class="copy-btn" />
                     </template>
                 </el-table-column>
-                <el-table-column label="来源监狱" width="120" align="center">
+                <el-table-column label="来源监狱" width="110" align="center">
                     <template v-slot="scope">
                         <el-tag v-for="jail in scope.row.jails.split(', ')" :key="jail" size="mini" type="info"
                             style="margin: 2px;">
@@ -480,10 +475,11 @@ export default {
         },
 
         /**
-         * 处理弹窗中IP选择事件（自动去重）
+         * 处理弹窗表格选择变更事件（提取选中行的IP）
+         * @param {Array} selection 选中的行数据
          */
-        handleDialogIpSelect() {
-            this.selectedDialogIps = [...new Set(this.selectedDialogIps)];
+        handleDialogSelectionChange(selection) {
+            this.selectedDialogIps = selection.map(row => row.ip);
         },
 
         /**
