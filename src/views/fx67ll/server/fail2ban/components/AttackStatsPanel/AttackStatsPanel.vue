@@ -39,13 +39,9 @@
             </div>
         </div>
 
-        <el-table :data="paginatedTopIps" border stripe style="width: 100%">
-            <el-table-column width="35" align="center">
-                <template v-slot="scope">
-                    <el-checkbox v-model="selectedTopIps" :label="scope.row.ip" @change="handleTopIpSelect">
-                    </el-checkbox>
-                </template>
-            </el-table-column>
+        <el-table :data="paginatedTopIps" border stripe style="width: 100%"
+            @selection-change="handleStatsSelectionChange">
+            <el-table-column type="selection" width="55" align="center" />
             <el-table-column label="排名" width="60" align="center">
                 <template v-slot="scope">
                     {{ scope.row.rank }}
@@ -54,8 +50,8 @@
             <el-table-column label="攻击IP" width="">
                 <template v-slot="scope">
                     <span class="ip-text">{{ scope.row.ip }}</span>
-                    <el-button type="text" icon="el-icon-document-copy" size="mini"
-                        @click="handleCopyIp(scope.row.ip)" class="copy-btn" />
+                    <el-button type="text" icon="el-icon-document-copy" size="mini" @click="handleCopyIp(scope.row.ip)"
+                        class="copy-btn" />
                 </template>
             </el-table-column>
             <!-- 来源监狱列 -->
@@ -100,7 +96,7 @@
         <!-- 分页 -->
         <div class="pagination-container" v-if="processedTopIps.length > 0">
             <el-pagination @size-change="handleStatsSizeChange" @current-change="handleStatsCurrentChange"
-                :current-page="statsCurrentPage" :page-sizes="[5, 10, 20]" :page-size="statsPageSize"
+                :current-page="statsCurrentPage" :page-sizes="statsPageSizes" :page-size="statsPageSize"
                 layout="total, sizes, prev, pager, next, jumper" :total="processedTopIps.length" background>
             </el-pagination>
         </div>
@@ -205,6 +201,19 @@ export default {
             const start = (this.statsCurrentPage - 1) * this.statsPageSize;
             const end = start + this.statsPageSize;
             return this.processedTopIps.slice(start, end);
+        },
+
+        /**
+         * 根据Top条数动态生成分页每页条数选项
+         * 只保留不超过topIpLimit的选项，确保最大选项等于topIpLimit
+         */
+        statsPageSizes() {
+            const base = [5, 10, 20, 50, 100];
+            const sizes = base.filter(s => s <= this.topIpLimit);
+            if (!sizes.includes(this.topIpLimit)) {
+                sizes.push(this.topIpLimit);
+            }
+            return sizes;
         }
     },
     watch: {
@@ -212,6 +221,13 @@ export default {
          * 数据变化时重置分页到第一页
          */
         topAttackIps() {
+            this.statsCurrentPage = 1;
+        },
+        /**
+         * 分页选项变化时，统一重置为5条一页并回到第一页
+         */
+        statsPageSizes() {
+            this.statsPageSize = 5;
             this.statsCurrentPage = 1;
         }
     },
@@ -327,10 +343,11 @@ export default {
         },
 
         /**
-         * 处理Top IP选择事件（自动去重）
+         * 处理表格选择变更事件（提取选中行的IP）
+         * @param {Array} selection 选中的行数据
          */
-        handleTopIpSelect() {
-            this.selectedTopIps = [...new Set(this.selectedTopIps)];
+        handleStatsSelectionChange(selection) {
+            this.selectedTopIps = selection.map(row => row.ip);
         },
 
         // ==================== 分页事件处理 ====================
@@ -427,9 +444,14 @@ export default {
 
 .ip-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+::v-deep .ip-actions .el-button+.el-button,
+.el-checkbox.is-bordered+.el-checkbox.is-bordered {
+    margin-left: 0;
 }
 
 /* ==================== 分页容器 ==================== */
