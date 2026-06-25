@@ -29,7 +29,7 @@
         <el-dialog :title="`${currentHourLabel} 攻击次数 Top5 IP`" :visible.sync="dialogVisible"
             :close-on-click-modal="false" width="700px"
             :style="`top: ${getDialogVerticalOffset(300 + ((currentTopIps.length - 2) * 50))}`" append-to-body
-            @close="handleDialogClose">
+            custom-class="trend-detail-dialog" @close="handleDialogClose">
             <el-table :data="currentTopIps" border stripe style="width: 100%"
                 @selection-change="handleDialogSelectionChange">
                 <el-table-column type="selection" width="55" align="center" />
@@ -76,13 +76,36 @@
                 </el-table-column>
             </el-table>
             <span slot="footer" class="dialog-footer">
-                <el-button type="primary" size="small" icon="el-icon-document-copy"
-                    @click="copyAllDialogIps" :disabled="currentTopIps.length === 0">
+                <!--
+                    批量封禁按钮：所选行全部未封禁 + 来自同一单个监狱时可用
+                    用 span 包裹以确保 disabled 状态下 tooltip 仍能触发
+                -->
+                <el-tooltip :content="batchBanTooltip" placement="top" :disabled="canBatchBan">
+                    <span>
+                        <el-button type="danger" size="small" icon="el-icon-close" :disabled="!canBatchBan"
+                            @click="handleBatchBan">
+                            批量封禁 ({{ selectedDialogRows.length }})
+                        </el-button>
+                    </span>
+                </el-tooltip>
+                <!--
+                    批量解封按钮：所选行全部已封禁 + 来自同一单个监狱时可用
+                -->
+                <el-tooltip :content="batchUnbanTooltip" placement="top" :disabled="canBatchUnban">
+                    <span>
+                        <el-button type="warning" size="small" icon="el-icon-check" :disabled="!canBatchUnban"
+                            @click="handleBatchUnban">
+                            批量解封 ({{ selectedDialogRows.length }})
+                        </el-button>
+                    </span>
+                </el-tooltip>
+                <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyAllDialogIps"
+                    :disabled="currentTopIps.length === 0">
                     复制全部
                 </el-button>
-                <el-button type="success" size="small" icon="el-icon-check"
-                    @click="copySelectedDialogIps" :disabled="selectedDialogIps.length === 0">
-                    复制选中 ({{ selectedDialogIps.length }})
+                <el-button type="success" size="small" icon="el-icon-check" @click="copySelectedDialogIps"
+                    :disabled="selectedDialogRows.length === 0">
+                    复制选中 ({{ selectedDialogRows.length }})
                 </el-button>
                 <el-button @click="dialogVisible = false">关闭</el-button>
             </span>
@@ -136,12 +159,16 @@ export default {
     },
     data() {
         return {
-            trendChart: null,          // 趋势图实例
-            dialogVisible: false,      // 时段IP详情弹窗开关
-            currentHourLabel: "",      // 当前选中时段标签
-            currentTopIps: [],         // 当前时段Top5 IP列表
-            selectedDialogIps: [],     // 弹窗中选中的IP列表
-            threshold: 0               // 攻击次数超标阈值（均值2倍）
+            trendChart: null,           // 趋势图实例
+            dialogVisible: false,       // 时段IP详情弹窗开关
+            currentHourLabel: "",       // 当前选中时段标签
+            currentTopIps: [],          // 当前时段Top5 IP列表
+            /**
+             * 弹窗中选中的完整行对象数组
+             * 存完整行对象以便提取 ip、jails 等字段用于批量操作校验
+             */
+            selectedDialogRows: [],
+            threshold: 0                // 攻击次数超标阈值（均值2倍）
         };
     },
     watch: {
@@ -155,6 +182,75 @@ export default {
                     this.updateTrendChart();
                 });
             }
+        }
+    },
+    computed: {
+        /**
+         * 从选中行提取去重后的监狱数组
+         * 用于判断所有选中行是否都来自同一个监狱
+         */
+        selectedJailSet() {
+            const jails = new Set();
+            this.selectedDialogRows.forEach(row => {
+                if (row.jails) {
+                    row.jails.split(', ').filter(Boolean).forEach(j => jails.add(j));
+                }
+            });
+            return Array.from(jails);
+        },
+
+        /**
+         * 批量操作通用前置校验：
+         * 1. 至少选中一行
+         * 2. 每行 jails 字段只含一个监狱（排除监狱未知的情况）
+         * 3. 所有选中行属于同一个监狱
+         */
+        batchPreCheck() {
+            if (this.selectedDialogRows.length === 0) return false;
+            const allSingleJail = this.selectedDialogRows.every(row => {
+                const jailArr = (row.jails || '').split(', ').filter(Boolean);
+                return jailArr.length === 1;
+            });
+            if (!allSingleJail) return false;
+            return this.selectedJailSet.length === 1;
+        },
+
+        /**
+         * 是否允许批量封禁：
+         * 通用前置校验通过 + 所有选中行均为未封禁状态
+         */
+        canBatchBan() {
+            if (!this.batchPreCheck) return false;
+            return this.selectedDialogRows.every(row => !this.isIpBanned(row.ip));
+        },
+
+        /**
+         * 是否允许批量解封：
+         * 通用前置校验通过 + 所有选中行均为已封禁状态
+         */
+        canBatchUnban() {
+            if (!this.batchPreCheck) return false;
+            return this.selectedDialogRows.every(row => this.isIpBanned(row.ip));
+        },
+
+        /**
+         * 批量封禁按钮不可用时的 tooltip 说明
+         */
+        batchBanTooltip() {
+            if (this.selectedDialogRows.length === 0) return '请先勾选要操作的IP';
+            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.canBatchBan) return '所选IP中存在已封禁的IP，批量封禁仅支持全部未封禁的IP';
+            return '';
+        },
+
+        /**
+         * 批量解封按钮不可用时的 tooltip 说明
+         */
+        batchUnbanTooltip() {
+            if (this.selectedDialogRows.length === 0) return '请先勾选要操作的IP';
+            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.canBatchUnban) return '所选IP中存在未封禁的IP，批量解封仅支持全部已封禁的IP';
+            return '';
         }
     },
     mounted() {
@@ -433,12 +529,35 @@ export default {
 
         /**
          * 通知父组件打开确认弹窗执行封禁/解封
-         * @param {String} type 操作类型 ban/unban
-         * @param {String} ip 目标IP地址
+         * @param {String} type 操作类型 ban/unban/ban-batch/unban-batch
+         * @param {String} ip 目标IP地址（单个操作时使用）
          * @param {String} jailName 监狱名称
+         * @param {Array} ips 批量操作IP列表（可选）
          */
-        handleOpenConfirm(type, ip = '', jailName = '') {
-            this.$emit('open-confirm', type, ip, jailName);
+        handleOpenConfirm(type, ip = '', jailName = '', ips = []) {
+            this.$emit('open-confirm', type, ip, jailName, ips);
+        },
+
+        /**
+         * 批量封禁：提取选中IP和监狱名，触发父组件确认弹窗
+         * 前置校验已由 canBatchBan computed 保证，此处直接取第一项的监狱名
+         */
+        handleBatchBan() {
+            if (!this.canBatchBan) return;
+            const jailName = this.selectedJailSet[0];
+            const ips = this.selectedDialogRows.map(row => row.ip);
+            this.handleOpenConfirm('ban-batch', '', jailName, ips);
+        },
+
+        /**
+         * 批量解封：提取选中IP和监狱名，触发父组件确认弹窗（走危险操作二次确认流程）
+         * 前置校验已由 canBatchUnban computed 保证，此处直接取第一项的监狱名
+         */
+        handleBatchUnban() {
+            if (!this.canBatchUnban) return;
+            const jailName = this.selectedJailSet[0];
+            const ips = this.selectedDialogRows.map(row => row.ip);
+            this.handleOpenConfirm('unban-batch', '', jailName, ips);
         },
 
         /**
@@ -446,7 +565,7 @@ export default {
          */
         handleDialogClose() {
             this.dialogVisible = false;
-            this.selectedDialogIps = [];
+            this.selectedDialogRows = [];
         },
 
         /**
@@ -466,20 +585,21 @@ export default {
          * 复制弹窗中选中的IP到剪贴板
          */
         async copySelectedDialogIps() {
-            if (this.selectedDialogIps.length === 0) {
+            if (this.selectedDialogRows.length === 0) {
                 this.$message.warning("请先选择要复制的IP");
                 return;
             }
-            await this.copyToClipboard(this.selectedDialogIps.join("\n"));
-            this.$message.success(`已复制 ${this.selectedDialogIps.length} 个选中的IP`);
+            const ips = this.selectedDialogRows.map(row => row.ip);
+            await this.copyToClipboard(ips.join("\n"));
+            this.$message.success(`已复制 ${ips.length} 个选中的IP`);
         },
 
         /**
-         * 处理弹窗表格选择变更事件（提取选中行的IP）
+         * 处理弹窗表格选择变更事件（存储完整行对象，用于提取 ip/jails/banned）
          * @param {Array} selection 选中的行数据
          */
         handleDialogSelectionChange(selection) {
-            this.selectedDialogIps = selection.map(row => row.ip);
+            this.selectedDialogRows = selection;
         },
 
         /**
@@ -692,6 +812,21 @@ export default {
     position: relative;
     top: -1px;
 }
+
+/* ==================== 弹窗 footer 按钮组间距 ==================== */
+/* el-tooltip>span 包装层打断了 el-button+el-button 的默认 margin，改用 flex+gap 统一间距 */
+::v-deep .trend-detail-dialog .el-dialog__footer .dialog-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+::v-deep .dialog-footer .el-button+.el-button,
+.el-checkbox.is-bordered+.el-checkbox.is-bordered {
+    margin-left: 0;
+}
+
 
 /* ==================== 响应式适配 ==================== */
 @media (max-width: 768px) {

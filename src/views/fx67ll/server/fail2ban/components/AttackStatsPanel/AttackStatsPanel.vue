@@ -32,10 +32,47 @@
                     :disabled="topAttackIps.length === 0">
                     复制全部
                 </el-button>
-                <el-button type="success" size="small" icon="el-icon-check" @click="copySelectedTopIps"
-                    :disabled="selectedTopIps.length === 0">
-                    复制选中 ({{ selectedTopIps.length }})
-                </el-button>
+                <!--
+                    批量操作下拉菜单：合并批量封禁、批量解封、复制选中三个操作
+                    封禁/解封在 dropdown-item 层面单独控制禁用态和 tooltip
+                    未选中任何行时整体按钮禁用
+                -->
+                <el-dropdown trigger="click" :disabled="selectedRows.length === 0" @command="handleBatchCommand"
+                    size="small">
+                    <el-button size="small" :disabled="selectedRows.length === 0">
+                        批量操作选中 ({{ selectedRows.length }})<i class="el-icon-arrow-down" style="margin-left: 4px;"></i>
+                    </el-button>
+                    <el-dropdown-menu slot="dropdown">
+                        <!-- 批量封禁：全部未封禁 + 同一单监狱时可用 -->
+                        <el-tooltip :content="batchBanTooltip" placement="left" :disabled="canBatchBan">
+                            <span>
+                                <el-dropdown-item command="ban" :disabled="!canBatchBan">
+                                    <div class="dropdown-item-inner">
+                                        <i class="el-icon-close" style="color: #f56c6c;"></i>
+                                        批量封禁
+                                    </div>
+                                </el-dropdown-item>
+                            </span>
+                        </el-tooltip>
+                        <!-- 批量解封：全部已封禁 + 同一单监狱时可用 -->
+                        <el-tooltip :content="batchUnbanTooltip" placement="left" :disabled="canBatchUnban">
+                            <span>
+                                <el-dropdown-item command="unban" :disabled="!canBatchUnban">
+                                    <div class="dropdown-item-inner">
+                                        <i class="el-icon-check" style="color: #e6a23c;"></i>
+                                        批量解封
+                                    </div>
+                                </el-dropdown-item>
+                            </span>
+                        </el-tooltip>
+                        <el-dropdown-item divided command="copy">
+                            <div class="dropdown-item-inner">
+                                <i class="el-icon-document-copy" style="color: #409eff;"></i>
+                                复制选中IP
+                            </div>
+                        </el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
             </div>
         </div>
 
@@ -146,9 +183,13 @@ export default {
     },
     data() {
         return {
-            selectedTopIps: [],         // Top攻击IP中选中的IP
-            statsCurrentPage: 1,        // 分页当前页码
-            statsPageSize: 5            // 分页每页条数，默认5条
+            /**
+             * 表格当前选中的完整行对象数组
+             * 存完整行对象以便提取 ip、jails、banned 等字段用于批量操作校验
+             */
+            selectedRows: [],
+            statsCurrentPage: 1,    // 分页当前页码
+            statsPageSize: 5        // 分页每页条数，默认5条
         };
     },
     computed: {
@@ -214,6 +255,74 @@ export default {
                 sizes.push(this.topIpLimit);
             }
             return sizes;
+        },
+
+        /**
+         * 从选中行提取去重后的监狱数组
+         * 用于判断所有选中行是否都来自同一个监狱
+         */
+        selectedJailSet() {
+            const jails = new Set();
+            this.selectedRows.forEach(row => {
+                if (row.jails) {
+                    row.jails.split(', ').filter(Boolean).forEach(j => jails.add(j));
+                }
+            });
+            return Array.from(jails);
+        },
+
+        /**
+         * 批量操作通用前置校验：
+         * 1. 至少选中一行
+         * 2. 每行 jails 字段只含一个监狱（排除监狱未知或跨监狱行）
+         * 3. 所有选中行属于同一个监狱
+         */
+        batchPreCheck() {
+            if (this.selectedRows.length === 0) return false;
+            const allSingleJail = this.selectedRows.every(row => {
+                const jailArr = (row.jails || '').split(', ').filter(Boolean);
+                return jailArr.length === 1;
+            });
+            if (!allSingleJail) return false;
+            return this.selectedJailSet.length === 1;
+        },
+
+        /**
+         * 是否允许批量封禁：
+         * 通用前置校验通过 + 所有选中行均为未封禁状态
+         */
+        canBatchBan() {
+            if (!this.batchPreCheck) return false;
+            return this.selectedRows.every(row => !row.banned);
+        },
+
+        /**
+         * 是否允许批量解封：
+         * 通用前置校验通过 + 所有选中行均为已封禁状态
+         */
+        canBatchUnban() {
+            if (!this.batchPreCheck) return false;
+            return this.selectedRows.every(row => row.banned);
+        },
+
+        /**
+         * 批量封禁按钮不可用时的 tooltip 说明
+         */
+        batchBanTooltip() {
+            if (this.selectedRows.length === 0) return '请先勾选要操作的IP';
+            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.canBatchBan) return '所选IP中存在已封禁的IP，批量封禁仅支持全部未封禁的IP';
+            return '';
+        },
+
+        /**
+         * 批量解封按钮不可用时的 tooltip 说明
+         */
+        batchUnbanTooltip() {
+            if (this.selectedRows.length === 0) return '请先勾选要操作的IP';
+            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.canBatchUnban) return '所选IP中存在未封禁的IP，批量解封仅支持全部已封禁的IP';
+            return '';
         }
     },
     watch: {
@@ -289,9 +398,42 @@ export default {
          * @param {String} type 操作类型
          * @param {String} ip 目标IP地址
          * @param {String} jailName 监狱名称
+         * @param {Array} ips 批量操作IP列表（可选）
          */
-        handleOpenConfirm(type, ip = '', jailName = '') {
-            this.$emit('open-confirm', type, ip, jailName);
+        handleOpenConfirm(type, ip = '', jailName = '', ips = []) {
+            this.$emit('open-confirm', type, ip, jailName, ips);
+        },
+
+        /**
+         * 批量操作下拉菜单统一路由
+         * @param {String} command 'ban' | 'unban' | 'copy'
+         */
+        handleBatchCommand(command) {
+            if (command === 'ban') this.handleBatchBan();
+            else if (command === 'unban') this.handleBatchUnban();
+            else if (command === 'copy') this.copySelectedTopIps();
+        },
+
+        /**
+         * 批量封禁：提取选中IP和监狱名，触发父组件确认弹窗（走危险操作二次确认流程）
+         * 前置校验已由 canBatchBan computed 保证，此处直接取第一项的监狱名
+         */
+        handleBatchBan() {
+            if (!this.canBatchBan) return;
+            const jailName = this.selectedJailSet[0];
+            const ips = this.selectedRows.map(row => row.ip);
+            this.handleOpenConfirm('ban-batch', '', jailName, ips);
+        },
+
+        /**
+         * 批量解封：提取选中IP和监狱名，触发父组件确认弹窗（走危险操作二次确认流程）
+         * 前置校验已由 canBatchUnban computed 保证，此处直接取第一项的监狱名
+         */
+        handleBatchUnban() {
+            if (!this.canBatchUnban) return;
+            const jailName = this.selectedJailSet[0];
+            const ips = this.selectedRows.map(row => row.ip);
+            this.handleOpenConfirm('unban-batch', '', jailName, ips);
         },
 
         /**
@@ -334,20 +476,21 @@ export default {
          * 复制选中的Top攻击IP到剪贴板
          */
         async copySelectedTopIps() {
-            if (this.selectedTopIps.length === 0) {
+            if (this.selectedRows.length === 0) {
                 this.$message.warning("请先选择要复制的IP");
                 return;
             }
-            await this.copyToClipboard(this.selectedTopIps.join("\n"));
-            this.$message.success(`已复制 ${this.selectedTopIps.length} 个选中的IP`);
+            const ips = this.selectedRows.map(row => row.ip);
+            await this.copyToClipboard(ips.join("\n"));
+            this.$message.success(`已复制 ${ips.length} 个选中的IP`);
         },
 
         /**
-         * 处理表格选择变更事件（提取选中行的IP）
+         * 处理表格选择变更事件（存储完整行对象，用于提取 ip/jails/banned）
          * @param {Array} selection 选中的行数据
          */
         handleStatsSelectionChange(selection) {
-            this.selectedTopIps = selection.map(row => row.ip);
+            this.selectedRows = selection;
         },
 
         // ==================== 分页事件处理 ====================
@@ -488,6 +631,13 @@ export default {
 .refresh-time {
     font-size: 12px;
     color: #8392a5;
+}
+
+/* ==================== 下拉菜单项内容布局 ==================== */
+.dropdown-item-inner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* ==================== 响应式适配 ==================== */
