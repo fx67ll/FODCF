@@ -98,9 +98,9 @@
         </el-table>
 
         <!-- 分页 -->
-        <div class="pagination-container" v-if="processedTopIps.length > statsPageSize">
+        <div class="pagination-container" v-if="processedTopIps.length > 0">
             <el-pagination @size-change="handleStatsSizeChange" @current-change="handleStatsCurrentChange"
-                :current-page="statsCurrentPage" :page-sizes="[5, 10, 20, 50]" :page-size="statsPageSize"
+                :current-page="statsCurrentPage" :page-sizes="[5, 10, 20]" :page-size="statsPageSize"
                 layout="total, sizes, prev, pager, next, jumper" :total="processedTopIps.length" background>
             </el-pagination>
         </div>

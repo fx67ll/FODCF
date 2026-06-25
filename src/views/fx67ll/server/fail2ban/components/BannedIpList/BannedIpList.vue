@@ -34,7 +34,7 @@
         </div>
 
         <!-- 全量IP分页 -->
-        <div class="pagination-container" v-if="allBannedIps.length > ipPageSize">
+        <div class="pagination-container" v-if="allBannedIps.length > 0">
             <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
                 :current-page="ipCurrentPage" :page-sizes="[50, 100, 200]" :page-size="ipPageSize"
                 layout="total, sizes, prev, pager, next, jumper" :total="allBannedIps.length" background>
