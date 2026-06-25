@@ -242,10 +242,12 @@ export default {
             // ==================== 统一确认弹窗 ====================
             confirmDialogVisible: false,
             confirmLoading: false,
+            // 【修改】增加ips数组存储批量IP列表
             confirmInfo: {
                 type: 'ban',
                 ip: '',
-                jailName: ''
+                jailName: '',
+                ips: []
             },
 
             // ==================== 各卡片加载计数器（并发刷新互不干扰） ====================
@@ -559,13 +561,23 @@ export default {
 
         /**
          * 打开统一确认弹窗
+         * @param {String} type 操作类型
+         * @param {String} ip 单个IP
+         * @param {String} jailName 监狱名
+         * @param {Array} ips 批量IP数组（可选）
          */
-        openConfirmDialog(type, ip = '', jailName = '') {
+        openConfirmDialog(type, ip = '', jailName = '', ips = []) {
             if (this.isSystemLocked) {
                 this.$message.warning("系统状态异常，无法执行操作");
                 return;
             }
-            this.confirmInfo = { type, ip, jailName };
+            // 【修改】批量IP直接存入confirmInfo，不再依赖ref读取
+            this.confirmInfo = {
+                type,
+                ip,
+                jailName,
+                ips: Array.isArray(ips) ? ips : []
+            };
             this.confirmDialogVisible = true;
         },
 
@@ -580,7 +592,7 @@ export default {
          * 执行确认后的操作
          */
         async executeOperation() {
-            const { type, ip, jailName } = this.confirmInfo;
+            const { type, ip, jailName, ips } = this.confirmInfo;
             this.confirmLoading = true;
 
             try {
@@ -593,10 +605,30 @@ export default {
                         res = await unbanIp(jailName, ip);
                         break;
                     case 'ban-batch':
-                        res = await banBatchIps(jailName, this.confirmInfo.ips);
+                        if (!ips || ips.length === 0) {
+                            this.$message.warning("未选中任何IP，无法执行批量封禁");
+                            this.confirmLoading = false;
+                            return;
+                        }
+                        if (ips.length > 100) {
+                            this.$message.warning("单次批量封禁最多支持100个IP");
+                            this.confirmLoading = false;
+                            return;
+                        }
+                        res = await banBatchIps(jailName, ips);
                         break;
                     case 'unban-batch':
-                        res = await unbanBatchIps(jailName, this.confirmInfo.ips);
+                        if (!ips || ips.length === 0) {
+                            this.$message.warning("未选中任何IP，无法执行批量解封");
+                            this.confirmLoading = false;
+                            return;
+                        }
+                        if (ips.length > 100) {
+                            this.$message.warning("单次批量解封最多支持100个IP");
+                            this.confirmLoading = false;
+                            return;
+                        }
+                        res = await unbanBatchIps(jailName, ips);
                         break;
                     case 'unban-all-jail':
                         res = await unbanAllJailIps(jailName);

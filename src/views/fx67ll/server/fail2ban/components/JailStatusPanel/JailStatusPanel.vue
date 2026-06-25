@@ -175,11 +175,15 @@
                     </div>
                 </div>
             </div>
-            <!-- 弹窗底部footer：新增一键解封、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
+            <!-- 弹窗底部footer：新增一键解封、解封选中、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
             <span slot="footer" class="dialog-footer" v-if="currentJailDetail">
                 <el-button type="danger" size="small" icon="el-icon-delete" @click="handleUnbanAllCurrentJail"
                     :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
                     一键解封本监狱全部IP
+                </el-button>
+                <el-button type="warning" size="small" icon="el-icon-check" @click="handleUnbanSelectedIps"
+                    :disabled="dialogSelectedIps.length === 0">
+                    解封选中 ({{ dialogSelectedIps.length }})
                 </el-button>
                 <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyDialogAllIps"
                     :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
@@ -304,6 +308,15 @@ export default {
         },
 
         /**
+         * 批量解封当前监狱中选中的IP
+         */
+        handleUnbanSelectedIps() {
+            if (!this.currentJailDetail || this.dialogSelectedIps.length === 0) return;
+            // 抛出操作类型 unban-batch，携带选中IP列表和当前监狱名称
+            this.$emit('open-confirm', 'unban-batch', '', this.currentJailDetail.name, this.dialogSelectedIps);
+        },
+
+        /**
          * 刷新弹窗中的监狱详情数据（操作成功后由父组件调用）
          */
         async refreshJailDetail() {
@@ -377,6 +390,7 @@ export default {
          * @param {String} type 操作类型
          * @param {String} ip 目标IP地址
          * @param {String} jailName 监狱名称
+         * @param {Array} ips 批量操作IP列表（可选）
          */
         handleOpenConfirm(type, ip = '', jailName = '') {
             this.$emit('open-confirm', type, ip, jailName);
@@ -497,7 +511,7 @@ export default {
 
 /* 预警待处理：温润浅杏橙，贴合页面清新淡色调，不抢蓝/粉主视觉 */
 .num-highlight-warning {
-    color: #f7bc78;
+    color: #fcac50;
     font-weight: bold;
     font-size: 28px;
     cursor: pointer;

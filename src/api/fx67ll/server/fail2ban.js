@@ -102,13 +102,14 @@ export function unbanIp(jailName, ip) {
  * 批量封禁指定IP列表（单次上限100个）
  * 【安全限制】仅超级管理员且IP在白名单中可执行
  * @param {String} jailName 监狱名称
- * @param {Array<String>} ips IP地址数组
+ * @data {Array<String>} ips IP地址数组
  */
 export function banBatchIps(jailName, ips) {
   return request({
     url: `/server/fail2ban/jail/${jailName}/ban-batch`,
     method: "post",
-    params: { ips },
+    // 核心修改：数组放请求体，不再放URL参数
+    data: ips,
   });
 }
 
@@ -116,13 +117,13 @@ export function banBatchIps(jailName, ips) {
  * 批量解封指定IP列表（单次上限100个）
  * 【安全限制】仅超级管理员且IP在白名单中可执行
  * @param {String} jailName 监狱名称
- * @param {Array<String>} ips IP地址数组
+ * @data {Array<String>} ips IP地址数组
  */
 export function unbanBatchIps(jailName, ips) {
   return request({
     url: `/server/fail2ban/jail/${jailName}/unban-batch`,
     method: "post",
-    params: { ips },
+    data: ips,
   });
 }
 
