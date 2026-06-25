@@ -58,10 +58,16 @@ import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 export default {
     name: "DangerConfirmDialog",
     props: {
+        /**
+         * 控制弹窗显隐，由父组件通过 .sync 双向绑定
+         */
         visible: {
             type: Boolean,
             default: false
         },
+        /**
+         * 确认执行按钮的 loading 状态，由父组件传入（执行API期间置为true）
+         */
         loading: {
             type: Boolean,
             default: false
@@ -69,11 +75,14 @@ export default {
     },
     data() {
         return {
-            inputValue: '',
-            inputError: false
+            inputValue: '',     // 用户输入的验证文字
+            inputError: false   // 输入内容不匹配时置true，显示错误提示
         };
     },
     computed: {
+        /**
+         * 双向绑定弹窗显隐：get读visible prop，set向父组件emit update:visible
+         */
         dialogVisible: {
             get() {
                 return this.visible;
@@ -84,6 +93,9 @@ export default {
         }
     },
     watch: {
+        /**
+         * 每次弹窗打开时重置输入框和错误状态，防止上次输入残留
+         */
         visible(val) {
             if (val) {
                 this.inputValue = '';
@@ -93,12 +105,15 @@ export default {
     },
     methods: {
         /**
-         * 代理工具函数
+         * 代理工具函数，用于计算弹窗垂直偏移量实现居中
          */
         getDialogVerticalOffset(offset) {
             return getDialogVerticalOffset(offset);
         },
 
+        /**
+         * 弹窗打开后自动聚焦输入框，减少用户点击步骤
+         */
         handleDialogOpen() {
             this.$nextTick(() => {
                 if (this.$refs.confirmInput) {
@@ -107,6 +122,10 @@ export default {
             });
         },
 
+        /**
+         * 点击确认执行 / 回车触发
+         * 校验输入内容必须精确等于"确认执行"，通过后向父组件emit confirm事件
+         */
         handleConfirm() {
             if (this.inputValue.trim() !== '确认执行') {
                 this.inputError = true;
@@ -115,6 +134,10 @@ export default {
             this.$emit('confirm');
         },
 
+        /**
+         * 点击取消 / 弹窗关闭时调用
+         * 关闭弹窗并清空输入状态，避免下次打开时出现残留数据
+         */
         handleCancel() {
             this.dialogVisible = false;
             this.inputValue = '';

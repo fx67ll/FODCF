@@ -90,7 +90,7 @@
         <!-- ==================== 监狱详情弹窗 ==================== -->
         <el-dialog :title="(currentJailDetail ? currentJailDetail.name : '') + ' 监狱详情'" :visible.sync="dialogVisible"
             width="830px" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
-            custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(570)}`" append-to-body>
+            custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
             <div v-if="currentJailDetail">
                 <!-- 监狱基本信息 -->
                 <div class="config-section">

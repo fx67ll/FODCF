@@ -1,6 +1,6 @@
 <template>
     <el-dialog title="操作安全确认" :visible.sync="dialogVisible" width="500px" :close-on-click-modal="false"
-        :style="`top: ${['ban', 'unban', 'ban-batch', 'unban-batch'].includes(confirmInfo.type) && confirmInfo.jailName ? 423 : getDialogVerticalOffset(getConfirmTypeHeight())}`"
+        :style="`top: ${['ban', 'unban'].includes(confirmInfo.type) && confirmInfo.jailName ? 423 : getDialogVerticalOffset(getConfirmTypeHeight())}`"
         append-to-body @open="handleDialogOpen" @close="handleDialogClose">
         <div class="confirm-content">
 
@@ -11,7 +11,7 @@
                 </div>
                 <div class="danger-banner-body">
                     <div class="danger-banner-title">极度危险操作，请再三确认</div>
-                    <div class="danger-banner-desc">此操作将立即解封大量IP，不可撤销，请确认后谨慎执行</div>
+                    <div class="danger-banner-desc">此操作将立即解封IP，不可撤销，请确认后谨慎执行</div>
                 </div>
             </div>
 
@@ -140,7 +140,7 @@ export default {
             return !noJailTypes.includes(this.confirmInfo.type);
         },
         isDangerousOp() {
-            return ['unban-all', 'unban-all-jail'].includes(this.confirmInfo.type);
+            return ['unban-all', 'unban-all-jail', 'unban-batch'].includes(this.confirmInfo.type);
         },
         isConfirmDisabled() {
             if (this.needSelectJail && !this.confirmInfo.jailName) return true;
@@ -233,7 +233,7 @@ export default {
                 'ban': 'danger',
                 'unban': 'success',
                 'ban-batch': 'danger',
-                'unban-batch': 'success',
+                'unban-batch': 'danger',
                 'unban-all-jail': 'danger',
                 'unban-all': 'danger',
                 'startService': 'success',
@@ -251,8 +251,8 @@ export default {
             const typeMap = {
                 'ban': 467,
                 'unban': 467,
-                'ban-batch': 480,
-                'unban-batch': 480,
+                'ban-batch': 510,
+                'unban-batch': 510,
                 'unban-all-jail': 470,
                 'unban-all': 470,
                 'startService': 350,
