@@ -599,7 +599,8 @@ export default {
 
 /* ==================== 分页容器 ==================== */
 .pagination-container {
-    margin-top: 20px;
+    margin-top: 15px;
+    margin-bottom: 20px;
     text-align: left;
 }
 
@@ -641,7 +642,15 @@ export default {
 }
 
 /* ==================== 响应式适配 ==================== */
-@media (max-width: 768px) {
+
+/* 标题行适配：元素开始换行变形时即分两行 */
+@media (max-width: 1150px) {
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
     .ip-actions {
         width: 100%;
         justify-content: flex-start;

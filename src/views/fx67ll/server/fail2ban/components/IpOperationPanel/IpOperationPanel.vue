@@ -267,7 +267,6 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-left: 12px;
     padding: 0 14px;
     height: 36px;
     background: #f5f7fa;
@@ -299,7 +298,7 @@ export default {
 }
 
 /* 响应式 */
-@media (max-width: 900px) {
+@media (max-width: 1040px) {
     .type-card-group {
         flex-direction: column;
     }

@@ -1054,9 +1054,5 @@ export default {
         margin-left: 0;
         margin-top: 15px;
     }
-
-    .refresh-container {
-        flex-wrap: wrap;
-    }
 }
 </style>

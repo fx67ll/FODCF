@@ -105,7 +105,7 @@
                         <span v-if="lastRefreshTime" class="refresh-time">最后刷新: {{ lastRefreshTime }}</span>
                     </div>
                     <el-button type="text" icon="el-icon-close" @click="toggleFullscreen" class="fullscreen-close-btn">
-                        退出全屏模式
+                        退出全屏 (Esc)
                     </el-button>
                 </div>
             </template>
@@ -225,6 +225,20 @@ export default {
                 });
             }
         }
+    },
+    mounted() {
+        // 监听浏览器原生全屏状态变化，用户按 Esc 退出时同步关闭 dialog
+        this._fullscreenChangeHandler = this.handleFullscreenChange.bind(this);
+        document.addEventListener('fullscreenchange', this._fullscreenChangeHandler);
+        document.addEventListener('webkitfullscreenchange', this._fullscreenChangeHandler);
+    },
+    beforeDestroy() {
+        // 退出浏览器全屏（若处于全屏状态）并移除事件监听
+        if (this.isFullscreen) {
+            this.exitBrowserFullscreen();
+        }
+        document.removeEventListener('fullscreenchange', this._fullscreenChangeHandler);
+        document.removeEventListener('webkitfullscreenchange', this._fullscreenChangeHandler);
     },
     methods: {
         /**
@@ -349,9 +363,58 @@ export default {
 
         /**
          * 切换全屏显示日志
+         * 先打开 el-dialog，再在 $nextTick 中调用浏览器原生 Fullscreen API 实现真正全屏
          */
         toggleFullscreen() {
-            this.isFullscreen = !this.isFullscreen;
+            if (!this.isFullscreen) {
+                // 进入全屏：先打开 dialog
+                this.isFullscreen = true;
+                this.$nextTick(() => {
+                    this.requestBrowserFullscreen();
+                });
+            } else {
+                // 退出全屏：先退出浏览器全屏，再关闭 dialog
+                this.exitBrowserFullscreen();
+            }
+        },
+
+        /**
+         * 调用浏览器原生 Fullscreen API 进入全屏
+         */
+        requestBrowserFullscreen() {
+            const dialogEl = document.querySelector('.fullscreen-log-dialog');
+            if (!dialogEl) return;
+            if (dialogEl.requestFullscreen) {
+                dialogEl.requestFullscreen();
+            } else if (dialogEl.webkitRequestFullscreen) {
+                dialogEl.webkitRequestFullscreen();
+            } else if (dialogEl.msRequestFullscreen) {
+                dialogEl.msRequestFullscreen();
+            }
+        },
+
+        /**
+         * 退出浏览器原生全屏
+         */
+        exitBrowserFullscreen() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+            this.isFullscreen = false;
+        },
+
+        /**
+         * 浏览器原生全屏状态变化回调
+         * 用户按 Esc 退出浏览器全屏时，同步关闭 dialog
+         */
+        handleFullscreenChange() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                this.isFullscreen = false;
+            }
         },
 
         /**
@@ -455,6 +518,7 @@ export default {
     margin-bottom: 20px;
     position: relative;
     transition: all 0.3s ease;
+    padding-bottom: 0;
 }
 
 .status-header {
@@ -576,15 +640,26 @@ export default {
 
 /* ==================== 分页容器 ==================== */
 .pagination-container {
-    margin-top: 10px;
     text-align: left;
+    height: 40px;
+    padding: 0 !important;
+    margin-top: 20px;
+    margin-bottom: 0 !important;
 }
 
 /* ==================== 响应式适配 ==================== */
-@media (max-width: 768px) {
+
+/* 标题行适配：元素开始换行变形时即分两行 */
+@media (max-width: 1000px) {
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
     .filter-container {
         flex-wrap: wrap;
-        margin-top: 10px;
+        margin-top: 0;
     }
 }
 </style>
@@ -598,7 +673,7 @@ export default {
 }
 
 .fullscreen-log-dialog .el-dialog__body {
-    padding: 0 20px 20px 20px;
+    padding: 0 20px 0 20px;
     overflow: hidden;
 }
 
@@ -704,8 +779,27 @@ export default {
 }
 
 .fullscreen-pagination {
-    margin-top: 15px;
+    height: 48px !important;
+    margin-top: 0 !important;
     text-align: left;
     flex-shrink: 0;
+    position: relative;
+    top: 15px;
+}
+
+/* 浏览器原生全屏时的适配 */
+.fullscreen-log-dialog:fullscreen,
+.fullscreen-log-dialog:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    overflow: hidden;
+    background: #fff;
+}
+
+.fullscreen-log-dialog:fullscreen .el-dialog__body,
+.fullscreen-log-dialog:-webkit-full-screen .el-dialog__body {
+    height: calc(100vh - 60px);
 }
 </style>

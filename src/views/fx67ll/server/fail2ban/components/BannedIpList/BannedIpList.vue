@@ -222,7 +222,6 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid #f5f5f5;
 }
@@ -261,7 +260,7 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .copy-btn {
@@ -293,7 +292,22 @@ export default {
 
 /* ==================== 分页容器 ==================== */
 .pagination-container {
-    margin-top: 20px;
+    margin-top: 10px;
     text-align: left;
+}
+
+/* ==================== 响应式适配 ==================== */
+
+/* 标题行适配：元素开始换行变形时即分两行 */
+@media (max-width: 850px) {
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
 }
 </style>

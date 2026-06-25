@@ -829,7 +829,9 @@ export default {
 
 
 /* ==================== 响应式适配 ==================== */
-@media (max-width: 768px) {
+
+/* 标题行适配：元素开始换行变形时即分两行 */
+@media (max-width: 900px) {
     .status-header {
         flex-direction: column;
         align-items: flex-start;
