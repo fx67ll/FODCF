@@ -22,12 +22,67 @@
             </div>
         </div>
         <div class="chart-container">
-            <div ref="trendChart" style="width: 100%; height: 300px;"></div>
+            <div ref="trendChart" style="width: 100%; height: 300px; cursor: pointer;"></div>
         </div>
+
+        <!-- 时段攻击IP详情弹窗 -->
+        <el-dialog :title="`${currentHourLabel} 攻击次数 Top5 IP`" :visible.sync="dialogVisible"
+            :close-on-click-modal="false" width="700px"
+            :style="`top: ${getDialogVerticalOffset(300 + ((currentTopIps.length - 2) * 50))}`" append-to-body
+            @close="dialogVisible = false">
+            <el-table :data="currentTopIps" border stripe style="width: 100%">
+                <el-table-column label="排名" width="60" align="center">
+                    <template v-slot="scope">
+                        {{ scope.$index + 1 }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="攻击IP">
+                    <template v-slot="scope">
+                        <span class="ip-text">{{ scope.row.ip }}</span>
+                        <el-button type="text" icon="el-icon-document-copy" size="mini"
+                            @click="handleCopyIp(scope.row.ip)" class="copy-btn" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="来源监狱" width="120" align="center">
+                    <template v-slot="scope">
+                        <el-tag v-for="jail in scope.row.jails.split(', ')" :key="jail" size="mini" type="info"
+                            style="margin: 2px;">
+                            {{ jail }}
+                        </el-tag>
+                        <span v-if="!scope.row.jails" style="color: #909399;">未知</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="count" label="攻击次数" width="80" align="center" />
+                <el-table-column label="封禁状态" width="90" align="center">
+                    <template v-slot="scope">
+                        <el-tag :type="isIpBanned(scope.row.ip) ? 'danger' : 'success'" size="small">
+                            {{ isIpBanned(scope.row.ip) ? '已封禁' : '未封禁' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100" align="center">
+                    <template v-slot="scope">
+                        <el-button v-if="!isIpBanned(scope.row.ip)" type="danger" size="mini" icon="el-icon-close"
+                            @click="handleOpenConfirm('ban', scope.row.ip, getAutoJail(scope.row.jails))">
+                            封禁
+                        </el-button>
+                        <el-button v-else type="success" size="mini" icon="el-icon-check"
+                            @click="handleOpenConfirm('unban', scope.row.ip, getAutoJail(scope.row.jails))">
+                            解封
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">关闭</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
 <script>
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
 import * as echarts from 'echarts';
 
 export default {
@@ -52,11 +107,29 @@ export default {
         lastRefreshTime: {
             type: String,
             default: ""
+        },
+        // 全量封禁IP列表（用于前端状态判断）
+        allBannedIps: {
+            type: Array,
+            default: () => []
+        },
+        // 按监狱分组的封禁IP（用于精准状态判断）
+        bannedIpsByJail: {
+            type: Object,
+            default: () => ({})
+        },
+        // 监狱列表（备用）
+        jailList: {
+            type: Array,
+            default: () => []
         }
     },
     data() {
         return {
-            trendChart: null          // 趋势图实例
+            trendChart: null,          // 趋势图实例
+            dialogVisible: false,      // 时段IP详情弹窗开关
+            currentHourLabel: "",      // 当前选中时段标签
+            currentTopIps: []          // 当前时段Top5 IP列表
         };
     },
     watch: {
@@ -83,6 +156,11 @@ export default {
         window.removeEventListener('resize', this.handleResize);
     },
     methods: {
+        // 代理工具函数
+        getDialogVerticalOffset(offset) {
+            return getDialogVerticalOffset(offset);
+        },
+
         /**
          * 初始化攻击趋势图
          */
@@ -93,7 +171,7 @@ export default {
             const option = {
                 tooltip: {
                     trigger: 'axis',
-                    formatter: '{b}<br/>攻击次数：{c} 次'
+                    formatter: '{b}<br/>攻击次数：{c} 次<br/><span style="color:#909399;font-size:12px;">点击查看该时段攻击IP</span>'
                 },
                 grid: {
                     left: '3%',
@@ -139,6 +217,13 @@ export default {
                 ]
             };
             this.trendChart.setOption(option);
+
+            // 绑定柱状图点击事件，唤起时段IP详情弹窗
+            this.trendChart.on('click', (params) => {
+                if (params.componentType === 'series') {
+                    this.handleBarClick(params.name);
+                }
+            });
         },
 
         /**
@@ -188,6 +273,37 @@ export default {
         },
 
         /**
+         * 点击柱状图柱子，打开时段IP详情弹窗
+         * @param {String} hourKey 小时键值，格式如 "06-25 14:00"
+         */
+        handleBarClick(hourKey) {
+            const hourData = this.trendData.find(item => item.dateTime === hourKey);
+            if (!hourData || !hourData.topIps || hourData.topIps.length === 0) {
+                this.$message.info("该时段暂无攻击IP记录");
+                return;
+            }
+            this.currentHourLabel = this.formatHourLabel(hourKey);
+            this.currentTopIps = hourData.topIps;
+            this.dialogVisible = true;
+        },
+
+        /**
+         * 将小时键值格式化为完整日期时间段标签
+         * @param {String} hourKey 格式如 "06-25 14:00"
+         * @returns {String} 格式如 "2026年06月25日 14:00 - 14:59"
+         */
+        formatHourLabel(hourKey) {
+            const currentYear = new Date().getFullYear();
+            // 解析 "06-25 14:00"
+            const [datePart, timePart] = hourKey.split(' ');
+            const [month, day] = datePart.split('-');
+            // 从 "14:00" 提取小时，拼接 "xx:59"
+            const hour = timePart.split(':')[0];
+            const endTime = `${hour}:59`;
+            return `${currentYear}年${month}月${day}日 ${timePart} - ${endTime}`;
+        },
+
+        /**
          * 窗口大小变化时自适应图表
          */
         handleResize() {
@@ -201,6 +317,65 @@ export default {
          */
         handleRefresh() {
             this.$emit('refresh');
+        },
+
+        /**
+         * 判断IP是否已被封禁（前端本地比对）
+         * @param {String} ip IP地址
+         * @returns {Boolean} 是否已封禁
+         */
+        isIpBanned(ip) {
+            return this.allBannedIps.includes(ip);
+        },
+
+        /**
+         * 根据来源监狱数量自动返回监狱名称
+         * 仅一个监狱时自动带上，多个监狱时返回空串让父组件弹窗手动选择
+         * @param {String} jails 逗号分隔的监狱名称
+         * @returns {String} 单个监狱名或空串
+         */
+        getAutoJail(jails) {
+            if (!jails) return '';
+            const jailArr = jails.split(', ').filter(Boolean);
+            return jailArr.length === 1 ? jailArr[0] : '';
+        },
+
+        /**
+         * 通知父组件打开确认弹窗执行封禁/解封
+         * @param {String} type 操作类型 ban/unban
+         * @param {String} ip 目标IP地址
+         * @param {String} jailName 监狱名称
+         */
+        handleOpenConfirm(type, ip = '', jailName = '') {
+            this.$emit('open-confirm', type, ip, jailName);
+        },
+
+        /**
+         * 复制单行IP地址到剪贴板
+         * @param {String} ip 要复制的IP地址
+         */
+        async handleCopyIp(ip) {
+            await this.copyToClipboard(ip);
+            this.$message.success(`已复制IP: ${ip}`);
+        },
+
+        /**
+         * 通用剪贴板复制方法（兼容现代Clipboard API + 旧浏览器降级）
+         * @param {String} text 要复制的文本
+         */
+        async copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+            }
         },
 
         /**
@@ -264,7 +439,7 @@ export default {
     color: #1f2d3d;
 }
 
-/* ==================== 新增：趋势统计样式 ==================== */
+/* ==================== 趋势统计样式 ==================== */
 .trend-stats {
     display: flex;
     gap: 20px;
@@ -348,6 +523,42 @@ export default {
 /* ==================== 图表容器 ==================== */
 .chart-container {
     margin-top: 20px;
+}
+
+/* ==================== 弹窗相关样式 ==================== */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.hour-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+}
+
+.tip-text {
+    font-size: 12px;
+    color: #909399;
+}
+
+.ip-text {
+    font-family: Consolas, monospace;
+    font-weight: 500;
+}
+
+.copy-btn {
+    margin-left: 5px;
+    padding: 2px 4px;
+    transition: transform 0.2s;
+}
+
+.copy-btn:hover {
+    transform: scale(1.25);
+    position: relative;
+    top: -1px;
 }
 
 /* ==================== 响应式适配 ==================== */

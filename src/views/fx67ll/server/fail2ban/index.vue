@@ -1,9 +1,8 @@
 <template>
     <div class="app-container">
         <!-- Fail2ban服务状态卡片（始终显示，异常状态显示上锁样式） -->
-        <div class="status-card" :class="{ 'locked-card': isSystemLocked }"
-            v-loading="isLoadingStatus" element-loading-text="数据加载中..."
-            element-loading-background="rgba(255, 255, 255, 0.8)">
+        <div class="status-card" :class="{ 'locked-card': isSystemLocked }" v-loading="isLoadingStatus"
+            element-loading-text="数据加载中..." element-loading-background="rgba(255, 255, 255, 0.8)">
             <!-- 上锁遮罩 -->
             <div v-if="isSystemLocked" class="lock-overlay">
                 <div class="lock-icon" :class="lockIconClass">
@@ -131,20 +130,22 @@
 
             <!-- 最近24小时攻击趋势卡片 -->
             <attack-trend-panel :trend-data="trendData" :max-trend-count="maxTrendCount"
-                :total-trend-attacks="totalTrendAttacks" :loading="isLoadingAttackData" :last-refresh-time="lastRefreshTime"
-                @refresh="handleRefreshAttackData" ref="attackTrendPanel" />
+                :total-trend-attacks="totalTrendAttacks" :loading="isLoadingAttackData"
+                :last-refresh-time="lastRefreshTime" :all-banned-ips="allBannedIps"
+                :banned-ips-by-jail="bannedIpsByJail" :jail-list="jailList" @refresh="handleRefreshAttackData"
+                @open-confirm="openConfirmDialog" ref="attackTrendPanel" />
 
             <!-- 攻击来源统计卡片 -->
             <attack-stats-panel :top-attack-ips="topAttackIps" :all-banned-ips="allBannedIps"
-                :banned-ips-by-jail="bannedIpsByJail"
-                :baseline-max-retry="baselineMaxRetry" :jail-list="jailList" :loading="isLoadingAttackData"
-                :last-refresh-time="lastRefreshTime"
-                :top-ip-limit.sync="topIpLimit" :stats-log-lines.sync="statsLogLines" @open-confirm="openConfirmDialog"
+                :banned-ips-by-jail="bannedIpsByJail" :baseline-max-retry="baselineMaxRetry" :jail-list="jailList"
+                :loading="isLoadingAttackData" :last-refresh-time="lastRefreshTime" :top-ip-limit.sync="topIpLimit"
+                :stats-log-lines.sync="statsLogLines" @open-confirm="openConfirmDialog"
                 @refresh="handleRefreshAttackData" ref="attackStatsPanel" />
 
             <!-- 全量封禁IP列表卡片 -->
-            <banned-ip-list :all-banned-ips="allBannedIps" :loading="isLoadingBannedIps" :last-refresh-time="lastRefreshTime"
-                @open-confirm="openConfirmDialog" @refresh="handleRefreshBannedIps" ref="bannedIpList" />
+            <banned-ip-list :all-banned-ips="allBannedIps" :loading="isLoadingBannedIps"
+                :last-refresh-time="lastRefreshTime" @open-confirm="openConfirmDialog" @refresh="handleRefreshBannedIps"
+                ref="bannedIpList" />
 
             <!-- 最近攻击日志卡片 -->
             <recent-logs-panel :jail-list="jailList" :last-refresh-time="lastRefreshTime" ref="recentLogsPanel" />
@@ -410,7 +411,9 @@ export default {
 
                 this.lastRefreshTime = this.formatDateTime(new Date());
             } catch (error) {
-                this.$message.error("加载数据失败：" + (error.msg || error.message));
+                if (!error._isHandled) {
+                    this.$message.error("加载数据失败：" + (error.msg || error.message));
+                }
             } finally {
                 if (showLoading) {
                     if (this.loadingStatusCount > 0) this.loadingStatusCount--;
@@ -511,18 +514,19 @@ export default {
             this.topAttackIps = response.data.topAttackIps || [];
             this.baselineMaxRetry = response.data.baselineMaxRetry || 5;
 
-            // 转换趋势数据格式
+            // 转换趋势数据格式（适配后端结构：每个时段包含count + topIps）
             const trend = response.data.hourlyTrend || {};
             const now = new Date();
             const entries = Object.entries(trend);
 
-            this.trendData = entries.map(([hour, count], index) => {
+            this.trendData = entries.map(([hour, data], index) => {
                 const date = new Date(now.getTime() - (23 - index) * 60 * 60 * 1000);
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
                 return {
                     dateTime: `${month}-${day} ${hour}`,
-                    count
+                    count: data.count || 0,
+                    topIps: data.topIps || []
                 };
             }).reverse();
 
@@ -632,7 +636,9 @@ export default {
                     this.$refs.ipOperationPanel.clearIp();
                 }
             } catch (err) {
-                this.$message.error(err.msg || '操作失败，请检查权限');
+                if (!err._isHandled) {
+                    this.$message.error(err.msg || '操作失败，请检查权限');
+                }
             } finally {
                 this.confirmLoading = false;
             }
