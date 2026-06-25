@@ -38,9 +38,9 @@
         </div>
 
         <!-- 全量IP分页 -->
-        <div class="pagination-container" v-if="allBannedIps.length > 0">
+        <div class="pagination-container" v-if="allBannedIps.length > 20">
             <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
-                :current-page="ipCurrentPage" :page-sizes="[50, 100, 200]" :page-size="ipPageSize"
+                :current-page="ipCurrentPage" :page-sizes="[20, 50, 100, 200, 500, 1000]" :page-size="ipPageSize"
                 layout="total, sizes, prev, pager, next, jumper" :total="allBannedIps.length" background>
             </el-pagination>
         </div>
@@ -68,7 +68,7 @@ export default {
         return {
             // ==================== 全量封禁IP分页 ====================
             ipCurrentPage: 1,           // IP列表当前页码
-            ipPageSize: 100            // IP列表每页条数
+            ipPageSize: 20            // IP列表每页条数
         };
     },
     computed: {
@@ -239,7 +239,8 @@ export default {
     gap: 12px;
 }
 
-::v-deep .header-actions .el-button+.el-button, .el-checkbox.is-bordered+.el-checkbox.is-bordered {
+::v-deep .header-actions .el-button+.el-button,
+.el-checkbox.is-bordered+.el-checkbox.is-bordered {
     margin-left: 0;
 }
 
