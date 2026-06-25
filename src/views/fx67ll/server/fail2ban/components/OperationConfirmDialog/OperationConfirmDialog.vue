@@ -1,9 +1,22 @@
 <template>
-    <el-dialog title="操作安全确认" :visible.sync="dialogVisible" width="480px" :close-on-click-modal="false"
+    <el-dialog title="操作安全确认" :visible.sync="dialogVisible" width="500px" :close-on-click-modal="false"
         :style="`top: ${['ban', 'unban', 'ban-batch', 'unban-batch'].includes(confirmInfo.type) && confirmInfo.jailName ? 423 : getDialogVerticalOffset(getConfirmTypeHeight())}`"
-        append-to-body>
+        append-to-body @open="handleDialogOpen" @close="handleDialogClose">
         <div class="confirm-content">
-            <div class="confirm-warning">
+
+            <!-- 极度危险操作警告横幅（仅限一键解封类操作） -->
+            <div v-if="isDangerousOp" class="extreme-danger-banner">
+                <div class="danger-banner-icon">
+                    <i class="el-icon-warning"></i>
+                </div>
+                <div class="danger-banner-body">
+                    <div class="danger-banner-title">极度危险操作，请再三确认</div>
+                    <div class="danger-banner-desc">此操作将立即解封大量IP，不可撤销，请确认后谨慎执行</div>
+                </div>
+            </div>
+
+            <!-- 普通提示（非危险操作） -->
+            <div v-else class="confirm-warning">
                 <i class="el-icon-warning" style="color: #e6a23c; font-size: 20px; margin-right: 8px;"></i>
                 <span>请核对以下操作信息，执行后立即生效</span>
             </div>
@@ -30,7 +43,7 @@
 
                 <!-- 全局一键解封：展示操作范围 -->
                 <el-descriptions-item v-if="confirmInfo.type === 'unban-all'" label="操作范围">
-                    <span style="color: #e6a23c; font-weight: 500;">所有运行中监狱的全部封禁IP</span>
+                    <span style="color: #f56c6c; font-weight: 600;">所有运行中监狱的全部封禁IP</span>
                 </el-descriptions-item>
 
                 <!-- 目标监狱：需要监狱的操作展示 -->
@@ -54,12 +67,24 @@
                     </el-select>
                 </el-form-item>
             </el-form>
+
+            <!-- 危险操作：倒计时提示 -->
+            <div v-if="isDangerousOp && countdown > 0" class="countdown-tip">
+                <i class="el-icon-time"></i>
+                请仔细阅读以上信息，<span class="countdown-num">{{ countdown }}</span> 秒后方可执行
+            </div>
+            <div v-if="isDangerousOp && countdown === 0" class="countdown-ready">
+                <i class="el-icon-circle-check"></i>
+                倒计时结束，请再次核对后点击确认执行
+            </div>
         </div>
+
         <span slot="footer" class="dialog-footer">
-            <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" :loading="confirmLoading" :disabled="needSelectJail && !confirmInfo.jailName"
-                @click="handleExecute">
-                确认执行
+            <el-button @click="handleClose">取消</el-button>
+            <el-button :type="isDangerousOp ? 'danger' : 'primary'" :loading="confirmLoading"
+                :disabled="isConfirmDisabled" @click="handleExecute">
+                <span v-if="isDangerousOp && countdown > 0">确认执行（{{ countdown }}s）</span>
+                <span v-else>确认执行</span>
             </el-button>
         </span>
     </el-dialog>
@@ -88,6 +113,15 @@ export default {
             default: false
         }
     },
+    data() {
+        return {
+            countdown: 10,
+            countdownTimer: null
+        };
+    },
+    beforeDestroy() {
+        this.stopCountdown();
+    },
     computed: {
         dialogVisible: {
             get() {
@@ -104,6 +138,14 @@ export default {
         needSelectJail() {
             const noJailTypes = ['unban-all', 'startService', 'stopService'];
             return !noJailTypes.includes(this.confirmInfo.type);
+        },
+        isDangerousOp() {
+            return ['unban-all', 'unban-all-jail'].includes(this.confirmInfo.type);
+        },
+        isConfirmDisabled() {
+            if (this.needSelectJail && !this.confirmInfo.jailName) return true;
+            if (this.isDangerousOp && this.countdown > 0) return true;
+            return false;
         }
     },
     methods: {
@@ -126,12 +168,47 @@ export default {
          * 点击确认执行
          */
         handleExecute() {
-            this.$emit('execute');
+            if (this.isDangerousOp) {
+                // 危险操作走二次确认流程
+                this.$emit('need-secondary-confirm');
+            } else {
+                this.$emit('execute');
+            }
         },
 
-        /**
-         * 获取确认弹窗操作类型文本
-         */
+        handleClose() {
+            this.dialogVisible = false;
+        },
+
+        handleDialogOpen() {
+            if (this.isDangerousOp) {
+                this.startCountdown();
+            }
+        },
+
+        handleDialogClose() {
+            this.stopCountdown();
+        },
+
+        startCountdown() {
+            this.countdown = 10;
+            this.stopCountdown();
+            this.countdownTimer = setInterval(() => {
+                if (this.countdown > 0) {
+                    this.countdown--;
+                } else {
+                    this.stopCountdown();
+                }
+            }, 1000);
+        },
+
+        stopCountdown() {
+            if (this.countdownTimer) {
+                clearInterval(this.countdownTimer);
+                this.countdownTimer = null;
+            }
+        },
+
         getConfirmTypeText() {
             const typeMap = {
                 'ban': '封禁IP',
@@ -157,8 +234,8 @@ export default {
                 'unban': 'success',
                 'ban-batch': 'danger',
                 'unban-batch': 'success',
-                'unban-all-jail': 'warning',
-                'unban-all': 'warning',
+                'unban-all-jail': 'danger',
+                'unban-all': 'danger',
                 'startService': 'success',
                 'stopService': 'warning',
                 'startJail': 'success',
@@ -176,8 +253,8 @@ export default {
                 'unban': 467,
                 'ban-batch': 480,
                 'unban-batch': 480,
-                'unban-all-jail': 380,
-                'unban-all': 360,
+                'unban-all-jail': 470,
+                'unban-all': 470,
                 'startService': 350,
                 'stopService': 350,
                 'startJail': 350,
@@ -190,6 +267,80 @@ export default {
 </script>
 
 <style scoped>
+/* ==================== 极度危险操作横幅 ==================== */
+.extreme-danger-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #fff1f0 0%, #ffe4e4 100%);
+    border: 1px solid #ffb3b3;
+    border-left: 4px solid #f56c6c;
+    border-radius: 6px;
+}
+
+.danger-banner-icon {
+    flex-shrink: 0;
+    color: #f56c6c;
+    font-size: 22px;
+    line-height: 1;
+    margin-top: 1px;
+}
+
+.danger-banner-body {
+    flex: 1;
+}
+
+.danger-banner-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #c0392b;
+    letter-spacing: 0.5px;
+}
+
+.danger-banner-desc {
+    font-size: 12px;
+    color: #e74c3c;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+/* ==================== 倒计时提示 ==================== */
+.countdown-tip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background-color: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 5px;
+    font-size: 13px;
+    color: #8a6200;
+}
+
+.countdown-num {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: 700;
+    color: #e6a23c;
+    min-width: 22px;
+    text-align: center;
+}
+
+.countdown-ready {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background-color: #f0f9eb;
+    border: 1px solid #c2e7b0;
+    border-radius: 5px;
+    font-size: 13px;
+    color: #389e0d;
+}
+
 /* ==================== 确认弹窗样式 ==================== */
 .confirm-warning {
     display: flex;

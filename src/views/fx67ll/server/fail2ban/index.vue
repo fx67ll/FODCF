@@ -153,7 +153,12 @@
 
         <!-- 统一操作确认弹窗 -->
         <operation-confirm-dialog :visible.sync="confirmDialogVisible" :confirm-info="confirmInfo" :jail-list="jailList"
-            :confirm-loading="confirmLoading" @update:jail-name="handleJailNameUpdate" @execute="executeOperation" />
+            :confirm-loading="confirmLoading" @update:jail-name="handleJailNameUpdate" @execute="executeOperation"
+            @need-secondary-confirm="handleNeedSecondaryConfirm" />
+
+        <!-- 危险操作二次确认弹窗 -->
+        <danger-confirm-dialog :visible.sync="dangerConfirmDialogVisible" :loading="confirmLoading"
+            @confirm="executeOperation" />
     </div>
 </template>
 
@@ -187,6 +192,7 @@ import AttackStatsPanel from './components/AttackStatsPanel/AttackStatsPanel';
 import BannedIpList from './components/BannedIpList/BannedIpList';
 import RecentLogsPanel from './components/RecentLogsPanel/RecentLogsPanel';
 import OperationConfirmDialog from './components/OperationConfirmDialog/OperationConfirmDialog';
+import DangerConfirmDialog from './components/DangerConfirmDialog/DangerConfirmDialog';
 
 // 定时刷新配置的localStorage key
 const REFRESH_INTERVAL_KEY = 'fail2ban-refresh-interval';
@@ -201,7 +207,8 @@ export default {
         AttackStatsPanel,
         BannedIpList,
         RecentLogsPanel,
-        OperationConfirmDialog
+        OperationConfirmDialog,
+        DangerConfirmDialog
     },
     data() {
         return {
@@ -242,6 +249,7 @@ export default {
             // ==================== 统一确认弹窗 ====================
             confirmDialogVisible: false,
             confirmLoading: false,
+            dangerConfirmDialogVisible: false,
             // 【修改】增加ips数组存储批量IP列表
             confirmInfo: {
                 type: 'ban',
@@ -582,6 +590,13 @@ export default {
         },
 
         /**
+         * 危险操作（一键解封）进入二次确认流程
+         */
+        handleNeedSecondaryConfirm() {
+            this.dangerConfirmDialogVisible = true;
+        },
+
+        /**
          * 确认弹窗内监狱名称更新
          */
         handleJailNameUpdate(val) {
@@ -655,6 +670,7 @@ export default {
 
                 this.$message.success(res.msg || '操作成功');
                 this.confirmDialogVisible = false;
+                this.dangerConfirmDialogVisible = false;
 
                 // 操作成功后刷新相关数据（带loading）
                 this.loadingStatusCount++;
