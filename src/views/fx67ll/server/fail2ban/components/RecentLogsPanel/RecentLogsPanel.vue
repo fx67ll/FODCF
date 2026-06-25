@@ -66,11 +66,11 @@
         </div>
 
         <!-- 全屏日志对话框 -->
-        <el-dialog :visible.sync="isFullscreen" custom-class="fullscreen-log-dialog" :show-close="false" :modal="true"
-            :append-to-body="true" fullscreen>
+        <el-dialog :visible.sync="isFullscreen" custom-class="fullscreen-log-dialog" :close-on-click-modal="false"
+            :show-close="false" :modal="true" :append-to-body="true" fullscreen>
             <template slot="title">
                 <div class="fullscreen-dialog-title-bar">
-                    <span class="fullscreen-dialog-title">全屏查看 最近攻击日志</span>
+                    <span class="fullscreen-dialog-title">最近攻击日志</span>
                     <div class="fullscreen-filter-container">
                         <el-select v-model="logLevelFilter" placeholder="日志级别" size="small" style="width: 120px;"
                             clearable @change="handleFilterChange" @clear="handleFilterClear">
@@ -105,7 +105,7 @@
                         <span v-if="lastRefreshTime" class="refresh-time">最后刷新: {{ lastRefreshTime }}</span>
                     </div>
                     <el-button type="text" icon="el-icon-close" @click="toggleFullscreen" class="fullscreen-close-btn">
-                        退出全屏
+                        退出全屏模式
                     </el-button>
                 </div>
             </template>
