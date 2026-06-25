@@ -33,30 +33,31 @@
                 <el-table-column label="当前失败" align="center">
                     <template v-slot="scope">
                         <span
-                            :class="{ 'num-highlight': scope.row.currentlyFailed && scope.row.currentlyFailed !== 0 }">
+                            :class="{ 'num-highlight-warning': scope.row.currentlyFailed && scope.row.currentlyFailed !== 0 }">
                             {{ scope.row.currentlyFailed }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="失败尝试" align="center">
+                    <template v-slot="scope">
+                        <span
+                            :class="{ 'num-highlight-warning': scope.row.totalFailed && scope.row.totalFailed !== 0 }">
+                            {{ scope.row.totalFailed }}
                         </span>
                     </template>
                 </el-table-column>
                 <el-table-column label="当前封禁" align="center">
                     <template v-slot="scope">
                         <span
-                            :class="{ 'num-highlight': scope.row.currentlyBanned && scope.row.currentlyBanned !== 0 }">
+                            :class="{ 'num-highlight-danger': scope.row.currentlyBanned && scope.row.currentlyBanned !== 0 }">
                             {{ scope.row.currentlyBanned }}
                         </span>
                     </template>
                 </el-table-column>
                 <el-table-column label="累计封禁" align="center">
                     <template v-slot="scope">
-                        <span :class="{ 'num-highlight': scope.row.totalBanned && scope.row.totalBanned !== 0 }">
+                        <span :class="{ 'num-highlight-danger': scope.row.totalBanned && scope.row.totalBanned !== 0 }">
                             {{ scope.row.totalBanned }}
-                        </span>
-                    </template>
-                </el-table-column>
-                <el-table-column label="失败尝试" align="center">
-                    <template v-slot="scope">
-                        <span :class="{ 'num-highlight': scope.row.totalFailed && scope.row.totalFailed !== 0 }">
-                            {{ scope.row.totalFailed }}
                         </span>
                     </template>
                 </el-table-column>
@@ -87,8 +88,8 @@
         </div>
 
         <!-- ==================== 监狱详情弹窗 ==================== -->
-        <el-dialog :title="'监狱详情 - ' + (currentJailDetail ? currentJailDetail.name : '')" :visible.sync="dialogVisible"
-            width="700px" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
+        <el-dialog :title="(currentJailDetail ? currentJailDetail.name : '') + ' 监狱详情'" :visible.sync="dialogVisible"
+            width="830px" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
             custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(570)}`" append-to-body>
             <div v-if="currentJailDetail">
                 <!-- 监狱基本信息 -->
@@ -150,18 +151,9 @@
                 <!-- 封禁IP列表区域 -->
                 <div class="banned-ips-section">
                     <div class="section-header">
-                        <h4>当前被封禁IP列表 (共 {{ (currentJailDetail.bannedIps || []).length }} 个)</h4>
-                        <div class="ip-actions">
-                            <el-button type="primary" size="small" icon="el-icon-document-copy"
-                                @click="copyDialogAllIps"
-                                :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
-                                复制全部
-                            </el-button>
-                            <el-button type="success" size="small" icon="el-icon-check" @click="copyDialogSelectedIps"
-                                :disabled="dialogSelectedIps.length === 0">
-                                复制选中 ({{ dialogSelectedIps.length }})
-                            </el-button>
-                        </div>
+                        <h4>当前监狱被封禁IP列表 (共 {{ (currentJailDetail.bannedIps || []).length }} 个)</h4>
+                        <!-- 复制按钮移至底部footer，此处清空 -->
+                        <div class="ip-actions"></div>
                     </div>
 
                     <div class="banned-ips-list">
@@ -172,10 +164,6 @@
                                 @click.stop="handleOpenConfirm('unban', ip, currentJailDetail.name)" class="copy-btn">
                                 解封
                             </el-button>
-                            <!-- <el-button type="text" icon="el-icon-document-copy" size="mini"
-                                @click.stop="copySingleIp(ip)" class="copy-btn">
-                                复制
-                            </el-button> -->
                             <el-button type="text" icon="el-icon-document-copy" size="mini"
                                 @click.stop="copySingleIp(ip)" class="copy-btn" />
                         </el-checkbox>
@@ -187,7 +175,20 @@
                     </div>
                 </div>
             </div>
-            <span slot="footer" class="dialog-footer">
+            <!-- 弹窗底部footer：新增一键解封、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
+            <span slot="footer" class="dialog-footer" v-if="currentJailDetail">
+                <el-button type="danger" size="small" icon="el-icon-delete" @click="handleUnbanAllCurrentJail"
+                    :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
+                    一键解封本监狱全部IP
+                </el-button>
+                <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyDialogAllIps"
+                    :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
+                    复制全部IP
+                </el-button>
+                <el-button type="success" size="small" icon="el-icon-check" @click="copyDialogSelectedIps"
+                    :disabled="dialogSelectedIps.length === 0">
+                    复制选中 ({{ dialogSelectedIps.length }})
+                </el-button>
                 <el-button @click="dialogVisible = false; dialogSelectedIps = []">关闭</el-button>
             </span>
         </el-dialog>
@@ -290,6 +291,31 @@ export default {
                 if (!err._isHandled) {
                     this.$message.error("获取监狱详情失败：" + (err.msg || err.message));
                 }
+            }
+        },
+
+        /**
+         * 一键解封当前监狱全部封禁IP
+         */
+        handleUnbanAllCurrentJail() {
+            if (!this.currentJailDetail) return;
+            // 抛出操作类型 unban-all-jail，携带当前监狱名称
+            this.$emit('open-confirm', 'unban-all-jail', '', this.currentJailDetail.name);
+        },
+
+        /**
+         * 刷新弹窗中的监狱详情数据（操作成功后由父组件调用）
+         */
+        async refreshJailDetail() {
+            if (!this.dialogVisible || !this.currentJailDetail) return;
+            try {
+                const res = await getJailDetail(this.currentJailDetail.name);
+                this.currentJailDetail = res.data;
+                // 清空选中状态（IP列表可能已变化）
+                this.dialogSelectedIps = [];
+            } catch (err) {
+                // 刷新详情失败不影响主流程，静默处理
+                console.warn('刷新监狱详情失败:', err);
             }
         },
 
@@ -460,9 +486,18 @@ export default {
     text-align: left;
 }
 
-/* ==================== 列表数字高亮样式 - 非零值红色放大加粗 ==================== */
-.num-highlight {
-    color: #f56c6c;
+/* ==================== 列表数字高亮样式 - 非零值高亮放大加粗 ==================== */
+/* 风险超标：匹配图表超标柱子顶部浅蜜桃红，低饱和柔和，视觉统一不刺眼 */
+.num-highlight-danger {
+    color: #ff8787;
+    font-weight: bold;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* 预警待处理：温润浅杏橙，贴合页面清新淡色调，不抢蓝/粉主视觉 */
+.num-highlight-warning {
+    color: #f7bc78;
     font-weight: bold;
     font-size: 28px;
     cursor: pointer;
@@ -542,6 +577,13 @@ export default {
 /* 仅监狱详情弹窗去除上下padding，左右保留20px，不污染其他弹窗 */
 ::v-deep .jail-detail-dialog .el-dialog__body {
     padding: 28px 20px !important;
+}
+
+/* 弹窗底部按钮间距 */
+::v-deep .jail-detail-dialog .dialog-footer {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
 }
 
 /* ==================== 响应式适配 ==================== */

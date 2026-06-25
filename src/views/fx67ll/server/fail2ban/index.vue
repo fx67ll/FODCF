@@ -640,6 +640,10 @@ export default {
                         if (this.$refs.recentLogsPanel) {
                             this.$refs.recentLogsPanel.refresh(true);
                         }
+                        // 刷新监狱详情弹窗数据（如弹窗处于打开状态）
+                        if (this.$refs.jailStatusPanel) {
+                            this.$refs.jailStatusPanel.refreshJailDetail();
+                        }
                     });
                 } finally {
                     if (this.loadingStatusCount > 0) this.loadingStatusCount--;
