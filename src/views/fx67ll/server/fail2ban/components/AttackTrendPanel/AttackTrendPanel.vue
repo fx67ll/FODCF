@@ -169,49 +169,117 @@ export default {
             if (!chartDom) return;
             this.trendChart = echarts.init(chartDom);
             const option = {
+                animation: true,
+                animationDuration: 800,
+                animationEasing: 'cubicOut',
                 tooltip: {
                     trigger: 'axis',
-                    formatter: '{b}<br/>攻击次数：{c} 次<br/><span style="color:#909399;font-size:12px;">点击查看该时段攻击IP</span>'
+                    axisPointer: {
+                        type: 'shadow',
+                        shadowStyle: {
+                            color: 'rgba(144, 202, 249, 0.12)' // 浅蓝淡阴影，清新
+                        }
+                    },
+                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                    borderColor: '#e7edf5',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    padding: [10, 14],
+                    textStyle: {
+                        color: '#4e5969',
+                        fontSize: 12,
+                        lineHeight: 1.6
+                    },
+                    extraCssText: 'box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);',
+                    formatter: '{b}<br/>攻击次数：{c} 次<br/><span style="color:#86909c;font-size:11px;">点击查看该时段攻击IP</span>'
                 },
                 grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
+                    left: '1%',
+                    right: '2%',
+                    bottom: '4%',
+                    top: '12%',
                     containLabel: true
                 },
                 xAxis: {
                     type: 'category',
                     data: [],
+                    axisLine: { show: false },
+                    axisTick: { show: false },
                     axisLabel: {
                         rotate: 45,
-                        fontSize: 10
+                        fontSize: 11,
+                        color: '#86909c', // 更浅灰，清新柔和
+                        margin: 10,
+                        interval: 0
                     }
                 },
                 yAxis: {
                     type: 'value',
                     name: '攻击次数',
                     nameTextStyle: {
-                        fontSize: 12
+                        fontSize: 12,
+                        color: '#86909c',
+                        padding: [0, 0, 0, 8]
+                    },
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#f0f4f9', // 极浅网格线
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 11,
+                        color: '#86909c'
                     }
                 },
                 series: [
                     {
                         data: [],
                         type: 'bar',
-                        barWidth: '60%',
+                        barWidth: '55%',
+                        barMaxWidth: 32,
+                        barMinHeight: 2,
+                        // 清新浅青蓝渐变（主色）
                         itemStyle: {
+                            borderRadius: [6, 6, 0, 0], // 圆角加大更柔和
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: '#409eff' },
-                                { offset: 1, color: '#66b1ff' }
+                                { offset: 0, color: '#a8daf8' },
+                                { offset: 1, color: '#d0e9fb' }
                             ])
                         },
                         emphasis: {
+                            focus: 'series',
                             itemStyle: {
+                                borderRadius: [6, 6, 0, 0],
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                    { offset: 0, color: '#337ecc' },
-                                    { offset: 1, color: '#409eff' }
-                                ])
+                                    { offset: 0, color: '#7cc7f2' },
+                                    { offset: 1, color: '#b3e0f7' }
+                                ]),
+                                shadowBlur: 6,
+                                shadowColor: 'rgba(124, 199, 242, 0.2)' // 淡阴影，不刺眼
                             }
+                        },
+                        // 均值线改为浅薄荷绿，替换原来刺眼橙黄
+                        markLine: {
+                            silent: true,
+                            symbol: 'none',
+                            lineStyle: {
+                                color: '#88d8c0',
+                                type: 'dashed',
+                                width: 1.5
+                            },
+                            label: {
+                                formatter: '平均值',
+                                color: '#47b89c',
+                                fontSize: 11,
+                                backgroundColor: 'rgba(136, 216, 192, 0.12)',
+                                padding: [2, 6],
+                                borderRadius: 4,
+                                position: 'insideMiddleTop'
+                            },
+                            data: [{ type: 'average', name: '平均值' }]
                         }
                     }
                 ]
@@ -239,20 +307,24 @@ export default {
             const avgCount = this.totalTrendAttacks / this.trendData.length;
             const threshold = avgCount * 2;
 
-            // 为超过阈值的柱子设置红色
+            // 为超过阈值的柱子设置红色渐变
             const itemStyles = seriesData.map(count => {
                 if (count > threshold) {
+                    // 超标：浅蜜桃粉渐变，温柔不刺眼
                     return {
+                        borderRadius: [12, 12, 0, 0],
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: '#f56c6c' },
-                            { offset: 1, color: '#f78989' }
+                            { offset: 0, color: '#ffc8c8' },
+                            { offset: 1, color: '#ffe5e5' }
                         ])
                     };
                 }
+                // 正常：浅青蓝清新渐变
                 return {
+                    borderRadius: [12, 12, 0, 0],
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: '#409eff' },
-                        { offset: 1, color: '#66b1ff' }
+                        { offset: 0, color: '#a8daf8' },
+                        { offset: 1, color: '#d0e9fb' }
                     ])
                 };
             });
