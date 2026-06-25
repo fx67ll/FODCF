@@ -166,6 +166,10 @@ import {
     getAllBannedIps,
     banIp,
     unbanIp,
+    banBatchIps,
+    unbanBatchIps,
+    unbanAllJailIps,
+    unbanAllJailsAllIps,
     getCurrentIp,
     startService,
     stopService,
@@ -587,6 +591,19 @@ export default {
                         break;
                     case 'unban':
                         res = await unbanIp(jailName, ip);
+                        break;
+                    case 'ban-batch':
+                        res = await banBatchIps(jailName, this.confirmInfo.ips);
+                        break;
+                    case 'unban-batch':
+                        res = await unbanBatchIps(jailName, this.confirmInfo.ips);
+                        break;
+                    case 'unban-all-jail':
+                        res = await unbanAllJailIps(jailName);
+                        break;
+                    case 'unban-all':
+                        // 全局一键解封不需要监狱、ip参数
+                        res = await unbanAllJailsAllIps();
                         break;
                     case 'startService':
                         res = await startService();
