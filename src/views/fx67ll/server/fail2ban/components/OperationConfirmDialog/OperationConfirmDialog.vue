@@ -11,7 +11,7 @@
                 </div>
                 <div class="danger-banner-body">
                     <div class="danger-banner-title">极度危险操作，请再三确认</div>
-                    <div class="danger-banner-desc">此操作将立即解封IP，不可撤销，请确认后谨慎执行</div>
+                    <div class="danger-banner-desc">{{ dangerBannerDesc }}</div>
                 </div>
             </div>
 
@@ -140,7 +140,16 @@ export default {
             return !noJailTypes.includes(this.confirmInfo.type);
         },
         isDangerousOp() {
-            return ['unban-all', 'unban-all-jail', 'unban-batch'].includes(this.confirmInfo.type);
+            return ['unban-all', 'unban-all-jail', 'unban-batch', 'ban-batch'].includes(this.confirmInfo.type);
+        },
+        /**
+         * 危险操作横幅的描述文案，根据操作类型动态展示
+         */
+        dangerBannerDesc() {
+            const isBan = ['ban-batch'].includes(this.confirmInfo.type);
+            return isBan
+                ? '此操作将立即批量封禁IP，请确认后谨慎执行'
+                : '此操作将立即解封IP，不可撤销，请确认后谨慎执行';
         },
         isConfirmDisabled() {
             if (this.needSelectJail && !this.confirmInfo.jailName) return true;
