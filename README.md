@@ -6,6 +6,7 @@ fx67ll One Data Center Front
 ## 0.9.4.20260625
 * 新增`Fail2Ban`最近日志添加全屏查看的功能  
 * 新增`Fail2Ban`攻击趋势点击查看当前时段攻击次数 TOP5 IP 的功能  
+* 新增`Fail2Ban`所有或单个监狱封禁 IP 一键全部解封，批量解封和封禁 IP 四种操作  
 * 优化`Fail2Ban`攻击趋势柱状图交互与样式  
 * 修复`Fail2Ban`异常重复提示的问题  
 * 优化`Fail2Ban`界面交互显示细节，修复已知问题 
