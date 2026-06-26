@@ -140,16 +140,24 @@ export default {
             return !noJailTypes.includes(this.confirmInfo.type);
         },
         isDangerousOp() {
-            return ['unban-all', 'unban-all-jail', 'unban-batch', 'ban-batch'].includes(this.confirmInfo.type);
+            // 停止类操作（停止服务/停止监狱）与批量封禁解封一样走二次确认流程，启动类操作不需要
+            return ['unban-all', 'unban-all-jail', 'unban-batch', 'ban-batch', 'stopService', 'stopJail'].includes(this.confirmInfo.type);
         },
         /**
          * 危险操作横幅的描述文案，根据操作类型动态展示
          */
         dangerBannerDesc() {
-            const isBan = ['ban-batch'].includes(this.confirmInfo.type);
-            return isBan
-                ? '此操作将立即批量封禁IP，请确认后谨慎执行'
-                : '此操作将立即解封IP，不可撤销，请确认后谨慎执行';
+            const type = this.confirmInfo.type;
+            if (type === 'ban-batch') {
+                return '此操作将立即批量封禁IP，请确认后谨慎执行';
+            }
+            if (type === 'stopService') {
+                return '此操作将停止Fail2ban防护服务，停止后所有封禁规则将立即失效，请确认后谨慎执行';
+            }
+            if (type === 'stopJail') {
+                return '此操作将停止该监狱的防护，停止后对应规则将不再生效，请确认后谨慎执行';
+            }
+            return '此操作将立即解封IP，不可撤销，请确认后谨慎执行';
         },
         isConfirmDisabled() {
             if (this.needSelectJail && !this.confirmInfo.jailName) return true;
@@ -265,9 +273,9 @@ export default {
                 'unban-all-jail': 470,
                 'unban-all': 470,
                 'startService': 350,
-                'stopService': 350,
+                'stopService': 440,
                 'startJail': 350,
-                'stopJail': 350
+                'stopJail': 470
             };
             return typeMap[this.confirmInfo.type] || 350;
         }
