@@ -38,7 +38,7 @@
                         </span>
                     </template>
                 </el-table-column>
-                <el-table-column label="失败尝试" align="center">
+                <el-table-column label="总失败尝试" align="center">
                     <template v-slot="scope">
                         <span
                             :class="{ 'num-highlight-warning': scope.row.totalFailed && scope.row.totalFailed !== 0 }">
@@ -61,18 +61,21 @@
                         </span>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="180" align="center">
+                <el-table-column label="操作" width="200" align="center">
                     <template v-slot="scope">
-                        <el-button type="primary" size="small" @click="openJailDetail(scope.row)">
-                            详情
+                        <el-button @click="openJailDetail(scope.row)" class="pill-btn pill-detail">
+                            <span class="pill-icon">🔍</span>
+                            <span class="pill-text">查看</span>
                         </el-button>
-                        <el-button v-if="scope.row.status === '运行中'" type="danger" size="small"
-                            @click="handleOpenConfirm('stopJail', '', scope.row.name)">
-                            停止
+                        <el-button v-if="scope.row.status === '运行中'"
+                            @click="handleOpenConfirm('stopJail', '', scope.row.name)" class="pill-btn pill-stop">
+                            <span class="pill-icon">🔒</span>
+                            <span class="pill-text">停止</span>
                         </el-button>
-                        <el-button v-else type="success" size="small"
-                            @click="handleOpenConfirm('startJail', '', scope.row.name)">
-                            启动
+                        <el-button v-else @click="handleOpenConfirm('startJail', '', scope.row.name)"
+                            class="pill-btn pill-start">
+                            <span class="pill-icon">🕹️</span>
+                            <span class="pill-text">启动</span>
                         </el-button>
                     </template>
                 </el-table-column>
@@ -104,14 +107,14 @@
                         <el-descriptions-item label="当前失败">
                             {{ currentJailDetail.currentlyFailed || '0' }}
                         </el-descriptions-item>
+                        <el-descriptions-item label="总失败尝试">
+                            {{ currentJailDetail.totalFailed || '0' }}
+                        </el-descriptions-item>
                         <el-descriptions-item label="当前封禁">
                             {{ currentJailDetail.currentlyBanned || '0' }}
                         </el-descriptions-item>
                         <el-descriptions-item label="累计封禁">
                             {{ currentJailDetail.totalBanned || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="总失败尝试">
-                            {{ currentJailDetail.totalFailed || '0' }}
                         </el-descriptions-item>
                         <el-descriptions-item label="日志路径" :span="3">
                             {{ currentJailDetail.logPath || '未知' }}
@@ -565,6 +568,76 @@ export default {
     transform: scale(1.25);
     position: relative;
     top: -1px;
+}
+
+/* ==================== 监狱列表操作按钮（椭圆药丸按钮） ==================== */
+/* 清新配色，非 Element 主题色：天蓝 / 珊瑚红 / 薄荷绿 */
+.pill-btn {
+    height: 30px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 15px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 30px;
+    transition: all 0.25s ease;
+}
+
+.pill-btn:hover,
+.pill-btn:focus {
+    color: #fff;
+}
+
+.pill-btn .pill-icon {
+    font-size: 13px;
+    transition: font-size 0.25s ease;
+    vertical-align: middle;
+}
+
+.pill-btn .pill-text {
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/* hover：emoji 放大 + 底色变浅更透明 */
+.pill-btn:hover .pill-icon {
+    font-size: 16px;
+}
+
+/* 详情：天蓝 */
+.pill-detail {
+    background-color: rgba(91, 155, 245, 0.85);
+    box-shadow: 0 2px 6px rgba(91, 155, 245, 0.3);
+}
+
+.pill-detail:hover,
+.pill-detail:focus {
+    background-color: rgba(91, 155, 245, 0.5);
+    box-shadow: 0 2px 8px rgba(91, 155, 245, 0.25);
+}
+
+/* 停止：珊瑚红 */
+.pill-stop {
+    background-color: rgba(248, 113, 108, 0.85);
+    box-shadow: 0 2px 6px rgba(248, 113, 108, 0.3);
+}
+
+.pill-stop:hover,
+.pill-stop:focus {
+    background-color: rgba(248, 113, 108, 0.5);
+    box-shadow: 0 2px 8px rgba(248, 113, 108, 0.25);
+}
+
+/* 启动：薄荷绿 */
+.pill-start {
+    background-color: rgba(82, 200, 150, 0.85);
+    box-shadow: 0 2px 6px rgba(82, 200, 150, 0.3);
+}
+
+.pill-start:hover,
+.pill-start:focus {
+    background-color: rgba(82, 200, 150, 0.5);
+    box-shadow: 0 2px 8px rgba(82, 200, 150, 0.25);
 }
 
 .empty-text {
