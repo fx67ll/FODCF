@@ -192,7 +192,7 @@ import AttackStatsPanel from './components/AttackStatsPanel/AttackStatsPanel';
 import BannedIpList from './components/BannedIpList/BannedIpList';
 import RecentLogsPanel from './components/RecentLogsPanel/RecentLogsPanel';
 import OperationConfirmDialog from './components/OperationConfirmDialog/OperationConfirmDialog';
-import DangerConfirmDialog from './components/DangerConfirmDialog/DangerConfirmDialog';
+import DangerConfirmDialog from './components/OperationConfirmDialog/DangerConfirmDialog';
 
 // 定时刷新配置的localStorage key
 const REFRESH_INTERVAL_KEY = 'fail2ban-refresh-interval';
