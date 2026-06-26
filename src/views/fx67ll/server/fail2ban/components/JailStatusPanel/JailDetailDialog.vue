@@ -1,6 +1,6 @@
 <template>
     <!-- ==================== 监狱详情弹窗 ==================== -->
-    <el-dialog :title="(jailDetail ? jailDetail.name : '') + ' 监狱详情'" :visible.sync="innerVisible" width="830px"
+    <el-dialog :title="`查看监狱详情${jailDetail ? ' - ' + jailDetail.name : ''}`" :visible.sync="innerVisible" width="830px"
         :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-detail-dialog"
         :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
         <div v-if="jailDetail">
@@ -81,14 +81,22 @@
             <!-- 封禁IP列表区域 -->
             <div class="banned-ips-section">
                 <div class="section-header">
-                    <h4>当前监狱被封禁IP列表 (共 {{ (jailDetail.bannedIps || []).length }} 个)</h4>
+                    <h4>
+                        当前监狱被封禁IP列表 (共 {{ bannedIpsTotal }} 个<span v-if="dialogSelectedIps.length > 0">，已选
+                            {{ dialogSelectedIps.length }} 个</span>)
+                    </h4>
                     <!-- 复制按钮移至底部footer，此处清空 -->
                     <div class="ip-actions"></div>
                 </div>
 
                 <div class="banned-ips-list">
-                    <el-checkbox v-for="ip in (jailDetail.bannedIps || [])" :key="ip" v-model="dialogSelectedIps"
-                        :label="ip" class="ip-checkbox">
+                    <!-- 全选当前页按钮（位于每页第一个IP之前） -->
+                    <el-checkbox v-if="paginatedBannedIps.length > 0" v-model="selectAllPage"
+                        :indeterminate="isCurrentPageIndeterminate" class="ip-checkbox select-all-checkbox">
+                        全选本页
+                    </el-checkbox>
+                    <el-checkbox v-for="ip in paginatedBannedIps" :key="ip" v-model="dialogSelectedIps" :label="ip"
+                        class="ip-checkbox">
                         {{ ip }}
                         <el-button type="text" icon="el-icon-check" size="mini"
                             @click.stop="handleOpenConfirm('unban', ip, jailDetail.name)" class="copy-btn">
@@ -99,8 +107,16 @@
                     </el-checkbox>
                 </div>
 
-                <div v-if="!jailDetail.bannedIps || jailDetail.bannedIps.length === 0" class="empty-text">
+                <div v-if="bannedIpsTotal === 0" class="empty-text">
                     暂无被封禁的IP
+                </div>
+
+                <!-- 分页器 -->
+                <div class="ip-pagination-container" v-if="bannedIpsTotal > 0">
+                    <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
+                        :current-page="ipCurrentPage" :page-sizes="[5, 10, 20, 50, 100]" :page-size="ipPageSize"
+                        layout="total, sizes, prev, pager, next" :total="bannedIpsTotal" background>
+                    </el-pagination>
                 </div>
             </div>
         </div>
@@ -147,7 +163,11 @@ export default {
     data() {
         return {
             // ==================== 弹窗控制 ====================
-            dialogSelectedIps: []               // 弹窗内选中的IP列表
+            dialogSelectedIps: [],              // 弹窗内选中的IP列表
+
+            // ==================== 封禁IP分页 ====================
+            ipCurrentPage: 1,                   // 当前页码
+            ipPageSize: 5                       // 每页条数，默认5
         };
     },
     computed: {
@@ -160,6 +180,72 @@ export default {
             },
             set(val) {
                 this.$emit('update:visible', val);
+            }
+        },
+
+        /**
+         * 当前监狱被封禁IP总数
+         */
+        bannedIpsTotal() {
+            return (this.jailDetail && this.jailDetail.bannedIps) ? this.jailDetail.bannedIps.length : 0;
+        },
+
+        /**
+         * 当前页展示的封禁IP列表
+         */
+        paginatedBannedIps() {
+            if (!this.jailDetail || !this.jailDetail.bannedIps) return [];
+            const start = (this.ipCurrentPage - 1) * this.ipPageSize;
+            return this.jailDetail.bannedIps.slice(start, start + this.ipPageSize);
+        },
+
+        /**
+         * 当前页是否已全选
+         */
+        isCurrentPageAllSelected() {
+            const page = this.paginatedBannedIps;
+            if (page.length === 0) return false;
+            return page.every(ip => this.dialogSelectedIps.includes(ip));
+        },
+
+        /**
+         * 当前页是否处于半选（indeterminate）状态
+         */
+        isCurrentPageIndeterminate() {
+            const page = this.paginatedBannedIps;
+            if (page.length === 0) return false;
+            const selectedCount = page.filter(ip => this.dialogSelectedIps.includes(ip)).length;
+            return selectedCount > 0 && selectedCount < page.length;
+        },
+
+        /**
+         * 全选本页复选框双向绑定
+         */
+        selectAllPage: {
+            get() {
+                return this.isCurrentPageAllSelected;
+            },
+            set(val) {
+                this.handleToggleSelectAllPage(val);
+            }
+        }
+    },
+    watch: {
+        /**
+         * 切换监狱时重置分页与选中状态，避免跨监狱数据残留
+         */
+        'jailDetail.name'() {
+            this.ipCurrentPage = 1;
+            this.dialogSelectedIps = [];
+        },
+
+        /**
+         * 封禁IP数量变化后纠正页码，避免停留在空页
+         */
+        bannedIpsTotal(val) {
+            const maxPage = Math.max(1, Math.ceil(val / this.ipPageSize));
+            if (this.ipCurrentPage > maxPage) {
+                this.ipCurrentPage = maxPage;
             }
         }
     },
@@ -175,6 +261,7 @@ export default {
         handleDialogClose() {
             this.$emit('update:visible', false);
             this.dialogSelectedIps = [];
+            this.ipCurrentPage = 1;
         },
 
         /**
@@ -201,6 +288,43 @@ export default {
             if (!this.jailDetail || this.dialogSelectedIps.length === 0) return;
             // 抛出操作类型 unban-batch，携带选中IP列表和当前监狱名称
             this.$emit('open-confirm', 'unban-batch', '', this.jailDetail.name, this.dialogSelectedIps);
+        },
+
+        /**
+         * 全选/取消全选当前页的封禁IP
+         * @param {Boolean} checked 是否选中
+         */
+        handleToggleSelectAllPage(checked) {
+            const page = this.paginatedBannedIps;
+            if (checked) {
+                // 选中当前页全部IP（跨页已选中的保留，不重复添加）
+                page.forEach(ip => {
+                    if (!this.dialogSelectedIps.includes(ip)) {
+                        this.dialogSelectedIps.push(ip);
+                    }
+                });
+            } else {
+                // 取消当前页全部IP的选中（其他页已选中的不受影响）
+                const pageSet = new Set(page);
+                this.dialogSelectedIps = this.dialogSelectedIps.filter(ip => !pageSet.has(ip));
+            }
+        },
+
+        /**
+         * 封禁IP每页条数变化事件
+         * @param {Number} size 新的每页条数
+         */
+        handleIpSizeChange(size) {
+            this.ipPageSize = size;
+            this.ipCurrentPage = 1;
+        },
+
+        /**
+         * 封禁IP页码变化事件
+         * @param {Number} page 新的页码
+         */
+        handleIpCurrentChange(page) {
+            this.ipCurrentPage = page;
         },
 
         /**
@@ -326,6 +450,24 @@ export default {
     font-size: 14px;
     text-align: center;
     padding: 20px;
+}
+
+/* 全选本页按钮（淡蓝底，区别于普通IP标签） */
+.select-all-checkbox {
+    background-color: #ecf5ff;
+    border-color: #c6e2ff;
+    color: #409eff;
+    font-weight: 500;
+}
+
+.select-all-checkbox ::v-deep .el-checkbox__label {
+    color: #409eff;
+}
+
+/* 封禁IP分页器 */
+.ip-pagination-container {
+    margin-top: 15px;
+    text-align: left;
 }
 
 /* ==================== 配置区域样式 ==================== */
