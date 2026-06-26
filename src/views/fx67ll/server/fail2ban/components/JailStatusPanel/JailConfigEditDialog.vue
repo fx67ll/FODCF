@@ -1,7 +1,7 @@
 <template>
     <!-- ==================== 监狱配置修改弹窗 ==================== -->
-    <el-dialog title="修改监狱运行配置" :visible.sync="innerVisible" width="620px" :close-on-click-modal="false"
-        @close="handleDialogClose" custom-class="jail-config-dialog" append-to-body>
+    <el-dialog :title="`修改监狱运行配置${jailName ? ' - ' + jailName : ''}`" :visible.sync="innerVisible" width="620px"
+        :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-config-dialog" append-to-body>
         <div v-loading="loading" element-loading-text="加载配置中...">
             <!-- 生效范围提示 -->
             <el-alert title="本次修改为运行时临时生效，重启 Fail2ban 服务后将自动恢复为配置文件默认值" type="warning" :closable="false" show-icon
