@@ -61,11 +61,16 @@
                         </span>
                     </template>
                 </el-table-column>
-                <el-table-column label="操作" width="200" align="center">
+                <el-table-column label="操作" width="280" align="center">
                     <template v-slot="scope">
                         <el-button @click="openJailDetail(scope.row)" class="pill-btn pill-detail">
                             <span class="pill-icon">🔍</span>
                             <span class="pill-text">查看</span>
+                        </el-button>
+                        <el-button v-if="scope.row.status === '运行中'" @click="handleOpenConfigEdit(scope.row.name)"
+                            class="pill-btn pill-config">
+                            <span class="pill-icon">⚙️</span>
+                            <span class="pill-text">配置</span>
                         </el-button>
                         <el-button v-if="scope.row.status === '运行中'"
                             @click="handleOpenConfirm('stopJail', '', scope.row.name)" class="pill-btn pill-stop">
@@ -90,124 +95,27 @@
             </div>
         </div>
 
-        <!-- ==================== 监狱详情弹窗 ==================== -->
-        <el-dialog :title="(currentJailDetail ? currentJailDetail.name : '') + ' 监狱详情'" :visible.sync="dialogVisible"
-            width="830px" :close-on-click-modal="false" @close="dialogVisible = false; dialogSelectedIps = []"
-            custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
-            <div v-if="currentJailDetail">
-                <!-- 监狱基本信息 -->
-                <div class="config-section">
-                    <div class="section-title">监狱基本信息</div>
-                    <el-descriptions :column="4" border size="small">
-                        <el-descriptions-item label="运行状态">
-                            <el-tag :type="currentJailDetail.status === '运行中' ? 'success' : 'info'" size="small">
-                                {{ currentJailDetail.status }}
-                            </el-tag>
-                        </el-descriptions-item>
-                        <el-descriptions-item label="当前失败">
-                            {{ currentJailDetail.currentlyFailed || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="总失败尝试">
-                            {{ currentJailDetail.totalFailed || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="当前封禁">
-                            {{ currentJailDetail.currentlyBanned || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="累计封禁">
-                            {{ currentJailDetail.totalBanned || '0' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="日志路径" :span="3">
-                            {{ currentJailDetail.logPath || '未知' }}
-                        </el-descriptions-item>
-                    </el-descriptions>
-                </div>
+        <!-- ==================== 监狱详情弹窗（子组件） ==================== -->
+        <JailDetailDialog :visible.sync="dialogVisible" :jail-detail="currentJailDetail"
+            @open-confirm="handleOpenConfirm" @open-config-edit="handleOpenConfigEdit" />
 
-                <!-- 监狱只读配置信息 -->
-                <div class="config-section">
-                    <div class="section-title">监狱配置参数</div>
-                    <el-descriptions :column="4" border size="small">
-                        <el-descriptions-item label="封禁时长">
-                            {{ currentJailDetail.config.bantime || '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="检测窗口">
-                            {{ currentJailDetail.config.findtime || '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="最大重试次数">
-                            {{ currentJailDetail.config.maxretry || currentJailDetail.config.maxretry === 0 ?
-                                `${currentJailDetail.config.maxretry}次` : '未知' }}
-                        </el-descriptions-item>
-                        <el-descriptions-item label="白名单IP数量">
-                            {{ (currentJailDetail.config.ignoreIpList || []).length }} 个
-                        </el-descriptions-item>
-                        <el-descriptions-item label="监狱白名单" :span="2">
-                            <el-tag v-for="ip in (currentJailDetail.config.ignoreIpList || [])" :key="ip" size="mini"
-                                style="margin: 3px;">
-                                {{ ip }}
-                            </el-tag>
-                            <span v-if="!currentJailDetail.config.ignoreIpList.length" style="color: #909399;">
-                                无白名单配置
-                            </span>
-                        </el-descriptions-item>
-                    </el-descriptions>
-                </div>
-
-                <!-- 封禁IP列表区域 -->
-                <div class="banned-ips-section">
-                    <div class="section-header">
-                        <h4>当前监狱被封禁IP列表 (共 {{ (currentJailDetail.bannedIps || []).length }} 个)</h4>
-                        <!-- 复制按钮移至底部footer，此处清空 -->
-                        <div class="ip-actions"></div>
-                    </div>
-
-                    <div class="banned-ips-list">
-                        <el-checkbox v-for="ip in (currentJailDetail.bannedIps || [])" :key="ip"
-                            v-model="dialogSelectedIps" :label="ip" class="ip-checkbox">
-                            {{ ip }}
-                            <el-button type="text" icon="el-icon-check" size="mini"
-                                @click.stop="handleOpenConfirm('unban', ip, currentJailDetail.name)" class="copy-btn">
-                                解封
-                            </el-button>
-                            <el-button type="text" icon="el-icon-document-copy" size="mini"
-                                @click.stop="copySingleIp(ip)" class="copy-btn" />
-                        </el-checkbox>
-                    </div>
-
-                    <div v-if="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0"
-                        class="empty-text">
-                        暂无被封禁的IP
-                    </div>
-                </div>
-            </div>
-            <!-- 弹窗底部footer：新增一键解封、解封选中、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
-            <span slot="footer" class="dialog-footer" v-if="currentJailDetail">
-                <el-button type="danger" size="small" icon="el-icon-delete" @click="handleUnbanAllCurrentJail"
-                    :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
-                    一键解封本监狱全部IP
-                </el-button>
-                <el-button type="warning" size="small" icon="el-icon-check" @click="handleUnbanSelectedIps"
-                    :disabled="dialogSelectedIps.length === 0">
-                    解封选中 ({{ dialogSelectedIps.length }})
-                </el-button>
-                <el-button type="primary" size="small" icon="el-icon-document-copy" @click="copyDialogAllIps"
-                    :disabled="!currentJailDetail.bannedIps || currentJailDetail.bannedIps.length === 0">
-                    复制全部IP
-                </el-button>
-                <el-button type="success" size="small" icon="el-icon-check" @click="copyDialogSelectedIps"
-                    :disabled="dialogSelectedIps.length === 0">
-                    复制选中 ({{ dialogSelectedIps.length }})
-                </el-button>
-                <el-button @click="dialogVisible = false; dialogSelectedIps = []">关闭</el-button>
-            </span>
-        </el-dialog>
+        <!-- ==================== 配置修改弹窗（子组件） ==================== -->
+        <JailConfigEditDialog :visible.sync="configDialogVisible" :jail-name="currentEditJailName"
+            @config-updated="handleConfigUpdated" />
     </div>
 </template>
 
 <script>
 import { getJailDetail } from "@/api/fx67ll/server/fail2ban";
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import JailDetailDialog from "./JailDetailDialog.vue";
+import JailConfigEditDialog from "./JailConfigEditDialog.vue";
 
 export default {
     name: "JailStatusPanel",
+    components: {
+        JailDetailDialog,
+        JailConfigEditDialog
+    },
     props: {
         jailList: {
             type: Array,
@@ -232,7 +140,10 @@ export default {
             // ==================== 弹窗控制 ====================
             dialogVisible: false,               // 弹窗显示状态
             currentJailDetail: null,            // 当前查看的监狱详情数据
-            dialogSelectedIps: []               // 弹窗内选中的IP列表
+
+            // ==================== 配置修改弹窗控制 ====================
+            configDialogVisible: false,         // 配置修改弹窗显示状态
+            currentEditJailName: ""             // 当前修改配置的监狱名称
         };
     },
     computed: {
@@ -272,11 +183,6 @@ export default {
         }
     },
     methods: {
-        // 代理工具函数
-        getDialogVerticalOffset(offset) {
-            return getDialogVerticalOffset(offset);
-        },
-
         /**
          * 点击刷新按钮
          */
@@ -292,31 +198,12 @@ export default {
             try {
                 const res = await getJailDetail(row.name);
                 this.currentJailDetail = res.data;
-                this.dialogSelectedIps = [];
                 this.dialogVisible = true;
             } catch (err) {
                 if (!err._isHandled) {
                     this.$message.error("获取监狱详情失败：" + (err.msg || err.message));
                 }
             }
-        },
-
-        /**
-         * 一键解封当前监狱全部封禁IP
-         */
-        handleUnbanAllCurrentJail() {
-            if (!this.currentJailDetail) return;
-            // 抛出操作类型 unban-all-jail，携带当前监狱名称
-            this.$emit('open-confirm', 'unban-all-jail', '', this.currentJailDetail.name);
-        },
-
-        /**
-         * 批量解封当前监狱中选中的IP
-         */
-        handleUnbanSelectedIps() {
-            if (!this.currentJailDetail || this.dialogSelectedIps.length === 0) return;
-            // 抛出操作类型 unban-batch，携带选中IP列表和当前监狱名称
-            this.$emit('open-confirm', 'unban-batch', '', this.currentJailDetail.name, this.dialogSelectedIps);
         },
 
         /**
@@ -327,8 +214,6 @@ export default {
             try {
                 const res = await getJailDetail(this.currentJailDetail.name);
                 this.currentJailDetail = res.data;
-                // 清空选中状态（IP列表可能已变化）
-                this.dialogSelectedIps = [];
             } catch (err) {
                 // 刷新详情失败不影响主流程，静默处理
                 console.warn('刷新监狱详情失败:', err);
@@ -336,67 +221,33 @@ export default {
         },
 
         /**
-         * 复制弹窗中全部IP到剪贴板
+         * 打开配置修改弹窗
+         * @param {String} jailName 监狱名称
          */
-        async copyDialogAllIps() {
-            const ips = this.currentJailDetail.bannedIps || [];
-            if (ips.length === 0) {
-                this.$message.warning("没有可复制的IP");
-                return;
-            }
-            await this.copyToClipboard(ips.join("\n"));
-            this.$message.success(`已复制 ${ips.length} 个IP`);
+        handleOpenConfigEdit(jailName) {
+            this.currentEditJailName = jailName;
+            this.configDialogVisible = true;
         },
 
         /**
-         * 复制弹窗中选中的IP到剪贴板
+         * 配置修改成功回调，刷新列表与详情数据
          */
-        async copyDialogSelectedIps() {
-            if (this.dialogSelectedIps.length === 0) {
-                this.$message.warning("请先选择要复制的IP");
-                return;
-            }
-            await this.copyToClipboard(this.dialogSelectedIps.join("\n"));
-            this.$message.success(`已复制 ${this.dialogSelectedIps.length} 个选中的IP`);
+        handleConfigUpdated() {
+            // 触发父组件刷新列表
+            this.$emit('refresh');
+            // 同步刷新详情弹窗数据
+            this.refreshJailDetail();
         },
 
         /**
-         * 复制单个IP到剪贴板
-         * @param {String} ip IP地址
-         */
-        async copySingleIp(ip) {
-            await this.copyToClipboard(ip);
-            this.$message.success(`已复制IP: ${ip}`);
-        },
-
-        /**
-         * 通用剪贴板复制方法（兼容现代Clipboard API + 旧浏览器降级）
-         * @param {String} text 要复制的文本
-         */
-        async copyToClipboard(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (err) {
-                const textarea = document.createElement("textarea");
-                textarea.value = text;
-                textarea.style.position = "fixed";
-                textarea.style.opacity = "0";
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand("copy");
-                document.body.removeChild(textarea);
-            }
-        },
-
-        /**
-         * 通知父组件打开确认弹窗
+         * 通知父组件打开确认弹窗（同时转发子组件的确认事件）
          * @param {String} type 操作类型
          * @param {String} ip 目标IP地址
          * @param {String} jailName 监狱名称
          * @param {Array} ips 批量操作IP列表（可选）
          */
-        handleOpenConfirm(type, ip = '', jailName = '') {
-            this.$emit('open-confirm', type, ip, jailName);
+        handleOpenConfirm(type, ip = '', jailName = '', ips) {
+            this.$emit('open-confirm', type, ip, jailName, ips);
         },
 
         // ==================== 分页事件处理 ====================
@@ -520,58 +371,8 @@ export default {
     cursor: pointer;
 }
 
-/* ==================== IP列表区域（通用） ==================== */
-.banned-ips-section {
-    margin-top: 20px;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.section-header h4 {
-    margin: 0;
-    font-size: 16px;
-    color: #1f2d3d;
-}
-
-.ip-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.banned-ips-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.ip-checkbox {
-    margin: 5px;
-    padding: 5px 10px;
-    background-color: #fff;
-    border-radius: 4px;
-    border: 1px solid #e6e6e6;
-}
-
-.copy-btn {
-    margin-left: 5px;
-    padding: 2px 4px;
-    transition: transform 0.2s;
-}
-
-.copy-btn:hover {
-    transform: scale(1.25);
-    position: relative;
-    top: -1px;
-}
-
 /* ==================== 监狱列表操作按钮（椭圆药丸按钮） ==================== */
-/* 清新配色，非 Element 主题色：天蓝 / 珊瑚红 / 薄荷绿 */
+/* 清新配色，非 Element 主题色：天蓝 / 暖黄 / 珊瑚红 / 薄荷绿 */
 .pill-btn {
     height: 30px;
     padding: 0 14px;
@@ -616,6 +417,18 @@ export default {
     box-shadow: 0 2px 8px rgba(91, 155, 245, 0.25);
 }
 
+/* 配置：暖黄 */
+.pill-config {
+    background-color: rgba(245, 194, 66, 0.85);
+    box-shadow: 0 2px 6px rgba(245, 194, 66, 0.3);
+}
+
+.pill-config:hover,
+.pill-config:focus {
+    background-color: rgba(245, 194, 66, 0.5);
+    box-shadow: 0 2px 8px rgba(245, 194, 66, 0.25);
+}
+
 /* 停止：珊瑚红 */
 .pill-stop {
     background-color: rgba(248, 113, 108, 0.85);
@@ -640,54 +453,10 @@ export default {
     box-shadow: 0 2px 8px rgba(82, 200, 150, 0.25);
 }
 
-.empty-text {
-    color: #8392a5;
-    font-size: 14px;
-    text-align: center;
-    padding: 20px;
-}
-
-/* ==================== 配置区域样式 ==================== */
-.config-section {
-    margin: 0 0 30px 0;
-}
-
-.section-title {
-    font-size: 15px;
-    /* font-weight: 600; */
-    color: #1f2d3d;
-    margin-bottom: 12px;
-    padding-left: 8px;
-    border-left: 3px solid #409eff;
-}
-
-/* 仅监狱详情弹窗去除上下padding，左右保留20px，不污染其他弹窗 */
-::v-deep .jail-detail-dialog .el-dialog__body {
-    padding: 28px 20px !important;
-}
-
-/* 弹窗底部按钮间距 */
-::v-deep .jail-detail-dialog .dialog-footer {
-    display: flex;
-    gap: 4px;
-    justify-content: flex-end;
-}
-
 /* ==================== 响应式适配 ==================== */
 @media (max-width: 768px) {
     .header-actions {
         flex-wrap: wrap;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .ip-actions {
-        width: 100%;
-        justify-content: flex-start;
     }
 }
 </style>
