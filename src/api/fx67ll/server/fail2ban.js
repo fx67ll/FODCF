@@ -205,3 +205,22 @@ export function stopJail(jailName) {
     method: "post",
   });
 }
+
+/**
+ * 统一修改监狱运行时临时配置
+ * 仅修改内存运行态参数，重启Fail2ban服务自动恢复配置文件默认值
+ * 支持配置项：bantime/findtime/maxretry/ignoreip（增删白名单IP）
+ * 【安全限制】仅fx67ll角色+指定白名单IP可执行
+ * @param {String} jailName 监狱名称
+ * @param {Object} data 请求体参数
+ * @param {String} data.configKey 配置项名称：bantime/findtime/maxretry/ignoreip
+ * @param {Number|String} data.value 配置值：数值(秒/次数) 或 IPv4地址
+ * @param {String} [data.action] ignoreip专用，add=添加白名单 / delete=删除白名单
+ */
+export function updateJailConfig(jailName, data) {
+  return request({
+    url: "/server/fail2ban/jail/" + jailName + "/config/update",
+    method: "post",
+    data: data,
+  });
+}
