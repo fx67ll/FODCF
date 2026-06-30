@@ -1,7 +1,8 @@
 <template>
     <!-- ==================== 监狱配置修改弹窗 ==================== -->
     <el-dialog :title="`修改监狱运行配置${jailName ? ' - ' + jailName : ''}`" :visible.sync="innerVisible" width="620px"
-        :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-config-dialog" append-to-body>
+        :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-config-dialog"
+        :style="`top: ${getDialogVerticalOffset(834)}`" append-to-body>
         <div v-loading="loading" element-loading-text="加载配置中...">
             <!-- 生效范围提示 -->
             <el-alert title="本次修改为运行时临时生效，重启 Fail2ban 服务后将自动恢复为配置文件默认值" type="warning" :closable="false" show-icon
@@ -12,13 +13,13 @@
                 <div class="block-title">基础防护参数</div>
                 <el-form :model="formData" :rules="formRules" ref="paramForm" label-width="120px" size="small">
                     <el-form-item label="封禁时长" prop="bantime">
-                        <el-input-number v-model="formData.bantime" :min="60" :max="31536000" :step="60"
+                        <el-input-number v-model="formData.bantime" :min="-1" :max="31536000" :step="60"
                             style="width: 100%;" />
-                        <span class="input-tip">单位：秒，取值范围 60（1分钟）~ 31536000（1年）</span>
+                        <span class="input-tip">单位：秒，取值范围 永久（-1秒）~ 31536000（1年）</span>
                     </el-form-item>
 
                     <el-form-item label="检测窗口" prop="findtime">
-                        <el-input-number v-model="formData.findtime" :min="60" :max="86400" :step="60"
+                        <el-input-number v-model="formData.findtime" :min="60" :max="31536000" :step="60"
                             style="width: 100%;" />
                         <span class="input-tip">单位：秒，取值范围 60（1分钟）~ 86400（1天）</span>
                     </el-form-item>
@@ -90,6 +91,7 @@
 
 <script>
 import { getJailDetail, updateJailConfig } from "@/api/fx67ll/server/fail2ban";
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 // IPv4严格格式校验正则，与后端保持一致
 const IPV4_STRICT_REG = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -147,11 +149,11 @@ export default {
             formRules: {
                 bantime: [
                     { required: true, message: "请输入封禁时长", trigger: "blur" },
-                    { type: "number", min: 60, max: 31536000, message: "取值范围 60 ~ 31536000 秒", trigger: "blur" }
+                    { type: "number", min: -1, max: 31536000, message: "取值范围 -1 ~ 31536000 秒", trigger: "blur" }
                 ],
                 findtime: [
                     { required: true, message: "请输入检测窗口", trigger: "blur" },
-                    { type: "number", min: 60, max: 86400, message: "取值范围 60 ~ 86400 秒", trigger: "blur" }
+                    { type: "number", min: 60, max: 31536000, message: "取值范围 60 ~ 31536000 秒", trigger: "blur" }
                 ],
                 maxretry: [
                     { required: true, message: "请输入最大重试次数", trigger: "blur" },
@@ -201,6 +203,11 @@ export default {
         }
     },
     methods: {
+        // 代理工具函数
+        getDialogVerticalOffset(offset) {
+            return getDialogVerticalOffset(offset);
+        },
+
         /**
          * 加载当前监狱配置，填充表单默认值
          */

@@ -54,7 +54,8 @@
                 </div>
                 <el-descriptions :column="4" border size="small">
                     <el-descriptions-item label="封禁时长">
-                        {{ jailDetail.config.bantime || '未知' }}
+                        {{ jailDetail.config.bantime ? jailDetail.config.bantime === '-1秒' ? '永久' : jailDetail.config.bantime
+                        : '未知' }}
                     </el-descriptions-item>
                     <el-descriptions-item label="检测窗口">
                         {{ jailDetail.config.findtime || '未知' }}
