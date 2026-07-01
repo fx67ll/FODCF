@@ -1,9 +1,12 @@
 <template>
     <!-- ==================== 监狱详情弹窗 ==================== -->
-    <el-dialog :title="`查看监狱详情${jailDetail ? ' - ' + jailDetail.name : ''}`" :visible.sync="innerVisible" width="830px"
-        :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-detail-dialog"
-        :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
-        <div v-if="jailDetail">
+    <el-dialog :title="`查看监狱详情${(jailDetail && jailDetail.name) || jailName ? ' - ' + ((jailDetail && jailDetail.name) || jailName) : ''}`"
+        :visible.sync="innerVisible" width="830px" :close-on-click-modal="false" @close="handleDialogClose"
+        custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
+        <!-- 详情加载中：先展示弹窗骨架，数据就绪后再渲染内容 -->
+        <div v-loading="loading" element-loading-text="加载监狱详情中..."
+            element-loading-background="rgba(255, 255, 255, 0.8)" style="min-height: 220px;">
+            <div v-if="jailDetail">
             <!-- 监狱基本信息 -->
             <div class="config-section">
                 <div class="section-title">
@@ -55,7 +58,7 @@
                 <el-descriptions :column="4" border size="small">
                     <el-descriptions-item label="封禁时长">
                         {{ jailDetail.config.bantime === '-1秒' ? '永久' :
-                            (detailData.config.bantime || '未知') }}
+                            (jailDetail.config.bantime || '未知') }}
                     </el-descriptions-item>
                     <el-descriptions-item label="检测窗口">
                         {{ jailDetail.config.findtime || '未知' }}
@@ -121,6 +124,7 @@
                 </div>
             </div>
         </div>
+        </div>
         <!-- 弹窗底部footer：新增一键解封、解封选中、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
         <span slot="footer" class="dialog-footer" v-if="jailDetail">
             <el-button type="danger" size="small" icon="el-icon-delete" @click="handleUnbanAllCurrentJail"
@@ -159,6 +163,16 @@ export default {
         jailDetail: {
             type: Object,
             default: null
+        },
+        /** 详情数据加载中（弹窗已打开、数据未就绪时展示loading） */
+        loading: {
+            type: Boolean,
+            default: false
+        },
+        /** 当前查看的监狱名称（用于数据未就绪时标题展示） */
+        jailName: {
+            type: String,
+            default: ""
         }
     },
     data() {
