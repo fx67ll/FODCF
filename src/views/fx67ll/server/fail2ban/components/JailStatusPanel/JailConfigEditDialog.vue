@@ -1,83 +1,86 @@
 <template>
     <!-- ==================== 监狱配置修改弹窗 ==================== -->
-    <el-dialog :title="`修改监狱运行配置${jailName ? ' - ' + jailName : ''}`" :visible.sync="innerVisible" width="620px"
+    <el-dialog :title="`修改监狱运行配置${jailName ? ' - ' + jailName : ''}`" :visible.sync="innerVisible" width="1000px"
         :close-on-click-modal="false" @close="handleDialogClose" custom-class="jail-config-dialog"
-        :style="`top: ${getDialogVerticalOffset(834)}`" append-to-body>
+        :style="`top: ${getDialogVerticalOffset(500)}`" append-to-body>
         <div v-loading="loading" element-loading-text="加载配置中...">
             <!-- 生效范围提示 -->
             <el-alert title="本次修改为运行时临时生效，重启 Fail2ban 服务后将自动恢复为配置文件默认值" type="warning" :closable="false" show-icon
                 style="margin-bottom: 20px;" />
 
-            <!-- 基础防护参数区块 -->
-            <div class="config-block">
-                <div class="block-title">基础防护参数</div>
-                <el-form :model="formData" :rules="formRules" ref="paramForm" label-width="120px" size="small">
-                    <el-form-item label="封禁时长" prop="bantime">
-                        <el-input-number v-model="formData.bantime" :min="-1" :max="31536000" :step="60"
-                            style="width: 100%;" />
-                        <span class="input-tip">单位：秒，取值范围 永久（-1秒）~ 31536000（1年）</span>
-                    </el-form-item>
+            <!-- 双栏配置内容区 -->
+            <div class="config-layout">
+                <!-- 基础防护参数区块 -->
+                <div class="config-block config-block-left">
+                    <div class="block-title">基础防护参数</div>
+                    <el-form :model="formData" :rules="formRules" ref="paramForm" label-width="110px" size="small">
+                        <el-form-item label="封禁时长" prop="bantime">
+                            <el-input-number v-model="formData.bantime" :min="-1" :max="31536000" :step="60"
+                                style="width: 100%;" />
+                            <span class="input-tip">单位：秒，取值范围 永久（-1秒）~ 31536000（1年）</span>
+                        </el-form-item>
 
-                    <el-form-item label="检测窗口" prop="findtime">
-                        <el-input-number v-model="formData.findtime" :min="60" :max="31536000" :step="60"
-                            style="width: 100%;" />
-                        <span class="input-tip">单位：秒，取值范围 60（1分钟）~ 86400（1天）</span>
-                    </el-form-item>
+                        <el-form-item label="检测窗口" prop="findtime">
+                            <el-input-number v-model="formData.findtime" :min="60" :max="31536000" :step="60"
+                                style="width: 100%;" />
+                            <span class="input-tip">单位：秒，取值范围 60（1分钟）~ 86400（1天）</span>
+                        </el-form-item>
 
-                    <el-form-item label="最大重试次数" prop="maxretry">
-                        <el-input-number v-model="formData.maxretry" :min="1" :max="1000" style="width: 100%;" />
-                        <span class="input-tip">单位：次，取值范围 1 ~ 1000，达到该次数将触发封禁</span>
-                    </el-form-item>
+                        <el-form-item label="最大重试次数" prop="maxretry">
+                            <el-input-number v-model="formData.maxretry" :min="1" :max="1000" style="width: 100%;" />
+                            <span class="input-tip">单位：次，取值范围 1 ~ 1000，达到该次数将触发封禁</span>
+                        </el-form-item>
 
-                    <el-form-item>
-                        <el-button type="primary" @click="handleSaveParams" :loading="paramSubmitting" size="small">
-                            保存参数修改
-                        </el-button>
-                        <span class="form-tip">修改后即时生效，无需重启服务</span>
-                    </el-form-item>
-                </el-form>
-            </div>
+                        <el-form-item>
+                            <el-button type="primary" @click="handleSaveParams" :loading="paramSubmitting" size="small">
+                                保存参数修改
+                            </el-button>
+                            <span class="form-tip">修改后即时生效，无需重启服务</span>
+                        </el-form-item>
+                    </el-form>
+                </div>
 
-            <!-- 分割线 -->
-            <el-divider style="margin: 20px 0;"></el-divider>
+                <!-- 垂直分割线 -->
+                <div class="vertical-divider"></div>
 
-            <!-- 白名单IP管理区块 -->
-            <div class="config-block">
-                <div class="block-title">白名单IP管理</div>
-                <el-form :model="ipForm" :rules="ipFormRules" ref="ipForm" label-width="120px" size="small">
-                    <el-form-item label="操作类型" prop="action">
-                        <el-radio-group v-model="ipForm.action">
-                            <el-radio label="add">添加IP</el-radio>
-                            <el-radio label="delete">删除IP</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
+                <!-- 白名单IP管理区块 -->
+                <div class="config-block config-block-right">
+                    <div class="block-title">白名单IP管理</div>
+                    <el-form :model="ipForm" :rules="ipFormRules" ref="ipForm" label-width="100px" size="small">
+                        <el-form-item label="操作类型" prop="action">
+                            <el-radio-group v-model="ipForm.action">
+                                <el-radio label="add">添加IP</el-radio>
+                                <el-radio label="delete">删除IP</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
 
-                    <el-form-item label="IP地址" prop="ip">
-                        <el-input v-model="ipForm.ip" placeholder="请输入合法的IPv4地址，例如 192.168.1.100" clearable />
-                        <span class="input-tip">仅支持单个IPv4地址；添加后仅对后续新攻击生效，已封禁IP需手动解封</span>
-                    </el-form-item>
+                        <el-form-item label="目标IP地址" prop="ip">
+                            <el-input v-model="ipForm.ip" placeholder="请输入合法的IPv4地址，例如 192.168.1.100" clearable />
+                            <span class="input-tip">仅支持单个IPv4地址；添加后仅对后续新攻击生效，已封禁IP需手动解封</span>
+                        </el-form-item>
 
-                    <el-form-item>
-                        <el-button type="warning" @click="handleIpOperate" :loading="ipSubmitting" size="small">
-                            执行操作
-                        </el-button>
-                        <span class="form-tip">执行完成后可继续操作其他IP，无需关闭弹窗</span>
-                    </el-form-item>
-                </el-form>
+                        <el-form-item>
+                            <el-button type="warning" @click="handleIpOperate" :loading="ipSubmitting" size="small">
+                                执行操作
+                            </el-button>
+                            <span class="form-tip">执行完成后可继续操作其他IP，无需关闭弹窗</span>
+                        </el-form-item>
+                    </el-form>
 
-                <!-- 当前白名单列表展示 -->
-                <div class="current-ip-list">
-                    <div class="ip-list-title">当前监狱白名单IP（共 {{ currentIgnoreIps.length }} 个）</div>
-                    <div class="ip-tags">
-                        <el-tag v-for="ip in currentIgnoreIps" :key="ip" size="mini" closable
-                            :disabled="systemWhiteList.includes(ip)" @close="handleQuickDeleteIp(ip)"
-                            style="margin: 3px;">
-                            {{ ip }}
-                        </el-tag>
-                        <span v-if="!currentIgnoreIps.length" class="empty-tip">暂无白名单IP</span>
-                    </div>
-                    <div class="ip-list-tip" v-if="systemWhiteList.length">
-                        灰色标签为系统级白名单，禁止在此处删除
+                    <!-- 当前白名单列表展示 -->
+                    <div class="current-ip-list">
+                        <div class="ip-list-title">当前监狱白名单IP（共 {{ currentIgnoreIps.length }} 个）</div>
+                        <div class="ip-tags">
+                            <el-tag v-for="ip in currentIgnoreIps" :key="ip" size="mini" closable
+                                :disabled="systemWhiteList.includes(ip)" @close="handleQuickDeleteIp(ip)"
+                                style="margin: 3px;">
+                                {{ ip }}
+                            </el-tag>
+                            <span v-if="!currentIgnoreIps.length" class="empty-tip">暂无白名单IP</span>
+                        </div>
+                        <div class="ip-list-tip" v-if="systemWhiteList.length">
+                            灰色标签为系统级白名单，禁止在此处删除
+                        </div>
                     </div>
                 </div>
             </div>
@@ -363,9 +366,35 @@ export default {
 </script>
 
 <style scoped>
+/* ==================== 双栏布局容器 ==================== */
+.config-layout {
+    display: flex;
+    align-items: flex-start;
+}
+
+.vertical-divider {
+    width: 1px;
+    background-color: #ebeef5;
+    margin: 0 22px 0 20px;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
 /* ==================== 配置区块通用样式 ==================== */
 .config-block {
+    flex: 1;
+    min-width: 0;
     padding: 0 10px;
+}
+
+.config-block-left {
+    flex: 0 0 43.5%;
+    padding-right: 0;
+}
+
+.config-block-right {
+    flex: 1;
+    padding-left: 0;
 }
 
 .block-title {
