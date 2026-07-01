@@ -1,129 +1,137 @@
 <template>
     <!-- ==================== 监狱详情弹窗 ==================== -->
-    <el-dialog :title="`查看监狱详情${(jailDetail && jailDetail.name) || jailName ? ' - ' + ((jailDetail && jailDetail.name) || jailName) : ''}`"
+    <el-dialog
+        :title="`查看监狱详情${(jailDetail && jailDetail.name) || jailName ? ' - ' + ((jailDetail && jailDetail.name) || jailName) : ''}`"
         :visible.sync="innerVisible" width="830px" :close-on-click-modal="false" @close="handleDialogClose"
-        custom-class="jail-detail-dialog" :style="`top: ${getDialogVerticalOffset(540)}`" append-to-body>
+        custom-class="jail-detail-dialog"
+        :style="`top: ${bannedIpsTotal > 0 ? getDialogVerticalOffset(590) : getDialogVerticalOffset(570)}`"
+        append-to-body>
         <!-- 详情加载中：先展示弹窗骨架，数据就绪后再渲染内容 -->
-        <div v-loading="loading" element-loading-text="加载监狱详情中..."
-            element-loading-background="rgba(255, 255, 255, 0.8)" style="min-height: 220px;">
+        <div v-loading="loading" element-loading-text="加载监狱详情中..." element-loading-background="rgba(255, 255, 255, 0.8)"
+            style="min-height: 220px;">
             <div v-if="jailDetail">
-            <!-- 监狱基本信息 -->
-            <div class="config-section">
-                <div class="section-title">
-                    监狱基本信息
-                    <el-button v-if="jailDetail && jailDetail.status === '运行中'"
-                        @click="handleOpenConfirm('stopJail', '', jailDetail.name)" class="mini-pill-btn mini-pill-stop"
-                        size="mini">
-                        🔒 停止运行
-                    </el-button>
-                    <el-button v-else-if="jailDetail && jailDetail.status !== '运行中'"
-                        @click="handleOpenConfirm('startJail', '', jailDetail.name)"
-                        class="mini-pill-btn mini-pill-start" size="mini">
-                        🕹️ 开始运行
-                    </el-button>
-                </div>
-                <el-descriptions :column="4" border size="small">
-                    <el-descriptions-item label="运行状态">
-                        <el-tag :type="jailDetail.status === '运行中' ? 'success' : 'info'" size="small">
-                            {{ jailDetail.status }}
-                        </el-tag>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="当前失败">
-                        {{ jailDetail.currentlyFailed || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="总失败尝试">
-                        {{ jailDetail.totalFailed || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="当前封禁">
-                        {{ jailDetail.currentlyBanned || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="累计封禁">
-                        {{ jailDetail.totalBanned || '0' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="日志路径" :span="3">
-                        {{ jailDetail.logPath || '未知' }}
-                    </el-descriptions-item>
-                </el-descriptions>
-            </div>
-
-            <!-- 监狱只读配置信息 -->
-            <div class="config-section">
-                <div class="section-title">
-                    监狱配置参数
-                    <el-button v-if="jailDetail && jailDetail.status === '运行中'" @click="handleOpenConfigEdit"
-                        class="mini-pill-btn mini-pill-config" size="mini">
-                        ⚙️ 修改配置
-                    </el-button>
-                </div>
-                <el-descriptions :column="4" border size="small">
-                    <el-descriptions-item label="封禁时长">
-                        {{ jailDetail.config.bantime === '-1秒' ? '永久' :
-                            (jailDetail.config.bantime || '未知') }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="检测窗口">
-                        {{ jailDetail.config.findtime || '未知' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="最大重试次数">
-                        {{ jailDetail.config.maxretry || jailDetail.config.maxretry === 0 ?
-                            `${jailDetail.config.maxretry}次` : '未知' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="白名单IP数量">
-                        {{ (jailDetail.config.ignoreIpList || []).length }} 个
-                    </el-descriptions-item>
-                    <el-descriptions-item label="监狱白名单" :span="2">
-                        <el-tag v-for="ip in (jailDetail.config.ignoreIpList || [])" :key="ip" size="mini"
-                            style="margin: 3px;">
-                            {{ ip }}
-                        </el-tag>
-                        <span v-if="!jailDetail.config.ignoreIpList.length" style="color: #909399;">
-                            无白名单配置
-                        </span>
-                    </el-descriptions-item>
-                </el-descriptions>
-            </div>
-
-            <!-- 封禁IP列表区域 -->
-            <div class="banned-ips-section">
-                <div class="section-header">
-                    <h4>
-                        当前监狱被封禁IP列表 (共 {{ bannedIpsTotal }} 个<span v-if="dialogSelectedIps.length > 0">，已选
-                            {{ dialogSelectedIps.length }} 个</span>)
-                    </h4>
-                    <!-- 复制按钮移至底部footer，此处清空 -->
-                    <div class="ip-actions"></div>
-                </div>
-
-                <div class="banned-ips-list">
-                    <!-- 全选当前页按钮（位于每页第一个IP之前） -->
-                    <el-checkbox v-if="paginatedBannedIps.length > 0" v-model="selectAllPage"
-                        :indeterminate="isCurrentPageIndeterminate" class="ip-checkbox select-all-checkbox">
-                        全选本页
-                    </el-checkbox>
-                    <el-checkbox v-for="ip in paginatedBannedIps" :key="ip" v-model="dialogSelectedIps" :label="ip"
-                        class="ip-checkbox">
-                        {{ ip }}
-                        <el-button type="text" icon="el-icon-check" size="mini"
-                            @click.stop="handleOpenConfirm('unban', ip, jailDetail.name)" class="copy-btn">
-                            解封
+                <!-- 监狱基本信息 -->
+                <div class="config-section">
+                    <div class="section-title">
+                        监狱基本信息
+                        <el-button v-if="jailDetail && jailDetail.status === '运行中'"
+                            @click="handleOpenConfirm('stopJail', '', jailDetail.name)"
+                            class="mini-pill-btn mini-pill-stop" size="mini">
+                            🔒 停止运行
                         </el-button>
-                        <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copySingleIp(ip)"
-                            class="copy-btn" />
-                    </el-checkbox>
+                        <el-button v-else-if="jailDetail && jailDetail.status !== '运行中'"
+                            @click="handleOpenConfirm('startJail', '', jailDetail.name)"
+                            class="mini-pill-btn mini-pill-start" size="mini">
+                            🕹️ 开始运行
+                        </el-button>
+                    </div>
+                    <el-descriptions :column="4" border size="small">
+                        <el-descriptions-item label="运行状态">
+                            <el-tag :type="jailDetail.status === '运行中' ? 'success' : 'info'" size="small">
+                                {{ jailDetail.status }}
+                            </el-tag>
+                        </el-descriptions-item>
+                        <el-descriptions-item label="当前失败">
+                            {{ jailDetail.currentlyFailed || '0' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="总失败尝试">
+                            {{ jailDetail.totalFailed || '0' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="当前封禁">
+                            {{ jailDetail.currentlyBanned || '0' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="累计封禁">
+                            {{ jailDetail.totalBanned || '0' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="日志路径" :span="3">
+                            {{ jailDetail.logPath || '未知' }}
+                        </el-descriptions-item>
+                    </el-descriptions>
                 </div>
 
-                <div v-if="bannedIpsTotal === 0" class="empty-text">
-                    暂无被封禁的IP
+                <!-- 监狱只读配置信息 -->
+                <div class="config-section">
+                    <div class="section-title">
+                        监狱配置参数
+                        <el-button v-if="jailDetail && jailDetail.status === '运行中'" @click="handleOpenConfigEdit"
+                            class="mini-pill-btn mini-pill-config" size="mini">
+                            ⚙️ 修改配置
+                        </el-button>
+                    </div>
+                    <el-descriptions :column="4" border size="small">
+                        <el-descriptions-item label="封禁时长">
+                            {{ jailDetail.config.bantime === '-1秒' ? '永久' :
+                                (jailDetail.config.bantime || '未知') }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="检测窗口">
+                            {{ jailDetail.config.findtime || '未知' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="最大重试次数">
+                            {{ jailDetail.config.maxretry || jailDetail.config.maxretry === 0 ?
+                                `${jailDetail.config.maxretry}次` : '未知' }}
+                        </el-descriptions-item>
+                        <el-descriptions-item label="白名单IP数量">
+                            {{ (jailDetail.config.ignoreIpList || []).length }} 个
+                        </el-descriptions-item>
+                        <el-descriptions-item label="监狱白名单" :span="2">
+                            <el-tag v-for="ip in (jailDetail.config.ignoreIpList || [])" :key="ip" size="mini"
+                                style="margin: 3px;">
+                                {{ ip }}
+                            </el-tag>
+                            <span v-if="!jailDetail.config.ignoreIpList.length" style="color: #909399;">
+                                无白名单配置
+                            </span>
+                        </el-descriptions-item>
+                    </el-descriptions>
                 </div>
 
-                <!-- 分页器 -->
-                <div class="ip-pagination-container" v-if="bannedIpsTotal > 0">
-                    <el-pagination @size-change="handleIpSizeChange" @current-change="handleIpCurrentChange"
-                        :current-page="ipCurrentPage" :page-sizes="[5, 10, 20, 50, 100]" :page-size="ipPageSize"
-                        layout="total, sizes, prev, pager, next" :total="bannedIpsTotal" background>
-                    </el-pagination>
+                <!-- 封禁IP列表区域（独立面板：头部 + 主体） -->
+                <div class="banned-ips-section">
+                    <!-- 面板头部：标题统计 + 分页器 + 全选本页 -->
+                    <div class="banned-ips-header">
+                        <div class="banned-ips-title">
+                            当前监狱被封禁IP列表
+                            <span class="banned-ips-count">
+                                共 {{ bannedIpsTotal }} 个<span v-if="dialogSelectedIps.length > 0"> · 已选
+                                    {{ dialogSelectedIps.length }} 个</span>
+                            </span>
+                        </div>
+                        <!-- 右侧操作区：分页器 + 全选本页 -->
+                        <div class="banned-ips-header-actions" v-if="bannedIpsTotal > 0">
+                            <!-- 分页器去 total，标题已展示总数 -->
+                            <el-pagination class="header-pagination" @size-change="handleIpSizeChange"
+                                @current-change="handleIpCurrentChange" :current-page="ipCurrentPage"
+                                :page-sizes="[5, 10, 20, 50, 100]" :page-size="ipPageSize"
+                                layout="sizes, prev, pager, next" :total="bannedIpsTotal" small>
+                            </el-pagination>
+                            <!-- 全选本页：中性灰轻量控件，不再混入IP列表 -->
+                            <el-checkbox v-model="selectAllPage" :indeterminate="isCurrentPageIndeterminate"
+                                class="select-all-checkbox">
+                                全选本页
+                            </el-checkbox>
+                        </div>
+                    </div>
+
+                    <!-- 面板主体：IP标签列表 -->
+                    <div class="banned-ips-body">
+                        <div class="banned-ips-list" v-if="bannedIpsTotal > 0">
+                            <el-checkbox v-for="ip in paginatedBannedIps" :key="ip" v-model="dialogSelectedIps"
+                                :label="ip" class="ip-checkbox">
+                                {{ ip }}
+                                <el-button type="text" icon="el-icon-check" size="mini"
+                                    @click.stop="handleOpenConfirm('unban', ip, jailDetail.name)" class="copy-btn">
+                                    解封
+                                </el-button>
+                                <el-button type="text" icon="el-icon-document-copy" size="mini"
+                                    @click.stop="copySingleIp(ip)" class="copy-btn" />
+                            </el-checkbox>
+                        </div>
+                        <div v-else class="empty-text">
+                            暂无被封禁的IP
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
         <!-- 弹窗底部footer：新增一键解封、解封选中、复制全部、复制选中按钮，整体加v-if判空，彻底避免空指针 -->
         <span slot="footer" class="dialog-footer" v-if="jailDetail">
@@ -410,38 +418,108 @@ export default {
 </script>
 
 <style scoped>
-/* ==================== IP列表区域（通用） ==================== */
+/* ==================== 封禁IP列表区域（独立面板） ==================== */
+/* 浅红底色呼应"封禁/监狱"语义，与全页 danger 色系保持一致 */
 .banned-ips-section {
-    margin-top: 20px;
+    margin-top: 8px;
+    background: #fef0f0;
+    border: 1px solid #fde2e2;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.section-header {
+/* 面板头部：标题统计 + 分页器 + 全选本页 */
+.banned-ips-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-}
-
-.section-header h4 {
-    margin: 0;
-    font-size: 16px;
-    color: #1f2d3d;
-}
-
-.ip-actions {
-    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #fde2e2;
+}
+
+/* 头部右侧操作区：分页器 + 全选本页 */
+.banned-ips-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* 头部分页器：紧凑化 + 内部元素垂直居中 */
+.header-pagination ::v-deep .el-pagination {
+    display: flex;
+    align-items: center;
+}
+
+.header-pagination ::v-deep .el-pagination .el-pagination__sizes,
+.header-pagination ::v-deep .el-pagination .btn-prev,
+.header-pagination ::v-deep .el-pagination .btn-next,
+.header-pagination ::v-deep .el-pagination .el-pager li {
+    margin: 0;
+    vertical-align: middle;
+}
+
+.header-pagination ::v-deep .el-input--mini .el-input__inner {
+    height: 24px;
+    line-height: 24px;
+}
+
+.banned-ips-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2d3d;
+    padding-left: 8px;
+    border-left: 3px solid #f56c6c;
+}
+
+.banned-ips-count {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #8392a5;
+}
+
+/* 全选本页：中性灰轻量控件，不再用突兀的蓝色 */
+.select-all-checkbox {
+    margin: 0;
+    position: relative;
+    top: 1px;
+}
+
+.select-all-checkbox ::v-deep .el-checkbox__label {
+    font-size: 12px;
+    color: #606266;
+}
+
+.select-all-checkbox ::v-deep .el-checkbox__inner {
+    border-color: #c0c4cc;
+}
+
+.select-all-checkbox.is-checked ::v-deep .el-checkbox__inner {
+    background-color: #909399;
+    border-color: #909399;
+}
+
+.select-all-checkbox.is-checked ::v-deep .el-checkbox__label {
+    color: #606266;
+}
+
+/* 面板主体 */
+.banned-ips-body {
+    padding: 16px;
+    min-height: 60px;
 }
 
 .banned-ips-list {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 15px;
 }
 
+/* IP标签样式（保持原有外观不变） */
 .ip-checkbox {
-    margin: 5px;
+    margin: 0;
     padding: 5px 10px;
     background-color: #fff;
     border-radius: 4px;
@@ -465,24 +543,6 @@ export default {
     font-size: 14px;
     text-align: center;
     padding: 20px;
-}
-
-/* 全选本页按钮（淡蓝底，区别于普通IP标签） */
-.select-all-checkbox {
-    background-color: #ecf5ff;
-    border-color: #c6e2ff;
-    color: #409eff;
-    font-weight: 500;
-}
-
-.select-all-checkbox ::v-deep .el-checkbox__label {
-    color: #409eff;
-}
-
-/* 封禁IP分页器 */
-.ip-pagination-container {
-    margin-top: 15px;
-    text-align: left;
 }
 
 /* ==================== 配置区域样式 ==================== */
@@ -551,15 +611,15 @@ export default {
 
 /* ==================== 响应式适配 ==================== */
 @media (max-width: 768px) {
-    .section-header {
+    .banned-ips-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
 
-    .ip-actions {
+    .banned-ips-header-actions {
         width: 100%;
-        justify-content: flex-start;
+        flex-wrap: wrap;
     }
 }
 </style>
