@@ -3,6 +3,12 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.9.7.20260701
+* 继续拆分`Fail2Ban`服务状态子组件  
+* 优化`Fail2Ban`监狱详情弹窗加载逻辑  
+* 优化`Fail2Ban`监狱配置弹窗样式   
+* 优化`Fail2Ban`界面按钮动效   
+
 ## 0.9.6.20260630
 * 新增对接`Fail2Ban`监狱永久封禁数据  
 
