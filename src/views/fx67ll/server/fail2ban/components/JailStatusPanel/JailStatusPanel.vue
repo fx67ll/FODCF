@@ -96,8 +96,8 @@
         </div>
 
         <!-- ==================== 监狱详情弹窗（子组件） ==================== -->
-        <JailDetailDialog :visible.sync="dialogVisible" :jail-detail="currentJailDetail"
-            @open-confirm="handleOpenConfirm" @open-config-edit="handleOpenConfigEdit" />
+        <JailDetailDialog :visible.sync="dialogVisible" :jail-detail="currentJailDetail" :loading="detailLoading"
+            :jail-name="currentJailName" @open-confirm="handleOpenConfirm" @open-config-edit="handleOpenConfigEdit" />
 
         <!-- ==================== 配置修改弹窗（子组件） ==================== -->
         <JailConfigEditDialog :visible.sync="configDialogVisible" :jail-name="currentEditJailName"
@@ -140,6 +140,8 @@ export default {
             // ==================== 弹窗控制 ====================
             dialogVisible: false,               // 弹窗显示状态
             currentJailDetail: null,            // 当前查看的监狱详情数据
+            currentJailName: "",                // 当前查看的监狱名称（数据未就绪时用于标题）
+            detailLoading: false,               // 详情数据加载中
 
             // ==================== 配置修改弹窗控制 ====================
             configDialogVisible: false,         // 配置修改弹窗显示状态
@@ -191,18 +193,26 @@ export default {
         },
 
         /**
-         * 打开监狱详情弹窗
+         * 打开监狱详情弹窗（先打开弹窗再异步加载数据，避免点击后延迟感）
          * @param {Object} row 监狱行数据
          */
         async openJailDetail(row) {
+            // 先清空旧数据并立即打开弹窗，让用户感知到即时响应
+            this.currentJailName = row.name;
+            this.currentJailDetail = null;
+            this.dialogVisible = true;
+            this.detailLoading = true;
             try {
                 const res = await getJailDetail(row.name);
                 this.currentJailDetail = res.data;
-                this.dialogVisible = true;
             } catch (err) {
                 if (!err._isHandled) {
                     this.$message.error("获取监狱详情失败：" + (err.msg || err.message));
                 }
+                // 加载失败关闭弹窗，避免停留在空白loading状态
+                this.dialogVisible = false;
+            } finally {
+                this.detailLoading = false;
             }
         },
 
@@ -210,13 +220,16 @@ export default {
          * 刷新弹窗中的监狱详情数据（操作成功后由父组件调用）
          */
         async refreshJailDetail() {
-            if (!this.dialogVisible || !this.currentJailDetail) return;
+            if (!this.dialogVisible || !this.currentJailName) return;
+            this.detailLoading = true;
             try {
-                const res = await getJailDetail(this.currentJailDetail.name);
+                const res = await getJailDetail(this.currentJailName);
                 this.currentJailDetail = res.data;
             } catch (err) {
                 // 刷新详情失败不影响主流程，静默处理
                 console.warn('刷新监狱详情失败:', err);
+            } finally {
+                this.detailLoading = false;
             }
         },
 
@@ -341,6 +354,21 @@ export default {
     color: #409eff;
     font-size: 12px;
     padding: 4px 8px;
+    transition: all 0.25s ease;
+}
+
+/* ==================== 刷新按钮悬浮动画 ==================== */
+.refresh-btn:hover {
+    opacity: 0.85;
+}
+
+/* 手动刷新图标：hover 时旋转一圈 */
+.refresh-btn ::v-deep .el-icon-refresh {
+    transition: transform 0.5s ease;
+}
+
+.refresh-btn:hover ::v-deep .el-icon-refresh {
+    transform: rotate(360deg);
 }
 
 .refresh-time {

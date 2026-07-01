@@ -609,6 +609,21 @@ export default {
     color: #409eff;
     font-size: 12px;
     padding: 4px 8px;
+    transition: all 0.25s ease;
+}
+
+/* ==================== 刷新按钮悬浮动画 ==================== */
+.refresh-btn:hover {
+    opacity: 0.85;
+}
+
+/* 手动刷新图标：hover 时旋转一圈 */
+.refresh-btn ::v-deep .el-icon-refresh {
+    transition: transform 0.5s ease;
+}
+
+.refresh-btn:hover ::v-deep .el-icon-refresh {
+    transform: rotate(360deg);
 }
 
 /* ==================== 攻击IP列样式 ==================== */
