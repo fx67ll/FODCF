@@ -27,8 +27,7 @@
                     启动服务
                 </el-button>
                 <!-- 定时刷新设置 -->
-                <el-popover placement="bottom-end" width="280" trigger="click"
-                    popper-class="refresh-config-popover">
+                <el-popover placement="bottom-end" width="280" trigger="click" popper-class="refresh-config-popover">
                     <div class="refresh-config">
                         <div class="config-title">
                             <i class="el-icon-time"></i>

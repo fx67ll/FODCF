@@ -4,8 +4,8 @@
         <service-status-panel :is-system-locked="isSystemLocked" :is-loading-status="isLoadingStatus"
             :service-status="serviceStatus" :lock-message="lockMessage" :service-info="serviceInfo"
             :is-refreshing="isRefreshing" :last-refresh-time="lastRefreshTime"
-            :refresh-interval-seconds="refreshIntervalSeconds" @open-confirm="openConfirmDialog" @refresh="handleRefresh"
-            @interval-change="handleIntervalChange" />
+            :refresh-interval-seconds="refreshIntervalSeconds" @open-confirm="openConfirmDialog"
+            @refresh="handleRefresh" @interval-change="handleIntervalChange" />
 
         <!-- 以下所有卡片仅在系统正常时显示 -->
         <template v-if="!isSystemLocked">
@@ -438,8 +438,9 @@ export default {
          * @param {String} ip 单个IP
          * @param {String} jailName 监狱名
          * @param {Array} ips 批量IP数组（可选）
+         * @param {Array} jailOptions 可选目标监狱候选集（仅批量操作多监狱共享时传入，未传则使用全部监狱）
          */
-        openConfirmDialog(type, ip = '', jailName = '', ips = []) {
+        openConfirmDialog(type, ip = '', jailName = '', ips = [], jailOptions = null) {
             if (this.isSystemLocked) {
                 this.$message.warning("系统状态异常，无法执行操作");
                 return;
@@ -449,7 +450,8 @@ export default {
                 type,
                 ip,
                 jailName,
-                ips: Array.isArray(ips) ? ips : []
+                ips: Array.isArray(ips) ? ips : [],
+                jailOptions: Array.isArray(jailOptions) ? jailOptions : null
             };
             this.confirmDialogVisible = true;
         },
@@ -602,4 +604,3 @@ export default {
     }
 };
 </script>
-

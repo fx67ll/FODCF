@@ -31,24 +31,22 @@
                 <div class="current-ip-wrap">
                     <span class="ip-label">当前操作台 IP：</span>
                     <span class="ip-value">{{ currentIp }}</span>
-                    <el-button type="text" icon="el-icon-document-copy" size="mini"
-                        @click="copySingleIp(currentIp)" class="ip-copy-btn" :disabled="currentIp === '获取中...'">
+                    <el-button type="text" icon="el-icon-document-copy" size="mini" @click="copySingleIp(currentIp)"
+                        class="ip-copy-btn" :disabled="currentIp === '获取中...'">
                     </el-button>
                 </div>
 
                 <el-select v-model="operationForm.jailName" placeholder="选择目标监狱" prefix-icon="el-icon-menu"
                     style="width: 180px;">
-                    <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name"
-                        :value="jail.name" />
+                    <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name" :value="jail.name" />
                 </el-select>
 
                 <el-input v-model="operationForm.ip" placeholder="请输入IPv4地址" prefix-icon="el-icon-monitor"
                     style="width: 260px;" clearable>
                 </el-input>
 
-                <el-button :type="operationForm.type === 'ban' ? 'danger' : 'success'"
-                    icon="el-icon-caret-right" @click="submitOperation" :disabled="!canSubmitOperation"
-                    class="execute-btn-v2">
+                <el-button :type="operationForm.type === 'ban' ? 'danger' : 'success'" icon="el-icon-caret-right"
+                    @click="submitOperation" :disabled="!canSubmitOperation" class="execute-btn-v2">
                     立即执行
                 </el-button>
             </div>
