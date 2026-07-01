@@ -91,8 +91,35 @@
                         class="copy-btn" />
                 </template>
             </el-table-column>
-            <!-- 来源监狱列 -->
-            <el-table-column label="来源监狱" width="200" align="center">
+            <!-- 来源监狱列（含Excel风格表头筛选） -->
+            <el-table-column width="200" align="center">
+                <template v-slot:header>
+                    <div class="col-header-filter">
+                        <span>来源监狱</span>
+                        <el-popover placement="bottom" width="180" trigger="click" popper-class="stats-filter-popover">
+                            <div class="filter-panel">
+                                <div class="filter-toolbar">
+                                    <span class="filter-toolbar-title">筛选</span>
+                                    <el-button type="text" size="mini" :disabled="filters.jails.length === 0"
+                                        @click="clearColumnFilter('jails')">清除</el-button>
+                                </div>
+                                <el-checkbox-group :value="filters.jails"
+                                    @input="val => handleFilterChange('jails', val)">
+                                    <el-checkbox v-for="jail in jailFilterOptions" :key="jail" :label="jail"
+                                        class="filter-option">
+                                        {{ jail }}
+                                    </el-checkbox>
+                                </el-checkbox-group>
+                                <div v-if="jailFilterOptions.length === 0" class="filter-empty">
+                                    暂无可筛选项
+                                </div>
+                            </div>
+                            <span slot="reference" class="filter-trigger" :class="{ active: filters.jails.length > 0 }">
+                                <i class="el-icon-arrow-down"></i>
+                            </span>
+                        </el-popover>
+                    </div>
+                </template>
                 <template v-slot="scope">
                     <el-tag v-for="jail in scope.row.jails.split(', ')" :key="jail" size="mini" type="info"
                         style="margin: 2px;">
@@ -102,14 +129,66 @@
                 </template>
             </el-table-column>
             <el-table-column prop="count" label="攻击次数" width="90" align="center" />
-            <el-table-column label="威胁等级" width="140" align="center">
+            <!-- 威胁等级列（含Excel风格表头筛选） -->
+            <el-table-column width="140" align="center">
+                <template v-slot:header>
+                    <div class="col-header-filter">
+                        <span>威胁等级</span>
+                        <el-popover placement="bottom" width="160" trigger="click" popper-class="stats-filter-popover">
+                            <div class="filter-panel">
+                                <div class="filter-toolbar">
+                                    <span class="filter-toolbar-title">筛选</span>
+                                    <el-button type="text" size="mini" :disabled="filters.threat.length === 0"
+                                        @click="clearColumnFilter('threat')">清除</el-button>
+                                </div>
+                                <el-checkbox-group :value="filters.threat"
+                                    @input="val => handleFilterChange('threat', val)">
+                                    <el-checkbox v-for="level in threatFilterOptions" :key="level" :label="level"
+                                        class="filter-option">
+                                        {{ level }}
+                                    </el-checkbox>
+                                </el-checkbox-group>
+                            </div>
+                            <span slot="reference" class="filter-trigger"
+                                :class="{ active: filters.threat.length > 0 }">
+                                <i class="el-icon-arrow-down"></i>
+                            </span>
+                        </el-popover>
+                    </div>
+                </template>
                 <template v-slot="scope">
                     <el-tag :type="getThreatLevel(scope.row.count)">
                         {{ getThreatLevelText(scope.row.count) }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="封禁状态" width="100" align="center">
+            <!-- 封禁状态列（含Excel风格表头筛选） -->
+            <el-table-column width="100" align="center">
+                <template v-slot:header>
+                    <div class="col-header-filter">
+                        <span>封禁状态</span>
+                        <el-popover placement="bottom" width="140" trigger="click" popper-class="stats-filter-popover">
+                            <div class="filter-panel">
+                                <div class="filter-toolbar">
+                                    <span class="filter-toolbar-title">筛选</span>
+                                    <el-button type="text" size="mini" :disabled="filters.banned.length === 0"
+                                        @click="clearColumnFilter('banned')">清除</el-button>
+                                </div>
+                                <el-checkbox-group :value="filters.banned"
+                                    @input="val => handleFilterChange('banned', val)">
+                                    <el-checkbox v-for="status in bannedFilterOptions" :key="status" :label="status"
+                                        class="filter-option">
+                                        {{ status }}
+                                    </el-checkbox>
+                                </el-checkbox-group>
+                            </div>
+                            <span slot="reference" class="filter-trigger"
+                                :class="{ active: filters.banned.length > 0 }">
+                                <i class="el-icon-arrow-down"></i>
+                            </span>
+                        </el-popover>
+                    </div>
+                </template>
                 <template v-slot="scope">
                     <el-tag :type="scope.row.banned ? 'danger' : 'success'" size="small">
                         {{ scope.row.banned ? '已封禁' : '未封禁' }}
@@ -130,12 +209,23 @@
             </el-table-column>
         </el-table>
 
+        <!-- 筛选无结果提示 -->
+        <div v-if="processedTopIps.length > 0 && filteredTopIps.length === 0" class="filter-empty-result">
+            <i class="el-icon-search"></i>
+            <span>没有符合筛选条件的数据</span>
+            <el-button type="text" @click="clearAllFilters">清除全部筛选</el-button>
+        </div>
+
         <!-- 分页 -->
-        <div class="pagination-container" v-if="processedTopIps.length > 0">
+        <div class="pagination-container" v-if="filteredTopIps.length > 0">
             <el-pagination @size-change="handleStatsSizeChange" @current-change="handleStatsCurrentChange"
                 :current-page="statsCurrentPage" :page-sizes="statsPageSizes" :page-size="statsPageSize"
-                layout="total, sizes, prev, pager, next, jumper" :total="processedTopIps.length" background>
+                layout="total, sizes, prev, pager, next, jumper" :total="filteredTopIps.length" background>
             </el-pagination>
+            <el-button v-if="hasAnyFilter" type="text" icon="el-icon-circle-close" class="clear-all-filter-btn"
+                @click="clearAllFilters">
+                清除筛选
+            </el-button>
         </div>
     </div>
 </template>
@@ -189,7 +279,15 @@ export default {
              */
             selectedRows: [],
             statsCurrentPage: 1,    // 分页当前页码
-            statsPageSize: 5        // 分页每页条数，默认5条
+            statsPageSize: 5,       // 分页每页条数，默认5条
+
+            // ==================== 表头列筛选（Excel自动筛选风格） ====================
+            // 各列选中的筛选项，空数组表示该列未启用筛选
+            filters: {
+                jails: [],          // 来源监狱（勾选的监狱名）
+                threat: [],         // 威胁等级（极高危/高危/中危/低危）
+                banned: []          // 封禁状态（已封禁/未封禁）
+            }
         };
     },
     computed: {
@@ -235,13 +333,82 @@ export default {
             });
             return result;
         },
+
         /**
-         * 分页后的攻击来源数据
+         * 来源监狱筛选项：从全部数据中收集出现过的监狱名，去重排序
+         * 直接基于 processedTopIps 收集，保证筛选项随数据变化
+         */
+        jailFilterOptions() {
+            const set = new Set();
+            this.processedTopIps.forEach(row => {
+                if (row.jails) {
+                    row.jails.split(', ').filter(Boolean).forEach(j => set.add(j));
+                }
+            });
+            return Array.from(set).sort();
+        },
+
+        /**
+         * 威胁等级筛选项：固定四档
+         */
+        threatFilterOptions() {
+            return ['极高危', '高危', '中危', '低危'];
+        },
+
+        /**
+         * 封禁状态筛选项：固定两档
+         */
+        bannedFilterOptions() {
+            return ['已封禁', '未封禁'];
+        },
+
+        /**
+         * 应用表头列筛选后的攻击来源数据
+         * 任一列有勾选时按勾选项过滤，未勾选（空数组）表示该列不筛选
+         */
+        filteredTopIps() {
+            const { jails, threat, banned } = this.filters;
+            const hasJailFilter = jails.length > 0;
+            const hasThreatFilter = threat.length > 0;
+            const hasBannedFilter = banned.length > 0;
+            if (!hasJailFilter && !hasThreatFilter && !hasBannedFilter) {
+                return this.processedTopIps;
+            }
+            return this.processedTopIps.filter(row => {
+                // 来源监狱：行的任一监狱命中勾选项即通过
+                if (hasJailFilter) {
+                    const rowJails = (row.jails || '').split(', ').filter(Boolean);
+                    if (!rowJails.some(j => jails.includes(j))) return false;
+                }
+                // 威胁等级：按攻击次数换算的文本命中勾选项
+                if (hasThreatFilter) {
+                    if (!threat.includes(this.getThreatLevelText(row.count))) return false;
+                }
+                // 封禁状态：按 banned 布尔值换算的文本命中勾选项
+                if (hasBannedFilter) {
+                    const statusText = row.banned ? '已封禁' : '未封禁';
+                    if (!banned.includes(statusText)) return false;
+                }
+                return true;
+            });
+        },
+
+        /**
+         * 是否存在任意已启用的列筛选（用于决定是否显示清除入口）
+         */
+        hasAnyFilter() {
+            return this.filters.jails.length > 0 ||
+                this.filters.threat.length > 0 ||
+                this.filters.banned.length > 0;
+        },
+
+        /**
+         * 分页后的攻击来源数据（基于筛选结果）
          */
         paginatedTopIps() {
             const start = (this.statsCurrentPage - 1) * this.statsPageSize;
             const end = start + this.statsPageSize;
-            return this.processedTopIps.slice(start, end);
+            return this.filteredTopIps.slice(start, end);
         },
 
         /**
@@ -259,7 +426,7 @@ export default {
 
         /**
          * 从选中行提取去重后的监狱数组
-         * 用于判断所有选中行是否都来自同一个监狱
+         * 当所有选中行监狱集合一致时，即为共享的监狱候选集
          */
         selectedJailSet() {
             const jails = new Set();
@@ -272,19 +439,26 @@ export default {
         },
 
         /**
+         * 所有选中行的来源监狱集合是否完全一致
+         * 允许每行含多个监狱，但所有行的监狱集合必须相同（且非空）
+         * 集合一致时，批量操作可针对其中任一监狱执行
+         */
+        selectedRowsSameJailSet() {
+            if (this.selectedRows.length === 0) return false;
+            const norm = row => (row.jails || '').split(', ').filter(Boolean).sort().join(',');
+            const firstKey = norm(this.selectedRows[0]);
+            if (!firstKey) return false; // 存在监狱未知的行，禁止批量操作
+            return this.selectedRows.every(row => norm(row) === firstKey);
+        },
+
+        /**
          * 批量操作通用前置校验：
          * 1. 至少选中一行
-         * 2. 每行 jails 字段只含一个监狱（排除监狱未知或跨监狱行）
-         * 3. 所有选中行属于同一个监狱
+         * 2. 所有选中行均有监狱且来源监狱集合完全一致（可含多个监狱，但各行须相同）
          */
         batchPreCheck() {
             if (this.selectedRows.length === 0) return false;
-            const allSingleJail = this.selectedRows.every(row => {
-                const jailArr = (row.jails || '').split(', ').filter(Boolean);
-                return jailArr.length === 1;
-            });
-            if (!allSingleJail) return false;
-            return this.selectedJailSet.length === 1;
+            return this.selectedRowsSameJailSet;
         },
 
         /**
@@ -310,7 +484,7 @@ export default {
          */
         batchBanTooltip() {
             if (this.selectedRows.length === 0) return '请先勾选要操作的IP';
-            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.batchPreCheck) return '所选IP的来源监狱须完全一致（可含多个监狱，但所有行须相同）';
             if (!this.canBatchBan) return '所选IP中存在已封禁的IP，批量封禁仅支持全部未封禁的IP';
             return '';
         },
@@ -320,7 +494,7 @@ export default {
          */
         batchUnbanTooltip() {
             if (this.selectedRows.length === 0) return '请先勾选要操作的IP';
-            if (!this.batchPreCheck) return '所选IP须来自同一个监狱，且每行只能对应一个监狱';
+            if (!this.batchPreCheck) return '所选IP的来源监狱须完全一致（可含多个监狱，但所有行须相同）';
             if (!this.canBatchUnban) return '所选IP中存在未封禁的IP，批量解封仅支持全部已封禁的IP';
             return '';
         }
@@ -338,6 +512,15 @@ export default {
         statsPageSizes() {
             this.statsPageSize = 5;
             this.statsCurrentPage = 1;
+        },
+        /**
+         * 筛选条件变化时重置分页到第一页，避免停留在空页
+         */
+        filters: {
+            deep: true,
+            handler() {
+                this.statsCurrentPage = 1;
+            }
         }
     },
     methods: {
@@ -399,9 +582,10 @@ export default {
          * @param {String} ip 目标IP地址
          * @param {String} jailName 监狱名称
          * @param {Array} ips 批量操作IP列表（可选）
+         * @param {Array} jailOptions 目标监狱候选集（可选，多监狱共享批量操作时传入）
          */
-        handleOpenConfirm(type, ip = '', jailName = '', ips = []) {
-            this.$emit('open-confirm', type, ip, jailName, ips);
+        handleOpenConfirm(type, ip = '', jailName = '', ips = [], jailOptions = null) {
+            this.$emit('open-confirm', type, ip, jailName, ips, jailOptions);
         },
 
         /**
@@ -415,25 +599,33 @@ export default {
         },
 
         /**
-         * 批量封禁：提取选中IP和监狱名，触发父组件确认弹窗（走危险操作二次确认流程）
-         * 前置校验已由 canBatchBan computed 保证，此处直接取第一项的监狱名
+         * 批量封禁：提取选中IP，触发父组件确认弹窗（走危险操作二次确认流程）
+         * 前置校验已由 canBatchBan computed 保证
+         * 仅一个共享监狱时自动带入；多个共享监狱时传空串，由确认弹窗让用户选择目标监狱
          */
         handleBatchBan() {
             if (!this.canBatchBan) return;
-            const jailName = this.selectedJailSet[0];
+            const sharedJails = this.selectedJailSet;
+            // 仅一个共享监狱时自动带入；多个共享监狱时传空串让用户选择，并限定候选集为共享监狱
+            const jailName = sharedJails.length === 1 ? sharedJails[0] : '';
+            const jailOptions = sharedJails.length === 1 ? null : sharedJails;
             const ips = this.selectedRows.map(row => row.ip);
-            this.handleOpenConfirm('ban-batch', '', jailName, ips);
+            this.handleOpenConfirm('ban-batch', '', jailName, ips, jailOptions);
         },
 
         /**
-         * 批量解封：提取选中IP和监狱名，触发父组件确认弹窗（走危险操作二次确认流程）
-         * 前置校验已由 canBatchUnban computed 保证，此处直接取第一项的监狱名
+         * 批量解封：提取选中IP，触发父组件确认弹窗（走危险操作二次确认流程）
+         * 前置校验已由 canBatchUnban computed 保证
+         * 仅一个共享监狱时自动带入；多个共享监狱时传空串，由确认弹窗让用户选择目标监狱
          */
         handleBatchUnban() {
             if (!this.canBatchUnban) return;
-            const jailName = this.selectedJailSet[0];
+            const sharedJails = this.selectedJailSet;
+            // 仅一个共享监狱时自动带入；多个共享监狱时传空串让用户选择，并限定候选集为共享监狱
+            const jailName = sharedJails.length === 1 ? sharedJails[0] : '';
+            const jailOptions = sharedJails.length === 1 ? null : sharedJails;
             const ips = this.selectedRows.map(row => row.ip);
-            this.handleOpenConfirm('unban-batch', '', jailName, ips);
+            this.handleOpenConfirm('unban-batch', '', jailName, ips, jailOptions);
         },
 
         /**
@@ -491,6 +683,32 @@ export default {
          */
         handleStatsSelectionChange(selection) {
             this.selectedRows = selection;
+        },
+
+        // ==================== 表头列筛选事件处理 ====================
+
+        /**
+         * 某列筛选勾选项变化
+         * @param {String} column 列名 jails | threat | banned
+         * @param {Array} values 勾选项数组
+         */
+        handleFilterChange(column, values) {
+            this.filters = { ...this.filters, [column]: values };
+        },
+
+        /**
+         * 清除指定列的筛选
+         * @param {String} column 列名
+         */
+        clearColumnFilter(column) {
+            this.filters = { ...this.filters, [column]: [] };
+        },
+
+        /**
+         * 清除全部列筛选
+         */
+        clearAllFilters() {
+            this.filters = { jails: [], threat: [], banned: [] };
         },
 
         // ==================== 分页事件处理 ====================
@@ -670,5 +888,99 @@ export default {
         width: 100%;
         justify-content: flex-start;
     }
+}
+
+/* ==================== 表头列筛选（Excel自动筛选风格） ==================== */
+.col-header-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* 筛选触发箭头：默认浅灰，hover/激活时变蓝，激活时向下加粗区分 */
+.filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    color: #c0c4cc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-trigger:hover {
+    color: #409eff;
+    background-color: #ecf5ff;
+}
+
+.filter-trigger.active {
+    color: #409eff;
+}
+
+.filter-trigger.active i {
+    font-weight: 700;
+}
+
+/* 筛选面板：选项纵向排列，底部清除入口 */
+.filter-panel {
+    padding: 4px 0;
+}
+
+.filter-option {
+    display: flex;
+    margin: 6px 12px !important;
+}
+
+.filter-empty {
+    padding: 12px;
+    text-align: center;
+    color: #909399;
+    font-size: 12px;
+}
+
+/* 筛选面板顶部操作条：标题 + 清除按钮，左右对齐 */
+.filter-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 0 12px 6px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-toolbar-title {
+    font-size: 12px;
+    color: #909399;
+}
+
+.filter-toolbar .el-button {
+    padding: 2px 0;
+}
+
+/* 筛选无结果提示 */
+.filter-empty-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 30px 0;
+    color: #8392a5;
+    font-size: 14px;
+}
+
+.filter-empty-result i {
+    font-size: 18px;
+}
+
+/* 分页区清除筛选按钮 */
+.clear-all-filter-btn {
+    margin-left: 12px;
+    color: #909399;
+}
+
+.clear-all-filter-btn:hover {
+    color: #f56c6c;
 }
 </style>

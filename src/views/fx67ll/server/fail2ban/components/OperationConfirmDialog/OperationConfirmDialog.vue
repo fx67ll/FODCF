@@ -63,7 +63,8 @@
                 <el-form-item label="选择监狱" required style="margin-bottom: 0;">
                     <el-select :value="confirmInfo.jailName" placeholder="请选择要操作的监狱" style="width: 100%;"
                         @change="handleJailNameChange">
-                        <el-option v-for="jail in jailList" :key="jail.name" :label="jail.name" :value="jail.name" />
+                        <el-option v-for="jail in selectableJailList" :key="jail.name" :label="jail.name"
+                            :value="jail.name" />
                     </el-select>
                 </el-form-item>
             </el-form>
@@ -102,7 +103,7 @@ export default {
         },
         confirmInfo: {
             type: Object,
-            default: () => ({ type: 'ban', ip: '', jailName: '', ips: [] })
+            default: () => ({ type: 'ban', ip: '', jailName: '', ips: [], jailOptions: null })
         },
         jailList: {
             type: Array,
@@ -138,6 +139,18 @@ export default {
         needSelectJail() {
             const noJailTypes = ['unban-all', 'startService', 'stopService'];
             return !noJailTypes.includes(this.confirmInfo.type);
+        },
+        /**
+         * 监狱选择下拉的可选列表
+         * 多监狱共享批量操作时，confirmInfo.jailOptions 限定为共享监狱候选集（字符串数组）
+         * 其余场景回退到全部监狱 jailList
+         */
+        selectableJailList() {
+            const opts = this.confirmInfo && this.confirmInfo.jailOptions;
+            if (Array.isArray(opts) && opts.length > 0) {
+                return opts.map(name => ({ name }));
+            }
+            return this.jailList;
         },
         isDangerousOp() {
             // 停止类操作（停止服务/停止监狱）与批量封禁解封一样走二次确认流程，启动类操作不需要
