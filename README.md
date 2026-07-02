@@ -3,6 +3,10 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.9.8.20260702
+* 修复`Fail2Ban`自动刷新间隔设置失败的问题  
+* 优化`Tomcat`界面按钮动效  
+
 ## 0.9.7.20260701
 * 继续拆分`Fail2Ban`服务状态子组件  
 * `Fail2Ban`攻击来源统计添加列表筛选功能和多个监狱来源的批量操作功能  
