@@ -284,7 +284,9 @@ export default {
         handleDialogClose() {
             this.$emit('update:visible', false);
             this.dialogSelectedIps = [];
+            // 重置分页到初始状态，避免重新打开弹窗时残留上次设置
             this.ipCurrentPage = 1;
+            this.ipPageSize = 5;
         },
 
         /**
