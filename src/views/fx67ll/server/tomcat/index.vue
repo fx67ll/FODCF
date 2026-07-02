@@ -741,11 +741,53 @@ export default {
   color: #409eff;
   font-size: 12px;
   padding: 4px 8px;
+  transition: all 0.25s ease;
 }
 
+/* 悬浮时整体微淡出，与 Fail2Ban 一致的反馈风格 */
 .refresh-btn:hover {
   color: #66b1ff;
   background-color: #e6f4ff;
+  opacity: 0.85;
+}
+
+/* 手动刷新图标：hover 时旋转一圈 */
+.refresh-btn ::v-deep .el-icon-refresh {
+  transition: transform 0.5s ease;
+  display: inline-block;
+}
+
+.refresh-btn:hover ::v-deep .el-icon-refresh {
+  transform: rotate(360deg);
+}
+
+/* 重置检测图标：hover 时上下弹跳，区别于刷新的旋转 */
+.refresh-btn ::v-deep .el-icon-switch-button {
+  transition: transform 0.25s ease;
+}
+
+.refresh-btn:hover ::v-deep .el-icon-switch-button {
+  animation: reset-bounce 0.6s ease;
+}
+
+@keyframes reset-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-4px);
+  }
+
+  60% {
+    transform: translateY(0);
+  }
+
+  80% {
+    transform: translateY(-2px);
+  }
 }
 
 .refresh-time {
