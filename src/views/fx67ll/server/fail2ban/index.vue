@@ -250,6 +250,7 @@ export default {
          * @param {Number} val 新的间隔秒数
          */
         handleIntervalChange(val) {
+            this.refreshIntervalSeconds = val;
             localStorage.setItem(REFRESH_INTERVAL_KEY, val);
             this.startAutoRefresh();
         },
