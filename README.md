@@ -3,6 +3,9 @@ fx67ll One Data Center Front
 
 欢迎访问 [fx67ll's 管理系统](https://vip.fx67ll.com) ~
 
+## 0.10.1.20260704
+* 完善`系统公告`相关功能  
+
 ## 0.9.8.20260702
 * 修复`Fail2Ban`自动刷新间隔设置失败的问题  
 * 优化`Fail2Ban`界面交互显示细节，修复已知问题 
