@@ -42,3 +42,28 @@ export function delNotice(noticeId) {
     method: "delete",
   });
 }
+
+// 查询已上架公告列表（面向登录用户）
+export function listPublicNotice(query) {
+  return request({
+    url: "/system/notice/public/list",
+    method: "get",
+    params: query,
+  });
+}
+
+// 查询已上架公告详细（面向登录用户）
+export function getPublicNotice(noticeId) {
+  return request({
+    url: "/system/notice/public/" + noticeId,
+    method: "get",
+  });
+}
+
+// 查询最新一条已上架公告
+export function latestPublicNotice() {
+  return request({
+    url: "/system/notice/public/latest",
+    method: "get",
+  });
+}

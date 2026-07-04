@@ -63,6 +63,10 @@
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:notice:edit']">修改</el-button>
+          <el-button v-if="scope.row.status === '1'" size="mini" type="text" icon="el-icon-top"
+            @click="handleShelf(scope.row, '0')" v-hasPermi="['system:notice:edit']">上架</el-button>
+          <el-button v-if="scope.row.status === '0'" size="mini" type="text" icon="el-icon-bottom"
+            @click="handleShelf(scope.row, '1')" v-hasPermi="['system:notice:edit']">下架</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
             v-hasPermi="['system:notice:remove']">删除</el-button>
         </template>
@@ -77,20 +81,20 @@
       :style="`top: ${getDialogVerticalOffset(575)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
-          <el-col :span="12">
+          <el-col :span="24">
             <el-form-item label="公告标题" prop="noticeTitle">
               <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="公告类型" prop="noticeType">
-              <el-select v-model="form.noticeType" placeholder="请选择公告类型">
+              <el-select v-model="form.noticeType" placeholder="请选择公告类型" style="width: 100%">
                 <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
+          <el-col :span="12">
             <el-form-item label="状态">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.value">{{
@@ -233,6 +237,20 @@ export default {
         this.open = true;
         this.title = "修改公告";
       });
+    },
+    /** 操作列上架/下架按钮 */
+    handleShelf(row, status) {
+      const text = status === "0" ? "上架" : "下架";
+      this.$modal
+        .confirm('确认将公告"' + row.noticeTitle + '"设为' + text + "吗？")
+        .then(() => {
+          return updateNotice({ noticeId: row.noticeId, status: status, noticeTitle: row.noticeTitle, noticeType: row.noticeType });
+        })
+        .then(() => {
+          row.status = status;
+          this.$modal.msgSuccess(text + "成功");
+        })
+        .catch(() => { });
     },
     /** 提交按钮 */
     submitForm: function () {
