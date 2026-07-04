@@ -313,7 +313,7 @@ import { arrayToMap } from "@/utils/fx67ll/utils";
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
-  name: "Log",
+  name: "AiRequestLog",
   components: { CommonEnhancedSelect },
   computed: {
     // 将选项数组转换为 { value: label } 的映射对象

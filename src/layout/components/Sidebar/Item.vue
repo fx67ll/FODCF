@@ -17,7 +17,12 @@ export default {
     const vnodes = [];
 
     if (icon) {
-      vnodes.push(<svg-icon icon-class={icon} />);
+      // 兼容 Element UI 字体图标：icon 以 "el-icon-" 开头时渲染 <i>，否则走 SVG 体系
+      if (icon.startsWith("el-icon-")) {
+        vnodes.push(<i class={icon} />);
+      } else {
+        vnodes.push(<svg-icon icon-class={icon} />);
+      }
     }
 
     if (title) {

@@ -47,7 +47,7 @@
 
 <script>
 export default {
-  name: "TomcatManager",
+  name: "TomcatCardBack",
   methods: {
     goToJenkins() {
       window.open('https://run.fx67ll.com/jenkins', '_blank');

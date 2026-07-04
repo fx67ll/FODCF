@@ -102,7 +102,7 @@ import {
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
-  name: "Log",
+  name: "NoteLog",
   data() {
     return {
       // 遮罩层

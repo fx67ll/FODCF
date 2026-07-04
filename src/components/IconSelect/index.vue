@@ -1,4 +1,5 @@
 <!-- @author zhengjie -->
+<!-- 扩充：在原有 SVG 图标基础上新增 Element UI 字体图标分组，支持分组切换与搜索 -->
 <template>
   <div class="icon-body">
     <el-input
@@ -11,6 +12,10 @@
     >
       <i slot="suffix" class="el-icon-search el-input__icon" />
     </el-input>
+    <el-radio-group v-model="activeGroup" size="mini" class="icon-group-tabs" @change="filterIcons">
+      <el-radio-button label="svg">SVG 图标</el-radio-button>
+      <el-radio-button label="element">Element 图标</el-radio-button>
+    </el-radio-group>
     <div class="icon-list">
       <div class="list-container">
         <div
@@ -20,7 +25,13 @@
           @click="selectedIcon(item)"
         >
           <div :class="['icon-item', { active: activeIcon === item }]">
+            <i
+              v-if="item.startsWith('el-icon-')"
+              :class="item"
+              class="icon el-icon-item"
+            />
             <svg-icon
+              v-else
               :icon-class="item"
               class-name="icon"
               style="height: 25px; width: 16px"
@@ -28,6 +39,7 @@
             <span>{{ item }}</span>
           </div>
         </div>
+        <div v-if="iconList.length === 0" class="icon-empty">无匹配图标</div>
       </div>
     </div>
   </div>
@@ -35,6 +47,7 @@
 
 <script>
 import icons from "./requireIcons";
+import elementIcons from "./elementIcons";
 export default {
   name: "IconSelect",
   props: {
@@ -45,14 +58,18 @@ export default {
   data() {
     return {
       name: "",
+      // 当前分组：svg = 项目自有 SVG，element = Element UI 字体图标
+      activeGroup: "svg",
       iconList: icons,
     };
   },
   methods: {
     filterIcons() {
-      this.iconList = icons;
+      const source = this.activeGroup === "element" ? elementIcons : icons;
       if (this.name) {
-        this.iconList = this.iconList.filter((item) => item.includes(this.name));
+        this.iconList = source.filter((item) => item.includes(this.name));
+      } else {
+        this.iconList = source;
       }
     },
     selectedIcon(name) {
@@ -61,7 +78,13 @@ export default {
     },
     reset() {
       this.name = "";
-      this.iconList = icons;
+      // 根据当前选中图标自动切换到对应分组，方便定位
+      if (this.activeIcon && this.activeIcon.startsWith("el-icon-")) {
+        this.activeGroup = "element";
+      } else {
+        this.activeGroup = "svg";
+      }
+      this.filterIcons();
     },
   },
 };
@@ -73,7 +96,17 @@ export default {
   padding: 10px;
   .icon-search {
     position: relative;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+  }
+  .icon-group-tabs {
+    width: 100%;
+    margin-bottom: 8px;
+    ::v-deep .el-radio-button {
+      width: 50%;
+      .el-radio-button__inner {
+        width: 100%;
+      }
+    }
   }
   .icon-list {
     height: 200px;
@@ -99,6 +132,13 @@ export default {
           .icon {
             flex-shrink: 0;
           }
+          // Element 字体图标对齐与尺寸
+          .el-icon-item {
+            font-size: 16px;
+            width: 16px;
+            line-height: 25px;
+            text-align: center;
+          }
           span {
             display: inline-block;
             vertical-align: -0.15em;
@@ -113,6 +153,13 @@ export default {
           background: #ececec;
           border-radius: 5px;
         }
+      }
+      .icon-empty {
+        width: 100%;
+        text-align: center;
+        color: #909399;
+        font-size: 13px;
+        line-height: 60px;
       }
     }
   }

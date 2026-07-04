@@ -307,7 +307,7 @@ import { getUserProfile } from "@/api/system/user";
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
-  name: "Log",
+  name: "PunchLog",
   dicts: ["sys_yes_no", "fx67ll_punch_type"],
   data() {
     return {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <svg-icon icon-class="phone" @click="goto" />
+    <i class="el-icon-mobile-phone" @click="goto" />
   </div>
 </template>
 

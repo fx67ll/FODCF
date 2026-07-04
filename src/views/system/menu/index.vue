@@ -36,7 +36,8 @@
       <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
       <el-table-column prop="icon" label="图标" align="center" width="100">
         <template slot-scope="scope">
-          <svg-icon :icon-class="scope.row.icon" />
+          <i v-if="scope.row.icon && scope.row.icon.startsWith('el-icon-')" :class="scope.row.icon" style="font-size: 18px" />
+          <svg-icon v-else :icon-class="scope.row.icon" />
         </template>
       </el-table-column>
       <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
@@ -89,7 +90,8 @@
               <el-popover placement="bottom-start" width="460" trigger="click" @show="$refs['iconSelect'].reset()">
                 <IconSelect ref="iconSelect" @selected="selected" :active-icon="form.icon" />
                 <el-input slot="reference" v-model="form.icon" placeholder="点击选择图标" readonly>
-                  <svg-icon v-if="form.icon" slot="prefix" :icon-class="form.icon" style="width: 25px" />
+                  <i v-if="form.icon && form.icon.startsWith('el-icon-')" slot="prefix" :class="form.icon" class="el-input__icon" style="font-size: 16px" />
+                  <svg-icon v-else-if="form.icon" slot="prefix" :icon-class="form.icon" style="width: 25px" />
                   <i v-else slot="prefix" class="el-icon-search el-input__icon" />
                 </el-input>
               </el-popover>

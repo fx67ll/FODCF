@@ -114,6 +114,10 @@ const user = {
             removeToken();
             // 清除与登录会话绑定的本地配置
             localStorage.removeItem("fail2ban-refresh-interval");
+            // 清除公告相关的会话标志，重新登录后恢复展示
+            sessionStorage.removeItem("closedNoticeId");
+            sessionStorage.removeItem("readNoticeId");
+            sessionStorage.removeItem("lastNoticeId");
             resolve();
           })
           .catch((error) => {
@@ -129,6 +133,10 @@ const user = {
         removeToken();
         // 清除与登录会话绑定的本地配置
         localStorage.removeItem("fail2ban-refresh-interval");
+        // 清除公告相关的会话标志，重新登录后恢复展示
+        sessionStorage.removeItem("closedNoticeId");
+        sessionStorage.removeItem("readNoticeId");
+        sessionStorage.removeItem("lastNoticeId");
         resolve();
       });
     },

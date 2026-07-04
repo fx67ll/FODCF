@@ -527,7 +527,7 @@ import LotteryHistoryStatistics from "./components/LotteryHistoryStatistics/Lott
 import GenerateNumbers from "./components/GenerateNumbers/GenerateNumbers.vue";
 
 export default {
-  name: "Log",
+  name: "LotteryLog",
   components: { LotteryHistoryStatistics, GenerateNumbers },
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {

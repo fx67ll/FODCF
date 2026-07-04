@@ -66,6 +66,14 @@
       margin-right: 16px;
     }
 
+    // Element UI 字体图标在侧边栏菜单中的对齐与间距，与 .svg-icon 保持一致
+    [class^="el-icon-"],
+    [class*=" el-icon-"] {
+      margin-right: 16px;
+      vertical-align: middle;
+      font-size: 18px;
+    }
+
     .el-menu {
       border: none;
       height: 100%;
@@ -152,6 +160,13 @@
         .svg-icon {
           margin-left: 20px;
         }
+
+        [class^="el-icon-"],
+        [class*=" el-icon-"] {
+          margin-left: 20px;
+          vertical-align: middle;
+          font-size: 18px;
+        }
       }
     }
 
@@ -163,6 +178,13 @@
 
         .svg-icon {
           margin-left: 20px;
+        }
+
+        [class^="el-icon-"],
+        [class*=" el-icon-"] {
+          margin-left: 20px;
+          vertical-align: middle;
+          font-size: 18px;
         }
       }
     }
@@ -219,6 +241,13 @@
   & > .el-menu {
     .svg-icon {
       margin-right: 16px;
+    }
+
+    [class^="el-icon-"],
+    [class*=" el-icon-"] {
+      margin-right: 16px;
+      vertical-align: middle;
+      font-size: 18px;
     }
   }
 

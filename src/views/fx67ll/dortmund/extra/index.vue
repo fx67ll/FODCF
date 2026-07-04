@@ -220,7 +220,7 @@ import * as echarts from "echarts";
 import _ from "underscore";
 
 export default {
-  name: "Extra",
+  name: "DortmundExtra",
   dicts: ["sys_yes_no"],
   data() {
     return {

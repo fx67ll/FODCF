@@ -1,17 +1,9 @@
 <template>
   <div class="navbar">
-    <hamburger
-      id="hamburger-container"
-      :is-active="sidebar.opened"
-      class="hamburger-container"
-      @toggleClick="toggleSideBar"
-    />
+    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container"
+      @toggleClick="toggleSideBar" />
 
-    <breadcrumb
-      id="breadcrumb-container"
-      class="breadcrumb-container"
-      v-if="!topNav"
-    />
+    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" v-if="!topNav" />
     <top-nav id="topmenu-container" class="topmenu-container" v-if="topNav" />
 
     <div class="right-menu">
@@ -22,24 +14,25 @@
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <el-tooltip
-          content="fx67ll's H5 App - https://life.fx67ll.com"
-          placement="bottom"
-        >
+        <el-tooltip content="fx67ll's H5 App - https://life.fx67ll.com" placement="bottom">
           <fx67ll-doc id="fx67ll-doc" class="right-menu-item hover-effect" />
         </el-tooltip>
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
+
+        <!-- 通知公告铃铛 -->
+        <el-tooltip content="通知公告" placement="bottom">
+          <div class="right-menu-item hover-effect notice-bell" @click="goNoticeList">
+            <i class="el-icon-bell"></i>
+          </div>
+        </el-tooltip>
 
         <!-- <el-tooltip content="布局大小" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip> -->
       </template>
 
-      <el-dropdown
-        class="avatar-container right-menu-item hover-effect"
-        trigger="click"
-      >
+      <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
           <img :src="avatar" class="user-avatar" />
           <i class="el-icon-caret-bottom" />
@@ -119,6 +112,10 @@ export default {
     },
   },
   methods: {
+    /** 跳转公告列表页 */
+    goNoticeList() {
+      this.$router.push("/fx67ll/notice/public").catch(() => { });
+    },
     toggleSideBar() {
       this.$store.dispatch("app/toggleSideBar");
     },
@@ -133,7 +130,7 @@ export default {
             location.href = "/index";
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     },
   },
 };

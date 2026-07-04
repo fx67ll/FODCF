@@ -275,7 +275,7 @@
 
 <script>
 export default {
-    name: "DortmundAnalysis",
+    name: "DortmundAnalysisDoubao",
     data() {
         return {
             activeTab: 'season',

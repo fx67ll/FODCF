@@ -83,7 +83,7 @@ import {
 } from "@/api/fx67ll/mahjong/room";
 
 export default {
-  name: "mahjongRoom",
+  name: "MahjongRoomOuter",
   dicts: ["sys_normal_disable"],
   data() {
     return {

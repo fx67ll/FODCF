@@ -171,7 +171,7 @@ import {
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
-  name: "Data",
+  name: "DictData",
   dicts: ["sys_normal_disable"],
   data() {
     return {

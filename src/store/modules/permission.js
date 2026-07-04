@@ -40,6 +40,19 @@ const permission = {
           const rewriteRoutes = filterAsyncRouter(rdata, false, true);
           const asyncRoutes = filterDynamicRoutes(dynamicRoutes);
           rewriteRoutes.push({ path: '*', redirect: '/404', hidden: true });
+          // === 路由 name 去重 START =================================================
+          // 背景：若依后端 SysMenuServiceImpl.getRouteName() 用菜单 path 的首字母大写作为路由 name，
+          //   导致多条以同名结尾的菜单（如 .../match/log、lottery/log、punch/log、note/log）
+          //   生成的路由 name 都是 "Log"，前端 router.addRoutes 时 vue-router 报
+          //   "Duplicate named routes definition" 警告。
+          // 处理：在路由正式注册前，对整棵路由树递归调用 deduplicateRouteNames，把重复的 name
+          //   改写为"完整路径转 PascalCase"的形式（如 match/log -> MatchLog），保证全局唯一且有语义。
+          // 影响评估：本项目所有路由跳转均使用 path（router.push({path}) / <router-link :to="path">），
+          //   不依赖路由 name 跳转，故改写 name 不影响任何现有功能。
+          // 回退方式：若后期需要恢复后端原始 name，删除下面这一行调用即可
+          //   （deduplicateRouteNames 函数可保留也可一并删除）。
+          deduplicateRouteNames(rewriteRoutes);
+          // === 路由 name 去重 END ===================================================
           router.addRoutes(asyncRoutes);
           commit('SET_ROUTES', rewriteRoutes);
           commit('SET_SIDEBAR_ROUTERS', constantRoutes.concat(sidebarRoutes));
@@ -78,6 +91,60 @@ function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
     }
     return true;
   });
+}
+
+/**
+ * 路由 name 去重（整棵路由树递归）：保证注册到 vue-router 的 name 全局唯一。
+ *
+ * 触发条件：仅当后端生成的 name 在本次路由表中出现重复时才改写，唯一 name 原样保留。
+ * 重命名规则：取路由完整 path（已由 filterChildren 拼接为全路径），按 / 拆段，
+ *   每段首字母大写后拼接，如 "lottery/log" -> "LotteryLog"；若转换后仍重复则追加数字后缀。
+ *
+ * 说明：每次调用（每次登录生成路由）都会重新初始化已用 name 集合，避免跨登录会话污染。
+ *
+ * @param {Array} routes 路由树（会被递归遍历 children）
+ * @returns {void} 直接修改各节点的 name
+ */
+function deduplicateRouteNames(routes) {
+  const usedNames = new Set();
+  const resolve = route => {
+    if (route.name) {
+      if (!usedNames.has(route.name)) {
+        // name 未被使用，登记并保留后端原始 name
+        usedNames.add(route.name);
+      } else {
+        // name 重复：用完整路径转 PascalCase 生成新 name，直至唯一
+        let newName = pathToPascalCase(route.path);
+        let suffix = 2;
+        while (usedNames.has(newName)) {
+          newName = pathToPascalCase(route.path) + '_' + suffix;
+          suffix++;
+        }
+        route.name = newName;
+        usedNames.add(newName);
+      }
+    }
+    if (route.children && route.children.length) {
+      route.children.forEach(resolve);
+    }
+  };
+  routes.forEach(resolve);
+}
+
+/**
+ * 路径转 PascalCase：lottery/log -> LotteryLog
+ * @param {String} path 路由完整路径
+ * @returns {String} PascalCase 名称
+ */
+function pathToPascalCase(path) {
+  if (!path) {
+    return '';
+  }
+  return path
+    .split('/')
+    .filter(segment => segment) // 去掉空段（首部 / 或连续 //）
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join('');
 }
 
 function filterChildren(childrenMap, lastRouter = false) {
