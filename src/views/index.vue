@@ -6,7 +6,8 @@
         <i class="el-icon-bell"></i>
       </div>
       <div class="notice-card-body">
-        <span class="notice-type-tag" :class="'type-' + latestNotice.noticeType">{{ typeText(latestNotice.noticeType) }}</span>
+        <span class="notice-type-tag" :class="'type-' + latestNotice.noticeType">{{ typeText(latestNotice.noticeType)
+          }}</span>
         <span class="notice-card-title">{{ latestNotice.noticeTitle }}</span>
         <span class="notice-card-time">{{ parseTime(latestNotice.createTime, "{y}-{m}-{d}") }}</span>
       </div>
