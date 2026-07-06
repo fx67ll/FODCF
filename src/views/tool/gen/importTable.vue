@@ -24,8 +24,16 @@
         <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column prop="tableName" label="表名称" :show-overflow-tooltip="true"></el-table-column>
         <el-table-column prop="tableComment" label="表描述" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="160"></el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" width="160"></el-table-column>
+        <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+          <template slot-scope="scope">
+            <span>{{ parseTime(scope.row.createTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="更新时间" align="center" prop="updateTime" width="160">
+          <template slot-scope="scope">
+            <span>{{ parseTime(scope.row.updateTime) }}</span>
+          </template>
+        </el-table-column>
       </el-table>
       <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
         @pagination="getList" />
