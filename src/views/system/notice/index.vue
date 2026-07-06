@@ -4,14 +4,25 @@
       <el-form-item label="公告标题" prop="noticeTitle">
         <el-input v-model="queryParams.noticeTitle" placeholder="请输入公告标题" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="操作人员" prop="createBy">
-        <el-input v-model="queryParams.createBy" placeholder="请输入操作人员" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="公告类型" prop="noticeType">
+      <el-form-item label="公告类型" prop="noticeType" v-if="isMoreQuery">
         <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
           <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
+      </el-form-item>
+      <el-form-item label="公告状态" prop="status" v-if="isMoreQuery">
+        <el-select v-model="queryParams.status" placeholder="公告状态" clearable>
+          <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
+        <el-input v-model="queryParams.createBy" placeholder="请输入创建者" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
+        <el-date-picker v-model="dateRange" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+          :default-time="['00:00:00', '23:59:59']"></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
@@ -19,6 +30,10 @@
         </el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
           重置
+        </el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
         </el-button>
       </el-form-item>
     </el-form>
@@ -56,7 +71,7 @@
       <el-table-column label="创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d}") }}</span>
+          <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -160,6 +175,10 @@ export default {
         createBy: undefined,
         status: undefined,
       },
+      // 创建时间范围
+      dateRange: [],
+      // 是否展开高级搜索
+      isMoreQuery: false,
       // 表单参数
       form: {},
       // 表单校验
@@ -184,7 +203,7 @@ export default {
     /** 查询公告列表 */
     getList() {
       this.loading = true;
-      listNotice(this.queryParams).then((response) => {
+      listNotice(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
         this.noticeList = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -211,8 +230,13 @@ export default {
       this.queryParams.pageNum = 1;
       this.getList();
     },
+    /** 高级搜索展开/收起 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
+    },
     /** 重置按钮操作 */
     resetQuery() {
+      this.dateRange = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },

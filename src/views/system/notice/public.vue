@@ -5,15 +5,24 @@
       <el-form-item label="公告标题" prop="noticeTitle">
         <el-input v-model="queryParams.noticeTitle" placeholder="请输入公告标题" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="公告类型" prop="noticeType">
+      <el-form-item label="公告类型" prop="noticeType" v-if="isMoreQuery">
         <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
           <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="创建时间" v-if="isMoreQuery">
+        <el-date-picker v-model="dateRange" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+          :default-time="['00:00:00', '23:59:59']"></el-date-picker>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+          @click="handleMoreQuery">
+          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -33,7 +42,7 @@
             {{ typeText(item.noticeType) }}
           </span>
           <span class="notice-card-title">{{ item.noticeTitle }}</span>
-          <span class="notice-card-time">{{ parseTime(item.createTime, "{y}-{m}-{d}") }}</span>
+          <span class="notice-card-time">{{ parseTime(item.createTime) }}</span>
         </div>
         <div class="notice-card-content" v-html="stripContent(item.noticeContent)"></div>
         <div class="notice-card-footer">
@@ -81,6 +90,10 @@ export default {
         noticeTitle: undefined,
         noticeType: undefined,
       },
+      // 创建时间范围
+      dateRange: [],
+      // 是否展开高级搜索
+      isMoreQuery: false,
     };
   },
   created() {
@@ -105,7 +118,7 @@ export default {
     /** 查询列表 */
     getList() {
       this.loading = true;
-      listPublicNotice(this.queryParams).then((response) => {
+      listPublicNotice(this.addDateRange(this.queryParams, this.dateRange)).then((response) => {
         this.noticeList = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -116,8 +129,13 @@ export default {
       this.queryParams.pageNum = 1;
       this.getList();
     },
+    /** 高级搜索展开/收起 */
+    handleMoreQuery() {
+      this.isMoreQuery = !this.isMoreQuery;
+    },
     /** 重置 */
     resetQuery() {
+      this.dateRange = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
