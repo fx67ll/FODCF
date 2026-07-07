@@ -8,7 +8,8 @@ import { isRelogin } from "@/utils/common/request";
 
 NProgress.configure({ showSpinner: false });
 
-const whiteList = ["/login", "/register"];
+// 游客免登录白名单：/status 为公开服务状态大盘，仅展示脱敏聚合数据
+const whiteList = ["/login", "/register", "/status"];
 
 router.beforeEach((to, from, next) => {
   NProgress.start();
