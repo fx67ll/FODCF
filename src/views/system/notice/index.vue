@@ -10,8 +10,8 @@
             :value="dict.value" />
         </el-select>
       </el-form-item>
-      <el-form-item label="公告状态" prop="status" v-if="isMoreQuery">
-        <el-select v-model="queryParams.status" placeholder="公告状态" clearable>
+      <el-form-item label="发布状态" prop="status" v-if="isMoreQuery">
+        <el-select v-model="queryParams.status" placeholder="发布状态" clearable>
           <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
@@ -56,14 +56,14 @@
 
     <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="序号" align="center" prop="noticeId" width="100" />
+      <el-table-column label="公告编号" align="center" prop="noticeId" width="80" />
       <el-table-column label="公告标题" align="center" prop="noticeTitle" :show-overflow-tooltip="true" />
-      <el-table-column label="公告类型" align="center" prop="noticeType" width="100">
+      <el-table-column label="公告类型" align="center" prop="noticeType" width="90">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_notice_type" :value="scope.row.noticeType" />
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="status" width="100">
+      <el-table-column label="发布状态" align="center" prop="status" width="90">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.status" />
         </template>
@@ -74,7 +74,7 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="230">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['system:notice:edit']">修改</el-button>
@@ -102,20 +102,20 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="公告类型" prop="noticeType">
-              <el-select v-model="form.noticeType" placeholder="请选择公告类型" style="width: 100%">
-                <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="状态">
+            <el-form-item label="发布状态">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.value">{{
                   dict.label
                 }}</el-radio>
               </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="公告类型" prop="noticeType">
+              <el-select v-model="form.noticeType" placeholder="请选择公告类型" style="width: 100%">
+                <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="24">

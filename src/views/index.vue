@@ -7,7 +7,7 @@
       </div>
       <div class="notice-card-body">
         <span class="notice-type-tag" :class="'type-' + latestNotice.noticeType">{{ typeText(latestNotice.noticeType)
-          }}</span>
+        }}</span>
         <span class="notice-card-title">{{ latestNotice.noticeTitle }}</span>
         <span class="notice-card-time">{{ parseTime(latestNotice.createTime, "{y}-{m}-{d}") }}</span>
       </div>
@@ -83,6 +83,7 @@ import 'flipclock/dist/flipclock.css';
 import moment from 'moment';
 import { latestPublicNotice, getPublicNotice } from "@/api/system/notice";
 import NoticeDetailDialog from "@/views/system/notice/component/NoticeDetailDialog.vue";
+import { NOTICE_PUBLIC_PATH } from "@/views/system/notice/constants";
 export default {
   name: "Index",
   components: { NoticeDetailDialog },
@@ -158,7 +159,7 @@ export default {
     },
     /** 跳转公告列表页 */
     goNoticeList() {
-      this.$router.push("/fx67ll/notice/public").catch(() => { });
+      this.$router.push(NOTICE_PUBLIC_PATH).catch(() => { });
     },
     /** 关闭首页公告条（关闭当前公告，新公告到达时会再次显示） */
     handleCloseNotice() {
