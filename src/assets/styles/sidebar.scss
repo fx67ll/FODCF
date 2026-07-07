@@ -62,16 +62,36 @@
       overflow: hidden;
     }
 
-    .svg-icon {
+    // 菜单图标统一尺寸与间距：svg-icon 与 Element UI 字体图标完全一致
+    // 不论菜单配的是 svg 还是 el-icon，视觉尺寸、对齐、与右侧文字间距都相同。
+    // - 外框固定 14×14：与原 svg-icon 的 1em 在菜单字号(14px)下一致，避免一大一小的尺寸错位；
+    // - inline-flex 居中：字形/矢量在固定外框内水平垂直居中，消除两者 baseline 差异导致的对齐不齐；
+    // - margin-right: 16px：沿用原 svg-icon 与文字的间距，作为统一基准；
+    // - color: inherit：默认颜色跟随菜单文字颜色，与 svg 的 currentColor 取同一色值。
+    // :not(.el-submenu__icon-arrow)：子菜单展开箭头也是 el-icon-*，需排除，避免被这里改写成图标样式，
+    // 折叠态箭头由 element-ui.scss 统一隐藏。
+    .svg-icon,
+    [class^="el-icon-"]:not(.el-submenu__icon-arrow),
+    [class*=" el-icon-"]:not(.el-submenu__icon-arrow) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      line-height: 1;
       margin-right: 16px;
+      font-size: 14px;
+      vertical-align: middle;
+      text-align: center;
+      color: inherit;
     }
 
-    // Element UI 字体图标在侧边栏菜单中的对齐与间距，与 .svg-icon 保持一致
-    [class^="el-icon-"],
-    [class*=" el-icon-"] {
-      margin-right: 16px;
-      vertical-align: middle;
-      font-size: 18px;
+    // svg 为实心矢量填充，同色值下视觉上比 Element 字体图标（字形描边）偏厚重。
+    // 默认态略减淡透明度，让两者观感更接近；选中/悬浮态在下方规则中恢复 opacity:1，主题色不被减淡。
+    // 该值为观感微调，可按需在 0.8~0.92 之间调整。
+    .svg-icon {
+      opacity: 0.85;
     }
 
     .el-menu {
@@ -88,6 +108,13 @@
       white-space: nowrap !important;
     }
 
+    // 选中的叶子菜单项（.el-menu-item.is-active，由 Element 的 active-text-color 着色）
+    // 及悬浮态，svg 图标恢复满色，覆盖上方默认的 opacity:0.85，主题色/悬浮色不被减淡。
+    .el-menu-item.is-active .svg-icon,
+    .el-menu-item:hover .svg-icon {
+      opacity: 1;
+    }
+
     // menu hover
     .submenu-title-noDropdown,
     .el-submenu__title {
@@ -99,15 +126,37 @@
       }
     }
 
-    // 不分主题，侧边栏选中的以及菜单字体颜色
+    // 父目录高亮：当子页面被选中时，Element 会给父级 .el-submenu 加 .is-active（任意子项激活即触发），
+    // 此规则让父目录标题文字与图标都变主题色，修复「选中子页面后父目录图标不高亮」的问题。
     & .is-active > .el-submenu__title {
       color: $base-menu-color-active !important;
+
+      // 父目录选中时，目录图标（svg 与 el-icon）一并高亮为主题色
+      .svg-icon,
+      [class^="el-icon-"],
+      [class*=" el-icon-"] {
+        color: $base-menu-color-active !important;
+      }
+      // 选中态 svg 恢复满色，覆盖上方默认的 opacity:0.85，主题色不被减淡
+      .svg-icon {
+        opacity: 1;
+      }
 
       // 不分主题，侧边栏一级菜单鼠标滑过的背景色以及菜单字体颜色
       &:hover {
         // background-color: rgba(0, 0, 0, 0.06) !important;
         background-color: $base-sub-menu-hover !important;
         color: $base-menu-color-hover !important;
+
+        .svg-icon,
+        [class^="el-icon-"],
+        [class*=" el-icon-"] {
+          color: $base-menu-color-hover !important;
+        }
+        // 悬浮态 svg 也恢复满色
+        .svg-icon {
+          opacity: 1;
+        }
       }
     }
 
@@ -157,15 +206,16 @@
       .el-tooltip {
         padding: 0 !important;
 
-        .svg-icon {
+        // 折叠态图标统一尺寸与对齐，与图标类型无关（排除子菜单展开箭头）
+        .svg-icon,
+        [class^="el-icon-"]:not(.el-submenu__icon-arrow),
+        [class*=" el-icon-"]:not(.el-submenu__icon-arrow) {
           margin-left: 20px;
-        }
-
-        [class^="el-icon-"],
-        [class*=" el-icon-"] {
-          margin-left: 20px;
+          width: 14px;
+          height: 14px;
+          line-height: 1;
+          font-size: 14px;
           vertical-align: middle;
-          font-size: 18px;
         }
       }
     }
@@ -176,15 +226,16 @@
       & > .el-submenu__title {
         padding: 0 !important;
 
-        .svg-icon {
+        // 折叠态子菜单图标统一尺寸与对齐，与上方 noDropdown 一致，与图标类型无关（排除展开箭头）
+        .svg-icon,
+        [class^="el-icon-"]:not(.el-submenu__icon-arrow),
+        [class*=" el-icon-"]:not(.el-submenu__icon-arrow) {
           margin-left: 20px;
-        }
-
-        [class^="el-icon-"],
-        [class*=" el-icon-"] {
-          margin-left: 20px;
+          width: 14px;
+          height: 14px;
+          line-height: 1;
+          font-size: 14px;
           vertical-align: middle;
-          font-size: 18px;
         }
       }
     }
@@ -239,15 +290,16 @@
 // when menu collapsed
 .el-menu--vertical {
   & > .el-menu {
-    .svg-icon {
+    // 弹出二级菜单图标统一尺寸与间距，与图标类型无关（排除子菜单展开箭头）
+    .svg-icon,
+    [class^="el-icon-"]:not(.el-submenu__icon-arrow),
+    [class*=" el-icon-"]:not(.el-submenu__icon-arrow) {
+      width: 14px;
+      height: 14px;
+      line-height: 1;
       margin-right: 16px;
-    }
-
-    [class^="el-icon-"],
-    [class*=" el-icon-"] {
-      margin-right: 16px;
+      font-size: 14px;
       vertical-align: middle;
-      font-size: 18px;
     }
   }
 

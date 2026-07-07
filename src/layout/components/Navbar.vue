@@ -63,6 +63,7 @@ import SizeSelect from "@/components/SizeSelect";
 import Search from "@/components/HeaderSearch";
 import fx67llGit from "@/components/fx67ll/Git";
 import fx67llDoc from "@/components/fx67ll/Doc";
+import { getNoticePath } from "@/views/system/notice/constants";
 
 import Cookies from "js-cookie";
 
@@ -112,9 +113,10 @@ export default {
     },
   },
   methods: {
-    /** 跳转公告列表页 */
+    /** 跳转公告列表页：超级管理员 fx67ll 进公告管理，其他人进公开公告列表 */
     goNoticeList() {
-      this.$router.push("/fx67ll/notice/public").catch(() => { });
+      const path = getNoticePath(this.$store.state.user.name);
+      this.$router.push(path).catch(() => { });
     },
     toggleSideBar() {
       this.$store.dispatch("app/toggleSideBar");

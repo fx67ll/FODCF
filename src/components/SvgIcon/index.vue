@@ -50,6 +50,10 @@ export default {
 </script>
 
 <style scoped>
+/* svg 图标统一走 currentColor：颜色始终跟随所在文字颜色，与 Element 字体图标取同一色值。
+   src/assets/icons/svg 下的源文件已统一为 fill="currentColor"（个别曾写死 #333333/#C6CCDA 的已修正），
+   保证选中菜单时图标能与文字一起高亮为主题色。尺寸默认 1em，随所在文字字号缩放；
+   侧边栏菜单等场景的外框/对齐/透明度微调见 sidebar.scss。 */
 .svg-icon {
   width: 1em;
   height: 1em;

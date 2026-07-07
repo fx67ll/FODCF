@@ -1,5 +1,18 @@
 // cover some element-ui styles
 
+// ===== 图标库统一：svg-icon 与 Element UI 字体图标（el-icon-*）=====
+// 背景：系统同时存在两套图标库，菜单/按钮里混用，曾出现颜色、尺寸、对齐不一致。
+// 此处为 Element 字体图标补齐与 svg-icon 一致的基础行为：
+// 1. color: inherit —— 字体图标颜色始终继承所在文字颜色，与 svg-icon 的 fill: currentColor 取同一色值；
+// 2. font-size: 1em —— 尺寸随所在文字字号缩放，与 svg-icon 的 1em 一致，由各业务场景按需覆盖。
+// 故意不加 !important：业务上单独指定颜色的图标（如行内 style="color:..."）仍可覆盖此默认值。
+// 侧边栏菜单图标的尺寸/间距/选中高亮等更细的统一，见 sidebar.scss。
+[class^="el-icon-"],
+[class*=" el-icon-"] {
+  color: inherit;
+  font-size: 1em;
+}
+
 .el-breadcrumb__inner,
 .el-breadcrumb__inner a {
   font-weight: 400 !important;
@@ -83,10 +96,12 @@
   box-sizing: content-box;
 }
 
-.el-menu--collapse
-  > div
-  > .el-submenu
-  > .el-submenu__title
+// 侧边栏折叠后，子菜单项不再展示展开/收起箭头（仅保留图标）
+// Element 自带规则用直系子选择器 .el-menu--collapse > .el-submenu > .el-submenu__title .el-submenu__icon-arrow，
+// 但 RuoYi 的 SidebarItem 在 .el-submenu 外多包了一层 <div>，导致选择器匹配不到、折叠后箭头仍在显示。
+// 此处去掉直系限制并加 !important，覆盖 Element 默认与 hover/opened 态，确保折叠菜单下所有层级的箭头都隐藏。
+.el-menu--collapse {
   .el-submenu__icon-arrow {
-  display: none;
+    display: none !important;
+  }
 }
