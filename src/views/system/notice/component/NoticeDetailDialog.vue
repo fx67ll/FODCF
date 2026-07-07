@@ -1,7 +1,6 @@
 <template>
-  <!-- :style="`top: ${getDialogVerticalOffset(0)}`" -->
   <el-dialog :title="notice.noticeTitle" :visible.sync="dialogVisible" :close-on-click-modal="false" width="780px"
-    append-to-body custom-class="notice-detail-dialog">
+    :style="`top: ${getDialogVerticalOffset(423)}`" append-to-body custom-class="notice-detail-dialog">
     <div class="notice-detail-meta">
       <span class="notice-type-tag" :class="'type-' + notice.noticeType">{{ typeText(notice.noticeType) }}</span>
       <span class="notice-detail-author">发布者：{{ notice.createBy || "系统" }}</span>
@@ -16,7 +15,7 @@
 </template>
 
 <script>
-// import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "NoticeDetailDialog",
@@ -45,9 +44,9 @@ export default {
   },
   methods: {
     // 代理工具函数
-    // getDialogVerticalOffset(offset) {
-    //   return getDialogVerticalOffset(offset);
-    // },
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     /** 类型文本 */
     typeText(noticeType) {
       const dict = (this.dict.type.sys_notice_type || []).find((d) => d.value === noticeType);
@@ -95,7 +94,7 @@ export default {
     font-size: 14px;
     color: #303133;
     line-height: 1.8;
-    max-height: 420px;
+    height: 80%;
     overflow-y: auto;
     padding: 0 4px;
 
