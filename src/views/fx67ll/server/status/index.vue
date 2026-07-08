@@ -7,7 +7,7 @@
         <div class="logo-dot"></div>
         <span class="header-title">fx67ll's 系统服务状态总览</span>
       </div>
-      <div class="header-right">
+      <div class="header-right" :class="{ refreshing }">
         <span class="update-label">数据更新于</span>
         <span class="update-time">{{ updateTimeText }}</span>
         <div class="countdown-bar">
@@ -93,25 +93,25 @@
       </div>
     </div>
 
-    <!-- 服务器负载与运行时长（脱敏，负载仅小数，不暴露核数） -->
+    <!-- 服务器负载与运行时长（脱敏，负载定性展示不暴露核数） -->
     <div class="load-section">
       <div class="load-card">
         <div class="load-value"><count-to :start-val="0" :end-val="osUptimeDays" :duration="1200" /></div>
         <div class="load-label">开机天数</div>
       </div>
       <div class="load-card">
-        <div class="load-value"><count-to :start-val="0" :end-val="load1" :duration="1200" /></div>
-        <div class="load-label">1min 负载</div>
+        <div class="load-value" :class="load1Level">{{ load1Display }}</div>
+        <div class="load-label">1min 负载 · {{ load1Text }}</div>
       </div>
       <div class="load-card">
-        <div class="load-value"><count-to :start-val="0" :end-val="load15" :duration="1200" /></div>
-        <div class="load-label">15min 负载</div>
+        <div class="load-value" :class="load15Level">{{ load15Display }}</div>
+        <div class="load-label">15min 负载 · {{ load15Text }}</div>
       </div>
     </div>
 
     <!-- 能力摘要文案：靠文案点题，不靠数据堆砌 -->
     <div class="summary-text">
-      本站由 fx67ll 管理系统提供运维与安全防护，已累计抵御
+      本站由 fx67ll.com 供运维与安全防护，已累计抵御
       <span class="summary-num">{{ totalBlockedAttempts }}</span>
       次恶意访问，数据均已脱敏处理，仅展示状态信息。
     </div>
@@ -127,6 +127,22 @@
 import CountTo from 'vue-count-to';
 import { getPublicStatusOverview } from '@/api/fx67ll/server/status';
 
+// 负载档位（基于绝对值定性，不依赖核数）：<0.5 空闲，<1.0 正常，<2.0 偏高，≥2.0 繁忙
+function loadLevel(value) {
+  const v = Number(value) || 0;
+  if (v >= 2) return 'danger';
+  if (v >= 1) return 'warn';
+  return 'normal';
+}
+// 负载定性文案：让游客无需理解负载比也能看懂当前系统忙闲程度
+function loadLevelText(value) {
+  const v = Number(value) || 0;
+  if (v >= 2) return '繁忙';
+  if (v >= 1) return '偏高';
+  if (v >= 0.5) return '正常';
+  return '空闲';
+}
+
 export default {
   name: 'PublicServerStatusMonitor',
   components: { CountTo },
@@ -141,8 +157,12 @@ export default {
       services: {},
       lastUpdateTime: 0,
       initializing: true,
-      // 倒计时进度：10 分钟一个采集周期
+      // 倒计时进度：基于前端拉取时刻计算，60 秒走满 100%，到顶触发刷新脉冲后归零
       countdownPercent: 0,
+      // 是否处于"到顶刷新"动效中（进度条闪动 + 数据淡入）
+      refreshing: false,
+      // 拉取周期基准时刻（前端自己的 Date.now()，不依赖后端时间戳，避免时钟偏差导致瞬间走满）
+      cycleStartTime: 0,
       refreshTimer: null,
       countdownTimer: null,
       // 服务器运行指标（全部脱敏，不含 IP/路径/版本/阈值）
@@ -175,14 +195,22 @@ export default {
       if (!this.totalServiceCount) return 0;
       return Math.round((this.onlineServiceCount / this.totalServiceCount) * 100);
     },
-    // "更新于 Xmin 前" 文案
+    // 更新时间点文案：完整中文日期 YYYY年M月D日 HH:mm:ss
     updateTimeText() {
       if (!this.lastUpdateTime) return '初始化中';
-      const diff = Date.now() - this.lastUpdateTime;
-      const min = Math.floor(diff / 60000);
-      if (min < 1) return '刚刚';
-      return `${min}min 前`;
+      const d = new Date(this.lastUpdateTime);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     },
+    // 负载档位：基于绝对值定性判断（不依赖核数），<0.5 空闲，<1.0 正常，<2.0 偏高，≥2.0 繁忙
+    // 暴露给游客的是定性状态而非精确负载比，既直观又不泄露核数
+    load1Level() { return loadLevel(this.load1); },
+    load15Level() { return loadLevel(this.load15); },
+    load1Text() { return loadLevelText(this.load1); },
+    load15Text() { return loadLevelText(this.load15); },
+    // 负载展示文案：固定 2 位小数，避免空闲时显示 0 显得异常
+    load1Display() { return Number(this.load1 || 0).toFixed(2); },
+    load15Display() { return Number(this.load15 || 0).toFixed(2); },
   },
   created() {
     // 游客路径不走 store.setTitle，这里显式设置页签标题
@@ -190,9 +218,9 @@ export default {
   },
   mounted() {
     this.fetchStatus();
-    // 每 30 秒拉取一次缓存（后端 60 秒刷新一次，前端 30 秒轮询能尽快命中新缓存，开销极低）
-    this.refreshTimer = setInterval(this.fetchStatus, 30000);
-    // 倒计时进度条：每秒推进，60 秒走满一轮
+    // 每 60 秒拉取一次缓存，与后端 60 秒采集周期对齐：圆环到顶 = 后端刚采集 = 数据必然更新
+    this.refreshTimer = setInterval(this.fetchStatus, 60000);
+    // 倒计时进度条：每秒推进，60 秒走满一圈，到顶触发刷新脉冲
     this.countdownTimer = setInterval(this.tickCountdown, 1000);
   },
   beforeDestroy() {
@@ -221,9 +249,13 @@ export default {
           this.load1 = Number(data.load1) || 0;
           this.load5 = Number(data.load5) || 0;
           this.load15 = Number(data.load15) || 0;
-          // 拉到新数据时重置倒计时
+          // 拉到新数据：更新展示时间戳，并以本次拉取时刻重置倒计时周期基准
           this.lastUpdateTime = Number(data.lastUpdateTime) || Date.now();
+          this.cycleStartTime = Date.now();
           this.countdownPercent = 0;
+          this.refreshing = true;
+          // 刷新脉冲动效：短暂闪动后恢复，配合进度条归零重新走满
+          setTimeout(() => { this.refreshing = false; }, 600);
           this.initializing = false;
         })
         .catch(() => {
@@ -231,10 +263,18 @@ export default {
           this.initializing = false;
         });
     },
+    // 倒计时进度：基于本次拉取时刻（前端 Date.now()）真实计算，60 秒走满 100%。
+    // 与后端 60 秒采集周期对齐：到顶 = 后端刚采集 = 数据必然更新。
+    // 不用后端 lastUpdateTime 作为基准，避免服务器/客户端时钟偏差导致一加载就瞬间走满
     tickCountdown() {
-      // 进度条映射 60 秒周期，到顶后停留等待下次拉取
-      if (this.countdownPercent < 100) {
-        this.countdownPercent = Math.min(100, this.countdownPercent + 100 / 60);
+      if (!this.cycleStartTime || this.refreshing) return;
+      const elapsed = Date.now() - this.cycleStartTime;
+      const percent = Math.min(100, (elapsed / 60000) * 100);
+      this.countdownPercent = percent;
+      // 走到 100% 主动触发一次拉取（进度条到顶 = 刷新，语义清晰），并启动刷新脉冲
+      if (percent >= 100 && !this.refreshing) {
+        this.refreshing = true;
+        this.fetchStatus();
       }
     },
     // 进度条宽度：百分比转宽度（0-100%）
@@ -305,12 +345,15 @@ $offline: #f85149;
   .header-right {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     font-size: 13px;
     color: $text-sub;
+    transition: opacity 0.3s ease;
 
     .update-time {
       color: $brand;
+      font-variant-numeric: tabular-nums; // 等宽数字，时间跳动不抖动
     }
 
     .countdown-bar {
@@ -319,13 +362,68 @@ $offline: #f85149;
       border-radius: 2px;
       background: rgba(255, 255, 255, 0.08);
       overflow: hidden;
+      position: relative;
 
       .countdown-fill {
         height: 100%;
+        border-radius: 2px;
         background: linear-gradient(90deg, $brand, #6ee7a8);
         transition: width 1s linear;
+        position: relative;
+        overflow: hidden;
+
+        // 流光：进度条上一道高光从左滑到右，循环播放，增加"活着"的质感
+        &::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+          transform: translateX(-100%);
+          animation: shimmer 2.4s infinite;
+        }
       }
     }
+
+    // 到顶刷新脉冲：进度条整体闪一下 + 右侧文字微微亮起，配合数据淡入
+    &.refreshing {
+      .countdown-fill {
+        animation: refresh-flash 0.6s ease;
+      }
+
+      .update-time {
+        animation: refresh-flash 0.6s ease;
+      }
+    }
+  }
+}
+
+// 流光动画：高光横扫进度条
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  60%,
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+// 刷新脉冲：闪动一下，表示数据已刷新
+@keyframes refresh-flash {
+  0% {
+    filter: brightness(1);
+  }
+
+  40% {
+    filter: brightness(1.8);
+  }
+
+  100% {
+    filter: brightness(1);
   }
 }
 
@@ -560,6 +658,16 @@ $offline: #f85149;
       font-weight: 700;
       color: $brand;
       line-height: 1;
+      font-variant-numeric: tabular-nums; // 等宽数字，负载值刷新不抖动
+
+      // 负载档位着色：空闲/正常用品牌绿，偏高用橙，繁忙用红
+      &.warn {
+        color: #e6a23c;
+      }
+
+      &.danger {
+        color: $offline;
+      }
     }
 
     .load-label {

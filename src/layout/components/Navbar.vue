@@ -20,6 +20,13 @@
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
+        <!-- 监控大盘：新窗口打开公开服务状态页 -->
+        <el-tooltip content="监控大盘" placement="bottom">
+          <div class="right-menu-item hover-effect" @click="goStatusMonitor">
+            <i class="el-icon-monitor"></i>
+          </div>
+        </el-tooltip>
+
         <!-- 通知公告铃铛 -->
         <el-tooltip content="通知公告" placement="bottom">
           <div class="right-menu-item hover-effect notice-bell" @click="goNoticeList">
@@ -113,6 +120,11 @@ export default {
     },
   },
   methods: {
+    /** 新窗口打开公开服务状态大盘（/status 在 constantRoutes 中，免登录可访问） */
+    goStatusMonitor() {
+      const { origin } = window.location;
+      window.open(origin + "/status", "_blank");
+    },
     /** 跳转公告列表页：超级管理员 fx67ll 进公告管理，其他人进公开公告列表 */
     goNoticeList() {
       const path = getNoticePath(this.$store.state.user.name);
