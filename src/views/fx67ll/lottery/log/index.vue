@@ -118,6 +118,12 @@
         </el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
+        <el-button type="warning" plain icon="el-icon-magic-stick" size="mini" :disabled="selectedRows.length < 2"
+          @click="handleMerge" v-hasPermi="['lottery:log:merge']">
+          合并
+        </el-button>
+      </el-col>
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['lottery:log:remove']">
           删除
@@ -262,7 +268,8 @@
       </el-table-column>
       <el-table-column label="当日中奖号码" align="center" prop="winningNumber" width="170">
         <template slot-scope="scope">
-          <template v-if="scope.row.winningNumberHighlightInfo && scope.row.winningNumber && scope.row.winningNumber !== '-'">
+          <template
+            v-if="scope.row.winningNumberHighlightInfo && scope.row.winningNumber && scope.row.winningNumber !== '-'">
             <span v-if="scope.row.winningNumberHighlightInfo.type === 'zone'">
               <span v-for="(n, ni) in scope.row.winningNumberHighlightInfo.front" :key="'wf' + ni"
                 style="margin-right: 3px">
@@ -512,6 +519,7 @@ import {
   delLog,
   addLog,
   updateLog,
+  mergeLog,
   listTotalReward,
 } from "@/api/fx67ll/lottery/log";
 
@@ -536,6 +544,8 @@ export default {
       loading: true,
       // 选中数组
       ids: [],
+      // 选中行的完整对象数组（合并功能需要 dateCode/numberType 做同期号同类型校验）
+      selectedRows: [],
       // 非单个禁用
       single: true,
       // 非多个禁用
@@ -906,6 +916,8 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map((item) => item.lotteryId);
+      // 保存整行引用，合并功能需读取 dateCode/numberType 做同期号同类型校验
+      this.selectedRows = selection;
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
@@ -1054,6 +1066,53 @@ export default {
           this.$modal.msgSuccess("删除成功");
         })
         .catch(() => { });
+    },
+    /** 合并按钮操作：合并同期号、同类型的多条记录为一条，后台事务完成合并+删除旧数据 */
+    handleMerge() {
+      const rows = this.selectedRows;
+      // 前置校验：至少选择两条记录
+      if (!rows || rows.length < 2) {
+        this.$modal.msgWarning("请至少选择两条记录进行合并！");
+        return;
+      }
+      // 前置校验：单次合并数量上限（与后台 MERGE_MAX_INPUT_COUNT 保持一致）
+      if (rows.length > 23) {
+        this.$modal.msgWarning("单次最多合并23条记录！");
+        return;
+      }
+      // 前置校验：所有选中记录必须同期号（dateCode）且同类型（numberType）
+      const baseDateCode = rows[0].dateCode;
+      const baseNumberType = rows[0].numberType;
+      const allSame = rows.every(
+        (item) =>
+          (item.dateCode || "") === (baseDateCode || "") &&
+          (item.numberType || "") === (baseNumberType || "")
+      );
+      if (!allSame) {
+        this.$modal.msgWarning("非同期号同类型数据不允许操作！");
+        return;
+      }
+      const lotteryIds = this.ids;
+      this.$modal
+        .confirm(
+          "合并后将新建一条记录并删除合并前的原数据，且无法恢复，请确认是否合并选中的 " +
+          rows.length +
+          " 条记录？"
+        )
+        .then(() => {
+          // 全屏 loading：合并期间禁用页面交互，防止用户重复点击造成并发请求
+          this.$modal.loading("正在合并数据，请稍候...");
+          // 后台一个事务完成：合并字段 → 新建记录 → 删除旧记录，避免前端多次异步调用产生脏数据
+          return mergeLog(lotteryIds);
+        })
+        .then(() => {
+          this.$modal.closeLoading();
+          this.getList();
+          this.$modal.msgSuccess("合并成功");
+        })
+        .catch(() => {
+          this.$modal.closeLoading();
+        });
     },
     /** 导出按钮操作 */
     handleExport() {
