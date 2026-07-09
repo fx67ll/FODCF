@@ -36,8 +36,8 @@
       <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
       <el-table-column prop="icon" label="图标" align="center" width="100">
         <template slot-scope="scope">
-          <i v-if="scope.row.icon && scope.row.icon.startsWith('el-icon-')" :class="scope.row.icon" style="font-size: 18px" />
-          <svg-icon v-else :icon-class="scope.row.icon" />
+          <i v-if="scope.row.icon && scope.row.icon.startsWith('el-icon-')" :class="scope.row.icon" class="menu-icon" />
+          <svg-icon v-else :icon-class="scope.row.icon" class-name="menu-icon" />
         </template>
       </el-table-column>
       <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
@@ -87,11 +87,11 @@
           </el-col>
           <el-col :span="24" v-if="form.menuType != 'F'">
             <el-form-item label="菜单图标" prop="icon">
-              <el-popover placement="bottom-start" width="460" trigger="click" @show="$refs['iconSelect'].reset()">
+              <el-popover placement="bottom-start" width="640" trigger="click" @show="$refs['iconSelect'].reset()">
                 <IconSelect ref="iconSelect" @selected="selected" :active-icon="form.icon" />
                 <el-input slot="reference" v-model="form.icon" placeholder="点击选择图标" readonly>
-                  <i v-if="form.icon && form.icon.startsWith('el-icon-')" slot="prefix" :class="form.icon" class="el-input__icon" style="font-size: 16px" />
-                  <svg-icon v-else-if="form.icon" slot="prefix" :icon-class="form.icon" style="width: 25px" />
+                  <i v-if="form.icon && form.icon.startsWith('el-icon-')" slot="prefix" :class="form.icon" class="el-input__icon menu-input-icon" />
+                  <svg-icon v-else-if="form.icon" slot="prefix" :icon-class="form.icon" class-name="menu-input-icon" />
                   <i v-else slot="prefix" class="el-icon-search el-input__icon" />
                 </el-input>
               </el-popover>
@@ -412,3 +412,56 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+// ===== 菜单管理图标统一：svg-icon 与 Element UI 字体图标（el-icon-*）显示效果一致 =====
+// 思路与侧边栏 sidebar.scss 一致：两类图标用相同固定外框 + inline-flex 居中，
+// 消除字形/矢量 baseline 差异导致的尺寸与对齐不一致；颜色走 currentColor/inherit，与所在文字同色。
+// 区别于侧边栏的「14px 外框」，此处按表格/输入框场景分别取 18px、16px。
+
+// 菜单列表「图标」列：统一 14px 外框，居中对齐，去掉原先 el-icon 行内写死的 font-size
+// 14px 与表格默认字号一致，避免图标过大喧宾夺主
+.menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+  font-size: 14px;
+  vertical-align: middle;
+  text-align: center;
+  color: inherit;
+}
+
+// 平衡两类图标的视觉重量：
+// 1. svg 为实心填充，同色值下比 el-icon（描边字形）偏厚重，略减淡透明度让两者观感接近；
+// 2. el-icon 字形自带字体留白，同外框下视觉占比偏小，字号略放大到 16px 补偿（外框仍 14px，居中对齐不变）。
+// 该值为观感微调，可按需在 opacity 0.8~0.92、font-size 15~16px 之间调整。
+// svg-icon 是子组件，class-name 透传的 menu-icon 落在内部 <svg> 上，需用 :deep() 穿透 scoped 边界。
+:deep(.svg-icon.menu-icon) {
+  opacity: 0.85;
+}
+// el-icon 是原生 <i> 标签带 menu-icon class，可直接匹配
+[class^="el-icon-"].menu-icon,
+[class*=" el-icon-"].menu-icon {
+  font-size: 16px;
+}
+
+// 新增/修改弹窗 input 前缀图标：统一 16px 外框，配合 el-input 高度居中
+// svg-icon 原写死 width:25px 已移除，避免与 el-icon 的 16px 不一致
+.menu-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 100%;
+  line-height: 1;
+  font-size: 16px;
+  vertical-align: middle;
+  text-align: center;
+  color: inherit;
+}
+</style>

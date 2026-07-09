@@ -17,7 +17,7 @@
       <el-radio-button label="element">Element 图标</el-radio-button>
     </el-radio-group>
     <div class="icon-list">
-      <div class="list-container">
+      <div class="list-container" :class="`cols-${activeGroup}`">
         <div
           v-for="(item, index) in iconList"
           class="icon-item-wrapper"
@@ -28,13 +28,12 @@
             <i
               v-if="item.startsWith('el-icon-')"
               :class="item"
-              class="icon el-icon-item"
+              class="icon icon-cell"
             />
             <svg-icon
               v-else
               :icon-class="item"
-              class-name="icon"
-              style="height: 25px; width: 16px"
+              class-name="icon icon-cell"
             />
             <span>{{ item }}</span>
           </div>
@@ -114,14 +113,25 @@ export default {
     .list-container {
       display: flex;
       flex-wrap: wrap;
+      // 按分组控制每行列数：SVG 图标名称短，一行 4 个；Element 图标名称长，一行 3 个，文本更易显示完整
+      &.cols-svg {
+        .icon-item-wrapper {
+          width: calc(100% / 4);
+        }
+      }
+      &.cols-element {
+        .icon-item-wrapper {
+          width: calc(100% / 3);
+        }
+      }
       .icon-item-wrapper {
-        width: calc(100% / 3);
-        height: 25px;
-        line-height: 25px;
+        height: 28px;
+        line-height: 28px;
         cursor: pointer;
         display: flex;
         .icon-item {
           display: flex;
+          align-items: center;
           max-width: 100%;
           height: 100%;
           padding: 0 5px;
@@ -132,18 +142,26 @@ export default {
           .icon {
             flex-shrink: 0;
           }
-          // Element 字体图标对齐与尺寸
-          .el-icon-item {
-            font-size: 16px;
-            width: 16px;
-            line-height: 25px;
+          // 两类图标统一外框与对齐：svg-icon 与 el-icon 都用 20px 方框 + inline-flex 居中，
+          // 消除矢量与字形 baseline/尺寸差异，效果一致
+          .icon-cell {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            line-height: 1;
+            font-size: 20px;
+            vertical-align: middle;
             text-align: center;
+            color: inherit;
           }
           span {
             display: inline-block;
             vertical-align: -0.15em;
             fill: currentColor;
-            padding-left: 2px;
+            padding-left: 4px;
+            font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
