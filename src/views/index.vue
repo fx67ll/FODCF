@@ -169,7 +169,7 @@ export default {
         String(this.readNoticeId) === String(this.latestNotice.noticeId);
       if (!isRead) {
         // 未查看详情，提示阅读并触发横向抖动动效
-        this.$message.warning("请先阅读公告详情后再关闭");
+        this.$message.warning("您还未阅读最新公告，请先查阅新公告详情，点击公告标题即可~");
         this.triggerShake();
         return;
       }
