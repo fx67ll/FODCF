@@ -1,23 +1,27 @@
 <template>
   <div class="app-container home">
-    <!-- 顶部公告条：有最新公告且未被关闭（关闭的是具体公告，新公告会再显示） -->
-    <div class="notice-card" v-if="latestNotice && !isNoticeClosed" @click="handleViewLatest">
-      <div class="notice-card-icon">
-        <i class="el-icon-bell"></i>
+    <!-- 顶部公告条：新增 transition 实现入场/离场动画 -->
+    <transition name="notice-slide">
+      <div class="notice-card" :class="{ 'notice-shake': isShaking }" v-if="latestNotice && !isNoticeClosed" @click="handleViewLatest">
+        <div class="notice-card-icon">
+          <!-- 新增铃铛摇晃动画类 -->
+          <i class="el-icon-bell bell-shake"></i>
+        </div>
+        <div class="notice-card-body">
+          <span class="notice-type-tag" :class="'type-' + latestNotice.noticeType">
+            {{ typeText(latestNotice.noticeType) }}
+          </span>
+          <span class="notice-card-title">{{ latestNotice.noticeTitle }}</span>
+          <span class="notice-card-time">{{ parseTime(latestNotice.createTime, "{y}-{m}-{d}") }}</span>
+        </div>
+        <div class="notice-card-more" @click.stop="goNoticeList">
+          更多<i class="el-icon-arrow-right"></i>
+        </div>
+        <div class="notice-card-close" @click.stop="handleCloseNotice">
+          <i class="el-icon-close"></i>
+        </div>
       </div>
-      <div class="notice-card-body">
-        <span class="notice-type-tag" :class="'type-' + latestNotice.noticeType">{{ typeText(latestNotice.noticeType)
-        }}</span>
-        <span class="notice-card-title">{{ latestNotice.noticeTitle }}</span>
-        <span class="notice-card-time">{{ parseTime(latestNotice.createTime, "{y}-{m}-{d}") }}</span>
-      </div>
-      <div class="notice-card-more" @click.stop="goNoticeList">
-        更多<i class="el-icon-arrow-right"></i>
-      </div>
-      <div class="notice-card-close" @click.stop="handleCloseNotice">
-        <i class="el-icon-close"></i>
-      </div>
-    </div>
+    </transition>
 
     <el-row :gutter="20">
       <!-- 左侧：品牌与Logo -->
@@ -103,6 +107,10 @@ export default {
       latestNoticeDetail: {},
       // 被用户关闭的公告ID（关闭的是具体公告，新公告会再显示）
       closedNoticeId: sessionStorage.getItem("closedNoticeId") || "",
+      // 已查看过详情的公告ID（未查看详情不允许关闭公告条）
+      readNoticeId: sessionStorage.getItem("readNoticeId") || "",
+      // 公告条横向抖动动效（提示用户无法关闭未读公告）
+      isShaking: false,
     };
   },
   computed: {
@@ -131,17 +139,7 @@ export default {
       latestPublicNotice().then((response) => {
         const notice = response.data || null;
         this.latestNotice = notice;
-        if (!notice || !notice.noticeId) return;
-        const lastId = sessionStorage.getItem("lastNoticeId");
-        // 刷新时若公告ID变化，自动弹出详情（与移动端一致）
-        if (String(lastId) !== String(notice.noticeId)) {
-          // 只记录已弹过的公告ID，不设 readNoticeId，保留铃铛红点
-          sessionStorage.setItem("lastNoticeId", notice.noticeId);
-          getPublicNotice(notice.noticeId).then((res) => {
-            this.latestNoticeDetail = res.data || {};
-            this.noticeOpen = true;
-          });
-        }
+        // 默认不弹出详情，由用户点击公告条自行查看
       });
     },
     /** 类型文本 */
@@ -149,24 +147,43 @@ export default {
       const dict = (this.dict.type.sys_notice_type || []).find((d) => d.value === noticeType);
       return dict ? dict.label : "公告";
     },
-    /** 点击公告条查看最新公告详情 */
+    /** 点击公告条查看最新公告详情，并标记为已读 */
     handleViewLatest() {
       if (!this.latestNotice) return;
       getPublicNotice(this.latestNotice.noticeId).then((response) => {
         this.latestNoticeDetail = response.data || {};
         this.noticeOpen = true;
+        // 记录已查看详情的公告ID，允许后续关闭该公告条
+        this.readNoticeId = String(this.latestNotice.noticeId);
+        sessionStorage.setItem("readNoticeId", this.readNoticeId);
       });
     },
     /** 跳转公告列表页 */
     goNoticeList() {
       this.$router.push(NOTICE_PUBLIC_PATH).catch(() => { });
     },
-    /** 关闭首页公告条（关闭当前公告，新公告到达时会再次显示） */
+    /** 关闭首页公告条（需先查看详情；关闭当前公告，新公告到达时会再次显示） */
     handleCloseNotice() {
-      if (this.latestNotice && this.latestNotice.noticeId) {
-        this.closedNoticeId = String(this.latestNotice.noticeId);
-        sessionStorage.setItem("closedNoticeId", this.closedNoticeId);
+      if (!this.latestNotice || !this.latestNotice.noticeId) return;
+      const isRead =
+        String(this.readNoticeId) === String(this.latestNotice.noticeId);
+      if (!isRead) {
+        // 未查看详情，提示阅读并触发横向抖动动效
+        this.$message.warning("请先阅读公告详情后再关闭");
+        this.triggerShake();
+        return;
       }
+      this.closedNoticeId = String(this.latestNotice.noticeId);
+      sessionStorage.setItem("closedNoticeId", this.closedNoticeId);
+    },
+    /** 公告条横向抖动动效 */
+    triggerShake() {
+      if (this.isShaking) return;
+      this.isShaking = true;
+      // 动效结束后重置，便于再次触发
+      setTimeout(() => {
+        this.isShaking = false;
+      }, 500);
     },
     showFirstJobDate() {
       this.isShowFirstJobDate = !this.isShowFirstJobDate;
@@ -256,40 +273,144 @@ export default {
 .home {
   cursor: pointer;
 
-  // 顶部公告条
+  // ========== 公告条核心样式 - 小清新风格 ==========
+  // 入场/离场滑入动画
+  .notice-slide-enter-active {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .notice-slide-leave-active {
+    transition: all 0.3s ease-in-out;
+  }
+
+  .notice-slide-enter,
+  .notice-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-16px);
+    height: 0;
+    margin-bottom: 0;
+  }
+
   .notice-card {
     display: flex;
     align-items: center;
-    height: 56px;
-    padding: 0 4px 0 0;
+    height: 60px;
+    padding: 0 8px 0 0;
     margin-bottom: 20px;
-    background: #fff;
-    border: 1px solid #ebeef5;
-    border-left: 4px solid #2ecc71;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    // 薄荷奶绿渐变背景
+    background: linear-gradient(90deg, #f0fdf4 0%, #ffffff 70%);
+    border: 1px solid #dcfce7;
+    border-left: 4px solid #4ade80;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(74, 222, 128, 0.08);
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.15);
-      border-left-color: #2ecc71;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(74, 222, 128, 0.18);
+      border-left-color: #22c55e;
+      background: linear-gradient(90deg, #ecfdf3 0%, #ffffff 70%);
 
       .notice-card-title {
-        color: #2ecc71;
+        color: #16a34a;
       }
+    }
+
+    // 点击按压效果
+    &:active {
+      transform: translateY(0) scale(0.995);
     }
   }
 
+  // 未读公告被关闭时，公告条横向抖动提示
+  .notice-card.notice-shake {
+    animation: noticeShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    border-left-color: #f97316;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  @keyframes noticeShake {
+
+    10%,
+    90% {
+      transform: translateX(-2px);
+    }
+
+    20%,
+    80% {
+      transform: translateX(4px);
+    }
+
+    30%,
+    50%,
+    70% {
+      transform: translateX(-8px);
+    }
+
+    40%,
+    60% {
+      transform: translateX(8px);
+    }
+  }
+
+  // 铃铛图标容器 - 圆形背景
   .notice-card-icon {
     flex-shrink: 0;
-    width: 56px;
+    width: 60px;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2ecc71;
+    color: #22c55e;
     font-size: 20px;
+
+    // 铃铛摇晃动画
+    .bell-shake {
+      animation: bellRing 2.5s ease-in-out infinite;
+      transform-origin: top center;
+    }
+
+    @keyframes bellRing {
+
+      0%,
+      100% {
+        transform: rotate(0deg);
+      }
+
+      10% {
+        transform: rotate(12deg);
+      }
+
+      20% {
+        transform: rotate(-10deg);
+      }
+
+      30% {
+        transform: rotate(8deg);
+      }
+
+      40% {
+        transform: rotate(-6deg);
+      }
+
+      50% {
+        transform: rotate(4deg);
+      }
+
+      60% {
+        transform: rotate(-2deg);
+      }
+
+      70% {
+        transform: rotate(1deg);
+      }
+    }
   }
 
   .notice-card-body {
@@ -297,91 +418,115 @@ export default {
     display: flex;
     align-items: center;
     min-width: 0;
-    padding-right: 12px;
+    padding-right: 16px;
+    gap: 12px;
+  }
+
+  .notice-type-tag {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    transition: all 0.2s ease;
+
+    &.type-1 {
+      background: linear-gradient(135deg, #fdba74 0%, #f97316 100%);
+      box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+    }
+
+    &.type-2 {
+      background: linear-gradient(135deg, #86efac 0%, #22c55e 100%);
+      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.2);
+    }
   }
 
   .notice-card-title {
     flex: 1;
     font-size: 15px;
     font-weight: 500;
-    color: #303133;
+    color: #374151;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin: 0 12px;
-    transition: color 0.25s ease;
+    margin: 0;
+    transition: color 0.3s ease;
   }
 
   .notice-card-time {
     flex-shrink: 0;
     font-size: 12px;
-    color: #c0c4cc;
+    color: #9ca3af;
   }
 
-  .notice-type-tag {
-    flex-shrink: 0;
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    color: #fff;
-
-    &.type-1 {
-      background: #ff9900;
-    }
-
-    &.type-2 {
-      background: #2ecc71;
-    }
-  }
-
+  // 更多按钮 - 胶囊样式
   .notice-card-more {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     font-size: 13px;
-    color: #2ecc71;
-    padding: 0 16px;
-    height: 100%;
+    color: #22c55e;
+    padding: 6px 16px;
+    margin-right: 8px;
+    height: auto;
+    border-radius: 20px;
+    background: rgba(34, 197, 94, 0.06);
+    transition: all 0.25s ease;
 
     &:hover {
-      background: rgba(46, 204, 113, 0.08);
+      background: rgba(34, 197, 94, 0.12);
+      color: #16a34a;
     }
 
     i {
-      margin-left: 3px;
+      margin-left: 4px;
       font-size: 12px;
+      transition: transform 0.25s ease;
+    }
+
+    &:hover i {
+      transform: translateX(3px);
     }
   }
 
+  // 关闭按钮 - 圆形hover
   .notice-card-close {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
-    height: 100%;
-    color: #c0c4cc;
-    font-size: 15px;
+    height: 32px;
+    border-radius: 50%;
+    color: #9ca3af;
+    font-size: 16px;
+    margin-right: 4px;
+    transition: all 0.25s ease;
 
     &:hover {
-      color: #909399;
-      background: rgba(0, 0, 0, 0.04);
+      color: #6b7280;
+      background: rgba(0, 0, 0, 0.06);
+      transform: rotate(90deg);
     }
   }
 
+  // ========== 原有其他样式保持，仅做轻微风格统一 ==========
   blockquote {
     padding: 10px 20px;
     margin: 0 0 20px;
     font-size: 17.5px;
-    border-left: 5px solid #eee;
+    border-left: 5px solid #dcfce7;
+    background: #f0fdf4;
+    border-radius: 0 8px 8px 0;
   }
 
   hr {
     margin-top: 20px;
     margin-bottom: 20px;
     border: 0;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #f3f4f6;
   }
 
   .col-item {
@@ -404,23 +549,26 @@ export default {
 
   ul {
     list-style-type: none;
+    line-height: 1.8;
   }
 
   h4 {
     margin-top: 0px;
+    color: #374151;
   }
 
   h2 {
     margin-top: 10px;
     font-size: 26px;
-    font-weight: 100;
+    font-weight: 300;
+    color: #1f2937;
   }
 
   p {
     margin-top: 10px;
 
     b {
-      font-weight: 700;
+      font-weight: 600;
     }
   }
 
@@ -430,8 +578,8 @@ export default {
       list-style-type: decimal;
       margin-block-start: 1em;
       margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
+      margin-inline-start: 0px;
+      margin-inline-end: 0px;
       padding-inline-start: 40px;
     }
   }
@@ -439,9 +587,11 @@ export default {
 
 .fx67ll-version {
   font-size: 16px;
+  cursor: pointer;
+  transition: color 0.25s ease;
 
   &:hover {
-    color: #2ECC71;
+    color: #22c55e;
   }
 }
 
@@ -454,5 +604,6 @@ export default {
   font-size: 18px;
   margin-left: 20px;
   margin-top: 30px;
+  color: #4b5563;
 }
 </style>
