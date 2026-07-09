@@ -14,24 +14,20 @@
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <el-tooltip content="fx67ll's H5 App - https://life.fx67ll.com" placement="bottom">
-          <fx67ll-doc id="fx67ll-doc" class="right-menu-item hover-effect" />
+        <el-tooltip content="移动端APP" placement="bottom">
+          <fx67ll-h5 id="fx67ll-h5" class="right-menu-item hover-effect" />
         </el-tooltip>
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
 
         <!-- 监控大盘：新窗口打开公开服务状态页 -->
         <el-tooltip content="监控大盘" placement="bottom">
-          <div class="right-menu-item hover-effect" @click="goStatusMonitor">
-            <i class="el-icon-monitor"></i>
-          </div>
+          <fx67ll-monitor id="fx67ll-monitor" class="right-menu-item hover-effect" />
         </el-tooltip>
 
         <!-- 通知公告铃铛 -->
         <el-tooltip content="通知公告" placement="bottom">
-          <div class="right-menu-item hover-effect notice-bell" @click="goNoticeList">
-            <i class="el-icon-bell"></i>
-          </div>
+          <fx67ll-notice id="fx67ll-notice" class="right-menu-item hover-effect" />
         </el-tooltip>
 
         <!-- <el-tooltip content="布局大小" placement="bottom">
@@ -69,8 +65,9 @@ import Screenfull from "@/components/Screenfull";
 import SizeSelect from "@/components/SizeSelect";
 import Search from "@/components/HeaderSearch";
 import fx67llGit from "@/components/fx67ll/Git";
-import fx67llDoc from "@/components/fx67ll/Doc";
-import { getNoticePath } from "@/views/system/notice/constants";
+import fx67llH5 from "@/components/fx67ll/H5";
+import fx67llMonitor from "@/components/fx67ll/Monitor";
+import fx67llNotice from "@/components/fx67ll/Notice";
 
 import Cookies from "js-cookie";
 
@@ -83,7 +80,9 @@ export default {
     SizeSelect,
     Search,
     fx67llGit,
-    fx67llDoc,
+    fx67llH5,
+    fx67llMonitor,
+    fx67llNotice,
   },
   data() {
     return {
@@ -120,16 +119,6 @@ export default {
     },
   },
   methods: {
-    /** 新窗口打开公开服务状态大盘（/status 在 constantRoutes 中，免登录可访问） */
-    goStatusMonitor() {
-      const { origin } = window.location;
-      window.open(origin + "/status", "_blank");
-    },
-    /** 跳转公告列表页：超级管理员 fx67ll 进公告管理，其他人进公开公告列表 */
-    goNoticeList() {
-      const path = getNoticePath(this.$store.state.user.name);
-      this.$router.push(path).catch(() => { });
-    },
     toggleSideBar() {
       this.$store.dispatch("app/toggleSideBar");
     },
