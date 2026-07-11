@@ -5,7 +5,7 @@
       设计：卡片式布局，红蓝渐变区分高频/低频，带入场动画及悬停效果
     -->
     <el-dialog title="历史开奖号码组合" :visible.sync="dialogVisible" width="950px"
-        :style="`top: ${getDialogVerticalOffset(584)}`" class="generate-dialog" :close-on-click-modal="false"
+        :style="`top: ${getDialogVerticalOffset(570)}`" class="generate-dialog" :close-on-click-modal="false"
         @close="handleClose" append-to-body>
         <!-- 加载状态容器 -->
         <div class="generate-result-container" v-loading="loading">

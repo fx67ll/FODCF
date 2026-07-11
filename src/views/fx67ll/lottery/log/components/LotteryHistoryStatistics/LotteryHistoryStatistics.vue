@@ -9,7 +9,7 @@
       @close 关闭时触发 handleClose 方法
       append-to-body 将对话框插入到 body 元素下，避免层级/定位问题
     -->
-    <el-dialog :visible.sync="dialogVisible" width="950px" :style="`top: ${getDialogVerticalOffset(584)}`"
+    <el-dialog :visible.sync="dialogVisible" width="950px" :style="`top: ${getDialogVerticalOffset(570)}`"
         :close-on-click-modal="false" :class="showCircle ? 'lottery-stats-dialog' : 'frequency-dialog'"
         @close="handleClose" append-to-body>
 
