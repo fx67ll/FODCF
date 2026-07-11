@@ -136,21 +136,27 @@
         </el-button>
       </el-col> -->
       <el-col :span="1.5" style="margin-bottom: 10px;">
+        <el-button type="primary" plain icon="el-icon-collection-tag" size="mini" @click="handleRecentIssueCodeOpen"
+          v-hasPermi="['lottery:log:recentCode']">
+          近期号码期号
+        </el-button>
+      </el-col>
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-data-line" size="mini" @click="handleLogTotalOpen"
           v-hasPermi="['lottery:log:total']">
-          查看历史号码中奖金额统计
+          中奖金额统计
         </el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-date" size="mini" @click="handleHistoryStatisticsOpen()"
           v-hasPermi="['lottery:log:statistics']">
-          查看历史号码出现频率统计
+          历史号码出现频率统计
         </el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-trophy" size="mini" @click="handleGenerateNumbersOpen()"
           v-hasPermi="['lottery:log:statistics']">
-          查看历史开奖号码组合
+          历史开奖号码频率组合
         </el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
@@ -441,68 +447,10 @@
     </el-dialog>
 
     <!-- 查看历史号码中奖金额统计的弹窗 -->
-    <el-dialog title="历史号码中奖金额统计" :visible.sync="logTotalOpen" :close-on-click-modal="false" width="900px"
-      :style="`top: ${getDialogVerticalOffset(486)}; left: 20px;`" append-to-body>
-      <div id="logTotalContainer">
-        <el-table v-loading="logTotalLoading" :data="logTotalList">
-          <el-table-column label="统计类型" align="center" prop="lotteryType" />
-          <!-- <el-table-column
-            label="总购买期数 / 注数"
-            width="150"
-            align="center"
-            prop="totalTickets"
-          >
-            <template slot-scope="scope">
-              <span>{{ `${scope.row.totalTickets} / ${scope.row.totalNumbers}` }}</span>
-            </template>
-          </el-table-column> -->
-          <!-- <el-table-column label="总购买期数" align="center" prop="totalTickets">
-            <template slot-scope="scope">
-              <span style="color: #909399">{{ scope.row.totalTickets }}</span>
-            </template>
-          </el-table-column> -->
-          <el-table-column label="总购买期数" align="center" prop="totalTickets" />
-          <el-table-column label="总购买注数" align="center" prop="totalNumbers">
-            <template slot-scope="scope">
-              <span style="color: #e6a23c">{{ scope.row.totalNumbers }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="总花费金额" align="center" prop="totalNumbers">
-            <template slot-scope="scope">
-              <span style="color: #409eff">{{
-                `￥${scope.row.totalNumbers * 2}`
-              }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="中奖期数" align="center" prop="winningTickets">
-            <template slot-scope="scope">
-              <span style="color: #2ecc71">{{ scope.row.winningTickets }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="中奖金额" align="center" prop="totalWinningAmount">
-            <template slot-scope="scope">
-              <span style="color: #ff5a5f">{{
-                `￥${scope.row.totalWinningAmount}`
-              }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="回血比例" align="center" prop="totalWinningAmount">
-            <template slot-scope="scope">
-              <span>{{
-                `${(
-                  (scope.row.totalWinningAmount /
-                    (scope.row.totalNumbers * 2)) *
-                  100
-                ).toFixed(2)}%`
-              }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="handleLogTotalClose">关闭</el-button>
-      </div>
-    </el-dialog>
+    <RecentRewardStatistics :visible.sync="logTotalOpen" />
+
+    <!-- 近期号码期号弹窗 -->
+    <RecentDateCode :visible.sync="recentIssueCodeOpen" />
 
     <!-- 查看历史号码出现频率统计弹窗 -->
     <LotteryHistoryStatistics :visible.sync="historyStatisticsOpen" />
@@ -520,7 +468,6 @@ import {
   addLog,
   updateLog,
   mergeLog,
-  listTotalReward,
 } from "@/api/fx67ll/lottery/log";
 
 // 中奖查询相关工具
@@ -533,10 +480,12 @@ import _ from "underscore";
 
 import LotteryHistoryStatistics from "./components/LotteryHistoryStatistics/LotteryHistoryStatistics.vue";
 import GenerateNumbers from "./components/GenerateNumbers/GenerateNumbers.vue";
+import RecentRewardStatistics from "./components/RecentRewardStatistics/RecentRewardStatistics.vue";
+import RecentDateCode from "./components/RecentDateCode/RecentDateCode.vue";
 
 export default {
   name: "LotteryLog",
-  components: { LotteryHistoryStatistics, GenerateNumbers },
+  components: { LotteryHistoryStatistics, GenerateNumbers, RecentRewardStatistics, RecentDateCode },
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
@@ -620,8 +569,8 @@ export default {
       dynamicWeekList: [],
       // 历史号码中奖金额统计相关参数
       logTotalOpen: false,
-      logTotalList: [],
-      logTotalLoading: false,
+      // 近期号码期号弹窗显示控制
+      recentIssueCodeOpen: false,
       // 中奖信息查询加载
       qryRewardLoading: false,
       // 彩票类型枚举（后期改为后台枚举接口获取）
@@ -754,26 +703,13 @@ export default {
         };
       }
     },
-    // 查询历史号码中奖金额统计
-    getTotalReward() {
-      const self = this;
-      self.logTotalLoading = true;
-      listTotalReward().then((response) => {
-        self.logTotalList = self.formatObjectArrayNullProperty(
-          response.rows,
-          true
-        );
-        self.logTotalLoading = false;
-      });
-    },
     // 打开历史号码中奖金额统计弹窗
     handleLogTotalOpen() {
-      this.getTotalReward();
       this.logTotalOpen = true;
     },
-    // 关闭历史号码中奖金额统计弹窗
-    handleLogTotalClose() {
-      this.logTotalOpen = false;
+    // 打开近期号码期号弹窗
+    handleRecentIssueCodeOpen() {
+      this.recentIssueCodeOpen = true;
     },
     // 打开历史号码出现频率统计弹窗
     handleHistoryStatisticsOpen(type) {

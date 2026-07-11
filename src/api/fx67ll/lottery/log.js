@@ -9,6 +9,16 @@ export function listLog(query) {
   });
 }
 
+// 查询指定彩种最近一条"有期号"的记录（管理端，不按用户过滤，取全局）
+// 用于近期号码期号弹窗的期号计算基准，传 numberType 区分彩种
+export function getLatestLogWithDateCodeForAdmin(query) {
+  return request({
+    url: "/lottery/log/getLatestLogWithDateCodeForAdmin",
+    method: "get",
+    params: query,
+  });
+}
+
 // 查询每日号码记录详细
 export function getLog(lotteryId) {
   return request({

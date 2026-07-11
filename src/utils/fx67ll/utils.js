@@ -1,4 +1,5 @@
 import CryptoJS from "crypto-js";
+import moment from "moment";
 
 // 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
 export function formatObjectArrayNullProperty(arr, isNeedNumZero) {
@@ -682,4 +683,259 @@ export function getDialogVerticalOffset(fixedHeight) {
 
   // 计算：(页面可视高度 - 固定高度) / 2，100是弹窗固定的上下margin
   return `${(viewHeight - fixedHeight - 90) / 2 - 10}px`;
+}
+
+// ===================== 期号计算相关（从 FODCA 迁移） =====================
+// 以下函数用于计算彩票期号（dateCode），与 FODCA pages/lottery/index/index.vue 逻辑一致。
+// dateCode 格式按彩种固定年份前缀：大乐透(type1)4位、双色球(2)/排列三(3)/排列五(4)/七星彩(5)均2位。
+// 跨年判定=最近记录 createTime 年份≠今年；跨年时以今年第一期 (D1,C1) 为锚点重算。
+// 注意：未迁移 isDateCodeYearMatch 同年守卫（曾导致大乐透 null），FODCF 按无守卫思路实现。
+
+// 返回当日号码类型（大乐透/双色球），todayWeek 为 ISO 星期 1=周一…7=周日
+export function mapLotteryNumberType(todayWeek) {
+  if (todayWeek === "1" || todayWeek === "3" || todayWeek === "6") {
+    return "1";
+  } else if (todayWeek === "2" || todayWeek === "4" || todayWeek === "7") {
+    return "2";
+  } else {
+    return "";
+  }
+}
+
+// 判断当前日期是否是上一个日期的"一个开奖周期"之后（同年）
+// 大乐透/双色球一周三期，相邻开奖日间隔2天、跨周末间隔3天
+export function isTwoOrThreeDaysAfterWithSameYearCheck(
+  previousDate,
+  currentDate
+) {
+  if (!previousDate || !currentDate) {
+    return false;
+  }
+  const prevDate = moment(previousDate, "YYYY-MM-DD");
+  const currDate = moment(currentDate, "YYYY-MM-DD");
+  if (!prevDate || !currDate) {
+    return false;
+  }
+  if (prevDate.year() !== currDate.year()) {
+    return false;
+  }
+  const diffDays = currDate.diff(prevDate, "days");
+  let hasFriday = false;
+  for (let i = 1; i < diffDays; i++) {
+    if (prevDate.clone().add(i, "days").day() === 5) {
+      hasFriday = true;
+      break;
+    }
+  }
+  if (hasFriday && diffDays === 3) {
+    return true;
+  } else if (!hasFriday && diffDays === 2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// 按开奖日统计两日期之间间隔的期数（type: 1大乐透 2双色球 3七星彩）
+// lastNumber 传 0 时返回纯间隔期数，用于跨年分支拼回带前缀 C1
+export function calculateCurrentDateCode(
+  type,
+  currentDateStr,
+  lastDateStr,
+  lastNumber
+) {
+  try {
+    if (type !== 1 && type !== 2 && type !== 3) {
+      console.error(`无效的类型参数 "${type}"。只允许 1、2 或 3。`);
+      return null;
+    }
+    const currentDate = moment(currentDateStr);
+    const lastDate = moment(lastDateStr);
+    if (!currentDate.isValid()) {
+      console.error(`无效的当前日期格式 "${currentDateStr}"`);
+      return null;
+    }
+    if (!lastDate.isValid()) {
+      console.error(`无效的最后记录日期格式 "${lastDateStr}"`);
+      return null;
+    }
+    if (currentDate.isSame(lastDate, "day")) {
+      return lastNumber;
+    }
+    if (currentDate.isBefore(lastDate)) {
+      console.error(
+        `当前日期 (${currentDate.format(
+          "YYYY-MM-DD"
+        )}) 早于最后记录日期 (${lastDate.format("YYYY-MM-DD")})`
+      );
+      return null;
+    }
+    let recordDays;
+    switch (type) {
+      case 1:
+        recordDays = [1, 3, 6];
+        break; // 周一、周三、周六
+      case 2:
+        recordDays = [2, 4, 0];
+        break; // 周二、周四、周日
+      case 3:
+        recordDays = [2, 5, 0];
+        break; // 周二、周五、周日（同七星彩）
+      default:
+        return null;
+    }
+    const start = lastDate.clone().add(1, "days");
+    const end = currentDate.clone();
+    const totalDays = end.diff(start, "days") + 1;
+    const fullWeeks = Math.floor(totalDays / 7);
+    const remainDays = totalDays % 7;
+    const fullWeekRecords = fullWeeks * 3;
+    let remainRecords = 0;
+    let tempDate = start.clone();
+    for (let i = 0; i < remainDays; i++) {
+      const dayOfWeek = tempDate.day();
+      if (recordDays.includes(dayOfWeek)) {
+        remainRecords++;
+      }
+      tempDate.add(1, "day");
+    }
+    const totalRecords = parseInt(fullWeekRecords) + parseInt(remainRecords);
+    return parseInt(lastNumber) + parseInt(totalRecords);
+  } catch (error) {
+    console.error(`计算过程中发生意外错误: ${error.message}`);
+    return null;
+  }
+}
+
+// 各彩种 dateCode 的年份前缀位数：大乐透4，其余2
+export function getDateCodeYearLen(type) {
+  switch (parseInt(type)) {
+    case 1:
+      return 4;
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+// 获取某一年该彩种的第一个开奖日（D1），不考虑元旦休市
+export function getFirstDrawDayOfYear(type, year) {
+  if (parseInt(type) === 3 || parseInt(type) === 4) {
+    return moment({ year: parseInt(year), month: 0, day: 1 }).startOf("day");
+  }
+  let recordDays;
+  switch (parseInt(type)) {
+    case 1:
+      recordDays = [1, 3, 6];
+      break;
+    case 2:
+      recordDays = [2, 4, 0];
+      break;
+    case 5:
+      recordDays = [2, 5, 0];
+      break;
+    default:
+      console.error(`getFirstDrawDayOfYear 无效的类型参数 "${type}"`);
+      return null;
+  }
+  const firstDay = moment({ year: parseInt(year), month: 0, day: 1 }).startOf(
+    "day"
+  );
+  for (let i = 0; i < 7; i++) {
+    if (recordDays.includes(firstDay.clone().add(i, "days").day())) {
+      return firstDay.clone().add(i, "days");
+    }
+  }
+  return firstDay;
+}
+
+// 将 dateCode 按彩种前缀位数拆分为年份/序号，序号至少3位，不足返回 null
+export function splitDateCodeParts(dateCode, type) {
+  if (dateCode === null || dateCode === undefined || dateCode === "") {
+    return null;
+  }
+  const codeStr = String(dateCode);
+  if (!/^\d+$/.test(codeStr)) {
+    return null;
+  }
+  const yearLen = getDateCodeYearLen(type);
+  const MIN_SEQ_LEN = 3;
+  if (yearLen <= 0 || codeStr.length < yearLen + MIN_SEQ_LEN) {
+    return null;
+  }
+  const yearPart = codeStr.slice(0, yearLen);
+  const seqPart = codeStr.slice(yearLen);
+  if (!seqPart || seqPart.length < MIN_SEQ_LEN) {
+    return null;
+  }
+  return { yearPart, seqPart, yearLen, seqLen: seqPart.length };
+}
+
+// 生成指定年份第一期的期号（C1）：年份直接取 currentYear，序号重置为1（位数沿用 lastDateCode）
+export function buildFirstIssueCodeOfThisYear(lastDateCode, type, currentYear) {
+  const parts = splitDateCodeParts(lastDateCode, type);
+  if (!parts) {
+    return null;
+  }
+  const fullYearStr = String(parseInt(currentYear, 10));
+  let newYearPart;
+  if (fullYearStr.length >= parts.yearLen) {
+    newYearPart = fullYearStr.slice(-parts.yearLen);
+  } else {
+    newYearPart = fullYearStr.padStart(parts.yearLen, "0");
+  }
+  const newSeqPart = "1".padStart(parts.seqLen, "0");
+  return newYearPart + newSeqPart;
+}
+
+// 以基准期号为起点按偏移期数递增，仅序号部分加，前缀不动
+export function calcIssueCodeByOffset(baseCode, offset, type) {
+  if (offset === null || offset === undefined || isNaN(offset) || offset < 0) {
+    return null;
+  }
+  const parts = splitDateCodeParts(baseCode, type);
+  if (!parts) {
+    return null;
+  }
+  const newSeqNum = parseInt(parts.seqPart, 10) + parseInt(offset, 10);
+  const newSeqPart = String(newSeqNum).padStart(parts.seqLen, "0");
+  return parts.yearPart + newSeqPart;
+}
+
+// 获取某彩种从指定日期起（含）下一个开奖日（用于"今日或之后最早一期"）
+// type: 1大乐透 2双色球 3排列三 4排列五 5七星彩
+export function getNextDrawDayFrom(type, fromDateStr) {
+  const fromDay = moment(fromDateStr, "YYYY-MM-DD").startOf("day");
+  if (!fromDay.isValid()) {
+    return null;
+  }
+  // 排列三/五每天都是开奖日，下一个就是当天
+  if (parseInt(type) === 3 || parseInt(type) === 4) {
+    return fromDay;
+  }
+  let recordDays;
+  switch (parseInt(type)) {
+    case 1:
+      recordDays = [1, 3, 6];
+      break;
+    case 2:
+      recordDays = [2, 4, 0];
+      break;
+    case 5:
+      recordDays = [2, 5, 0];
+      break;
+    default:
+      return null;
+  }
+  // 从当天起最多往后找 7 天，必有开奖日
+  for (let i = 0; i < 7; i++) {
+    if (recordDays.includes(fromDay.clone().add(i, "days").day())) {
+      return fromDay.clone().add(i, "days");
+    }
+  }
+  return fromDay;
 }
