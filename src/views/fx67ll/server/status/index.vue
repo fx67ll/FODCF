@@ -29,10 +29,10 @@
       <div class="overview-card">
         <div class="card-label">稳定运行</div>
         <div class="card-value">
-          <count-to :start-val="0" :end-val="uptimeDays" :duration="1200" />
-          <span class="card-unit">天</span>
+          <count-to :start-val="0" :end-val="uptimeValue" :decimals="uptimeDecimals" :duration="1200" />
+          <span class="card-unit">{{ uptimeUnit }}</span>
         </div>
-        <div class="card-sub">系统持续平稳运行</div>
+        <div class="card-sub">应用进程持续运行</div>
       </div>
       <div class="overview-card highlight">
         <div class="card-label">累计拦截攻击</div>
@@ -151,7 +151,7 @@ export default {
       // 脱敏状态快照
       onlineServiceCount: 0,
       totalServiceCount: 0,
-      uptimeDays: 0,
+      uptimeHours: 0,
       totalBlockedAttempts: 0,
       fail2banEnabled: false,
       services: {},
@@ -195,6 +195,20 @@ export default {
       if (!this.totalServiceCount) return 0;
       return Math.round((this.onlineServiceCount / this.totalServiceCount) * 100);
     },
+    // 稳定运行时长：后端返回总小时数 uptimeHours，≥24 小时换算为天（保留 1 位小数），<24 小时直接显示小时（整数）。
+    // 这样刚部署完也能如实反映"本次启动运行了多久"，不会因不足1天被兜底成1天。
+    uptimeValue() {
+      const hours = Number(this.uptimeHours) || 0;
+      // 换算为天并保留 1 位小数，避免整数天丢失精度（如 1.5 天 = 36 小时）
+      return hours >= 24 ? Math.round((hours / 24) * 10) / 10 : hours;
+    },
+    uptimeDecimals() {
+      // 天数带 1 位小数，小时数为整数
+      return (Number(this.uptimeHours) || 0) >= 24 ? 1 : 0;
+    },
+    uptimeUnit() {
+      return (Number(this.uptimeHours) || 0) >= 24 ? '天' : '小时';
+    },
     // 更新时间点文案：完整中文日期 YYYY年M月D日 HH:mm:ss
     updateTimeText() {
       if (!this.lastUpdateTime) return '初始化中';
@@ -235,7 +249,7 @@ export default {
           const data = res.data || {};
           this.onlineServiceCount = Number(data.onlineServiceCount) || 0;
           this.totalServiceCount = Number(data.totalServiceCount) || 0;
-          this.uptimeDays = Number(data.uptimeDays) || 0;
+          this.uptimeHours = Number(data.uptimeHours) || 0;
           this.totalBlockedAttempts = Number(data.totalBlockedAttempts) || 0;
           this.fail2banEnabled = !!data.fail2banEnabled;
           this.services = data.services || {};
