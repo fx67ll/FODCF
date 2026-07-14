@@ -471,9 +471,8 @@ import {
 } from "@/api/fx67ll/lottery/log";
 
 // 中奖查询相关工具
-import { getSecretConfig } from "@/api/fx67ll/secret/key";
-import { decryptString, checkLotteryResult, validateLotteryString, validateMultiLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
-import { getCryptoSaltKey } from "@@/neverUploadToGithub";
+import { getCredential } from "@/api/fx67ll/secret/key";
+import { checkLotteryResult, validateLotteryString, validateMultiLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import axios from "axios";
 import _ from "underscore";
@@ -1104,50 +1103,20 @@ export default {
 
       if (logDateCode && numType && logNumId) {
         this.qryRewardLoading = true;
-        getSecretConfig({ secretKey: "qryLotteryRewardAppId" })
-          .then((res) => {
-            if (res && res?.rows && res?.rows.length > 0 && res?.code === 200) {
-              const qryLotteryRewardAppId = decryptString(
-                res.rows[0].secretValue,
-                getCryptoSaltKey()
-              );
-              getSecretConfig({ secretKey: "qryLotteryRewardAppSecret" })
-                .then((res) => {
-                  if (
-                    res &&
-                    res?.rows &&
-                    res?.rows.length > 0 &&
-                    res?.code === 200
-                  ) {
-                    const qryLotteryRewardAppSecret = decryptString(
-                      res.rows[0].secretValue,
-                      getCryptoSaltKey()
-                    );
-                    self.queryLotteryRewardInfo(
-                      qryLotteryRewardAppId,
-                      qryLotteryRewardAppSecret,
-                      logDateCode,
-                      numType,
-                      logNumId
-                    );
-                  } else {
-                    self.$modal.msgWarning(
-                      "查询中奖信息查询接口配置项AppSecret失败！"
-                    );
-                  }
-                })
-                .catch((error) => {
-                  console.error(
-                    "查询中奖信息查询接口配置项AppSecret异常：" + error
-                  );
-                  self.qryRewardLoading = false;
-                });
-            } else {
-              self.$modal.msgWarning("查询中奖信息查询接口配置项AppId失败！");
-            }
+        // 走专用凭据接口：credentialForApp → decryptForApp 换明文（阶段四·4.18）
+        getCredential("lotteryReward")
+          .then((cred) => {
+            self.queryLotteryRewardInfo(
+              cred.appId,
+              cred.appSecret,
+              logDateCode,
+              numType,
+              logNumId
+            );
           })
           .catch((error) => {
-            console.error("查询中奖信息查询接口配置项AppId异常：" + error);
+            console.error("查询中奖信息查询接口凭据异常：" + (error?.msg || error));
+            self.$modal.msgWarning("查询中奖信息查询接口配置项失败！");
             self.qryRewardLoading = false;
           });
       } else {
