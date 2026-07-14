@@ -147,7 +147,7 @@ export default {
         dangerouslyUseHTMLString: true,
         message:
           "</br> 暂不支持游客注册，请使用既定账号访问 </br></br> 账号：user / 密码：123456 </br></br> 已为您自动填充游客账号密码 (*^▽^*)",
-        duration: 9999,
+        duration: 2333,
       });
       this.loginForm.username = "user";
       this.loginForm.password = 123456;
