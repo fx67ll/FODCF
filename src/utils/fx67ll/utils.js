@@ -1,4 +1,3 @@
-import CryptoJS from "crypto-js";
 import moment from "moment";
 
 // 将对象数组中每一个对象属性值为 null 的属性值设置为 '-'
@@ -25,19 +24,6 @@ export function formatObjectArrayNullProperty(arr, isNeedNumZero) {
   }
   // 返回处理后的新数组
   return newArr;
-}
-
-// 加密函数
-export function encryptString(plainText, key) {
-  const encrypted = CryptoJS.AES.encrypt(plainText, key).toString();
-  return encrypted;
-}
-
-// 解密函数
-export function decryptString(encryptedText, key) {
-  const decryptedBytes = CryptoJS.AES.decrypt(encryptedText, key);
-  const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
-  return decryptedText;
 }
 
 // 返回双色球和大乐透的中奖信息
