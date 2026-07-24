@@ -10,6 +10,8 @@
       <template v-if="device !== 'mobile'">
         <search id="header-search" class="right-menu-item" />
 
+        <screenfull id="screenfull" class="right-menu-item hover-effect" />
+
         <!-- <el-tooltip content="源码地址" placement="bottom">
           <fx67ll-git id="fx67ll-git" class="right-menu-item hover-effect" />
         </el-tooltip> -->
@@ -18,11 +20,14 @@
           <fx67ll-h5 id="fx67ll-h5" class="right-menu-item hover-effect" />
         </el-tooltip>
 
-        <screenfull id="screenfull" class="right-menu-item hover-effect" />
-
         <!-- 监控大盘：新窗口打开公开服务状态页 -->
         <el-tooltip content="监控大盘" placement="bottom">
           <fx67ll-monitor id="fx67ll-monitor" class="right-menu-item hover-effect" />
+        </el-tooltip>
+
+        <!-- 日常通勤：新窗口打开通勤地图 -->
+        <el-tooltip content="日常通勤" placement="bottom">
+          <fx67ll-commute id="fx67ll-commute" class="right-menu-item hover-effect" />
         </el-tooltip>
 
         <!-- 通知公告铃铛 -->
@@ -68,6 +73,7 @@ import fx67llGit from "@/components/fx67ll/Git";
 import fx67llH5 from "@/components/fx67ll/H5";
 import fx67llMonitor from "@/components/fx67ll/Monitor";
 import fx67llNotice from "@/components/fx67ll/Notice";
+import fx67llCommute from "@/components/fx67ll/Commute";
 
 import Cookies from "js-cookie";
 
@@ -83,6 +89,7 @@ export default {
     fx67llH5,
     fx67llMonitor,
     fx67llNotice,
+    fx67llCommute,
   },
   data() {
     return {
