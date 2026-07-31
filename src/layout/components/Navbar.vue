@@ -25,8 +25,8 @@
           <fx67ll-monitor id="fx67ll-monitor" class="right-menu-item hover-effect" />
         </el-tooltip>
 
-        <!-- 日常通勤：新窗口打开通勤地图 -->
-        <el-tooltip content="日常通勤" placement="bottom">
+        <!-- 日常通勤：新窗口打开通勤地图（仅超级管理员可见） -->
+        <el-tooltip v-if="isAdmin" content="日常通勤" placement="bottom">
           <fx67ll-commute id="fx67ll-commute" class="right-menu-item hover-effect" />
         </el-tooltip>
 
@@ -107,7 +107,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["sidebar", "avatar", "device"]),
+    ...mapGetters(["sidebar", "avatar", "device", "name"]),
+    // 是否为 fx67ll 超级管理员
+    isAdmin() {
+      return this.name === "fx67ll";
+    },
     setting: {
       get() {
         return this.$store.state.settings.showSettings;
