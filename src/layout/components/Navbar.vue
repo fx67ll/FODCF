@@ -212,6 +212,40 @@ export default {
       }
     }
 
+    // 右上角图标悬浮语义动效：每个图标悬停时播放与其语义匹配的循环动效
+    // 仅在用户未开启「减少动效」系统偏好时启用，兼顾无障碍
+    @media (prefers-reduced-motion: no-preference) {
+      #header-search:hover ::v-deep .search-icon {
+        animation: nav-search-wiggle 0.6s ease-in-out infinite;
+      }
+
+      #screenfull:hover ::v-deep .screenfull-icon {
+        animation: nav-expand 1.4s ease-in-out infinite;
+      }
+
+      #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone {
+        animation: nav-phone-vibrate 0.35s linear infinite;
+      }
+
+      #fx67ll-monitor:hover ::v-deep .el-icon-monitor {
+        animation: nav-monitor-breathe 1.6s ease-in-out infinite;
+      }
+
+      #fx67ll-commute:hover ::v-deep .el-icon-discover {
+        transform-origin: center;
+        animation: nav-compass-wobble 1.2s ease-in-out infinite;
+      }
+
+      #fx67ll-notice:hover ::v-deep .el-icon-bell {
+        transform-origin: top center;
+        animation: nav-bell-ring 0.6s ease-in-out infinite;
+      }
+
+      .avatar-container:hover .user-avatar {
+        animation: nav-avatar-breathe 1.4s ease-in-out infinite;
+      }
+    }
+
     .avatar-container {
       margin-right: 30px;
 
@@ -236,5 +270,54 @@ export default {
       }
     }
   }
+}
+</style>
+
+<style lang="scss">
+/*
+ * 首页右上角图标悬浮语义动效 keyframes（全局，供上方 scoped 样式引用）
+ * 动效与图标语义一一对应，各不相同
+ */
+@keyframes nav-search-wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes nav-expand {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes nav-phone-vibrate {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-1.5px); }
+  40% { transform: translateX(1.5px); }
+  60% { transform: translateX(-1.5px); }
+  80% { transform: translateX(1.5px); }
+}
+
+@keyframes nav-monitor-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes nav-compass-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-25deg); }
+  75% { transform: rotate(25deg); }
+}
+
+@keyframes nav-bell-ring {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(18deg); }
+  40% { transform: rotate(-18deg); }
+  60% { transform: rotate(12deg); }
+  80% { transform: rotate(-12deg); }
+}
+
+@keyframes nav-avatar-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 </style>
