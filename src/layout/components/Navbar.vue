@@ -212,37 +212,59 @@ export default {
       }
     }
 
-    // 右上角图标悬浮语义动效：每个图标悬停时播放与其语义匹配的循环动效
-    // 仅在用户未开启「减少动效」系统偏好时启用，兼顾无障碍
-    @media (prefers-reduced-motion: no-preference) {
-      #header-search:hover ::v-deep .search-icon {
-        animation: nav-search-wiggle 0.6s ease-in-out infinite;
-      }
+    // transform 对普通行内元素的兼容性不一致，统一建立可变换的行内块。
+    #header-search ::v-deep .search-icon,
+    #screenfull ::v-deep .screenfull-icon,
+    #fx67ll-h5 ::v-deep .el-icon-mobile-phone,
+    #fx67ll-monitor ::v-deep .el-icon-monitor,
+    #fx67ll-commute ::v-deep .el-icon-discover,
+    #fx67ll-notice ::v-deep .el-icon-bell {
+      display: inline-block;
+      backface-visibility: hidden;
+      will-change: transform;
+    }
 
-      #screenfull:hover ::v-deep .screenfull-icon {
-        animation: nav-expand 1.4s ease-in-out infinite;
-      }
+    #header-search:hover ::v-deep .search-icon {
+      animation: nav-search-wiggle 0.6s ease-in-out infinite;
+    }
 
-      #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone {
-        animation: nav-phone-vibrate 0.35s linear infinite;
-      }
+    #screenfull:hover ::v-deep .screenfull-icon {
+      animation: nav-expand 1.4s ease-in-out infinite;
+    }
 
-      #fx67ll-monitor:hover ::v-deep .el-icon-monitor {
-        animation: nav-monitor-breathe 1.6s ease-in-out infinite;
-      }
+    #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone {
+      animation: nav-phone-vibrate 0.35s linear infinite;
+    }
 
-      #fx67ll-commute:hover ::v-deep .el-icon-discover {
-        transform-origin: center;
-        animation: nav-compass-wobble 1.2s ease-in-out infinite;
-      }
+    #fx67ll-monitor:hover ::v-deep .el-icon-monitor {
+      animation: nav-monitor-breathe 1.6s ease-in-out infinite;
+    }
 
-      #fx67ll-notice:hover ::v-deep .el-icon-bell {
-        transform-origin: top center;
-        animation: nav-bell-ring 0.6s ease-in-out infinite;
-      }
+    #fx67ll-commute:hover ::v-deep .el-icon-discover {
+      transform-origin: center;
+      animation: nav-compass-wobble 1.2s ease-in-out infinite;
+    }
 
+    #fx67ll-notice:hover ::v-deep .el-icon-bell {
+      transform-origin: top center;
+      animation: nav-bell-ring 0.6s ease-in-out infinite;
+    }
+
+    .avatar-container:hover .user-avatar {
+      animation: nav-avatar-breathe 1.4s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    // 老浏览器不识别该媒体查询时仍播放动画；明确要求减少动效时才关闭。
+    @media (prefers-reduced-motion: reduce) {
+      #header-search:hover ::v-deep .search-icon,
+      #screenfull:hover ::v-deep .screenfull-icon,
+      #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone,
+      #fx67ll-monitor:hover ::v-deep .el-icon-monitor,
+      #fx67ll-commute:hover ::v-deep .el-icon-discover,
+      #fx67ll-notice:hover ::v-deep .el-icon-bell,
       .avatar-container:hover .user-avatar {
-        animation: nav-avatar-breathe 1.4s ease-in-out infinite;
+        animation: none;
       }
     }
 
