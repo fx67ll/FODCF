@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" :class="{ 'mobile-access-enabled': allowMobileAccess }">
     <div id="app-router"><router-view /> <theme-picker /></div>
     <div id="app-tip">非常抱歉！暂不支持宽度小于768px尺寸的设备访问！</div>
   </div>
@@ -12,6 +12,13 @@ export default {
   name: "App",
   components: {
     ThemePicker,
+  },
+  computed: {
+    allowMobileAccess() {
+      return this.$route.matched.some(
+        (record) => record.meta && record.meta.allowMobile === true
+      );
+    },
   },
   metaInfo() {
     return {
@@ -44,18 +51,20 @@ export default {
   }
 }
 
-// 超过 768px 不显示界面
+// 默认不支持小屏设备，路由可通过 allowMobile 元数据显式豁免。
 @media screen and (max-width: 767px) {
-  #app-router {
-    display: none;
-  }
+  #app:not(.mobile-access-enabled) {
+    #app-router {
+      display: none;
+    }
 
-  #app-tip {
-    display: block !important;
-    text-align: center;
-    line-height: 15vw;
-    font-size: 10vw;
-    padding: 20vw 1vw 0 1vw;
+    #app-tip {
+      display: block !important;
+      text-align: center;
+      line-height: 15vw;
+      font-size: 10vw;
+      padding: 20vw 1vw 0 1vw;
+    }
   }
 }
 </style>
