@@ -15,9 +15,14 @@ export default {
   },
   computed: {
     allowMobileAccess() {
-      return this.$route.matched.some(
+      const routeAllowsMobile = this.$route.matched.some(
         (record) => record.meta && record.meta.allowMobile === true
       );
+
+      // 异步路由组件完成解析前，直接访问 /status 时 matched 可能仍为空。
+      // 先按浏览器地址放行，避免移动端限制文案短暂闪现。
+      const initialPath = window.location.pathname.replace(/\/+$/, "") || "/";
+      return routeAllowsMobile || this.$route.path === "/status" || initialPath === "/status";
     },
   },
   metaInfo() {

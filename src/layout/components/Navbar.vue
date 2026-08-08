@@ -242,7 +242,7 @@ export default {
 
     #fx67ll-commute:hover ::v-deep .el-icon-discover {
       transform-origin: center;
-      animation: nav-compass-turn 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      animation: nav-compass-sway 3.2s ease-in-out infinite;
     }
 
     #fx67ll-notice:hover ::v-deep .el-icon-bell {
@@ -331,11 +331,21 @@ export default {
   }
 }
 
-@keyframes nav-compass-turn {
-  0% { transform: rotate(0deg); }
-  35% { transform: rotate(135deg); }
-  65% { transform: rotate(225deg); }
-  100% { transform: rotate(360deg); }
+@keyframes nav-compass-sway {
+  0%, 8% { transform: rotate(0deg) scale(1); }
+  12% { transform: rotate(5deg) scale(1.02); }
+  19% { transform: rotate(-26deg) scale(1.09); }
+  28% { transform: rotate(22deg) scale(1.08); }
+  36% { transform: rotate(-16deg) scale(1.06); }
+  43% { transform: rotate(10deg) scale(1.04); }
+  49% { transform: rotate(-6deg) scale(1.03); }
+  54% { transform: rotate(3deg) scale(1.01); }
+  58%, 72% { transform: rotate(0deg) scale(1); }
+  78% { transform: rotate(8deg) scale(1.03); }
+  84% { transform: rotate(-6deg) scale(1.02); }
+  89% { transform: rotate(3deg) scale(1.01); }
+  93% { transform: rotate(-1deg) scale(1); }
+  96%, 100% { transform: rotate(0deg) scale(1); }
 }
 
 @keyframes nav-bell-ring {
