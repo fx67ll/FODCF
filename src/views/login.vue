@@ -48,7 +48,13 @@
           <i class="el-icon-key el-input__icon" slot="prefix" />
         </el-input>
         <div class="login-code">
-          <img :src="codeUrl" @click="getCode" class="login-code-img" v-if="codeUrl" />
+          <img
+            :src="codeUrl"
+            @click="getCode"
+            class="login-code-img"
+            title="点击刷新验证码"
+            v-if="codeUrl"
+          />
           <span class="login-code-text" v-if="!codeUrl">正在获取验证码</span>
         </div>
       </el-form-item>
@@ -84,6 +90,19 @@
 import { getCodeImg } from "@/api/login";
 import Cookies from "js-cookie";
 import { encrypt, decrypt } from "@/utils/common/jsencrypt";
+
+const DEFAULT_CAPTCHA_REFRESH_INTERVAL = 110 * 1000;
+const MIN_CAPTCHA_REFRESH_INTERVAL = 10 * 1000;
+
+function getCaptchaRefreshInterval() {
+  const configuredInterval = Number(
+    process.env.VUE_APP_CAPTCHA_REFRESH_INTERVAL
+  );
+  return Number.isFinite(configuredInterval) &&
+    configuredInterval >= MIN_CAPTCHA_REFRESH_INTERVAL
+    ? configuredInterval
+    : DEFAULT_CAPTCHA_REFRESH_INTERVAL;
+}
 
 export default {
   name: "Login",
@@ -123,6 +142,9 @@ export default {
       loading: false,
       // 验证码开关
       captchaEnabled: true,
+      captchaRefreshInterval: getCaptchaRefreshInterval(),
+      captchaRefreshTimer: null,
+      captchaRequestId: 0,
       // 注册开关
       register: true,
       redirect: undefined,
@@ -140,6 +162,14 @@ export default {
     this.getCode();
     this.getCookie();
   },
+  mounted() {
+    document.addEventListener("visibilitychange", this.handleVisibilityChange);
+  },
+  beforeDestroy() {
+    document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+    this.clearCaptchaRefreshTimer();
+    this.captchaRequestId += 1;
+  },
   methods: {
     touristLogin() {
       this.$notify({
@@ -153,14 +183,45 @@ export default {
       this.loginForm.password = 123456;
     },
     getCode() {
-      getCodeImg().then((res) => {
+      this.clearCaptchaRefreshTimer();
+      const requestId = ++this.captchaRequestId;
+      this.codeUrl = "";
+      this.loginForm.code = "";
+      return getCodeImg().then((res) => {
+        if (requestId !== this.captchaRequestId) return;
         this.captchaEnabled =
           res.captchaEnabled === undefined ? true : res.captchaEnabled;
         if (this.captchaEnabled) {
           this.codeUrl = "data:image/gif;base64," + res.img;
           this.loginForm.uuid = res.uuid;
+          this.scheduleCaptchaRefresh();
+        } else {
+          this.loginForm.uuid = "";
         }
       });
+    },
+    scheduleCaptchaRefresh() {
+      this.clearCaptchaRefreshTimer();
+      this.captchaRefreshTimer = window.setTimeout(() => {
+        if (document.visibilityState === "visible" && !this.loading) {
+          this.getCode();
+        }
+      }, this.captchaRefreshInterval);
+    },
+    clearCaptchaRefreshTimer() {
+      if (this.captchaRefreshTimer !== null) {
+        window.clearTimeout(this.captchaRefreshTimer);
+        this.captchaRefreshTimer = null;
+      }
+    },
+    handleVisibilityChange() {
+      if (
+        document.visibilityState === "visible" &&
+        this.captchaEnabled &&
+        !this.loading
+      ) {
+        this.getCode();
+      }
     },
     getCookie() {
       const username = Cookies.get("username");
@@ -170,12 +231,15 @@ export default {
         username: username === undefined ? this.loginForm.username : username,
         password: password === undefined ? this.loginForm.password : decrypt(password),
         rememberMe: rememberMe === undefined ? false : Boolean(rememberMe),
+        code: "",
+        uuid: "",
       };
     },
     handleLogin() {
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.loading = true;
+          this.clearCaptchaRefreshTimer();
           if (this.loginForm.rememberMe) {
             Cookies.set("username", this.loginForm.username, {
               expires: 30,
