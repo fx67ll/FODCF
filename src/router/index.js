@@ -69,7 +69,11 @@ export const constantRoutes = [
     path: "/status",
     component: () => import("@/views/fx67ll/server/status/index"),
     hidden: true,
-    meta: { title: "系统服务状态" },
+    meta: {
+      title: "系统服务状态",
+      publicAccess: true,
+      allowMobile: true,
+    },
   },
   {
     path: "",

@@ -11,6 +11,14 @@ let downloadLoadingInstance;
 // 是否显示重新登录
 export let isRelogin = { show: false };
 
+// 公开接口使用精确路径白名单：只隔离登录副作用，不改变后端权限判断。
+const publicApiPaths = ['/public/status/overview'];
+
+function isPublicRequest(config) {
+  const url = (config && config.url ? config.url : '').split('?')[0];
+  return publicApiPaths.indexOf(url) !== -1;
+}
+
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8';
 // 创建axios实例
 const service = axios.create({
@@ -24,7 +32,7 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     // 是否需要设置 token
-    const isToken = (config.headers || {}).isToken === false;
+    const isToken = (config.headers || {}).isToken === false || isPublicRequest(config);
     // 是否需要防止数据重复提交
     const isRepeatSubmit = (config.headers || {}).repeatSubmit === false;
     if (getToken() && !isToken) {
@@ -80,6 +88,11 @@ service.interceptors.response.use(
       return res.data;
     }
     if (code === 401) {
+      if (isPublicRequest(res.config)) {
+        const err = new Error(msg);
+        err._isHandled = true;
+        return Promise.reject(err);
+      }
       if (!isRelogin.show) {
         isRelogin.show = true;
         MessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
@@ -118,6 +131,11 @@ service.interceptors.response.use(
     }
   },
   error => {
+    // 公开状态接口失败时由页面静默降级，不弹登录提示或全局错误。
+    if (isPublicRequest(error.config)) {
+      error._isHandled = true;
+      return Promise.reject(error);
+    }
     console.log('err' + error);
     let { message } = error;
     if (message == 'Network Error') {

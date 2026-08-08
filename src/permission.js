@@ -8,13 +8,25 @@ import { isRelogin } from "@/utils/common/request";
 
 NProgress.configure({ showSpinner: false });
 
-// 游客免登录白名单：/status 为公开服务状态大盘，仅展示脱敏聚合数据
-const whiteList = ["/login", "/register", "/status"];
+const whiteList = ["/login", "/register"];
+
+function isPublicRoute(route) {
+  return route.matched.some(
+    (record) => record.meta && record.meta.publicAccess === true
+  );
+}
 
 router.beforeEach((to, from, next) => {
   NProgress.start();
+  to.meta.title && store.dispatch("settings/setTitle", to.meta.title);
+
+  // 显式公开的路由优先放行，避免残留或过期 token 触发 GetInfo 后被重定向。
+  if (isPublicRoute(to)) {
+    next();
+    return;
+  }
+
   if (getToken()) {
-    to.meta.title && store.dispatch("settings/setTitle", to.meta.title);
     /* has token*/
     if (to.path === "/login") {
       next({ path: "/" });
