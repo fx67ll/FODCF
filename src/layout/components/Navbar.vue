@@ -225,11 +225,11 @@ export default {
     }
 
     #header-search:hover ::v-deep .search-icon {
-      animation: nav-search-wiggle 0.6s ease-in-out infinite;
+      animation: nav-search-inspect 0.9s ease-in-out infinite;
     }
 
     #screenfull:hover ::v-deep .screenfull-icon {
-      animation: nav-expand 1.4s ease-in-out infinite;
+      animation: nav-fullscreen-expand 1.2s ease-in-out infinite;
     }
 
     #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone {
@@ -237,12 +237,12 @@ export default {
     }
 
     #fx67ll-monitor:hover ::v-deep .el-icon-monitor {
-      animation: nav-monitor-breathe 1.6s ease-in-out infinite;
+      animation: nav-monitor-scan 1.1s ease-in-out infinite;
     }
 
     #fx67ll-commute:hover ::v-deep .el-icon-discover {
       transform-origin: center;
-      animation: nav-compass-wobble 1.2s ease-in-out infinite;
+      animation: nav-compass-turn 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
 
     #fx67ll-notice:hover ::v-deep .el-icon-bell {
@@ -251,8 +251,8 @@ export default {
     }
 
     .avatar-container:hover .user-avatar {
-      animation: nav-avatar-breathe 1.4s ease-in-out infinite;
-      will-change: transform;
+      animation: nav-avatar-glow 1.5s ease-in-out infinite;
+      will-change: box-shadow, border-radius;
     }
 
     // 老浏览器不识别该媒体查询时仍播放动画；明确要求减少动效时才关闭。
@@ -300,15 +300,16 @@ export default {
  * 首页右上角图标悬浮语义动效 keyframes（全局，供上方 scoped 样式引用）
  * 动效与图标语义一一对应，各不相同
  */
-@keyframes nav-search-wiggle {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
+@keyframes nav-search-inspect {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-2px, -1px) scale(1.05); }
+  50% { transform: translate(1px, -2px) scale(1.1); }
+  75% { transform: translate(2px, 1px) scale(1.05); }
 }
 
-@keyframes nav-expand {
+@keyframes nav-fullscreen-expand {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  50% { transform: scale(1.2); }
 }
 
 @keyframes nav-phone-vibrate {
@@ -319,15 +320,22 @@ export default {
   80% { transform: translateX(1.5px); }
 }
 
-@keyframes nav-monitor-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+@keyframes nav-monitor-scan {
+  0%, 100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-3px);
+    filter: brightness(1.35);
+  }
 }
 
-@keyframes nav-compass-wobble {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-25deg); }
-  75% { transform: rotate(25deg); }
+@keyframes nav-compass-turn {
+  0% { transform: rotate(0deg); }
+  35% { transform: rotate(135deg); }
+  65% { transform: rotate(225deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes nav-bell-ring {
@@ -338,8 +346,14 @@ export default {
   80% { transform: rotate(-12deg); }
 }
 
-@keyframes nav-avatar-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+@keyframes nav-avatar-glow {
+  0%, 100% {
+    border-radius: 10px;
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
+  }
+  50% {
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.22);
+  }
 }
 </style>
