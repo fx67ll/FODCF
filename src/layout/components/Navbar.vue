@@ -255,18 +255,9 @@ export default {
       will-change: box-shadow, border-radius;
     }
 
-    // 老浏览器不识别该媒体查询时仍播放动画；明确要求减少动效时才关闭。
-    @media (prefers-reduced-motion: reduce) {
-      #header-search:hover ::v-deep .search-icon,
-      #screenfull:hover ::v-deep .screenfull-icon,
-      #fx67ll-h5:hover ::v-deep .el-icon-mobile-phone,
-      #fx67ll-monitor:hover ::v-deep .el-icon-monitor,
-      #fx67ll-commute:hover ::v-deep .el-icon-discover,
-      #fx67ll-notice:hover ::v-deep .el-icon-bell,
-      .avatar-container:hover .user-avatar {
-        animation: none;
-      }
-    }
+    // 产品决策：右上角图标悬浮动效在所有主流浏览器中保持一致，主动忽略
+    // 系统级「减少动态效果」设置，避免不同设备效果不一致（曾因该设置导致动效在家用浏览器失效）。
+    // 若后续需恢复无障碍降级，可重新引入 @media (prefers-reduced-motion: reduce) 分支。
 
     .avatar-container {
       margin-right: 30px;
@@ -301,30 +292,69 @@ export default {
  * 动效与图标语义一一对应，各不相同
  */
 @keyframes nav-search-inspect {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-2px, -1px) scale(1.05); }
-  50% { transform: translate(1px, -2px) scale(1.1); }
-  75% { transform: translate(2px, 1px) scale(1.05); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(-2px, -1px) scale(1.05);
+  }
+
+  50% {
+    transform: translate(1px, -2px) scale(1.1);
+  }
+
+  75% {
+    transform: translate(2px, 1px) scale(1.05);
+  }
 }
 
 @keyframes nav-fullscreen-expand {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
 }
 
 @keyframes nav-phone-vibrate {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-1.5px); }
-  40% { transform: translateX(1.5px); }
-  60% { transform: translateX(-1.5px); }
-  80% { transform: translateX(1.5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-1.5px);
+  }
+
+  40% {
+    transform: translateX(1.5px);
+  }
+
+  60% {
+    transform: translateX(-1.5px);
+  }
+
+  80% {
+    transform: translateX(1.5px);
+  }
 }
 
 @keyframes nav-monitor-scan {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
     filter: brightness(1);
   }
+
   50% {
     transform: translateY(-3px);
     filter: brightness(1.35);
@@ -332,35 +362,99 @@ export default {
 }
 
 @keyframes nav-compass-sway {
-  0%, 8% { transform: rotate(0deg) scale(1); }
-  12% { transform: rotate(5deg) scale(1.02); }
-  19% { transform: rotate(-26deg) scale(1.09); }
-  28% { transform: rotate(22deg) scale(1.08); }
-  36% { transform: rotate(-16deg) scale(1.06); }
-  43% { transform: rotate(10deg) scale(1.04); }
-  49% { transform: rotate(-6deg) scale(1.03); }
-  54% { transform: rotate(3deg) scale(1.01); }
-  58%, 72% { transform: rotate(0deg) scale(1); }
-  78% { transform: rotate(8deg) scale(1.03); }
-  84% { transform: rotate(-6deg) scale(1.02); }
-  89% { transform: rotate(3deg) scale(1.01); }
-  93% { transform: rotate(-1deg) scale(1); }
-  96%, 100% { transform: rotate(0deg) scale(1); }
+
+  0%,
+  8% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  12% {
+    transform: rotate(5deg) scale(1.02);
+  }
+
+  19% {
+    transform: rotate(-26deg) scale(1.09);
+  }
+
+  28% {
+    transform: rotate(22deg) scale(1.08);
+  }
+
+  36% {
+    transform: rotate(-16deg) scale(1.06);
+  }
+
+  43% {
+    transform: rotate(10deg) scale(1.04);
+  }
+
+  49% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+
+  54% {
+    transform: rotate(3deg) scale(1.01);
+  }
+
+  58%,
+  72% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  78% {
+    transform: rotate(8deg) scale(1.03);
+  }
+
+  84% {
+    transform: rotate(-6deg) scale(1.02);
+  }
+
+  89% {
+    transform: rotate(3deg) scale(1.01);
+  }
+
+  93% {
+    transform: rotate(-1deg) scale(1);
+  }
+
+  96%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
 }
 
 @keyframes nav-bell-ring {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(18deg); }
-  40% { transform: rotate(-18deg); }
-  60% { transform: rotate(12deg); }
-  80% { transform: rotate(-12deg); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(18deg);
+  }
+
+  40% {
+    transform: rotate(-18deg);
+  }
+
+  60% {
+    transform: rotate(12deg);
+  }
+
+  80% {
+    transform: rotate(-12deg);
+  }
 }
 
 @keyframes nav-avatar-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     border-radius: 10px;
     box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
   }
+
   50% {
     border-radius: 50%;
     box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.22);
