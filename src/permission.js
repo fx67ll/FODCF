@@ -5,6 +5,7 @@ import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { getToken } from "@/utils/common/auth";
 import { isRelogin } from "@/utils/common/request";
+import { recordMenuVisit } from "@/utils/menu-frequency";
 
 NProgress.configure({ showSpinner: false });
 
@@ -67,6 +68,8 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
   NProgress.done();
+  // 记录菜单访问频率（仅本机 localStorage，用于首页常用入口与访问趋势，不改变菜单逻辑）
+  recordMenuVisit(to, store.state.user.name);
 });
