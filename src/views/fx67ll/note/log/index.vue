@@ -44,8 +44,14 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="富文本" align="center" prop="noteContent" />
-      <el-table-column label="备注" align="center" prop="noteRemark" />
+      <!-- 标题置左（需求 #8），原备注字段仅展示层改名 -->
+      <el-table-column label="标题" align="center" prop="noteRemark" />
+      <!-- 内容沿用首页备忘卡片的去标签渲染，避免原始 HTML 标签直接展示（需求 #8） -->
+      <el-table-column label="内容" align="center" prop="noteContent">
+        <template slot-scope="scope">
+          <span>{{ snippet(scope.row.noteContent) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
       <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
@@ -71,22 +77,8 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改富文本记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
-      :style="`top: ${getDialogVerticalOffset(534)}`" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="内容">
-          <editor v-model="form.noteContent" :min-height="192" />
-        </el-form-item>
-        <el-form-item label="备注" prop="noteRemark">
-          <el-input v-model="form.noteRemark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>
+    <!-- 添加或修改富文本记录对话框（与首页备忘卡片共享同一组件，需求 #7） -->
+    <memo-edit-dialog :visible.sync="open" :model="form" @success="getList" />
   </div>
 </template>
 
@@ -95,14 +87,13 @@ import {
   listNoteLog,
   getNoteLog,
   delNoteLog,
-  addNoteLog,
-  updateNoteLog,
 } from "@/api/fx67ll/note/log";
 
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import MemoEditDialog from "@/views/fx67ll/note/component/MemoEditDialog.vue";
 
 export default {
   name: "NoteLog",
+  components: { MemoEditDialog },
   data() {
     return {
       // 遮罩层
@@ -119,8 +110,6 @@ export default {
       total: 0,
       // 富文本记录表格数据
       logList: [],
-      // 弹出层标题
-      title: "",
       // 是否显示弹出层
       open: false,
       // 创建时间范围
@@ -135,23 +124,21 @@ export default {
         noteRemark: null,
         userId: null,
       },
-      // 表单参数
+      // 当前编辑的表单参数（传给共享弹窗）
       form: {},
-      // 表单校验
-      rules: {
-        noteContent: [
-          { required: true, message: "富文本内容不能为空", trigger: "blur" },
-        ],
-      },
     };
   },
   created() {
     this.getList();
   },
   methods: {
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
+    // 富文本去标签 + 截断，与首页备忘卡片展示逻辑一致（需求 #8）
+    snippet(html) {
+      const text = String(html || "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim();
+      return text ? (text.length > 64 ? text.slice(0, 64) + "…" : text) : "（空内容）";
     },
     // 重置时间段查询
     clearDateQueryParams() {
@@ -178,23 +165,9 @@ export default {
         this.loading = false;
       });
     },
-    // 取消按钮
+    // 取消按钮（共享弹窗自管关闭，这里仅保留空函数兼容旧调用）
     cancel() {
       this.open = false;
-      this.reset();
-    },
-    // 表单重置
-    reset() {
-      this.form = {
-        noteId: null,
-        noteContent: null,
-        noteRemark: null,
-        createBy: null,
-        createTime: null,
-        updateBy: null,
-        updateTime: null,
-      };
-      this.resetForm("form");
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -216,42 +189,15 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
-      this.reset();
+      this.form = {};
       this.open = true;
-      this.title = "添加富文本";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
-      this.reset();
       const noteId = row.noteId || this.ids;
       getNoteLog(noteId).then((response) => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改富文本";
-      });
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate((valid) => {
-        if (valid) {
-          if (!this.form.noteContent || this.form.noteContent?.trim() === "") {
-            this.$modal.msgError("富文本内容不能为空");
-            return;
-          }
-          if (this.form.noteId != null) {
-            updateNoteLog(this.form).then((response) => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addNoteLog(this.form).then((response) => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
       });
     },
     /** 删除按钮操作 */
