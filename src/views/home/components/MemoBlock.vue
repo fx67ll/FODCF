@@ -1,0 +1,317 @@
+<template>
+  <section class="panel memo-panel">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">RICH MEMO</span>
+        <h3>备忘录</h3>
+      </div>
+      <button v-if="canAdd" type="button" class="memo-write" @click="handleAdd">
+        <i class="el-icon-edit"></i> 写备忘
+      </button>
+      <i v-else class="el-icon-edit-outline panel-glyph glyph-wobble"></i>
+    </div>
+
+    <!-- 有列表权限：展示最近备忘 -->
+    <div v-if="canList" v-loading="loading" class="memo-body">
+      <button v-for="item in memos" :key="item.noteId" type="button" class="memo-item" :class="{ clickable: canEdit }"
+        @click="canEdit && handleEdit(item)">
+        <span class="memo-pin"></span>
+        <span class="memo-copy">
+          <strong>{{ titleOf(item) }}</strong>
+          <small>{{ snippet(item.noteContent) }}</small>
+        </span>
+        <span class="meta">
+          <span class="meta-by"><i class="el-icon-user"></i>{{ item.createBy || "我" }}</span>
+          <span class="meta-time">{{ formatTime(item.updateTime || item.createTime) }}</span>
+        </span>
+      </button>
+
+      <home-empty-state v-if="!loading && !memos.length" inline icon="el-icon-edit" :title="canAdd ? '还没有备忘' : '暂无备忘记录'"
+        :desc="canAdd ? '点击「写备忘」，随手记录一条富文本备忘' : '有备忘记录后会展示在这里'" />
+
+      <button v-if="memos.length && hasMemoMenu" type="button" class="memo-more" @click="openMemoMenu">
+        管理全部备忘 <i class="el-icon-right"></i>
+      </button>
+    </div>
+
+    <!-- 无列表权限：不调用接口，避免 403 报错，仅静态空状态 -->
+    <div v-else class="memo-body">
+      <home-empty-state inline icon="el-icon-lock" title="暂无备忘录访问权限" desc="当前账号未开放备忘录查看权限" />
+    </div>
+
+    <!-- 写备忘 / 编辑弹窗（与富文本备忘页共享同一组件，需求 #7） -->
+    <memo-edit-dialog :visible.sync="dialogOpen" :model="editModel" @success="handleSaved" />
+  </section>
+</template>
+
+<script>
+import { listNoteLog } from "@/api/fx67ll/note/log";
+import MemoEditDialog from "@/views/fx67ll/note/component/MemoEditDialog.vue";
+import HomeEmptyState from "./EmptyState.vue";
+
+export default {
+  name: "HomeMemoBlock",
+  components: { MemoEditDialog, HomeEmptyState },
+  data() {
+    return {
+      loading: false,
+      memos: [],
+      dialogOpen: false,
+      // 当前编辑的备忘对象；空对象视为新增
+      editModel: {},
+    };
+  },
+  computed: {
+    canList() {
+      return this.hasPerm("note:log:list");
+    },
+    canAdd() {
+      return this.hasPerm("note:log:add");
+    },
+    canEdit() {
+      return this.hasPerm("note:log:edit");
+    },
+    // 是否存在备忘录菜单入口（用于「管理全部备忘」）
+    hasMemoMenu() {
+      const menus = this.$store.getters.sidebarRouters || [];
+      return this.findMemoPath(menus, "") !== "";
+    },
+  },
+  mounted() {
+    // 仅在有列表权限时拉取，避免无权限账号触发 403 全局错误提示
+    if (this.canList) {
+      this.fetchMemos();
+    }
+  },
+  methods: {
+    hasPerm(perm) {
+      const perms = this.$store.getters.permissions || [];
+      return perms.indexOf("*:*:*") !== -1 || perms.indexOf(perm) !== -1;
+    },
+    fetchMemos() {
+      this.loading = true;
+      listNoteLog({ pageNum: 1, pageSize: 5 })
+        .then((response) => {
+          this.memos = (response && response.rows) || [];
+        })
+        .catch(() => {
+          this.memos = [];
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+    titleOf(item) {
+      return item.noteRemark ? item.noteRemark : "无标题备忘";
+    },
+    snippet(html) {
+      const text = String(html || "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim();
+      return text ? (text.length > 64 ? text.slice(0, 64) + "…" : text) : "（空内容）";
+    },
+    formatTime(time) {
+      if (!time) return "—";
+      return this.parseTime ? this.parseTime(time, "{m}-{d} {h}:{i}") : String(time);
+    },
+    handleAdd() {
+      this.editModel = {};
+      this.dialogOpen = true;
+    },
+    handleEdit(item) {
+      this.editModel = {
+        noteId: item.noteId,
+        noteRemark: item.noteRemark || "",
+        noteContent: item.noteContent || "",
+      };
+      this.dialogOpen = true;
+    },
+    // 共享弹窗保存成功后刷新列表
+    handleSaved() {
+      if (this.canList) this.fetchMemos();
+    },
+    findMemoPath(routes, parent) {
+      // 在可访问菜单里定位富文本记录菜单路径
+      let result = "";
+      (routes || []).some((route) => {
+        if (!route) return false;
+        const path = this.joinPath(parent, route.path);
+        if (route.component && /note\/log/i.test(String(route.component))) {
+          result = path;
+          return true;
+        }
+        if (route.children && route.children.length) {
+          result = this.findMemoPath(route.children, path);
+          if (result) return true;
+        }
+        return false;
+      });
+      return result;
+    },
+    joinPath(parent, child) {
+      if (!child) return parent || "/";
+      if (/^(https?:)?\/\//.test(child)) return child;
+      if (child.charAt(0) === "/") return child;
+      return `${parent || ""}/${child}`.replace(/\/{2,}/g, "/");
+    },
+    openMemoMenu() {
+      const path = this.findMemoPath(this.$store.getters.sidebarRouters || [], "");
+      if (path) this.$router.push(path).catch(() => { });
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+$primary: #2ecc71;
+$primary-dark: #27ad60;
+$ink: #2b3a36;
+$muted: #7c8b84;
+
+.memo-panel {
+  display: flex;
+  flex-direction: column;
+  /* 修复紧贴上一面板（活动/架构面板）导致的缺少上边距问题（需求 #3） */
+  margin-top: 18px;
+}
+
+.memo-write {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  color: #fff;
+  background: linear-gradient(135deg, $primary, $primary-dark);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.24);
+  cursor: pointer;
+  font-size: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 9px 18px rgba(46, 204, 113, 0.3);
+  }
+}
+
+.panel-glyph {
+  color: $primary;
+  font-size: 22px;
+}
+
+.memo-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.memo-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 4px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #eef3f0;
+  transition: background 0.2s ease;
+
+  &.clickable {
+    cursor: pointer;
+  }
+
+  &:hover {
+    background: var(--home-primary-softer);
+  }
+
+  &:last-of-type {
+    border-bottom: 0;
+  }
+}
+
+.memo-pin {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-right: 12px;
+  background: $primary;
+  border-radius: 50%;
+}
+
+.memo-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+
+  strong {
+    overflow: hidden;
+    color: $ink;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    margin-top: 4px;
+    overflow: hidden;
+    color: $muted;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 12px;
+  color: $muted;
+  font-size: 10px;
+
+  .meta-by {
+    margin-bottom: 4px;
+
+    i {
+      margin-right: 3px;
+    }
+  }
+}
+
+.memo-more {
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 7px 14px;
+  color: $primary-dark;
+  background: var(--home-primary-softer);
+  border: 1px solid var(--home-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.25s ease;
+
+  &:hover {
+    color: #fff;
+    background: $primary;
+    border-color: $primary;
+
+    i {
+      transform: translateX(3px);
+    }
+  }
+
+  i {
+    margin-left: 3px;
+    transition: transform 0.25s ease;
+  }
+}
+
+.panel-head {
+  i {
+    cursor: pointer;
+  }
+}
+</style>

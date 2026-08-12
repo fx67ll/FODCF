@@ -1,0 +1,266 @@
+/**
+ * 首页共享样式（全局，非 scoped）
+ * 在 index.vue 派发组件中引入一次，供 AdminHome / UserHome 及其子组件复用。
+ * 主题色以 CSS 变量定义在 .home-shell 上，子组件通过 var(--home-*) 取用。
+ */
+
+.home-shell {
+  /* 主题色板：主色 #2ECC71 */
+  --home-primary: #2ecc71;
+  --home-primary-dark: #27ad60;
+  --home-primary-soft: #e7f8ee;
+  --home-primary-softer: #f2fbf6;
+  --home-ink: #2b3a36;
+  --home-ink-soft: #44604f;
+  --home-muted: #7c8b84;
+  --home-border: #e2eee7;
+  --home-surface: #ffffff;
+  --home-bg: #f3faf6;
+  --home-radius: 18px;
+  --home-radius-sm: 12px;
+  --home-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
+  --home-shadow-hover: 0 16px 34px rgba(46, 204, 113, 0.16);
+
+  min-height: calc(100vh - 84px);
+  padding: 22px;
+  /* 需求 #5：信息展示区默认箭头光标，避免大面积 I-beam 文本光标；
+     可交互元素（button/a/可点击行）各自显式声明 cursor: pointer 覆盖。 */
+  cursor: default;
+  color: var(--home-ink);
+  background: radial-gradient(
+      circle at 92% 0%,
+      rgba(46, 204, 113, 0.12),
+      transparent 22%
+    ),
+    radial-gradient(circle at 0% 12%, rgba(46, 204, 113, 0.06), transparent 26%),
+    var(--home-bg);
+}
+
+/* ===== 通用面板卡片 ===== */
+.home-shell .panel {
+  padding: 22px;
+  background: var(--home-surface);
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-shell .panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+
+  h3 {
+    margin: 4px 0 0;
+    color: var(--home-ink);
+    font-size: 22px;
+    font-weight: 600;
+  }
+}
+
+.home-shell .eyebrow {
+  color: var(--home-primary-dark);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.home-shell .range-tag {
+  padding: 6px 11px;
+  color: var(--home-muted);
+  background: var(--home-primary-softer);
+  border: 1px solid var(--home-border);
+  border-radius: 999px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ===== 指标小卡片 ===== */
+.home-shell .metric-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 104px;
+  padding: 18px 20px;
+  background: var(--home-surface);
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--home-shadow-hover);
+  }
+
+  .metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    margin-right: 14px;
+    color: #fff;
+    background: var(--home-primary);
+    border-radius: 14px;
+    font-size: 20px;
+  }
+
+  .metric-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .metric-value {
+    color: var(--home-ink);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .metric-label {
+    margin-top: 3px;
+    color: var(--home-muted);
+    font-size: 12px;
+  }
+
+  .metric-note {
+    position: absolute;
+    right: 14px;
+    bottom: 10px;
+    color: #9daea4;
+    font-size: 10px;
+  }
+}
+
+/* ===== 入场动画（交错出现） ===== */
+.home-shell .reveal {
+  animation: home-reveal 0.55s both;
+}
+
+.home-shell .reveal-1 {
+  animation-delay: 0.06s;
+}
+.home-shell .reveal-2 {
+  animation-delay: 0.12s;
+}
+.home-shell .reveal-3 {
+  animation-delay: 0.18s;
+}
+.home-shell .reveal-4 {
+  animation-delay: 0.24s;
+}
+.home-shell .reveal-5 {
+  animation-delay: 0.3s;
+}
+
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.home-shell h1,
+.home-shell h2,
+.home-shell h3 {
+  letter-spacing: -0.01em;
+}
+
+/* ===== 需求 #1：卡片右上角图标共享悬浮动效工具类 =====
+   纯 CSS，按语义命名，各卡片选一个、尽量不重复；统一时长与缓动保证风格一致。
+   已有循环动效（指南针旋转 / live-dot 脉冲 / 状态点呼吸 / bell-shake）的卡片
+   不动其循环部分，仅把对应悬浮类挂到 .panel-glyph 上。 */
+.home-shell .panel-glyph {
+  transition: transform 0.3s ease, color 0.3s ease, filter 0.3s ease;
+}
+
+/* 放大 + 顺时针微旋（号码台账：赏金旋转） */
+.home-shell .glyph-rotate:hover {
+  transform: scale(1.18) rotate(8deg);
+}
+
+/* 上浮 + 轻倾斜（未开奖号码：票据探出） */
+.home-shell .glyph-lift:hover {
+  transform: translateY(-3px) rotate(-6deg);
+}
+
+/* 放大 + 亮度闪烁（Tomcat：屏幕刷新） */
+.home-shell .glyph-flicker:hover {
+  transform: scale(1.16);
+  filter: brightness(1.35) drop-shadow(0 0 4px rgba(46, 204, 113, 0.4));
+}
+
+/* 逆时针摆动（备忘录：书写） */
+.home-shell .glyph-wobble:hover {
+  animation: glyph-wobble 0.6s ease;
+}
+
+@keyframes glyph-wobble {
+  0% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+  75% {
+    transform: rotate(-4deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+/* 上下弹跳（账户与活动：点头） */
+.home-shell .glyph-bounce:hover {
+  animation: glyph-bounce 0.5s ease;
+}
+
+@keyframes glyph-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  70% {
+    transform: translateY(-2px);
+  }
+}
+
+/* 水平轻移 + 微旋（常用链接：链接咬合） */
+.home-shell .glyph-nudge:hover {
+  transform: translateX(3px) rotate(8deg);
+}
+
+/* 缩放脉冲（技术架构：运算） */
+.home-shell .glyph-pulse:hover {
+  animation: glyph-pulse 0.7s ease;
+}
+
+@keyframes glyph-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.22);
+  }
+}
+
+/* 需求 #5：可点击面板图标统一按压反馈 */
+.home-shell .panel-glyph-btn:active .panel-glyph {
+  transform: scale(0.92);
+}
