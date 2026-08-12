@@ -18,7 +18,7 @@
             <span style="color: #e6a23c">{{ scope.row.totalNumbers }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="总花费金额" align="center" prop="totalNumbers">
+        <el-table-column label="总花费金额" align="center">
           <template slot-scope="scope">
             <span style="color: #409eff">{{
               `￥${scope.row.totalNumbers * 2}`
@@ -37,7 +37,7 @@
             }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回血比例" align="center" prop="totalWinningAmount">
+        <el-table-column label="回血比例" align="center">
           <template slot-scope="scope">
             <span>{{
               `${(
