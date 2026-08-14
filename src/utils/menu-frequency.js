@@ -12,7 +12,7 @@ const STORAGE_PREFIX = "fodcf:menu-usage:";
 const RETENTION_DAYS = 7;
 
 /**
- * 统计区间类型（预留扩展，需求 #4）
+ * 统计区间类型（预留扩展）
  * 当前首页仅消费 daily；未来月/季/年数据源可按同一结构接入，不改存储与清理逻辑。
  * 读取旧 localStorage 记录时 range 缺失，按 DAILY 兜底（见 normalizeRange）。
  */
@@ -70,7 +70,7 @@ function readEntries(userName) {
     if (!entry || !entry.path || !entry.date) return false;
     const timestamp = new Date(`${entry.date}T00:00:00`).getTime();
     if (!(Number.isFinite(timestamp) && timestamp >= cutoff)) return false;
-    // 需求 #4：旧记录补齐 range，向后兼容
+    // 旧记录补齐 range，向后兼容
     entry.range = normalizeRange(entry.range);
     return true;
   });
@@ -188,7 +188,7 @@ export function getMenuUsageSummary(userName) {
       menuMap[entry.path] = { ...entry, count: 0, dailyMap: {} };
     }
     menuMap[entry.path].count += count;
-    // 需求 #4：累计每个菜单逐日访问次数，供首页「最近活动」迷你频次图使用
+    // 累计每个菜单逐日访问次数，供首页「最近活动」迷你频次图使用
     menuMap[entry.path].dailyMap[entry.date] =
       (menuMap[entry.path].dailyMap[entry.date] || 0) + count;
     if ((entry.lastVisitedAt || 0) > (menuMap[entry.path].lastVisitedAt || 0)) {
@@ -202,7 +202,7 @@ export function getMenuUsageSummary(userName) {
     item.count = dayMap[item.date] || 0;
   });
 
-  // 需求 #4：把每个菜单的逐日字典展开为与 dailyTrend 对齐的 7 元数组，非破坏性新增字段
+  // 把每个菜单的逐日字典展开为与 dailyTrend 对齐的 7 元数组，非破坏性新增字段
   const trendDates = dailyTrend.map((item) => item.date);
   const menus = Object.values(menuMap).map((menu) => {
     const dailyMap = menu.dailyMap || {};
@@ -219,7 +219,7 @@ export function getMenuUsageSummary(userName) {
     (b.lastVisitedAt || 0) - (a.lastVisitedAt || 0);
 
   return {
-    // 需求 #4：当前 summary 区间类型（预留月/季/年扩展）
+    // 当前 summary 区间类型（预留月/季/年扩展）
     range: RANGE_TYPES.DAILY,
     totalVisits: entries.reduce(
       (sum, entry) => sum + (Number(entry.count) || 0),
