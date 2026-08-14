@@ -3,6 +3,8 @@
  * 提供各面板统一的刷新状态、最后刷新时间戳与数据更新闪烁动画。
  * 时间戳只在用户主动刷新（面板按钮 / 欢迎区一键刷新）时更新，静默轮询不算。
  */
+// 与 home.scss 的 panel-refresh-spin 一圈时长（0.9s）对齐：请求过快时补足一圈，避免图标半途停住闪烁
+const MIN_SPIN_MS = 900;
 export default {
   data() {
     return {
@@ -46,9 +48,17 @@ export default {
     runRefresh(run) {
       if (this.refreshing) return Promise.resolve();
       this.refreshing = true;
+      const startedAt = Date.now();
       return Promise.resolve()
         .then(run)
         .catch(() => {})
+        .then(() => {
+          // 保证旋转图标至少完整转完一圈再停止
+          const remain = MIN_SPIN_MS - (Date.now() - startedAt);
+          return remain > 0
+            ? new Promise((resolve) => setTimeout(resolve, remain))
+            : null;
+        })
         .finally(() => {
           this.refreshing = false;
           this.lastRefreshTime = this.formatRefreshTime();
