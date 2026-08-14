@@ -470,7 +470,7 @@ import {
   mergeLog,
 } from "@/api/fx67ll/lottery/log";
 
-// 中奖查询相关逻辑抽离至共享 helper（需求 #3）
+// 中奖查询相关逻辑抽离至共享 helper
 import { queryRewardForRecord } from "./rewardQueryHelper";
 import { validateMultiLotteryString, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
@@ -1058,7 +1058,7 @@ export default {
         `log_${new Date().getTime()}.xlsx`
       );
     },
-    /** 查询中奖信息（debounce 包装，复用共���查询逻辑，需求 #3） */
+    /** 查询中奖信息（debounce 包装，复用共���查询逻辑） */
     handleQueryRewardDubounce: _.debounce(function (row) {
       queryRewardForRecord(this, row, {
         onLoadingChange: (val) => {

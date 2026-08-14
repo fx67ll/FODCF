@@ -44,9 +44,9 @@
 
     <el-table v-loading="loading" :data="logList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <!-- 标题置左（需求 #8），原备注字段仅展示层改名 -->
+      <!-- 标题置左，原备注字段仅展示层改名 -->
       <el-table-column label="标题" align="center" prop="noteRemark" />
-      <!-- 内容沿用首页备忘卡片的去标签渲染，避免原始 HTML 标签直接展示（需求 #8） -->
+      <!-- 内容沿用首页备忘卡片的去标签渲染，避免原始 HTML 标签直接展示 -->
       <el-table-column label="内容" align="center" prop="noteContent">
         <template slot-scope="scope">
           <span>{{ snippet(scope.row.noteContent) }}</span>
@@ -77,7 +77,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改富文本记录对话框（与首页备忘卡片共享同一组件，需求 #7） -->
+    <!-- 添加或修改富文本记录对话框（与首页备忘卡片共享同一组件） -->
     <memo-edit-dialog :visible.sync="open" :model="form" @success="getList" />
   </div>
 </template>
@@ -132,7 +132,7 @@ export default {
     this.getList();
   },
   methods: {
-    // 富文本去标签 + 截断，与首页备忘卡片展示逻辑一致（需求 #8）
+    // 富文本去标签 + 截断，与首页备忘卡片展示逻辑一致
     snippet(html) {
       const text = String(html || "")
         .replace(/<[^>]+>/g, "")

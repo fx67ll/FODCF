@@ -3,8 +3,8 @@
     备忘录新增/编辑共享弹窗（首页备忘卡片 + 富文本备忘页统一消费）
     :visible.sync 双向绑定控制显示/隐藏
     :model 传入待编辑的备忘对象（null 或缺 noteId 视为新增）
-    标题字段（noteRemark）置于内容之上（需求 #8），底层字段名保持不变，仅展示层改名
-    样式对齐公告弹窗 NoticeDetailDialog：custom-class + 圆角 + 统一头尾（需求 #7）
+    标题字段（noteRemark）置于内容之上，底层字段名保持不变，仅展示层改名
+    样式对齐公告弹窗 NoticeDetailDialog：custom-class + 圆角 + 统一头尾
   -->
   <el-dialog :visible.sync="dialogVisible" :close-on-click-modal="false" :show-close="true" width="760px"
     :style="`top: ${dialogTop}`" append-to-body custom-class="memo-edit-dialog" @open="handleOpen">
@@ -20,7 +20,7 @@
     </template>
 
     <el-form ref="form" :model="form" label-width="64px" @submit.native.prevent>
-      <!-- 标题（原备注，需求 #8 置顶） -->
+      <!-- 标题（原备注） -->
       <el-form-item label="标题">
         <el-input v-model="form.noteRemark" placeholder="一句话概括这条备忘（可选）" maxlength="60" show-word-limit />
       </el-form-item>
