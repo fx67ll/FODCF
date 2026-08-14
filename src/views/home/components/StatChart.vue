@@ -10,7 +10,7 @@ import * as echarts from "echarts";
 import HomeEmptyState from "./EmptyState.vue";
 
 /**
- * ECharts 轻量封装（对应需求 #3 / #10）
+ * ECharts 轻量封装
  * - 传入完整 option，自动 init / resize / dispose
  * - hasData 为 false 时展示统一空状态，避免出现空画布
  */
@@ -32,7 +32,7 @@ export default {
     option: {
       deep: true,
       handler() {
-        this.render();
+        this.$nextTick(this.render);
       },
     },
     hasData(value) {
@@ -46,6 +46,15 @@ export default {
       this.render();
     }
     window.addEventListener("resize", this.handleResize);
+  },
+  // keep-alive 重新激活时画布尺寸可能与容器脱节，先校正再按当前数据重绘
+  activated() {
+    this.$nextTick(() => {
+      if (this.chart) {
+        this.chart.resize();
+        this.chart.setOption(this.option, true);
+      }
+    });
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
@@ -62,6 +71,10 @@ export default {
       if (!this.hasData || !this.$refs.canvas) return;
       if (!this.chart) {
         this.chart = echarts.init(this.$refs.canvas);
+      } else {
+        // setOption 不会重新测量容器：面板动画 / 布局变化后画布尺寸可能失真，
+        // 先 resize 校正，否则新数据绘制在旧尺寸画布上表现为「图表不刷新」
+        this.chart.resize();
       }
       this.chart.setOption(this.option, true);
     },

@@ -23,7 +23,7 @@
 
   min-height: calc(100vh - 84px);
   padding: 22px;
-  /* 需求 #5：信息展示区默认箭头光标，避免大面积 I-beam 文本光标；
+  /* 信息展示区默认箭头光标，避免大面积 I-beam 文本光标；
      可交互元素（button/a/可点击行）各自显式声明 cursor: pointer 覆盖。 */
   cursor: default;
   color: var(--home-ink);
@@ -175,7 +175,7 @@
   letter-spacing: -0.01em;
 }
 
-/* ===== 需求 #1：卡片右上角图标共享悬浮动效工具类 =====
+/* ===== 卡片右上角图标共享悬浮动效工具类 =====
    纯 CSS，按语义命名，各卡片选一个、尽量不重复；统一时长与缓动保证风格一致。
    已有循环动效（指南针旋转 / live-dot 脉冲 / 状态点呼吸 / bell-shake）的卡片
    不动其循环部分，仅把对应悬浮类挂到 .panel-glyph 上。 */
@@ -260,7 +260,138 @@
   }
 }
 
-/* 需求 #5：可点击面板图标统一按压反馈 */
+/* 可点击面板图标统一按压反馈 */
 .home-shell .panel-glyph-btn:active .panel-glyph {
   transform: scale(0.92);
+}
+
+/* ===== 面板标题右侧操作区（跳转图标等并排） ===== */
+.home-shell .panel-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== 面板标题行：标题文字 + 紧贴标题的刷新按钮 ===== */
+.home-shell .panel-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  h3 {
+    margin: 4px 0 0;
+  }
+}
+
+/* ===== 面板刷新按钮 + 最后刷新时间戳（PanelRefresh 组件共享）
+   首页为紧凑小卡片，采用图标按钮省略文字描述，hover 提示由 title 提供 ===== */
+.home-shell .panel-refresh-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  top: 2px;
+}
+
+.home-shell .panel-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--home-primary-dark);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.25s ease;
+
+  i {
+    transition: transform 0.5s ease;
+  }
+
+  /* 悬浮淡绿底 + 图标旋转一圈（刷新中由 .spinning 接管） */
+  &:hover:not(:disabled) {
+    background: var(--home-primary-softer);
+
+    i:not(.spinning) {
+      transform: rotate(360deg);
+    }
+  }
+
+  &:disabled {
+    cursor: progress;
+  }
+
+  .spinning {
+    animation: panel-refresh-spin 0.9s linear infinite;
+  }
+}
+
+@keyframes panel-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.home-shell .panel-refresh-time {
+  color: #8392a5;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Element UI v-loading 默认主色为蓝：SVG 圆环的 stroke 与文字均为固定色，统一改为首页主题绿 */
+.home-shell .el-loading-spinner .path {
+  stroke: var(--home-primary);
+}
+
+.home-shell .el-loading-spinner i,
+.home-shell .el-loading-spinner .el-loading-text {
+  color: var(--home-primary-dark);
+}
+
+/* ===== 数据更新动画：轻柔淡入上浮 + 数值主色渐隐（避免突兀闪烁） ===== */
+.home-shell .refresh-flash {
+  animation: refresh-fade-in 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* 数值短暂染上主色后缓慢恢复 */
+.home-shell .refresh-flash strong,
+.home-shell .refresh-flash b {
+  animation: refresh-value-glow 1.1s ease-out both;
+}
+
+@keyframes refresh-fade-in {
+  0% {
+    opacity: 0.6;
+    transform: translateY(6px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes refresh-value-glow {
+  0%,
+  55% {
+    color: var(--home-primary-dark);
+  }
+
+  100% {
+    color: inherit;
+  }
+}
+
+/* 系统「减少动态效果」：刷新相关动画全部降级为直接显示 */
+@media (prefers-reduced-motion: reduce) {
+  .home-shell .refresh-flash,
+  .home-shell .refresh-flash strong,
+  .home-shell .refresh-flash b,
+  .home-shell .panel-refresh .spinning {
+    animation: none;
+  }
 }

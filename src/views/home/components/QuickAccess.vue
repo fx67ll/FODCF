@@ -33,7 +33,7 @@
 import HomeEmptyState from "./EmptyState.vue";
 
 /**
- * 常用入口（对应需求 #2：根据最近 7 天访问频率提供快捷入口）
+ * 常用入口（根据最近 7 天访问频率提供快捷入口）
  */
 export default {
   name: "HomeQuickAccess",

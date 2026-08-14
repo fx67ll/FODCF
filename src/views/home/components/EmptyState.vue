@@ -8,7 +8,7 @@
 
 <script>
 /**
- * 通用空状态（对应需求 #10：图表无数据时的空状态展示）
+ * 通用空状态（图表无数据时的空状态展示）
  */
 export default {
   name: "HomeEmptyState",

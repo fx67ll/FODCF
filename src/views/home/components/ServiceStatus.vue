@@ -3,16 +3,20 @@
     <div class="panel-head">
       <div>
         <span class="eyebrow">PROCESS STABILITY</span>
-        <h3>运行稳定性</h3>
+        <div class="panel-title-row">
+          <h3>运行稳定性</h3>
+          <panel-refresh :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refresh" />
+        </div>
       </div>
       <span class="live-dot" :class="{ muted: !available }"></span>
     </div>
 
-    <div class="status-body">
+    <div :class="{ 'refresh-flash': flashing }" class="status-body">
       <div class="status-ring" :style="{ '--rate': ringDeg + 'deg' }">
         <div class="status-ring-inner">
-          <strong>{{ available ? centerValue : "--" }}</strong>
-          <small>{{ available ? centerUnit : "" }}</small>
+          <strong><animated-number v-if="available" :value="centerValue" :trigger="refreshTick" /><template
+              v-else>--</template><small>{{
+                available ? centerUnit : "" }}</small></strong>
           <span class="ring-caption">稳定运行</span>
         </div>
       </div>
@@ -21,9 +25,21 @@
         <p class="status-text">{{ statusText }}</p>
         <div class="status-bar"><span :style="{ width: barPercent + '%' }"></span></div>
         <div class="status-meta-row">
-          <span><i class="el-icon-timer"></i> 进程运行 <b>{{ processDaysText }}</b></span>
-          <span><i class="el-icon-open"></i> 系统开机 <b>{{ osUptimeDays || "--" }} 天</b></span>
-          <span><i class="el-icon-connection"></i> 服务在线 <b>{{ onlineServiceCount }}/{{ totalServiceCount }}</b></span>
+          <span><i class="el-icon-timer"></i> 进程运行
+            <b>
+              <template v-if="processDays >= 1"><animated-number :value="processDays" :trigger="refreshTick" />
+                天</template>
+              <template v-else><animated-number :value="Number(uptimeHours)" :trigger="refreshTick" /> 小时</template>
+            </b>
+          </span>
+          <span><i class="el-icon-open"></i> 系统开机
+            <b><animated-number v-if="osUptimeDays" :value="osUptimeDays" :trigger="refreshTick" /><template
+                v-else>--</template> 天</b>
+          </span>
+          <span><i class="el-icon-connection"></i> 服务在线
+            <b><animated-number :value="onlineServiceCount" :trigger="refreshTick" />/<animated-number
+                :value="totalServiceCount" :trigger="refreshTick" /></b>
+          </span>
         </div>
       </div>
     </div>
@@ -36,6 +52,9 @@
 
 <script>
 import { getPublicStatusOverview } from "@/api/fx67ll/server/status";
+import panelRefreshMixin from "../refreshMixin";
+import PanelRefresh from "./PanelRefresh.vue";
+import AnimatedNumber from "./AnimatedNumber.vue";
 
 /**
  * 运行稳定性面板（脱敏数据，管理员 / 非管理员首页均可展示）
@@ -43,6 +62,8 @@ import { getPublicStatusOverview } from "@/api/fx67ll/server/status";
  */
 export default {
   name: "HomeServiceStatus",
+  components: { PanelRefresh, AnimatedNumber },
+  mixins: [panelRefreshMixin],
   data() {
     return {
       available: false,
@@ -57,10 +78,6 @@ export default {
     processDays() {
       const hours = Number(this.uptimeHours) || 0;
       return Math.round((hours / 24) * 10) / 10;
-    },
-    processDaysText() {
-      const days = this.processDays;
-      return days >= 1 ? `${days} 天` : `${Number(this.uptimeHours) || 0} 小时`;
     },
     // 稳定运行占比 = 进程运行天数 / 系统开机天数
     stabilityRate() {
@@ -99,8 +116,12 @@ export default {
     this.fetchStatus();
   },
   methods: {
+    // 面板刷新：标题右侧按钮触发，供欢迎区一键刷新调用
+    refresh() {
+      return this.runRefresh(() => this.fetchStatus());
+    },
     fetchStatus() {
-      getPublicStatusOverview()
+      return getPublicStatusOverview()
         .then((response) => {
           const data = (response && response.data) || {};
           this.onlineServiceCount = Number(data.onlineServiceCount) || 0;
@@ -198,11 +219,14 @@ export default {
     font-size: 24px;
     font-weight: 600;
     line-height: 1.1;
+    margin-right: 1px;
   }
 
   small {
     color: var(--home-muted);
     font-size: 11px;
+    position: relative;
+    top: -2px;
   }
 
   .ring-caption {
@@ -259,8 +283,12 @@ export default {
   }
 
   b {
+    /* 数值滚动拆成多个内联节点后需保证同行呈现，禁止在数字与单位之间换行 */
+    display: inline-flex;
+    align-items: baseline;
     color: var(--home-ink);
     font-size: 13px;
+    white-space: nowrap;
   }
 }
 

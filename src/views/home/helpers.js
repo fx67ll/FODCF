@@ -252,7 +252,7 @@ export function dailyFreshContent(date = new Date()) {
 
 /**
  * 管理员默认常用入口的分组定义：label 为对外名称，keys 为菜单标题匹配别名
- * 用于无本机使用记录时的默认入口（需求 #4）
+ * 用于无本机使用记录时的默认入口
  */
 export const DEFAULT_QUICK_GROUPS = [
   { label: "每日总览", keys: ["总览", "概览", "日报", "首页"] },
@@ -261,7 +261,7 @@ export const DEFAULT_QUICK_GROUPS = [
   { label: "常用链接", keys: ["链接", "友情", "外链"] },
 ];
 
-/** 按当前时段给出默认入口分组的优先排序（需求 #5：按时段动态切换） */
+/** 按当前时段给出默认入口分组的优先排序（按时段动态切换） */
 export function timeBasedDefaultGroups(hour = new Date().getHours()) {
   if (hour < 6) return ["备忘录", "常用链接", "每日总览", "盈亏"];
   if (hour < 11) return ["每日总览", "盈亏", "常用链接", "备忘录"];

@@ -27,14 +27,14 @@
             <strong><i class="el-icon-s-platform"></i> 后端技术</strong>
             <div class="tech-tags">
               <span v-for="item in backendTechnologies" :key="item" title="点击复制" @click="copyTech(item)">{{ item
-              }}</span>
+                }}</span>
             </div>
           </div>
           <div class="tech-col">
             <strong><i class="el-icon-monitor"></i> 前端技术</strong>
             <div class="tech-tags">
               <span v-for="item in frontendTechnologies" :key="item" title="点击复制" @click="copyTech(item)">{{ item
-              }}</span>
+                }}</span>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ import "flipclock/dist/flipclock.css";
 import moment from "moment";
 
 /**
- * 从旧首页迁移的品牌信息 / 技术选型 / 版本彩蛋（对应需求 #7）
+ * 从旧首页迁移的品牌信息 / 技术选型 / 版本彩蛋
  */
 export default {
   name: "HomeOriginBlock",
@@ -117,7 +117,7 @@ export default {
     }
   },
   methods: {
-    // 点击复制技术项，弹出复制成功提示（需求 #6）
+    // 点击复制技术项，弹出复制成功提示
     copyTech(text) {
       const textStr = String(text || "");
       const done = () => this.$message.success(`已复制：${textStr}`);

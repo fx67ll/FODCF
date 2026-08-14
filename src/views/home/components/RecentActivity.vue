@@ -24,11 +24,11 @@
             <small class="recent-time">
               <i class="el-icon-time"></i>{{ relativeTime(item.lastVisitedAt) }}
             </small>
-            <!-- 需求 #4：智能角色标签（基于访问频次派生） -->
+            <!-- 智能角色标签（基于访问频次派生） -->
             <span v-if="roleText(item)" class="recent-role" :class="roleClass(item)">{{ roleText(item) }}</span>
           </div>
         </div>
-        <!-- 需求 #4：右侧 7 天迷你频次图，填充原本空旷的右侧 -->
+        <!-- 右侧 7 天迷你频次图，填充原本空旷的右侧 -->
         <div class="recent-insight" :title="`近 7 天访问 ${item.count || 0} 次`">
           <div class="recent-spark">
             <span v-for="(bar, i) in sparkBars(item)" :key="i" class="recent-spark-bar"
@@ -50,8 +50,8 @@ import HomeEmptyState from "./EmptyState.vue";
 /**
  * 最近活动时间线卡片（仅本机 localStorage 数据）
  * 与「常用入口」（按频率）形成互补：本卡片按最近访问时间排序，
- * 额外展示相对时间、访问次数与所属分组，便于回溯近期操作（需求 #3）。
- * 供管理员首页（#3）与访客首页（#4，置于技术架构卡片下方）复用。
+ * 额外展示相对时间、访问次数与所属分组，便于回溯近期操作。
+ * 供管理员首页与访客首页（置于技术架构卡片下方）复用。
  */
 export default {
   name: "HomeRecentActivity",
@@ -72,7 +72,7 @@ export default {
     visibleItems() {
       return (this.items || []).slice(0, this.limit);
     },
-    // 需求 #4：当前可见项中的最大访问次数，用于派生「本周主力」角色
+    // 当前可见项中的最大访问次数，用于派生「本周主力」角色
     maxCount() {
       return this.visibleItems.reduce(
         (max, item) => Math.max(max, Number(item.count) || 0),
@@ -82,7 +82,7 @@ export default {
   },
   methods: {
     /**
-     * 需求 #4：根据访问频次派生一句话角色描述
+     * 根据访问频次派生一句话角色描述
      * 本周主力（最高频且≥3）/ 高频访问（≥5）/ 常用（≥2），单次访问不展示
      */
     roleText(item) {
@@ -97,7 +97,7 @@ export default {
       if (this.maxCount >= 3 && count === this.maxCount) return "lead";
       return "";
     },
-    /** 需求 #4：把 item.daily（7 元数组）归一化为迷你频次图柱高 */
+    /** 把 item.daily（7 元数组）归一化为迷你频次图柱高 */
     sparkBars(item) {
       const source = Array.isArray(item.daily) ? item.daily.slice(0, 7) : [];
       const daily = source.slice();
@@ -271,7 +271,7 @@ $muted: #7c8b84;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* 需求 #4：智能角色标签 */
+/* 智能角色标签 */
 .recent-role {
   flex: 0 0 auto;
   padding: 1px 7px;
@@ -289,7 +289,7 @@ $muted: #7c8b84;
   }
 }
 
-/* 需求 #4：右侧 7 天迷你频次图，填充原本空旷的右侧 */
+/* 右侧 7 天迷你频次图，填充原本空旷的右侧 */
 .recent-insight {
   display: flex;
   flex: 0 0 auto;

@@ -33,7 +33,7 @@ import NoticeDetailDialog from "@/views/system/notice/component/NoticeDetailDial
 import { NOTICE_PUBLIC_PATH } from "@/views/system/notice/constants";
 
 /**
- * 通知公告条（对应需求 #5：保留非管理员首页的公告条，沿用现有实现）
+ * 通知公告条（对应保留非管理员首页的公告条，沿用现有实现）
  */
 export default {
   name: "HomeNoticeBanner",
@@ -63,8 +63,12 @@ export default {
       const dict = (this.dict.type.sys_notice_type || []).find((item) => item.value === noticeType);
       return dict ? dict.label : "公告";
     },
+    // 供欢迎区一键刷新调用
+    refresh() {
+      return this.loadLatestNotice();
+    },
     loadLatestNotice() {
-      latestPublicNotice()
+      return latestPublicNotice()
         .then((response) => {
           this.latestNotice = response.data || null;
         })

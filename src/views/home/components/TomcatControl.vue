@@ -3,12 +3,17 @@
     <div class="panel-head">
       <div>
         <span class="eyebrow">TOMCAT SERVICE</span>
-        <h3>Tomcat 服务</h3>
+        <div class="panel-title-row">
+          <h3>Tomcat 服务</h3>
+          <panel-refresh :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refresh" />
+        </div>
       </div>
-      <!-- 需求 #3：右上图标风格对齐其他卡片 .panel-glyph -->
-      <button type="button" class="panel-glyph-btn" title="Tomcat 管理页" @click="openTomcat">
-        <i class="el-icon-monitor panel-glyph glyph-flicker"></i>
-      </button>
+      <div class="panel-head-actions">
+        <!-- 右上图标风格对齐其他卡片 .panel-glyph -->
+        <button type="button" class="panel-glyph-btn" title="Tomcat 管理页" @click="openTomcat">
+          <i class="el-icon-monitor panel-glyph glyph-flicker"></i>
+        </button>
+      </div>
     </div>
 
     <!-- 系统锁定（不匹配 / 未安装）：不可操作 -->
@@ -21,31 +26,30 @@
     </div>
 
     <template v-else>
-      <!-- 需求 #3：运行状态 + 刷新（左半）与可用���存环形仪表（右半）同一行，各占一半 -->
-      <div class="tomcat-top-row">
+      <!-- 运行状态（左半）与可用内存环形仪表（右半）同一行，各占一半 -->
+      <div class="tomcat-top-row" :class="{ 'refresh-flash': flashing }">
         <div class="tomcat-status">
           <span class="tomcat-dot" :class="dotClass"></span>
           <div class="tomcat-status-copy">
             <strong>{{ status || "加载中..." }}</strong>
             <small>{{ statusHint }}</small>
           </div>
-          <button type="button" class="tomcat-refresh" :disabled="isRefreshing" @click="handleRefresh">
-            <i class="el-icon-refresh" :class="{ spinning: isRefreshing, 'spin-once': spinOnce }"
-              @animationend="spinOnce = false"></i>
-          </button>
         </div>
 
-        <!-- 需求 #3：可用内存改为环形仪表盘（移除进度条） -->
+        <!-- 可用内存改为环形仪表盘（移除进度条） -->
         <div v-if="hasMemory" class="tomcat-memory">
           <div class="tomcat-mem-text">
             <span class="tomcat-mem-label"><i class="el-icon-coin"></i> 可用内存</span>
-            <b class="tomcat-mem-value">{{ formatMem(memoryInfo.availableMemoryMb)
-              }}<small> / {{ formatMem(memoryInfo.totalMemoryMb) }}</small></b>
+            <b class="tomcat-mem-value"><animated-number :value="availMemValue" :trigger="refreshTick" snap-on-change />
+              {{ availMemUnit }}<small> / <animated-number :value="totalMemValue" :trigger="refreshTick"
+                  snap-on-change />
+                {{ totalMemUnit }}</small></b>
             <small class="tomcat-mem-hint">清理缓存前可参考</small>
           </div>
           <div class="tomcat-mem-ring" :class="memoryBarClass" :style="{ '--mem-rate': usedPercent + '%' }">
             <div class="tomcat-mem-ring-inner">
-              <strong>{{ usedPercent }}<small>%</small></strong>
+              <strong><animated-number :value="usedPercent" :trigger="refreshTick"
+                  snap-on-change /><small>%</small></strong>
               <span>已用</span>
             </div>
           </div>
@@ -54,11 +58,11 @@
 
       <div class="tomcat-actions">
         <button type="button" class="tomcat-btn start" :disabled="isRunning || isOperating" @click="handleStart">
-          <i :class="isOperating && pendingOp === 'start' ? 'el-icon-loading' : 'el-icon-video-play'"></i>
+          <i :class="isOperating && pendingOp === 'start' ? 'el-icon-loading' : 'el-icon-mouse'"></i>
           启动服务
         </button>
         <button type="button" class="tomcat-btn stop" :disabled="!isRunning || isOperating" @click="handleStop">
-          <i :class="isOperating && pendingOp === 'stop' ? 'el-icon-loading' : 'el-icon-video-pause'"></i>
+          <i :class="isOperating && pendingOp === 'stop' ? 'el-icon-loading' : 'el-icon-switch-button'"></i>
           停止服务
         </button>
         <button type="button" class="tomcat-btn cache" :disabled="clearingCache" @click="handleClearCache">
@@ -66,8 +70,6 @@
           清理缓存
         </button>
       </div>
-
-      <p v-if="lastRefreshTime" class="tomcat-foot">最后刷新 · {{ lastRefreshTime }}</p>
     </template>
   </section>
 </template>
@@ -79,6 +81,9 @@ import {
   stopTomcat,
   clearSystemCache,
 } from "@/api/fx67ll/server/tomcat";
+import panelRefreshMixin from "../refreshMixin";
+import PanelRefresh from "./PanelRefresh.vue";
+import AnimatedNumber from "./AnimatedNumber.vue";
 
 // 状态 → 指示灯/胶囊样式映射（与号码台账 Tomcat 管理页口径一致）
 const RUNNING = "运行中";
@@ -86,6 +91,8 @@ const STOPPED = "已停止";
 
 export default {
   name: "HomeTomcatControl",
+  components: { PanelRefresh, AnimatedNumber },
+  mixins: [panelRefreshMixin],
   data() {
     return {
       status: "加载中...",
@@ -96,13 +103,9 @@ export default {
       isOperating: false,
       // 当前进行中的操作类型，用于切换按钮 loading 图标
       pendingOp: "",
-      isRefreshing: false,
-      // 需求 #3：刷新按钮点击至少满圈旋转一次（即便接口秒回）
-      spinOnce: false,
       clearingCache: false,
-      lastRefreshTime: "",
       refreshInterval: null,
-      // 需求 #6：内存指标（与 Tomcat 管理页同源 memoryInfo）
+      // 内存指标（与 Tomcat 管理页同源 memoryInfo）
       memoryInfo: {
         totalMemoryMb: 0,
         availableMemoryMb: 0,
@@ -119,7 +122,7 @@ export default {
       if (this.status === STOPPED) return "stopped";
       return "pending";
     },
-    // 需求 #6：内存指标派生
+    // 内存指标派生
     hasMemory() {
       return Number(this.memoryInfo.totalMemoryMb) > 0;
     },
@@ -142,6 +145,19 @@ export default {
       if (this.isSystemLocked) return this.lockMessage || "该功能不可用";
       return "正在获取服务状态…";
     },
+    // 内存数值与单位拆分展示（MB / GB 自适应），数值部分交给滚动动画
+    availMemValue() {
+      return this.toMemNumber(this.memoryInfo.availableMemoryMb);
+    },
+    availMemUnit() {
+      return this.toMemUnit(this.memoryInfo.availableMemoryMb);
+    },
+    totalMemValue() {
+      return this.toMemNumber(this.memoryInfo.totalMemoryMb);
+    },
+    totalMemUnit() {
+      return this.toMemUnit(this.memoryInfo.totalMemoryMb);
+    },
   },
   created() {
     this.queryStatus();
@@ -157,7 +173,7 @@ export default {
         .then((response) => {
           const data = (response && response.data) || {};
           this.status = data.status || "未知";
-          // 需求 #6：记录内存指标（与 Tomcat 管理页同源）
+          // 记录内存指标（与 Tomcat 管理页同源）
           const mem = data.memoryInfo || {};
           this.memoryInfo = {
             totalMemoryMb: Number(mem.totalMemoryMb) || 0,
@@ -171,7 +187,6 @@ export default {
             this.isSystemLocked = false;
             this.lockMessage = "";
           }
-          this.lastRefreshTime = this.formatNow();
         })
         .catch((error) => {
           if (!error._isHandled) {
@@ -180,13 +195,9 @@ export default {
           this.status = "未知";
         });
     },
-    handleRefresh() {
-      // 需求 #3：触发一次性满圈旋转，保证点击交互完整
-      this.spinOnce = true;
-      this.isRefreshing = true;
-      this.queryStatus().finally(() => {
-        this.isRefreshing = false;
-      });
+    // 面板刷新：标题右侧按钮触发，供欢迎区一键刷新调用
+    refresh() {
+      return this.runRefresh(() => this.queryStatus());
     },
     handleStart() {
       this.$confirm("确定要启动 Tomcat 服务吗？", "提示", {
@@ -278,7 +289,7 @@ export default {
         })
         .catch(() => { });
     },
-    // 启动成功后右上角弹出 Jenkins 跳转通知（与 Tomcat 管理页一致，需求 #5）
+    // 启动成功后右上角弹出 Jenkins 跳转通知（与 Tomcat 管理页一致）
     notifyJenkins() {
       const h = this.$createElement;
       this.$notify({
@@ -306,20 +317,17 @@ export default {
         position: "top-right",
       });
     },
-    // 需求 #6：内存单位智能展示（MB / GB）
-    formatMem(mb) {
+    // 内存数值换算：GB 保留一位小数，MB 取整
+    toMemNumber(mb) {
       const value = Number(mb) || 0;
-      if (value >= 1024) return `${(value / 1024).toFixed(1)} GB`;
-      return `${value} MB`;
+      return value >= 1024 ? Math.round((value / 1024) * 10) / 10 : value;
     },
-    // 需求 #6：右上图标跳转 Tomcat 管理页
+    toMemUnit(mb) {
+      return (Number(mb) || 0) >= 1024 ? "GB" : "MB";
+    },
+    // 右上图标跳转 Tomcat 管理页
     openTomcat() {
       this.$router.push("/ruoyi/tool/server/tomcat").catch(() => { });
-    },
-    formatNow() {
-      const pad = (value) => String(value).padStart(2, "0");
-      const d = new Date();
-      return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     },
   },
 };
@@ -342,7 +350,7 @@ $memory-track: #dce9e0;
   flex-direction: column;
 }
 
-/* 需求 #3：右上图标对齐其他卡片 .panel-glyph 风格（可点击跳转 Tomcat 管理页） */
+/* 右上图标对齐其他卡片 .panel-glyph 风格（可点击跳转 Tomcat 管理页） */
 .panel-glyph {
   color: $primary;
   font-size: 22px;
@@ -359,7 +367,7 @@ $memory-track: #dce9e0;
   border-radius: 10px;
   cursor: pointer;
 
-  /* 需求 #1：悬浮动效收敛为共享工具类 .glyph-flicker，仅保留配色加深 */
+  /* 悬浮动效收敛为共享工具类 .glyph-flicker，仅保留配色加深 */
   &:hover .panel-glyph {
     color: $primary-dark;
   }
@@ -392,7 +400,7 @@ $memory-track: #dce9e0;
   }
 }
 
-/* 需求 #3：运行状态 + 内存仪表同一行容器 */
+/* 运行状态 + 内存仪表同一行容器 */
 .tomcat-top-row {
   display: flex;
   align-items: center;
@@ -435,7 +443,7 @@ $memory-track: #dce9e0;
   }
 }
 
-/* 需求 #6：状态点优雅动效（运行脉冲 / 停止呼吸） */
+/* 状态点优雅动效（运行脉冲 / 停止呼吸） */
 @keyframes tomcat-dot-pulse {
 
   0%,
@@ -479,60 +487,9 @@ $memory-track: #dce9e0;
   }
 }
 
-.tomcat-refresh {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  color: $primary-dark;
-  background: var(--home-primary-softer);
-  border: 1px solid var(--home-border);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease,
-    transform 0.15s ease;
+/* 刷新按钮样式由共享 .panel-refresh 提供 */
 
-  i {
-    transition: transform 0.45s ease;
-  }
-
-  /* 需求 #3：悬浮换色 + 图标半圈旋转（刷新中由 .spinning 接管） */
-  &:hover:not(:disabled) {
-    color: #fff;
-    background: $primary;
-    border-color: $primary;
-
-    i:not(.spinning) {
-      transform: rotate(180deg);
-    }
-  }
-
-  /* 需求 #3：点击按压反馈 */
-  &:active:not(:disabled) {
-    transform: scale(0.9);
-  }
-
-  &:disabled {
-    cursor: progress;
-    opacity: 0.7;
-  }
-
-  .spinning {
-    animation: tomcat-spin 0.9s linear infinite;
-  }
-
-  /* 需求 #3：点击满圈旋转一次，与 .spinning 无限旋转叠加时一次性先播放完 */
-  .spin-once {
-    animation: tomcat-spin 0.6s linear 1;
-  }
-}
-
-@keyframes tomcat-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 需求 #3：可用内存环形仪表盘（右半） */
+/* 可用内存环形仪表盘（右半） */
 .tomcat-memory {
   display: flex;
   flex: 1;
@@ -565,6 +522,8 @@ $memory-track: #dce9e0;
     color: $ink;
     font-size: 16px;
     font-weight: 600;
+    /* 数值滚动拆成多个内联节点，禁止在数字与单位之间换行 */
+    white-space: nowrap;
 
     small {
       color: $muted;
@@ -659,17 +618,19 @@ $memory-track: #dce9e0;
 
   i {
     font-size: 15px;
+    position: relative;
+    top: 1px;
   }
 
   &.start {
     color: #fff;
-    background: linear-gradient(135deg, #67c23a, #5daf34);
+    background: linear-gradient(135deg, #2ecc71, #2ecc71);
     box-shadow: 0 6px 14px rgba(103, 194, 58, 0.25);
   }
 
   &.stop {
     color: #fff;
-    /* 需求 #3：停止服务改用更柔和的珊瑚红，降低视觉刺激 */
+    /* 停止服务改用更柔和的珊瑚红，降低视觉刺激 */
     background: linear-gradient(135deg, #f3a0a0, #e88080);
     box-shadow: 0 6px 14px rgba(232, 128, 128, 0.2);
   }
@@ -697,13 +658,6 @@ $memory-track: #dce9e0;
     opacity: 0.5;
     transform: none;
   }
-}
-
-.tomcat-foot {
-  margin: 14px 0 0;
-  color: #9daea4;
-  font-size: 11px;
-  text-align: right;
 }
 
 .panel-head {

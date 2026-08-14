@@ -27,6 +27,15 @@
               </small>
             </span>
           </button>
+          <!-- 一键刷新首页所有面板 -->
+          <button class="hero-btn secondary refresh" type="button" :disabled="refreshAllLoading" @click="refreshAll">
+            <i :class="refreshAllLoading ? 'el-icon-loading' : 'el-icon-refresh'"></i>
+            <span class="hero-btn-copy">
+              <strong>刷新数据</strong>
+              <small v-if="refreshAllTime">上次刷新 {{ refreshAllTime }}</small>
+              <small v-else>刷新首页全部面板</small>
+            </span>
+          </button>
         </div>
       </div>
       <div class="hero-time">
@@ -39,15 +48,16 @@
       <span class="hero-orbit orbit-b"></span>
     </section>
 
-    <!-- 旧首页迁移内容置顶（需求 #7） -->
+    <!-- 旧首页迁移内容置顶 -->
     <origin-block />
 
-    <!-- 关键指标 -->
-    <section class="metric-grid reveal reveal-1">
+    <!-- 关键指标（一键刷新 / 台账刷新时闪烁） -->
+    <section :class="{ 'refresh-flash': flashing }" class="metric-grid reveal reveal-1">
       <home-metric-card icon="el-icon-menu" :value="accessibleMenus.length" label="可访问菜单" note="当前权限范围" />
       <home-metric-card icon="el-icon-mouse" alt="alt-1" :value="summary.totalVisits" label="一周打开次数" note="本机聚合记录" />
       <home-metric-card icon="el-icon-date" alt="alt-2" :value="summary.activeDays" label="活跃天数" note="最近 7 个自然日" />
-      <home-metric-card icon="el-icon-tickets" alt="alt-3" :value="lotteryTotalBets" label="累计购买注数" note="号码台账累计" />
+      <home-metric-card icon="el-icon-tickets" alt="alt-3" :value="lotteryTotalBets" :trigger="refreshTick"
+        label="累计购买注数" note="号码台账累计" />
     </section>
 
     <!-- 常用入口 + 访问趋势 -->
@@ -57,36 +67,42 @@
         empty-desc="打开任意业务菜单后，这里会生成近 7 天访问趋势" />
     </section>
 
-    <!-- 号码台账统计（需求 #8）+ 服务脉搏 + 日常通勤（需求 #9） -->
+    <!-- 号码台账统计 + 服务脉搏 + 日常通勤 -->
     <section class="grid three-col reveal reveal-3">
       <section class="panel lottery-panel">
         <div class="panel-head">
           <div>
             <span class="eyebrow">NUMBER LEDGER</span>
-            <h3>号码台账</h3>
+            <div class="panel-title-row">
+              <h3>号码台账</h3>
+              <panel-refresh :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refreshLottery" />
+            </div>
           </div>
-          <button v-if="lotteryPath" type="button" class="panel-glyph-btn" title="号码台账" @click="goPath(lotteryPath)">
-            <i class="el-icon-coin panel-glyph glyph-rotate"></i>
-          </button>
-          <i v-else class="el-icon-coin panel-glyph glyph-rotate"></i>
+          <div class="panel-head-actions">
+            <button v-if="lotteryPath" type="button" class="panel-glyph-btn" title="号码台账" @click="goPath(lotteryPath)">
+              <i class="el-icon-coin panel-glyph glyph-rotate"></i>
+            </button>
+            <i v-else class="el-icon-coin panel-glyph glyph-rotate"></i>
+          </div>
         </div>
 
-        <div class="lottery-summary">
+        <div :class="{ 'refresh-flash': flashing }" class="lottery-summary">
           <div>
-            <strong>￥{{ lotteryTotalSpent }}</strong>
+            <strong>￥<animated-number :value="lotteryTotalSpent" :trigger="refreshTick" /></strong>
             <small>总购买金额</small>
           </div>
           <div>
-            <strong>￥{{ lotteryTotalWon }}</strong>
+            <strong>￥<animated-number :value="lotteryTotalWon" :trigger="refreshTick" /></strong>
             <small>中奖金额</small>
           </div>
           <div>
-            <strong :class="{ positive: lotteryRecovery >= 100 }">{{ lotteryRecovery }}%</strong>
+            <strong :class="{ positive: lotteryRecovery >= 100 }"><animated-number :value="lotteryRecovery"
+                :trigger="refreshTick" />%</strong>
             <small>利润回本率</small>
           </div>
         </div>
 
-        <div v-if="lotteryHasData" class="lottery-chart">
+        <div v-if="lotteryHasData" :class="{ 'refresh-flash': flashing }" class="lottery-chart">
           <home-stat-chart :option="lotteryTypeOption" :has-data="true" empty-icon="el-icon-coin" empty-title="暂无号码台账数据"
             empty-desc="在号码台账页录入记录后，这里会按彩种汇总购买与中奖金额" />
         </div>
@@ -97,7 +113,7 @@
         </button>
       </section>
 
-      <home-service-status />
+      <home-service-status ref="stability" />
 
       <section class="panel commute-panel">
         <div class="panel-head">
@@ -120,17 +136,17 @@
       </section>
     </section>
 
-    <!-- 未开奖号码快捷核对（需求 #3）+ Tomcat 服务管理（需求 #5） -->
+    <!-- 未开奖号码快捷核对 + Tomcat 服务管理 -->
     <section class="grid two-col reveal reveal-4">
-      <home-undrawn-numbers />
-      <home-tomcat-control />
+      <home-undrawn-numbers ref="undrawn" />
+      <home-tomcat-control ref="tomcat" />
     </section>
 
-    <!-- 最近活动时间线（需求 #3：时间线增强，按最近访问时间回溯，与常用入口按频率区分） -->
+    <!-- 最近活动时间线（时间线增强，按最近访问时间回溯，与常用入口按频率区分） -->
     <home-recent-activity class="reveal reveal-5" :items="recentItems" @navigate="goPath" />
 
-    <!-- 底部备忘录（需求 #2：与管理员首页其他模块统一） -->
-    <home-memo-block class="reveal reveal-5" />
+    <!-- 底部备忘录（与管理员首页其他模块统一） -->
+    <home-memo-block ref="memo" class="reveal reveal-5" />
   </main>
 </template>
 
@@ -157,12 +173,17 @@ import HomeMemoBlock from "./components/MemoBlock.vue";
 import HomeRecentActivity from "./components/RecentActivity.vue";
 import HomeUndrawnNumbers from "./components/UndrawnNumbers.vue";
 import HomeTomcatControl from "./components/TomcatControl.vue";
+import AnimatedNumber from "./components/AnimatedNumber.vue";
+import PanelRefresh from "./components/PanelRefresh.vue";
+import panelRefreshMixin from "./refreshMixin";
 
 const LOTTERY_TYPE_LABEL = { 1: "大乐透", 2: "双色球", 3: "排列三", 4: "排列五", 5: "七星彩" };
 
 export default {
   name: "AdminHome",
-  components: { OriginBlock, HomeQuickAccess, HomeStatChart, HomeMetricCard, HomeTrendChartPanel, HomeServiceStatus, HomeEmptyState, HomeMemoBlock, HomeRecentActivity, HomeUndrawnNumbers, HomeTomcatControl },
+  components: { OriginBlock, HomeQuickAccess, HomeStatChart, HomeMetricCard, HomeTrendChartPanel, HomeServiceStatus, HomeEmptyState, HomeMemoBlock, HomeRecentActivity, HomeUndrawnNumbers, HomeTomcatControl, PanelRefresh, AnimatedNumber },
+  // 号码台账面板的刷新状态与闪烁动画（refreshing / lastRefreshTime / flashing）由混入提供
+  mixins: [panelRefreshMixin],
   data() {
     return {
       now: new Date(),
@@ -171,8 +192,12 @@ export default {
       fresh: dailyFreshContent(),
       // 号码台账逐彩种聚合（来自后端 listTotalReward，与统计弹窗同源）
       lotteryTotalRewards: [],
-      // 需求 #1：Fail2Ban 拦截攻击次数（用于丰富安全防护按钮标签）；null 表示未加载 / 不可用
+      // Fail2Ban 拦截攻击次数（用于丰富安全防护按钮标签）；null 表示未加载 / 不可用
       fail2banAttackCount: null,
+      // 一键刷新进行中
+      refreshAllLoading: false,
+      // 一键刷新完成时间戳
+      refreshAllTime: "",
       commuteUrl: "https://map.fx67ll.com/daily",
       commuteLoaded: false,
       commuteLoading: true,
@@ -196,7 +221,7 @@ export default {
     accessibleMenus() {
       return collectAccessibleMenus(this.$store.getters.sidebarRouters);
     },
-    // 需求 #2：「继续最近工作」按钮描述即将恢复的任务（取首个常用入口标题）
+    // 「继续最近工作」按钮描述即将恢复的任务（取首个常用入口标题）
     resumeTarget() {
       return this.quickItems.length ? this.quickItems[0].title : "";
     },
@@ -204,7 +229,7 @@ export default {
       const allowed = new Set(this.accessibleMenus.map((item) => item.path));
       const frequent = this.summary.topMenus.filter((item) => allowed.has(item.path)).slice(0, 6);
       if (frequent.length) return frequent;
-      // 无本机使用记录：按时段优先级匹配默认入口（需求 #4 / #5）
+      // 无本机使用记录：按时段优先级匹配默认入口
       const defaults = pickDefaultQuickMenus(this.accessibleMenus, new Date().getHours());
       return defaults.length
         ? defaults
@@ -214,7 +239,7 @@ export default {
       return buildTrendOption(this.summary.dailyTrend);
     },
     // 按 numberType 聚合，固定输出 5 个彩种（含无记录的彩种，保证���表稳定呈现）
-    // 数据源：后端 listTotalReward（与「历史号码中奖金额统计」弹窗同源），修正前端聚合偏差（需求 #4）
+    // 数据源：后端 listTotalReward（与「历史号码中奖金额统计」弹窗同源），修正前端聚合偏差
     lotteryTypeStats() {
       const labelToType = {};
       Object.entries(LOTTERY_TYPE_LABEL).forEach(([type, label]) => {
@@ -242,7 +267,7 @@ export default {
     lotteryTotalTickets() {
       return this.lotteryTypeStats.reduce((sum, stat) => sum + stat.tickets, 0);
     },
-    // 累计购买注数（需求 #2：指标卡由「期数」改为「注数」）
+    // 累计购买注数（指标卡由「期数」改为「注数」）
     lotteryTotalBets() {
       return this.lotteryTypeStats.reduce((sum, stat) => sum + stat.numbers, 0);
     },
@@ -281,7 +306,7 @@ export default {
   },
   mounted() {
     this.fetchLotteryTotal();
-    // 需求 #1：拉取 Fail2Ban 攻击数据，丰富安全防护按钮标签（失败静默回退纯标签）
+    // 拉取 Fail2Ban 攻击数据，丰富安全防护按钮标签（失败静默回退纯标签）
     this.fetchFail2banStatus();
     this.timer = setInterval(() => {
       this.now = new Date();
@@ -299,16 +324,46 @@ export default {
     clearInterval(this.timer);
   },
   methods: {
+    // 号码台账面板刷新：标题右侧按钮触发
+    refreshLottery() {
+      return this.runRefresh(() => this.fetchLotteryTotal());
+    },
     fetchLotteryTotal() {
       // 直接消费后端逐彩种聚合（listTotalReward），与「历史号码中奖金额统计」弹窗同源，
-      // 修正前端 listLog(9999) 自行聚合带来的注数遗漏与超长截断偏差（需求 #4）
-      listTotalReward()
+      // 修正前端 listLog(9999) 自行聚合带来的注数遗漏与超长截断偏差
+      return listTotalReward()
         .then((response) => {
           this.lotteryTotalRewards = (response && response.rows) || [];
         })
         .catch(() => {
           this.lotteryTotalRewards = [];
         });
+    },
+    // 一键刷新首页所有可刷新面板：各面板动画由其自身 refresh() 触发
+    refreshAll() {
+      if (this.refreshAllLoading) return;
+      this.refreshAllLoading = true;
+      const tasks = [
+        this.refreshLottery(),
+        // Fail2Ban 拦截数：仅取数，不占用台账面板的 refreshing 状态
+        this.fetchFail2banStatus().catch(() => { }),
+        this.$refs.undrawn ? this.$refs.undrawn.refresh() : Promise.resolve(),
+        this.$refs.tomcat ? this.$refs.tomcat.refresh() : Promise.resolve(),
+        this.$refs.stability ? this.$refs.stability.refresh() : Promise.resolve(),
+        this.$refs.memo ? this.$refs.memo.refresh() : Promise.resolve(),
+        Promise.resolve(this.refreshLocalSummary()),
+      ];
+      Promise.all(tasks)
+        .catch(() => { })
+        .finally(() => {
+          this.refreshAllLoading = false;
+          this.refreshAllTime = this.formatRefreshTime();
+        });
+    },
+    // 本机使用统计（指标卡 / 趋势 / 常用入口 / 最近活动）
+    refreshLocalSummary() {
+      this.summary = getMenuUsageSummary(this.userName);
+      this.flashData();
     },
     openFirstQuick() {
       if (this.quickItems.length) this.goPath(this.quickItems[0].path);
@@ -317,7 +372,7 @@ export default {
       if (!path) return;
       this.$router.push(path).catch(() => { });
     },
-    // 需求 #2：服务大盘按钮去重后改为跳 Fail2Ban 监控（与下方运行稳定性卡片不再重复）
+    // 服务大盘按钮去重后改为跳 Fail2Ban 监控（与下方运行稳定性卡片不再重复）
     openFail2Ban() {
       if (this.fail2banPath) {
         this.goPath(this.fail2banPath);
@@ -325,9 +380,9 @@ export default {
         this.$message.warning("未找到 Fail2Ban 监控入口，请确认当前账号菜单权限");
       }
     },
-    // 需求 #1：读取 Fail2Ban 服务状态中的拦截攻击次数（与 Fail2Ban 监控页同源）
+    // 读取 Fail2Ban 服务状态中的拦截攻击次数（与 Fail2Ban 监控页同源）
     fetchFail2banStatus() {
-      getFail2banStatus()
+      return getFail2banStatus()
         .then((response) => {
           const data = (response && response.data) || {};
           // 系统不匹配 / 未安装：功能不可用，回退纯标签
@@ -341,14 +396,14 @@ export default {
           this.fail2banAttackCount = null;
         });
     },
-    // 需求 #1：攻击次数紧凑展示（千 / 万）
+    // 攻击次数紧凑展示（千 / 万）
     formatAttackCount(value) {
       const n = Number(value) || 0;
       if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
       if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
       return String(n);
     },
-    // 需求 #7：日常通勤指南针点击在新窗口打开通勤地图
+    // 日常通勤指南针点击在新窗口打开通勤地图
     openCommuteMap() {
       if (this.commuteUrl) window.open(this.commuteUrl, "_blank");
     },
@@ -473,7 +528,7 @@ $muted: #7c8b84;
       }
     }
 
-    /* 需求 #2：安全防护按钮——图标 + 文字 + 醒目统计条，复合卡片式 */
+    /* 安全防护按钮——图标 + 文字 + 醒目统计条，复合卡片式 */
     &.secondary.security {
       color: $primary-dark;
       background: #fff;
@@ -491,7 +546,7 @@ $muted: #7c8b84;
           font-weight: 700;
         }
 
-        /* 需求 #2：已加载统计时用主色渐变高亮，优化过窄绿色区域 */
+        /* 已加载统计时用主色渐变高亮，优化过窄绿色区域 */
         &.loaded {
           color: #fff;
           background: linear-gradient(135deg, $primary, $primary-dark);
@@ -506,6 +561,37 @@ $muted: #7c8b84;
         transform: translateY(-2px);
         background: var(--home-primary-softer);
         box-shadow: 0 12px 24px rgba(46, 204, 113, 0.18);
+      }
+    }
+
+    /* 一键刷新按钮：与安全防护按钮同风格 */
+    &.secondary.refresh {
+      color: $primary-dark;
+      background: #fff;
+      border: 1px solid #c7ebd3;
+
+      small {
+        margin-top: 2px;
+        color: $muted;
+      }
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        background: var(--home-primary-softer);
+        box-shadow: 0 12px 24px rgba(46, 204, 113, 0.18);
+
+        i {
+          transform: rotate(180deg);
+        }
+      }
+
+      i {
+        transition: transform 0.45s ease;
+      }
+
+      &:disabled {
+        cursor: progress;
+        opacity: 0.75;
       }
     }
   }
@@ -716,7 +802,7 @@ $muted: #7c8b84;
   }
 }
 
-/* ===== 可点击面板装饰图标（需求 #7） ===== */
+/* ===== 可点击面板装饰图标 ===== */
 .panel-glyph-btn {
   display: inline-flex;
   align-items: center;
@@ -743,7 +829,7 @@ $muted: #7c8b84;
   }
 }
 
-/* 指南针循环旋转（需求 #7） */
+/* 指南针循环旋转 */
 .compass-needle {
   animation: compass-rotate 6s linear infinite;
 }

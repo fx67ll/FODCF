@@ -1,6 +1,6 @@
 <template>
   <main class="home-shell user-home">
-    <!-- 公告条（需求 #5：保留非管理员首页公告条） -->
+    <!-- 公告条（保留非管理员首页公告条） -->
     <home-notice-banner class="reveal" />
 
     <!-- 欢迎区 -->
@@ -22,7 +22,7 @@
       </div>
     </section>
 
-    <!-- 旧首页迁移内容置顶（需求 #7） -->
+    <!-- 旧首页迁移内容置顶 -->
     <origin-block />
 
 
@@ -78,7 +78,7 @@
         <ul class="info-list">
           <li><span>账户</span><strong>{{ userName }}</strong></li>
           <li><span>角色</span><strong>{{ roleText }}</strong></li>
-          <!-- 需求 #6：移除始终为空的用户编号行，改为展示头像（每次登录必定有值） -->
+          <!-- 移除始终为空的用户编号行，改为展示头像（每次登录必定有值） -->
           <li class="avatar-row"><span>头像</span><img class="info-avatar" :src="avatar" :alt="userName" /></li>
         </ul>
         <div class="info-activity">
@@ -115,10 +115,10 @@
       </section>
     </section>
 
-    <!-- 最近活动时间线（需求 #4：置于项目技术架构卡片下方，复用管理员首页优化版） -->
+    <!-- 最近活动时间线（置于项目技术架构卡片下方，复用管理员首页优化版） -->
     <home-recent-activity class="reveal reveal-6 recent-spacer" :items="recentItems" @navigate="goPath" />
 
-    <!-- 底部备忘录（需求 #2：从公告条后移至页面底部） -->
+    <!-- 底部备忘录（从公告条后移至页面底部） -->
     <home-memo-block class="reveal reveal-6" />
   </main>
 </template>
@@ -157,7 +157,7 @@ export default {
     userName() {
       return this.$store.state.user.name || "用户";
     },
-    // 需求 #6：头像（替代始终为空的用户编号）
+    // 头像（替代始终为空的用户编号）
     avatar() {
       return this.$store.getters.avatar || "";
     },
@@ -193,7 +193,7 @@ export default {
     recentActivities() {
       return this.summary.recentMenus.slice(0, 4);
     },
-    // 最近活动时间线数据（需求 #4）：交由 RecentActivity 组件内置上限与滚动
+    // 最近活动时间线数据：交由 RecentActivity 组件内置上限与滚动
     recentItems() {
       return this.summary.recentMenus || [];
     },
@@ -427,7 +427,7 @@ $muted: #7c8b84;
   }
 }
 
-/* 需求 #6：头像行（替代空用户编号） */
+/* 头像行（替代空用户编号） */
 .info-list li.avatar-row {
   align-items: center;
 }
@@ -441,7 +441,7 @@ $muted: #7c8b84;
   object-fit: cover;
 }
 
-/* 需求 #6：最近活动卡片上方补足间距 */
+/* 最近活动卡片上方补足间距 */
 .recent-spacer {
   margin-top: 18px;
 }

@@ -3,21 +3,28 @@
     <div class="panel-head">
       <div>
         <span class="eyebrow">UNDRAWN NUMBERS</span>
-        <h3>未开奖号码</h3>
+        <div class="panel-title-row">
+          <h3>未开奖号码</h3>
+          <panel-refresh v-if="canList" :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refresh" />
+        </div>
       </div>
-      <button v-if="canList && hasLotteryMenu" type="button" class="panel-glyph-btn" title="号码台账"
-        @click="openLotteryMenu">
-        <i class="el-icon-tickets panel-glyph glyph-lift"></i>
-      </button>
+      <div v-if="canList" class="panel-head-actions">
+        <button v-if="hasLotteryMenu" type="button" class="panel-glyph-btn" title="号码台账" @click="openLotteryMenu">
+          <i class="el-icon-tickets panel-glyph glyph-lift"></i>
+        </button>
+        <i v-else class="el-icon-tickets panel-glyph glyph-lift" title="号码台账"></i>
+      </div>
       <i v-else class="el-icon-tickets panel-glyph glyph-lift" title="号码台账"></i>
     </div>
 
-    <div v-if="canList" v-loading="loading" class="undrawn-body">
-      <!-- 需求 #2：固定汇总头（期数 + 未开奖注数） -->
+    <div v-if="canList" v-loading="loading" :class="{ 'refresh-flash': flashing }" class="undrawn-body">
+      <!-- 固定汇总头（期数 + 未开奖注数） -->
       <div v-if="!loading && list.length" class="undrawn-summary">
-        <span class="undrawn-summary-item"><b>{{ summary.periods }}</b> 期</span>
+        <span class="undrawn-summary-item"><b><animated-number :value="summary.periods" :trigger="refreshTick" /></b>
+          期</span>
         <span class="undrawn-summary-sep"></span>
-        <span class="undrawn-summary-item"><b>{{ summary.bets }}</b> 注未开奖</span>
+        <span class="undrawn-summary-item"><b><animated-number :value="summary.bets" :trigger="refreshTick" /></b>
+          注未开奖</span>
       </div>
 
       <div v-for="item in list" :key="item.lotteryId" class="undrawn-item">
@@ -61,15 +68,19 @@
 <script>
 import { listLog } from "@/api/fx67ll/lottery/log";
 import { queryRewardForRecord, LOTTERY_TYPE_TEXT, formatNumDisplay } from "@/views/fx67ll/lottery/log/rewardQueryHelper";
+import panelRefreshMixin from "../refreshMixin";
+import PanelRefresh from "./PanelRefresh.vue";
+import AnimatedNumber from "./AnimatedNumber.vue";
 import HomeEmptyState from "./EmptyState.vue";
 
 export default {
   name: "HomeUndrawnNumbers",
-  components: { HomeEmptyState },
+  components: { PanelRefresh, HomeEmptyState, AnimatedNumber },
+  mixins: [panelRefreshMixin],
   data() {
     return {
       loading: false,
-      // 未开奖号码记录（仅展示号码台账默认查询返回的数据，需求 #3）
+      // 未开奖号码记录（仅展示号码台账默认查询返回的数据）
       list: [],
       // 当前正在查询开奖信息的记录主键
       queryingId: null,
@@ -84,7 +95,7 @@ export default {
       const menus = this.$store.getters.sidebarRouters || [];
       return this.findLotteryPath(menus, "") !== "";
     },
-    // 需求 #2：卡片级固定汇总（期数 + 未开奖注数）
+    // 卡片级固定汇总（期数 + 未开奖注数）
     summary() {
       const periods = this.list.length;
       const bets = this.list.reduce(
@@ -111,13 +122,18 @@ export default {
     typeText(numberType) {
       return LOTTERY_TYPE_TEXT[Number(numberType)] || "未知彩种";
     },
-    // 需求 #5：拆分为逐注数组，每注独立一行展示（与号码台账表格视图一致）
+    // 拆分为逐注数组，每注独立一行展示（与号码台账表格视图一致）
     parseBets(numberText) {
       if (!numberText || numberText === "-") return [];
       return String(numberText)
         .split("/")
         .filter(Boolean)
         .map((bet) => formatNumDisplay(bet));
+    },
+    // 面板刷新：标题右侧按钮触发，供欢迎区一键刷新调用
+    refresh() {
+      if (!this.canList) return Promise.resolve();
+      return this.runRefresh(() => this.fetchUndrawn());
     },
     fetchUndrawn() {
       this.loading = true;
@@ -138,7 +154,7 @@ export default {
           this.loading = false;
         });
     },
-    // 逐条触发 mxnzp 开奖查询（需求 #3 快捷按钮）
+    // 逐条触发 mxnzp 开奖查询
     queryReward(item) {
       if (this.queryingId) return;
       this.queryingId = item.lotteryId;
@@ -159,7 +175,10 @@ export default {
       (routes || []).some((route) => {
         if (!route) return false;
         const path = this.joinPath(parent, route.path);
-        if (route.component && /lottery\/log/i.test(String(route.component))) {
+        // 按完整路由路径匹配（与号码台账面板口径一致）。
+        // sidebarRouters 中 component 已被 filterAsyncRouter 替换为组件对象，不能再按 component 字符串匹配，
+        // 否则永远找不到菜单入口，右上角图标退化为不可点击。
+        if (/lottery\/log/i.test(path)) {
           result = path;
           return true;
         }
@@ -202,7 +221,7 @@ $muted: #7c8b84;
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
-/* 需求 #1：悬浮动效收敛为共享工具类 .glyph-lift，仅保留配色加深 */
+/* 悬浮动效收敛为共享工具类 .glyph-lift，仅保留配色加深 */
 .panel-glyph:hover {
   color: $primary-dark;
 }
@@ -280,7 +299,7 @@ $muted: #7c8b84;
   font-size: 10px;
 }
 
-/* 需求 #5：逐注独立成行（对齐号码台账表格视图） */
+/* 逐注独立成行（对齐号码台账表格视图） */
 .undrawn-bets {
   display: flex;
   flex-direction: column;
@@ -354,7 +373,7 @@ $muted: #7c8b84;
   }
 }
 
-/* 需求 #7：右上图标可点击 + 悬浮动效，点击跳号码台账 */
+/* 右上图标可点击 + 悬浮动效，点击跳号码台账 */
 .panel-glyph-btn {
   display: inline-flex;
   align-items: center;
@@ -369,13 +388,13 @@ $muted: #7c8b84;
     transition: color 0.3s ease, transform 0.3s ease;
   }
 
-  /* 需求 #1：transform 由共享 .glyph-lift 提供 */
+  /* transform 由共享 .glyph-lift 提供 */
   &:hover .panel-glyph {
     color: $primary-dark;
   }
 }
 
-/* 需求 #2：卡片级固定汇总头 */
+/* 卡片级固定汇总头 */
 .undrawn-summary {
   display: flex;
   align-items: center;

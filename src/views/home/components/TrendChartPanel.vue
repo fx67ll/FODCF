@@ -15,7 +15,7 @@
 import HomeStatChart from "./StatChart.vue";
 
 /**
- * 菜单访问趋势面板（卡片级抽取，需求 #5b）
+ * 菜单访问趋势面板（卡片级抽取）
  * 管理员 / 非管理员首页该面板标记完全相同，抽出后各引一行。
  * 内部复用 HomeStatChart（含空状态）。
  */

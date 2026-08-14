@@ -3,16 +3,21 @@
     <div class="panel-head">
       <div>
         <span class="eyebrow">RICH MEMO</span>
-        <h3>备忘录</h3>
+        <div class="panel-title-row">
+          <h3>备忘录</h3>
+          <panel-refresh v-if="canList" :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refresh" />
+        </div>
       </div>
-      <button v-if="canAdd" type="button" class="memo-write" @click="handleAdd">
-        <i class="el-icon-edit"></i> 写备忘
-      </button>
-      <i v-else class="el-icon-edit-outline panel-glyph glyph-wobble"></i>
+      <div class="panel-head-actions">
+        <button v-if="canAdd" type="button" class="memo-write" @click="handleAdd">
+          <i class="el-icon-edit"></i> 写备忘
+        </button>
+        <i v-if="!canAdd" class="el-icon-edit-outline panel-glyph glyph-wobble"></i>
+      </div>
     </div>
 
     <!-- 有列表权限：展示最近备忘 -->
-    <div v-if="canList" v-loading="loading" class="memo-body">
+    <div v-if="canList" v-loading="loading" :class="{ 'refresh-flash': flashing }" class="memo-body">
       <button v-for="item in memos" :key="item.noteId" type="button" class="memo-item" :class="{ clickable: canEdit }"
         @click="canEdit && handleEdit(item)">
         <span class="memo-pin"></span>
@@ -39,7 +44,7 @@
       <home-empty-state inline icon="el-icon-lock" title="暂无备忘录访问权限" desc="当前账号未开放备忘录查看权限" />
     </div>
 
-    <!-- 写备忘 / 编辑弹窗（与富文本备忘页共享同一组件，需求 #7） -->
+    <!-- 写备忘 / 编辑弹窗（与富文本备忘页共享同一组件） -->
     <memo-edit-dialog :visible.sync="dialogOpen" :model="editModel" @success="handleSaved" />
   </section>
 </template>
@@ -47,11 +52,14 @@
 <script>
 import { listNoteLog } from "@/api/fx67ll/note/log";
 import MemoEditDialog from "@/views/fx67ll/note/component/MemoEditDialog.vue";
+import panelRefreshMixin from "../refreshMixin";
+import PanelRefresh from "./PanelRefresh.vue";
 import HomeEmptyState from "./EmptyState.vue";
 
 export default {
   name: "HomeMemoBlock",
-  components: { MemoEditDialog, HomeEmptyState },
+  components: { MemoEditDialog, PanelRefresh, HomeEmptyState },
+  mixins: [panelRefreshMixin],
   data() {
     return {
       loading: false,
@@ -87,6 +95,11 @@ export default {
     hasPerm(perm) {
       const perms = this.$store.getters.permissions || [];
       return perms.indexOf("*:*:*") !== -1 || perms.indexOf(perm) !== -1;
+    },
+    // 面板刷新：标题右侧按钮触发，供欢迎区一键刷新调用
+    refresh() {
+      if (!this.canList) return Promise.resolve();
+      return this.runRefresh(() => this.fetchMemos());
     },
     fetchMemos() {
       this.loading = true;
@@ -172,7 +185,7 @@ $muted: #7c8b84;
 .memo-panel {
   display: flex;
   flex-direction: column;
-  /* 修复紧贴上一面板（活动/架构面板）导致的缺少上边距问题（需求 #3） */
+  /* 修复紧贴上一面板（活动/架构面板）导致的缺少上边距问题 */
   margin-top: 18px;
 }
 
