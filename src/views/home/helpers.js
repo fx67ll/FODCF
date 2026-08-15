@@ -11,6 +11,30 @@ export const CHART_PALETTE = [
   "#EC7063",
 ];
 
+/**
+ * 在可访问菜单中查找内管页「平平淡淡才是真」入口
+ * 按菜单名「平平淡淡才是真」或路径 fx67ll/daily 匹配（不硬编码完整地址），
+ * 返回拼接后的完整路径（外链菜单返回 http 开头地址），找不到返回 ""
+ */
+export function findDailyManagePath(routes, parentPath = "") {
+  let result = "";
+  (routes || []).some((route) => {
+    if (!route || route.hidden) return false;
+    const path = joinPath(parentPath, route.path);
+    const title = (route.meta && route.meta.title) || "";
+    if (/fx67ll\/daily/i.test(path) || title === "平平淡淡才是真") {
+      result = path;
+      return true;
+    }
+    if (route.children && route.children.length) {
+      result = findDailyManagePath(route.children, path);
+      if (result) return true;
+    }
+    return false;
+  });
+  return result;
+}
+
 /** 拼接父子路由 path */
 function joinPath(parent, child) {
   if (!child) return parent || "/";

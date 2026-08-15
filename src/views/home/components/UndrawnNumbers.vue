@@ -8,13 +8,11 @@
           <panel-refresh v-if="canList" :loading="refreshing" :timestamp="lastRefreshTime" @refresh="refresh" />
         </div>
       </div>
-      <div v-if="canList" class="panel-head-actions">
-        <button v-if="hasLotteryMenu" type="button" class="panel-glyph-btn" title="号码台账" @click="openLotteryMenu">
-          <i class="el-icon-tickets panel-glyph glyph-lift"></i>
+      <div class="panel-head-actions">
+        <button type="button" class="panel-glyph-btn" title="打开内管页「平平淡淡才是真」" @click="openLotteryManage">
+          <i class="el-icon-tickets panel-glyph glyph-flip"></i>
         </button>
-        <i v-else class="el-icon-tickets panel-glyph glyph-lift" title="号码台账"></i>
       </div>
-      <i v-else class="el-icon-tickets panel-glyph glyph-lift" title="号码台账"></i>
     </div>
 
     <div v-if="canList" v-loading="loading" :class="{ 'refresh-flash': flashing }" class="undrawn-body">
@@ -68,6 +66,7 @@
 <script>
 import { listLog } from "@/api/fx67ll/lottery/log";
 import { queryRewardForRecord, LOTTERY_TYPE_TEXT, formatNumDisplay } from "@/views/fx67ll/lottery/log/rewardQueryHelper";
+import { findDailyManagePath } from "../helpers";
 import panelRefreshMixin from "../refreshMixin";
 import PanelRefresh from "./PanelRefresh.vue";
 import AnimatedNumber from "./AnimatedNumber.vue";
@@ -89,11 +88,6 @@ export default {
   computed: {
     canList() {
       return this.hasPerm("lottery:log:list");
-    },
-    // 是否存在号码台账菜单入口
-    hasLotteryMenu() {
-      const menus = this.$store.getters.sidebarRouters || [];
-      return this.findLotteryPath(menus, "") !== "";
     },
     // 卡片级固定汇总（期数 + 未开奖注数）
     summary() {
@@ -170,35 +164,18 @@ export default {
         this.queryingId = null;
       }, 12000);
     },
-    findLotteryPath(routes, parent) {
-      let result = "";
-      (routes || []).some((route) => {
-        if (!route) return false;
-        const path = this.joinPath(parent, route.path);
-        // 按完整路由路径匹配（与号码台账面板口径一致）。
-        // sidebarRouters 中 component 已被 filterAsyncRouter 替换为组件对象，不能再按 component 字符串匹配，
-        // 否则永远找不到菜单入口，右上角图标退化为不可点击。
-        if (/lottery\/log/i.test(path)) {
-          result = path;
-          return true;
-        }
-        if (route.children && route.children.length) {
-          result = this.findLotteryPath(route.children, path);
-          if (result) return true;
-        }
-        return false;
-      });
-      return result;
-    },
-    joinPath(parent, child) {
-      if (!child) return parent || "/";
-      if (/^(https?:)?\/\//.test(child)) return child;
-      if (child.charAt(0) === "/") return child;
-      return `${parent || ""}/${child}`.replace(/\/{2,}/g, "/");
-    },
-    openLotteryMenu() {
-      const path = this.findLotteryPath(this.$store.getters.sidebarRouters || [], "");
-      if (path) this.$router.push(path).catch(() => { });
+    // 右上角图标跳内管页「平平淡淡才是真」：按菜单名/路径动态解析，外链新窗口打开
+    openLotteryManage() {
+      const path = findDailyManagePath(this.$store.getters.sidebarRouters || []);
+      if (!path) {
+        this.$message.warning("未找到内管页「平平淡淡才是真」入口，请确认当前账号菜单权限");
+        return;
+      }
+      if (/^https?:\/\//i.test(path)) {
+        window.open(path, "_blank");
+      } else {
+        this.$router.push(path).catch(() => { });
+      }
     },
   },
 };

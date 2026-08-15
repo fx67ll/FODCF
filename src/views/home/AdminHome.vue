@@ -79,10 +79,9 @@
             </div>
           </div>
           <div class="panel-head-actions">
-            <button v-if="lotteryPath" type="button" class="panel-glyph-btn" title="号码台账" @click="goPath(lotteryPath)">
+            <button type="button" class="panel-glyph-btn" title="打开内管页「平平淡淡才是真」" @click="openLotteryManage">
               <i class="el-icon-coin panel-glyph glyph-rotate"></i>
             </button>
-            <i v-else class="el-icon-coin panel-glyph glyph-rotate"></i>
           </div>
         </div>
 
@@ -125,9 +124,11 @@
             <i class="el-icon-discover panel-glyph compass-needle"></i>
           </button>
         </div>
-        <div class="commute-frame">
-          <iframe v-if="commuteLoaded" :src="commuteUrl" title="日常通勤地图" loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade" @load="commuteLoading = false"></iframe>
+        <!-- 占位框：地图由 keep-alive 之外的持久层（CommuteMapLayer）每帧对齐覆盖，
+             持久层不可用时降级为内联 iframe（旧行为） -->
+        <div ref="commuteFrame" class="commute-frame">
+          <iframe v-if="commuteLoaded && !layerAvailable" :src="commuteUrl" title="日常通勤地图" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade" @load="inlineLoading = false"></iframe>
           <div v-if="commuteLoading" class="commute-loading"><i class="el-icon-loading"></i> 正在加载通勤地图…</div>
         </div>
         <a class="panel-link" :href="commuteUrl" target="_blank" rel="noopener noreferrer">
@@ -147,6 +148,9 @@
 
     <!-- 底部备忘录（与管理员首页其他模块统一） -->
     <home-memo-block ref="memo" class="reveal reveal-5" />
+
+    <!-- 通知公告发布面板（管理员快捷撰写 / 管理公告） -->
+    <home-notice-panel ref="notice" class="reveal reveal-5" />
   </main>
 </template>
 
@@ -161,6 +165,7 @@ import {
   buildLotteryTypeOption,
   dailyFreshContent,
   pickDefaultQuickMenus,
+  findDailyManagePath,
 } from "./helpers";
 import OriginBlock from "./components/OriginBlock.vue";
 import HomeQuickAccess from "./components/QuickAccess.vue";
@@ -173,6 +178,7 @@ import HomeMemoBlock from "./components/MemoBlock.vue";
 import HomeRecentActivity from "./components/RecentActivity.vue";
 import HomeUndrawnNumbers from "./components/UndrawnNumbers.vue";
 import HomeTomcatControl from "./components/TomcatControl.vue";
+import HomeNoticePanel from "./components/NoticePanel.vue";
 import AnimatedNumber from "./components/AnimatedNumber.vue";
 import PanelRefresh from "./components/PanelRefresh.vue";
 import panelRefreshMixin from "./refreshMixin";
@@ -181,7 +187,7 @@ const LOTTERY_TYPE_LABEL = { 1: "大乐透", 2: "双色球", 3: "排列三", 4: 
 
 export default {
   name: "AdminHome",
-  components: { OriginBlock, HomeQuickAccess, HomeStatChart, HomeMetricCard, HomeTrendChartPanel, HomeServiceStatus, HomeEmptyState, HomeMemoBlock, HomeRecentActivity, HomeUndrawnNumbers, HomeTomcatControl, PanelRefresh, AnimatedNumber },
+  components: { OriginBlock, HomeQuickAccess, HomeStatChart, HomeMetricCard, HomeTrendChartPanel, HomeServiceStatus, HomeEmptyState, HomeMemoBlock, HomeRecentActivity, HomeUndrawnNumbers, HomeTomcatControl, HomeNoticePanel, PanelRefresh, AnimatedNumber },
   // 号码台账面板的刷新状态与闪烁动画（refreshing / lastRefreshTime / flashing）由混入提供
   mixins: [panelRefreshMixin],
   data() {
@@ -199,8 +205,9 @@ export default {
       // 一键刷新完成时间戳
       refreshAllTime: "",
       commuteUrl: "https://map.fx67ll.com/daily",
+      // 降级内联 iframe 的挂载 / 加载状态（持久层正常时不使用）
       commuteLoaded: false,
-      commuteLoading: true,
+      inlineLoading: true,
     };
   },
   computed: {
@@ -221,9 +228,16 @@ export default {
     accessibleMenus() {
       return collectAccessibleMenus(this.$store.getters.sidebarRouters);
     },
-    // 「继续最近工作」按钮描述即将恢复的任务（取首个常用入口标题）
+    // 「继续最近工作」恢复最后打开的菜单（按 lastVisitedAt 倒序），
+    // 而非使用频率最高的入口；无访问记录时回退常用入口首项
+    resumeItem() {
+      const allowed = new Set(this.accessibleMenus.map((item) => item.path));
+      const recent = (this.summary.recentMenus || []).find((item) => allowed.has(item.path));
+      if (recent) return recent;
+      return this.quickItems.length ? this.quickItems[0] : null;
+    },
     resumeTarget() {
-      return this.quickItems.length ? this.quickItems[0].title : "";
+      return this.resumeItem ? this.resumeItem.title : "";
     },
     quickItems() {
       const allowed = new Set(this.accessibleMenus.map((item) => item.path));
@@ -303,6 +317,16 @@ export default {
     recentItems() {
       return this.summary.recentMenus || [];
     },
+    // 通勤地图持久层是否可用（不可用时降级为内联 iframe）
+    layerAvailable() {
+      return this.$store.state.commuteMap.available;
+    },
+    // 通勤地图加载态：持久层看 iframe 首次加载标记，降级路径看内联 iframe
+    commuteLoading() {
+      return this.layerAvailable
+        ? !this.$store.state.commuteMap.frameLoaded
+        : this.inlineLoading;
+    },
   },
   mounted() {
     this.fetchLotteryTotal();
@@ -311,17 +335,28 @@ export default {
     this.timer = setInterval(() => {
       this.now = new Date();
     }, 30000);
-    // 延迟挂载通勤 iframe，避免阻塞首屏
+    // 延迟挂载通勤地图，避免阻塞首屏：
+    // 正常路径仅向持久层注册地址并显示（iframe 由持久层持有，切标签页不重载）；
+    // commuteLoaded 仅服务于降级内联 iframe
+    this.commuteLoaded = true;
     this.$nextTick(() => {
-      this.commuteLoaded = true;
+      this.$store.commit("commuteMap/SET_SRC", this.commuteUrl);
+      this.$store.commit("commuteMap/SET_VISIBLE", true);
     });
   },
   activated() {
-    // keep-alive 重新激活时刷新本机统计
+    // keep-alive 重新激活时刷新本机统计，并恢复通勤地图持久层显示
+    this.$store.commit("commuteMap/SET_VISIBLE", true);
     this.summary = getMenuUsageSummary(this.userName);
+  },
+  deactivated() {
+    // 切换到其他标签页：隐藏持久层（iframe 保持已加载状态）
+    this.$store.commit("commuteMap/SET_VISIBLE", false);
   },
   beforeDestroy() {
     clearInterval(this.timer);
+    // 管理员身份切换等场景：仅隐藏，不清空 src，避免返回时重载
+    this.$store.commit("commuteMap/SET_VISIBLE", false);
   },
   methods: {
     // 号码台账面板刷新：标题右侧按钮触发
@@ -351,6 +386,7 @@ export default {
         this.$refs.tomcat ? this.$refs.tomcat.refresh() : Promise.resolve(),
         this.$refs.stability ? this.$refs.stability.refresh() : Promise.resolve(),
         this.$refs.memo ? this.$refs.memo.refresh() : Promise.resolve(),
+        this.$refs.notice ? this.$refs.notice.refresh() : Promise.resolve(),
         Promise.resolve(this.refreshLocalSummary()),
       ];
       Promise.all(tasks)
@@ -366,7 +402,7 @@ export default {
       this.flashData();
     },
     openFirstQuick() {
-      if (this.quickItems.length) this.goPath(this.quickItems[0].path);
+      if (this.resumeItem) this.goPath(this.resumeItem.path);
     },
     goPath(path) {
       if (!path) return;
@@ -406,6 +442,19 @@ export default {
     // 日常通勤指南针点击在新窗口打开通勤地图
     openCommuteMap() {
       if (this.commuteUrl) window.open(this.commuteUrl, "_blank");
+    },
+    // 号码台账右上角图标跳内管页「平平淡淡才是真」：按菜单名/路径动态解析，外链新窗口打开
+    openLotteryManage() {
+      const path = findDailyManagePath(this.$store.getters.sidebarRouters || []);
+      if (!path) {
+        this.$message.warning("未找到内管页「平平淡淡才是真」入口，请确认当前账号菜单权限");
+        return;
+      }
+      if (/^https?:\/\//i.test(path)) {
+        window.open(path, "_blank");
+      } else {
+        this.goPath(path);
+      }
     },
   },
 };
@@ -528,16 +577,17 @@ $muted: #7c8b84;
       }
     }
 
-    /* 安全防护按钮——图标 + 文字 + 醒目统计条，复合卡片式 */
+    /* 安全防护按钮——浅绿填充，与主按钮（深）→ 刷新（白）形成由深到浅的过渡 */
     &.secondary.security {
       color: $primary-dark;
-      background: #fff;
-      border: 1px solid #c7ebd3;
+      background: linear-gradient(135deg, #e7f8ee, #dcf5e6);
+      border: 1px solid #a9dfc0;
 
       .hero-stat {
         padding: 2px 10px;
         color: $primary-dark;
-        background: var(--home-primary-softer);
+        /* 白底胶囊：原 softer 底在浅绿按钮上会隐形 */
+        background: #fff;
         border-radius: 999px;
         font-weight: 600;
 
@@ -559,12 +609,12 @@ $muted: #7c8b84;
 
       &:hover {
         transform: translateY(-2px);
-        background: var(--home-primary-softer);
-        box-shadow: 0 12px 24px rgba(46, 204, 113, 0.18);
+        background: linear-gradient(135deg, #d9f3e4, #cdefdb);
+        box-shadow: 0 12px 24px rgba(46, 204, 113, 0.22);
       }
     }
 
-    /* 一键刷新按钮：与安全防护按钮同风格 */
+    /* 一键刷新按钮：白底描边，与安全防护浅绿填充区分 */
     &.secondary.refresh {
       color: $primary-dark;
       background: #fff;
