@@ -66,7 +66,7 @@ function readEntries(userName) {
   }
   if (!Array.isArray(entries)) return [];
   const cutoff = retentionCutoff();
-  return entries.filter((entry) => {
+  const valid = entries.filter((entry) => {
     if (!entry || !entry.path || !entry.date) return false;
     const timestamp = new Date(`${entry.date}T00:00:00`).getTime();
     if (!(Number.isFinite(timestamp) && timestamp >= cutoff)) return false;
@@ -74,6 +74,32 @@ function readEntries(userName) {
     entry.range = normalizeRange(entry.range);
     return true;
   });
+  return mergeDuplicateEntries(valid);
+}
+
+/**
+ * 合并同日同路径的重复记录（历史脏数据 / 时钟回拨可能产生）
+ * 仅修正 count 累加口径：count 求和、lastVisitedAt 取最大，展示字段取最新一次。
+ */
+function mergeDuplicateEntries(entries) {
+  const merged = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.date}|${entry.path}`;
+    const existing = merged.get(key);
+    entry.count = Number(entry.count) || 0;
+    if (!existing) {
+      merged.set(key, entry);
+      return;
+    }
+    existing.count += entry.count;
+    if ((entry.lastVisitedAt || 0) > (existing.lastVisitedAt || 0)) {
+      existing.lastVisitedAt = entry.lastVisitedAt;
+      existing.title = entry.title;
+      existing.icon = entry.icon;
+      existing.category = entry.category;
+    }
+  });
+  return Array.from(merged.values());
 }
 
 function writeEntries(userName, entries) {

@@ -630,9 +630,9 @@ $memory-track: #dce9e0;
 
   &.stop {
     color: #fff;
-    /* 停止服务改用更柔和的珊瑚红，降低视觉刺激 */
-    background: linear-gradient(135deg, #f3a0a0, #e88080);
-    box-shadow: 0 6px 14px rgba(232, 128, 128, 0.2);
+    /* 停止服务保持珊瑚红系但加深，避免与 50% 透明度的禁用态混淆 */
+    background: linear-gradient(135deg, #ee6b6b, #e04848);
+    box-shadow: 0 6px 14px rgba(224, 72, 72, 0.24);
   }
 
   &.cache {
@@ -650,7 +650,7 @@ $memory-track: #dce9e0;
   }
 
   &.stop:hover:not(:disabled) {
-    box-shadow: 0 10px 20px rgba(232, 128, 128, 0.26);
+    box-shadow: 0 10px 20px rgba(224, 72, 72, 0.32);
   }
 
   &:disabled {

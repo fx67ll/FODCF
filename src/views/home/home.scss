@@ -75,6 +75,18 @@
   border-radius: 999px;
   font-size: 11px;
   white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.25s ease, color 0.25s ease, background 0.25s ease,
+    border-color 0.25s ease, box-shadow 0.25s ease;
+
+  /* 悬浮轻抬 + 配色加深（可点击的时间范围标签） */
+  &:hover {
+    transform: translateY(-2px);
+    color: var(--home-primary-dark);
+    background: var(--home-primary-soft);
+    border-color: var(--home-primary);
+    box-shadow: 0 6px 14px rgba(46, 204, 113, 0.18);
+  }
 }
 
 /* ===== 指标小卡片 ===== */
@@ -191,6 +203,11 @@
 /* 上浮 + 轻倾斜（未开奖号码：票据探出） */
 .home-shell .glyph-lift:hover {
   transform: translateY(-3px) rotate(-6deg);
+}
+
+/* 翻面 + 轻放大（未开奖号码：票据翻面，跳转内管页） */
+.home-shell .glyph-flip:hover {
+  transform: perspective(400px) rotateY(180deg) scale(1.08);
 }
 
 /* 放大 + 亮度闪烁（Tomcat：屏幕刷新） */
