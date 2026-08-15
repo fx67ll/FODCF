@@ -6,15 +6,18 @@
       </keep-alive>
     </transition>
     <iframe-toggle />
+    <!-- 通勤地图持久层：置于 keep-alive 之外，切换标签页不卸载、不重载 -->
+    <commute-map-layer />
   </section>
 </template>
 
 <script>
 import iframeToggle from "./IframeToggle/index";
+import commuteMapLayer from "./CommuteMapLayer/index";
 
 export default {
   name: "AppMain",
-  components: { iframeToggle },
+  components: { iframeToggle, commuteMapLayer },
   computed: {
     cachedViews() {
       return this.$store.state.tagsView.cachedViews;
@@ -35,7 +38,7 @@ export default {
   overflow: hidden;
 }
 
-.fixed-header + .app-main {
+.fixed-header+.app-main {
   padding-top: 50px;
 }
 
@@ -45,7 +48,7 @@ export default {
     min-height: calc(100vh - 84px);
   }
 
-  .fixed-header + .app-main {
+  .fixed-header+.app-main {
     padding-top: 84px;
   }
 }
