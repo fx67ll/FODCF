@@ -9,6 +9,9 @@
         </div>
       </div>
       <div class="panel-head-actions">
+        <button v-if="hasMemoMenu" type="button" class="panel-glyph-btn" title="管理全部备忘" @click="openMemoMenu">
+          <i class="el-icon-folder-opened panel-glyph glyph-nudge"></i>
+        </button>
         <button v-if="canAdd" type="button" class="memo-write" @click="handleAdd">
           <i class="el-icon-edit"></i> 写备忘
         </button>
@@ -33,10 +36,6 @@
 
       <home-empty-state v-if="!loading && !memos.length" inline icon="el-icon-edit" :title="canAdd ? '还没有备忘' : '暂无备忘记录'"
         :desc="canAdd ? '点击「写备忘」，随手记录一条富文本备忘' : '有备忘记录后会展示在这里'" />
-
-      <button v-if="memos.length && hasMemoMenu" type="button" class="memo-more" @click="openMemoMenu">
-        管理全部备忘 <i class="el-icon-right"></i>
-      </button>
     </div>
 
     <!-- 无列表权限：不调用接口，避免 403 报错，仅静态空状态 -->
@@ -145,12 +144,14 @@ export default {
       if (this.canList) this.fetchMemos();
     },
     findMemoPath(routes, parent) {
-      // 在可访问菜单里定位富文本记录菜单路径
+      // 在可访问菜单里定位富文本记录菜单路径。
+      // sidebarRouters 中 component 已被 filterAsyncRouter 替换为组件对象，不能按 component 匹配，
+      // 否则永远找不到菜单入口，右上角按钮退化为不显示（与未开奖号码卡片历史问题同因）。
       let result = "";
       (routes || []).some((route) => {
-        if (!route) return false;
+        if (!route || route.hidden) return false;
         const path = this.joinPath(parent, route.path);
-        if (route.component && /note\/log/i.test(String(route.component))) {
+        if (/note\/log/i.test(path)) {
           result = path;
           return true;
         }
@@ -212,6 +213,26 @@ $muted: #7c8b84;
 .panel-glyph {
   color: $primary;
   font-size: 22px;
+}
+
+/* 右上角「管理全部备忘」图标按钮（悬浮动效由共享 .glyph-nudge 提供） */
+.panel-glyph-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+
+  .panel-glyph {
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+
+  &:hover .panel-glyph {
+    color: $primary-dark;
+  }
 }
 
 .memo-body {
@@ -291,34 +312,6 @@ $muted: #7c8b84;
     i {
       margin-right: 3px;
     }
-  }
-}
-
-.memo-more {
-  align-self: flex-start;
-  margin-top: 12px;
-  padding: 7px 14px;
-  color: $primary-dark;
-  background: var(--home-primary-softer);
-  border: 1px solid var(--home-border);
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.25s ease;
-
-  &:hover {
-    color: #fff;
-    background: $primary;
-    border-color: $primary;
-
-    i {
-      transform: translateX(3px);
-    }
-  }
-
-  i {
-    margin-left: 3px;
-    transition: transform 0.25s ease;
   }
 }
 
