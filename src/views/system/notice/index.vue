@@ -91,61 +91,22 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加或修改公告对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="780px"
-      :style="`top: ${getDialogVerticalOffset(575)}`" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="公告标题" prop="noticeTitle">
-              <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="发布状态">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.value">{{
-                  dict.label
-                }}</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="公告类型" prop="noticeType">
-              <el-select v-model="form.noticeType" placeholder="请选择公告类型" style="width: 100%">
-                <el-option v-for="dict in dict.type.sys_notice_type" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="内容">
-              <editor v-model="form.noticeContent" :min-height="192" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>
+    <!-- 添加或修改公告对话框（与首页通知公告面板共享同一组件，统一首页优化样式） -->
+    <notice-compose-dialog :visible.sync="open" :model="editModel" @success="getList" />
   </div>
 </template>
 
 <script>
 import {
   listNotice,
-  getNotice,
   delNotice,
-  addNotice,
   updateNotice,
 } from "@/api/system/notice";
-
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import NoticeComposeDialog from "./component/NoticeComposeDialog.vue";
 
 export default {
   name: "Notice",
+  components: { NoticeComposeDialog },
   dicts: ["sys_notice_status", "sys_notice_type"],
   data() {
     return {
@@ -163,10 +124,10 @@ export default {
       total: 0,
       // 公告表格数据
       noticeList: [],
-      // 弹出层标题
-      title: "",
       // 是否显示弹出层
       open: false,
+      // 当前编辑的公告行；空对象视为新增（完整内容由共享弹窗自行拉取）
+      editModel: {},
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -179,27 +140,12 @@ export default {
       dateRange: [],
       // 是否展开高级搜索
       isMoreQuery: false,
-      // 表单参数
-      form: {},
-      // 表单校验
-      rules: {
-        noticeTitle: [
-          { required: true, message: "公告标题不能为空", trigger: "blur" },
-        ],
-        noticeType: [
-          { required: true, message: "公告类型不能为空", trigger: "change" },
-        ],
-      },
     };
   },
   created() {
     this.getList();
   },
   methods: {
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
-    },
     /** 查询公告列表 */
     getList() {
       this.loading = true;
@@ -208,22 +154,6 @@ export default {
         this.total = response.total;
         this.loading = false;
       });
-    },
-    // 取消按钮
-    cancel() {
-      this.open = false;
-      this.reset();
-    },
-    // 表单重置
-    reset() {
-      this.form = {
-        noticeId: undefined,
-        noticeTitle: undefined,
-        noticeType: undefined,
-        noticeContent: undefined,
-        status: "0",
-      };
-      this.resetForm("form");
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -248,19 +178,13 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
-      this.reset();
+      this.editModel = {};
       this.open = true;
-      this.title = "添加公告";
     },
-    /** 修改按钮操作 */
+    /** 修改按钮操作（完整内容由共享弹窗自���拉取） */
     handleUpdate(row) {
-      this.reset();
-      const noticeId = row.noticeId || this.ids;
-      getNotice(noticeId).then((response) => {
-        this.form = response.data;
-        this.open = true;
-        this.title = "修改公告";
-      });
+      this.editModel = row.noticeId ? row : { noticeId: this.ids[0] };
+      this.open = true;
     },
     /** 操作列上架/下架按钮 */
     handleShelf(row, status) {
@@ -275,26 +199,6 @@ export default {
           this.$modal.msgSuccess(text + "成功");
         })
         .catch(() => { });
-    },
-    /** 提交按钮 */
-    submitForm: function () {
-      this.$refs["form"].validate((valid) => {
-        if (valid) {
-          if (this.form.noticeId != undefined) {
-            updateNotice(this.form).then((response) => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addNotice(this.form).then((response) => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
-      });
     },
     /** 删除按钮操作 */
     handleDelete(row) {
