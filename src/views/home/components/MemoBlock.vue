@@ -188,6 +188,7 @@ $muted: #7c8b84;
   flex-direction: column;
   /* 修复紧贴上一面板（活动/架构面板）导致的缺少上边距问题 */
   margin-top: 18px;
+  margin-bottom: 18px;
 }
 
 .memo-write {

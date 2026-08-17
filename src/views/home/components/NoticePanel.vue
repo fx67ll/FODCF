@@ -208,6 +208,7 @@ $muted: #7c8b84;
   flex-direction: column;
   /* 与备忘录面板一致：避免紧贴上一面板 */
   margin-top: 18px;
+  margin-bottom: 18px;
 }
 
 .notice-write {

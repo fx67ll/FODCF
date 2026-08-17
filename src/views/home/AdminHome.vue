@@ -21,7 +21,8 @@
               <strong class="hero-defence">安全防护</strong>
               <small class="hero-stat" :class="{ loaded: fail2banAttackCount !== null }">
                 <template v-if="fail2banAttackCount !== null">
-                  已拦截 <b>{{ formatAttackCount(fail2banAttackCount) }}</b> 次攻击
+                  已拦截 <b><animated-number :value="fail2banAttackCount" :trigger="attackCountTick"
+                      :format="formatAttackCount" /></b> 次攻击
                 </template>
                 <template v-else>防护运行中</template>
               </small>
@@ -48,23 +49,13 @@
       <span class="hero-orbit orbit-b"></span>
     </section>
 
-    <!-- 旧首页迁移内容置顶 -->
-    <origin-block />
+    <!-- 通知公告发布面板（管理员快捷撰写 / 管理公告） -->
+    <home-notice-panel ref="notice" class="reveal reveal-5" />
 
-    <!-- 关键指标（一键刷新 / 台账刷新时闪烁） -->
-    <section :class="{ 'refresh-flash': flashing }" class="metric-grid reveal reveal-1">
-      <home-metric-card icon="el-icon-menu" :value="accessibleMenus.length" label="可访问菜单" note="当前权限范围" />
-      <home-metric-card icon="el-icon-mouse" alt="alt-1" :value="summary.totalVisits" label="一周打开次数" note="本机聚合记录" />
-      <home-metric-card icon="el-icon-date" alt="alt-2" :value="summary.activeDays" label="活跃天数" note="最近 7 个自然日" />
-      <home-metric-card icon="el-icon-tickets" alt="alt-3" :value="lotteryTotalBets" :trigger="refreshTick"
-        label="累计购买注数" note="号码台账累计" />
-    </section>
-
-    <!-- 常用入口 + 访问趋势 -->
-    <section class="grid two-col reveal reveal-2">
-      <home-quick-access :items="quickItems" />
-      <home-trend-chart-panel :option="trendOption" :has-data="summary.totalVisits > 0" empty-title="还没有访问记录"
-        empty-desc="打开任意业务菜单后，这里会生成近 7 天访问趋势" />
+    <!-- 未开奖号码快捷核对 + Tomcat 服务管理 -->
+    <section class="grid two-col reveal reveal-4">
+      <home-undrawn-numbers ref="undrawn" />
+      <home-tomcat-control ref="tomcat" />
     </section>
 
     <!-- 号码台账统计 + 服务脉搏 + 日常通勤 -->
@@ -137,20 +128,34 @@
       </section>
     </section>
 
-    <!-- 未开奖号码快捷核对 + Tomcat 服务管理 -->
-    <section class="grid two-col reveal reveal-4">
-      <home-undrawn-numbers ref="undrawn" />
-      <home-tomcat-control ref="tomcat" />
+    <!-- 备忘录（与管理员首页其他模块统一） -->
+    <home-memo-block ref="memo" class="reveal reveal-5" />
+
+    <!-- 旧首页迁移内容置顶 -->
+    <origin-block />
+
+    <!-- 关键指标（四卡统一由数值滚动动画反馈刷新，不再使用闪烁动效） -->
+    <section class="metric-grid reveal reveal-1">
+      <home-metric-card icon="el-icon-menu" :value="accessibleMenus.length" :trigger="refreshTick" label="可访问菜单"
+        note="当前权限范围" />
+      <home-metric-card icon="el-icon-mouse" alt="alt-1" :value="summary.totalVisits" :trigger="refreshTick"
+        label="一周打开次数" note="本机聚合记录" />
+      <home-metric-card icon="el-icon-date" alt="alt-2" :value="summary.activeDays" :trigger="refreshTick" label="活跃天数"
+        note="最近 7 个自然日" />
+      <home-metric-card icon="el-icon-tickets" alt="alt-3" :value="lotteryTotalBets" :trigger="refreshTick"
+        label="累计购买注数" note="号码台账累计" />
+    </section>
+
+    <!-- 常用入口 + 访问趋势 -->
+    <section class="grid two-col reveal reveal-2">
+      <home-quick-access :items="quickItems" />
+      <home-trend-chart-panel :option="trendOption" :has-data="summary.totalVisits > 0" empty-title="还没有访问记录"
+        empty-desc="打开任意业务菜单后，这里会生成近 7 天访问趋势" />
     </section>
 
     <!-- 最近活动时间线（时间线增强，按最近访问时间回溯，与常用入口按频率区分） -->
     <home-recent-activity class="reveal reveal-5" :items="recentItems" @navigate="goPath" />
 
-    <!-- 底部备忘录（与管理员首页其他模块统一） -->
-    <home-memo-block ref="memo" class="reveal reveal-5" />
-
-    <!-- 通知公告发布面板（管理员快捷撰写 / 管理公告） -->
-    <home-notice-panel ref="notice" class="reveal reveal-5" />
   </main>
 </template>
 
@@ -200,6 +205,8 @@ export default {
       lotteryTotalRewards: [],
       // Fail2Ban 拦截攻击次数（用于丰富安全防护按钮标签）；null 表示未加载 / 不可用
       fail2banAttackCount: null,
+      // 拦截次数主动刷新次数：传递给 AnimatedNumber 的 trigger，一键刷新后即使数值未变也重播滚动
+      attackCountTick: 0,
       // 一键刷新进行中
       refreshAllLoading: false,
       // 一键刷新完成时间戳
@@ -427,17 +434,19 @@ export default {
             return;
           }
           this.fail2banAttackCount = Number(data.totalFailedAttempts) || 0;
+          // 数值就绪后驱动滚动动画重播（含一键刷新且数值未变的场景）
+          this.attackCountTick += 1;
         })
         .catch(() => {
           this.fail2banAttackCount = null;
         });
     },
-    // 攻击次数紧凑展示（千 / 万）
+    // 攻击次数紧凑展示（千 / 万）；滚动动画过程值为小数，取整避免出现长小数
     formatAttackCount(value) {
       const n = Number(value) || 0;
       if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
       if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-      return String(n);
+      return String(Math.round(n));
     },
     // 日常通勤指南针点击在新窗口打开通勤地图
     openCommuteMap() {

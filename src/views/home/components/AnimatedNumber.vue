@@ -20,6 +20,8 @@ export default {
     trigger: { type: Number, default: 0 },
     // 值变化时直接落位不滚动（用于高频静默轮询的数值），trigger 触发时仍完整滚动
     snapOnChange: { type: Boolean, default: false },
+    // 自定义展示格式化（如 1.2万 / 3.4k 紧凑格式），传入时过程值与落位值均经其格式化
+    format: { type: Function, default: null },
   },
   data() {
     return {
@@ -33,6 +35,7 @@ export default {
     },
     displayText() {
       const v = this.displayValue;
+      if (this.format) return this.format(v);
       if (this.isIntegerTarget) return String(Math.round(v));
       return String(Math.round(v * 10) / 10);
     },
