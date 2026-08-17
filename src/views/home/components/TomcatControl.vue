@@ -71,6 +71,17 @@
         </button>
       </div>
     </template>
+
+    <!-- 底部入口：Jenkins 控制台（样式参考 Tomcat 管理页「常用服务快速访问」卡片） -->
+    <a class="service-item" :href="jenkinsUrl" target="_blank" rel="noopener noreferrer">
+      <div class="service-icon"><i class="el-icon-s-promotion"></i></div>
+      <div class="service-info">
+        <h4>Jenkins 服务</h4>
+        <p>持续集成与部署平台</p>
+        <span class="service-link">{{ jenkinsLinkText }}</span>
+      </div>
+      <i class="el-icon-right service-arrow"></i>
+    </a>
   </section>
 </template>
 
@@ -88,6 +99,8 @@ import AnimatedNumber from "./AnimatedNumber.vue";
 // 状态 → 指示灯/胶囊样式映射（与号码台账 Tomcat 管理页口径一致）
 const RUNNING = "运行中";
 const STOPPED = "已停止";
+// Jenkins 控制台地址（与 Tomcat 管理页跳转一致）
+const JENKINS_URL = "https://run.fx67ll.com/jenkins";
 
 export default {
   name: "HomeTomcatControl",
@@ -105,6 +118,8 @@ export default {
       pendingOp: "",
       clearingCache: false,
       refreshInterval: null,
+      // Jenkins 控制台地址（底部入口新窗口打开）
+      jenkinsUrl: JENKINS_URL,
       // 内存指标（与 Tomcat 管理页同源 memoryInfo）
       memoryInfo: {
         totalMemoryMb: 0,
@@ -157,6 +172,10 @@ export default {
     },
     totalMemUnit() {
       return this.toMemUnit(this.memoryInfo.totalMemoryMb);
+    },
+    // Jenkins 入口展示用的链接文本（去掉协议头，与 Tomcat 管理页快速访问卡片一致）
+    jenkinsLinkText() {
+      return this.jenkinsUrl.replace(/^https?:\/\//, "");
     },
   },
   created() {
@@ -306,7 +325,7 @@ export default {
               style:
                 "display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #eb5656 0%, #FAB6B6 100%); color: #fff; border-radius: 20px; text-decoration: none; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(235, 86, 86, 0.3);",
               on: {
-                click: () => window.open("https://run.fx67ll.com/jenkins", "_blank"),
+                click: () => window.open(JENKINS_URL, "_blank"),
               },
             },
             "🚀 前往 Jenkins"
@@ -379,6 +398,8 @@ $memory-track: #dce9e0;
   align-items: center;
   gap: 12px;
   padding: 18px;
+  /* 与底部 Jenkins 入口的间距下限（入口 margin-top:auto 贴底时兜底） */
+  margin-bottom: 14px;
   color: $ink;
   background: var(--home-primary-softer);
   border: 1px dashed var(--home-border);
@@ -602,6 +623,8 @@ $memory-track: #dce9e0;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 16px;
+  /* 与底部 Jenkins 入口的间距下限（入口 margin-top:auto 贴底时兜底） */
+  margin-bottom: 14px;
 }
 
 .tomcat-btn {
@@ -658,6 +681,125 @@ $memory-track: #dce9e0;
     opacity: 0.5;
     transform: none;
   }
+}
+
+/* 底部 Jenkins 服务入口：参考 Tomcat 管理页「常用服务快速访问」卡片，
+   按首页卡片紧凑宽度等比缩小（图标/字号/内边距）。
+   卡片与未开奖号码卡同处一行会被撑高，auto 上边距把入口贴到卡片底部，
+   间距下限由上方内容块的 margin-bottom 保证 */
+.service-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  padding: 12px 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #fee9e9 0%, #f8dddd 100%);
+    border-color: #eb5656;
+    box-shadow: 0 6px 20px rgba(235, 86, 86, 0.15);
+
+    /* 悬浮时顶部亮色渐变条（与 Tomcat 管理页一致） */
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #eb5656, #fab6b6);
+    }
+
+    .service-arrow {
+      transform: translateX(5px);
+    }
+  }
+}
+
+/* Jenkins 图标块：红系渐变 + 流光动画 */
+.service-icon {
+  position: relative;
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #eb5656 0%, #fab6b6 100%);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(235, 86, 86, 0.35);
+  color: #fff;
+  font-size: 20px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(250, 182, 182, 0.2), transparent);
+    animation: service-shine 3s linear infinite;
+  }
+}
+
+@keyframes service-shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+.service-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+
+  h4 {
+    margin: 0 0 2px;
+    color: $ink;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 6px;
+    color: $muted;
+    font-size: 12px;
+  }
+}
+
+/* 链接文本小胶囊（等宽字体） */
+.service-link {
+  align-self: flex-start;
+  padding: 3px 8px;
+  color: #8392a5;
+  background: rgba(131, 146, 165, 0.1);
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+}
+
+/* 右侧跳转箭头 */
+.service-arrow {
+  margin-left: 12px;
+  color: #fab6b6;
+  font-size: 16px;
+  transition: transform 0.3s ease;
 }
 
 .panel-head {
