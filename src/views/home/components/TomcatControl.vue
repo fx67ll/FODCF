@@ -9,6 +9,14 @@
         </div>
       </div>
       <div class="panel-head-actions">
+        <!-- GitHub 连通性检测胶囊（仅 TCP 网络层检测，与管理页同款状态灯动效） -->
+        <el-tooltip v-if="!isSystemLocked" :content="githubTooltip" placement="bottom" effect="dark" :open-delay="300">
+          <button type="button" class="gh-pill" :class="['gh-' + tcpStatus, { 'is-busy': testingTcp }]"
+            @click="testTcpConnectivity" aria-label="GitHub 连通性检测">
+            <span class="gh-pill-dot"></span>
+            <span class="gh-pill-label">{{ githubPillText }}</span>
+          </button>
+        </el-tooltip>
         <!-- 右上图标风格对齐其他卡片 .panel-glyph -->
         <button type="button" class="panel-glyph-btn" title="Tomcat 管理页" @click="openTomcat">
           <i class="el-icon-monitor panel-glyph glyph-flicker"></i>
@@ -90,6 +98,7 @@ import {
   getTomcatStatus,
   startTomcat,
   stopTomcat,
+  testConnectToGithubByTcp,
   clearSystemCache,
 } from "@/api/fx67ll/server/tomcat";
 import panelRefreshMixin from "../refreshMixin";
@@ -126,6 +135,11 @@ export default {
         availableMemoryMb: 0,
         usedMemoryMb: 0,
       },
+      // GitHub TCP 连通性检测（仅网络层，与管理页胶囊同款交互）
+      tcpStatus: "waiting", // 检测状态：waiting, testing, success, error
+      testingTcp: false, // 检测进行中标志
+      lastGithubTestTime: "", // 最后一次检测时间
+      githubResultDetail: "", // 最近一次检测结果详情（tooltip 展示用）
     };
   },
   computed: {
@@ -176,6 +190,29 @@ export default {
     // Jenkins 入口展示用的链接文本（去掉协议头，与 Tomcat 管理页快速访问卡片一致）
     jenkinsLinkText() {
       return this.jenkinsUrl.replace(/^https?:\/\//, "");
+    },
+    // GitHub 检测胶囊按钮的显示文案（随状态流转，首页紧凑卡片用短文案）
+    githubPillText() {
+      const textMap = {
+        waiting: "GitHub 连通",
+        testing: "检测中…",
+        success: "连通正常",
+        error: "连接失败，重试",
+      };
+      return textMap[this.tcpStatus] || "GitHub 连通";
+    },
+    // GitHub 检测胶囊按钮的 tooltip 详情文案
+    githubTooltip() {
+      if (this.tcpStatus === "testing") {
+        return "正在检测与 GitHub 的 TCP 443 端口连通性…";
+      }
+      if (this.tcpStatus === "success") {
+        return `最后检测 ${this.lastGithubTestTime} · ${this.githubResultDetail || "TCP 443 网络层可达"}`;
+      }
+      if (this.tcpStatus === "error") {
+        return `最后检测 ${this.lastGithubTestTime} · 失败原因：${this.githubResultDetail || "未知"}`;
+      }
+      return "仅检测与 GitHub 的网络层连通性（TCP 443），不涉及 HTTP 协议";
     },
   },
   created() {
@@ -308,6 +345,37 @@ export default {
         })
         .catch(() => { });
     },
+    // GitHub TCP 连通性检测（仅网络层 TCP 443，动效与提示与管理页胶囊保持一致）
+    testTcpConnectivity() {
+      if (this.testingTcp || this.isSystemLocked) return;
+      this.testingTcp = true;
+      this.tcpStatus = "testing";
+      const startedAt = Date.now();
+      // 结果至少延迟600ms落地，保证雷达动画可感知（避免接口过快返回导致状态闪变）
+      const settle = (status) => {
+        const wait = Math.max(0, 600 - (Date.now() - startedAt));
+        setTimeout(() => {
+          this.tcpStatus = status;
+          this.testingTcp = false;
+        }, wait);
+      };
+
+      testConnectToGithubByTcp()
+        .then((response) => {
+          this.githubResultDetail = response.data ? String(response.data) : "";
+          this.lastGithubTestTime = this.parseTime(new Date());
+          this.$message.success("GitHub 网络层连通正常（TCP 443 可达）");
+          settle("success");
+        })
+        .catch((error) => {
+          this.githubResultDetail = error.msg || error.message || "未知原因";
+          this.lastGithubTestTime = this.parseTime(new Date());
+          if (!error._isHandled) {
+            this.$message.error("GitHub 网络层不可达，请检查服务器出站网络或 443 端口防火墙规则");
+          }
+          settle("error");
+        });
+    },
     // 启动成功后右上角弹出 Jenkins 跳转通知（与 Tomcat 管理页一致）
     notifyJenkins() {
       const h = this.$createElement;
@@ -389,6 +457,174 @@ $memory-track: #dce9e0;
   /* 悬浮动效收敛为共享工具类 .glyph-flicker，仅保留配色加深 */
   &:hover .panel-glyph {
     color: $primary-dark;
+  }
+}
+
+/* ===== GitHub 连通性检测胶囊（仅 TCP 网络层检测，状态灯动效与管理页同款） ===== */
+.gh-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--home-border);
+  border-radius: 14px;
+  background: #f5f7fa;
+  cursor: pointer;
+  font-size: 11px;
+  color: $muted;
+  line-height: 1;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  top: 1px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 检测进行中：不可重复点击，光标提示 */
+  &.is-busy {
+    cursor: not-allowed;
+  }
+
+  /* 胶囊状态灯（圆点） */
+  .gh-pill-dot {
+    flex-shrink: 0;
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #bdc3c7;
+    transition: background-color 0.3s ease;
+  }
+
+  /* ---- 检测中：蓝色状态灯 + 雷达扩散脉冲 + 胶囊流光扫描 ---- */
+  &.gh-testing {
+    border-color: #a8d8ff;
+    background: #e6f4ff;
+    color: #1890ff;
+
+    .gh-pill-dot {
+      background: #409eff;
+
+      /* 双波纹错峰扩散 */
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 1.5px solid #409eff;
+        border-radius: 50%;
+        animation: gh-radar 1.5s ease-out infinite;
+      }
+
+      &::after {
+        animation-delay: 0.75s;
+      }
+    }
+
+    /* 胶囊表面流光扫过 */
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+      animation: gh-sheen 1.6s ease-in-out infinite;
+    }
+  }
+
+  /* ---- 成功：主题绿呼吸灯 ---- */
+  &.gh-success {
+    border-color: rgba(46, 204, 113, 0.45);
+    background: rgba(46, 204, 113, 0.1);
+    color: $primary-dark;
+
+    .gh-pill-dot {
+      background: $primary;
+      animation: gh-breath 2.4s ease-in-out infinite;
+    }
+  }
+
+  /* ---- 失败：红点 + 胶囊轻抖一次（可点击重试） ---- */
+  &.gh-error {
+    border-color: rgba(245, 34, 45, 0.35);
+    background: #fef0f0;
+    color: $danger;
+    animation: gh-shake 0.45s ease;
+
+    .gh-pill-dot {
+      background: $danger;
+    }
+  }
+}
+
+@keyframes gh-radar {
+
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes gh-sheen {
+
+  0% {
+    transform: translateX(-120%) skewX(-15deg);
+  }
+
+  60%,
+  100% {
+    transform: translateX(320%) skewX(-15deg);
+  }
+}
+
+@keyframes gh-breath {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0);
+  }
+}
+
+@keyframes gh-shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-3px);
+  }
+
+  40% {
+    transform: translateX(3px);
+  }
+
+  60% {
+    transform: translateX(-2px);
+  }
+
+  80% {
+    transform: translateX(2px);
   }
 }
 
