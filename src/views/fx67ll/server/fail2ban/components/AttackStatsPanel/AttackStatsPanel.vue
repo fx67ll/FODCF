@@ -104,7 +104,7 @@
                                         @click="clearColumnFilter('jails')">清除</el-button>
                                 </div>
                                 <el-checkbox-group :value="filters.jails"
-                                    @input="val => handleFilterChange('jails', val)">
+                                    @input="val => handleColumnFilterChange('jails', val)">
                                     <el-checkbox v-for="jail in jailFilterOptions" :key="jail" :label="jail"
                                         class="filter-option">
                                         {{ jail }}
@@ -142,7 +142,7 @@
                                         @click="clearColumnFilter('threat')">清除</el-button>
                                 </div>
                                 <el-checkbox-group :value="filters.threat"
-                                    @input="val => handleFilterChange('threat', val)">
+                                    @input="val => handleColumnFilterChange('threat', val)">
                                     <el-checkbox v-for="level in threatFilterOptions" :key="level" :label="level"
                                         class="filter-option">
                                         {{ level }}
@@ -175,7 +175,7 @@
                                         @click="clearColumnFilter('banned')">清除</el-button>
                                 </div>
                                 <el-checkbox-group :value="filters.banned"
-                                    @input="val => handleFilterChange('banned', val)">
+                                    @input="val => handleColumnFilterChange('banned', val)">
                                     <el-checkbox v-for="status in bannedFilterOptions" :key="status" :label="status"
                                         class="filter-option">
                                         {{ status }}
@@ -561,7 +561,9 @@ export default {
 
         /**
          * 处理筛选条件变更（同步更新父组件值并触发刷新）
-         * @param {String} filterName 筛选字段名
+         * 注意：仅用于 Top条数 / 统计行数选择器；表头列筛选走 handleColumnFilterChange，
+         * 两者不可重名，否则后者会覆盖本方法导致选择器切换不刷新数据
+         * @param {String} filterName 筛选字段名（topIpLimit / statsLogLines）
          * @param {*} value 新值
          */
         handleFilterChange(filterName, value) {
@@ -692,7 +694,7 @@ export default {
          * @param {String} column 列名 jails | threat | banned
          * @param {Array} values 勾选项数组
          */
-        handleFilterChange(column, values) {
+        handleColumnFilterChange(column, values) {
             this.filters = { ...this.filters, [column]: values };
         },
 
