@@ -441,12 +441,9 @@ export default {
           this.fail2banAttackCount = null;
         });
     },
-    // 攻击次数紧凑展示（千 / 万）；滚动动画过程值为小数，取整避免出现长小数
+    // 攻击次数完整展示原始数值，不再紧凑折算为千（k）/ 万；滚动动画过程值为小数，取整避免出现长小数
     formatAttackCount(value) {
-      const n = Number(value) || 0;
-      if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
-      if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-      return String(Math.round(n));
+      return String(Math.round(Number(value) || 0));
     },
     // 日常通勤指南针点击在新窗口打开通勤地图
     openCommuteMap() {
