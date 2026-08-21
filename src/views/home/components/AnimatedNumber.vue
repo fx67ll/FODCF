@@ -8,7 +8,8 @@
  * 纯展示数值滚动组件
  * - 挂载与值更新时从 0 以 easeOutCubic 滚动到目标值
  * - 目标值为整数时过程值取整，否则保留一位小数
- * - 系统「减少动态效果」时直接落位
+ * - 产品决策：滚动效果在所有设备保持一致，主动忽略系统「减少动态效果」设置，
+ *   避免该设置开启时滚动失效（与 Navbar 头像动效决策一致）
  */
 export default {
   name: "AnimatedNumber",
@@ -73,10 +74,8 @@ export default {
     start() {
       this.cancel();
       const target = Number(this.value) || 0;
-      const reduceMotion =
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduceMotion || this.duration <= 0) {
+      // 产品决策：不检测系统「减少动态效果」，所有设备均播放滚动动画
+      if (this.duration <= 0) {
         this.displayValue = target;
         return;
       }

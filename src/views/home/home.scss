@@ -403,12 +403,6 @@
   }
 }
 
-/* 系统「减少动态效果」：刷新相关动画全部降级为直接显示 */
-@media (prefers-reduced-motion: reduce) {
-  .home-shell .refresh-flash,
-  .home-shell .refresh-flash strong,
-  .home-shell .refresh-flash b,
-  .home-shell .panel-refresh .spinning {
-    animation: none;
-  }
-}
+/* 产品决策：刷新相关动画在所有主流浏览器中保持一致，主动忽略系统级「减少动态效果」设置，
+   避免不同设备效果不一致（曾因该设置导致首页动效在家用浏览器失效，与 Navbar 头像动效决策一致）。
+   若后续需恢复无障碍降级，可重新引入 @media (prefers-reduced-motion: reduce) 分支。 */
