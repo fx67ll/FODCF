@@ -12,7 +12,10 @@
             <span>v{{ version }}</span>
             <i :class="isEasterEggVisible ? 'el-icon-arrow-up' : 'el-icon-magic-stick'"></i>
           </button>
-          <p>fx67ll.com</p>
+          <a class="site-link" href="https://fx67ll.com" target="_blank" rel="noopener noreferrer">
+            <span>fx67ll.com</span>
+            <i class="el-icon-top-right"></i>
+          </a>
         </div>
       </div>
 
@@ -245,11 +248,60 @@ export default {
     font-weight: 600;
   }
 
-  p {
+  // 个人主页链接：默认弱化展示，悬浮时主题绿渐变下划线滑入 + 轻抬发光
+  .site-link {
+    position: relative;
+    // 独占一行（同原 p 标签换行效果），宽度收缩为内容宽，保证下划线不撑满整行
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 3px;
     margin: 10px 0 0;
     color: var(--home-muted);
     font-size: 12px;
-    line-height: 1.7;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease;
+
+    i {
+      font-size: 11px;
+      transition: transform 0.25s ease;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -2px;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--home-primary), var(--home-primary-dark));
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(46, 204, 113, 0.45);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:hover {
+      color: var(--home-primary-dark);
+      transform: translateY(-1px);
+      text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+
+      i {
+        transform: translate(2px, -2px);
+      }
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
