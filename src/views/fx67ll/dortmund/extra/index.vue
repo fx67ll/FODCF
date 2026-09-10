@@ -1,1054 +1,136 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="总金额" prop="extraMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.extraMoney" placeholder="请输入当前外快总金额" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="是否盈利" prop="isWin">
-        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable>
-          <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="盈亏金额" prop="winMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.winMoney" placeholder="请输入外快盈亏金额" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="当前本金" prop="seedMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.seedMoney" placeholder="请输入当前投入本金" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="落袋金额" prop="saveMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.saveMoney" placeholder="请输入已经落袋为安的盈利金额" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="目标金额" prop="targetMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.targetMoney" placeholder="请输入目标金额" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
-        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="创建时间">
-        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新时间">
-        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
-          搜索
-        </el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">
-          重置
-        </el-button>
-        <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-          @click="handleMoreQuery">
-          {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <!-- 页面内容按模式切换（外快盈亏记录/数值模拟），切换状态本地持久缓存 -->
+    <transition name="mode-switch" mode="out-in">
+      <extra-record-pane v-if="pageMode === 'extra'" key="extra" />
+      <simulate-pane v-else key="simulate" />
+    </transition>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['dortmund:extra:add']">新增</el-button>
-      </el-col>
-      <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['dortmund:extra:edit']">修改</el-button>
-      </el-col>
-      <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['dortmund:extra:remove']">删除</el-button>
-      </el-col>
-      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:extra:export']">
-          导出</el-button>
-      </el-col> -->
-      <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="info" plain icon="el-icon-data-line" size="mini"
-          @click="handleOpenDataAnalysis">查看外快盈亏历史数据走势图</el-button>
-      </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-table v-loading="loading" :data="extraList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="外快总金额" align="center" prop="extraMoney" fixed="left" width="90" />
-      <el-table-column label="是否盈利" align="center" prop="isWin" fixed="left" width="80">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
-        </template>
-      </el-table-column>
-      <el-table-column label="本次外快盈亏金额" align="center" prop="winMoney" fixed="left" width="130">
-        <template slot-scope="scope">
-          <span style="color: #ff5a5f" v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney) < 0">{{
-            scope.row.winMoney }}</span>
-          <span style="color: #999999" v-if="
-            scope.row.isWin !== 'Y' &&
-            parseFloat(scope.row.winMoney || 0) === 0
-          ">{{ scope.row.winMoney }}</span>
-          <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'">{{
-            scope.row.winMoney
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="历史总盈亏金额" align="center" prop="currentMoney" width="120">
-        <template slot-scope="scope">
-          <span style="color: #ff5a5f" v-if="scope.row.currentMoney < 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "")
-          }}</span>
-          <span style="color: #999999" v-if="parseInt(scope.row.currentMoney || 0) === 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "") }}</span>
-          <span style="color: #2ecc71" v-if="scope.row.currentMoney > 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "")
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="100" />
-      <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
-      <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
-      <el-table-column label="外快备注" align="center" prop="extraRemark" width="230" :show-overflow-tooltip="true" />
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
-        <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dortmund:extra:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['dortmund:extra:remove']">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      :page-sizes="[5, 10, 23, 50, 100]" @pagination="getList" />
-
-    <!-- 添加或修改外快盈亏记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
-      :style="`top: ${getDialogVerticalOffset(isAdd ? 570 : 450)}`" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" v-loading="formLoading" label-width="80px">
-        <!-- 新增时展示上一次记录参考 -->
-        <div class="pre-extra-reference" v-if="isAdd">
-          <div class="pre-extra-reference-header">
-            <div class="pre-extra-reference-header-left">
-              <span class="pre-extra-reference-title">上次记录参考</span>
-              <span class="pre-extra-reference-time" v-if="preExtraData.createTime">{{
-                parseTime(preExtraData.createTime, "{y}-{m}-{d} {h}:{i}")
-              }}</span>
-            </div>
-            <el-button type="text" size="mini" icon="el-icon-refresh-right"
-              @click="handleRestorePreExtra">恢复上次数据</el-button>
-          </div>
-          <div class="pre-extra-reference-body">
-            <div class="pre-extra-reference-item">
-              <span class="pre-extra-reference-label">总金额</span>
-              <span class="pre-extra-reference-value">{{ preExtraData.extraMoney }}</span>
-            </div>
-            <div class="pre-extra-reference-item">
-              <span class="pre-extra-reference-label">盈亏金额</span>
-              <span class="pre-extra-reference-value">{{
-                preExtraData.winMoney > 0 ? "+" + preExtraData.winMoney : preExtraData.winMoney
-              }}</span>
-            </div>
-            <div class="pre-extra-reference-item">
-              <span class="pre-extra-reference-label">当前本金</span>
-              <span class="pre-extra-reference-value">{{ preExtraData.seedMoney }}</span>
-            </div>
-            <div class="pre-extra-reference-item">
-              <span class="pre-extra-reference-label">落袋金额</span>
-              <span class="pre-extra-reference-value">{{ preExtraData.saveMoney }}</span>
-            </div>
-            <div class="pre-extra-reference-item">
-              <span class="pre-extra-reference-label">目标金额</span>
-              <span class="pre-extra-reference-value">{{ preExtraData.targetMoney }}</span>
-            </div>
-          </div>
-          <div class="pre-extra-reference-tip">
-            上次的总金额、当前本金、落袋金额、目标金额已自动填入下方表单，请按本次实际情况修改，盈亏金额与是否盈利将自动计算
-          </div>
-        </div>
-
-        <!-- 一行两列 -->
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-form-item label="总金额" prop="extraMoney">
-              <el-input v-model="form.extraMoney" placeholder="请输入当前外快总金额" @input="handleExtraMoneyChangeDubounce" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="是否盈利" prop="isWin">
-              <el-select v-model="form.isWin" style="width: 100%" placeholder="请选择是否盈利" @change="handleIsWinChange">
-                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-form-item label="盈亏金额" prop="winMoney">
-              <el-input v-model="form.winMoney" placeholder="请输入外快盈亏金额" @input="handleWinMoneyChangeDubounce" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="当前本金" prop="seedMoney">
-              <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" @input="handleSeedMoneyChangeDubounce" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-form-item label="落袋金额" prop="saveMoney">
-              <el-input v-model="form.saveMoney" placeholder="请输入已经落袋为安的盈利金额" @input="handleSaveMoneyChangeDubounce" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="目标金额" prop="targetMoney">
-              <el-input v-model="form.targetMoney" placeholder="请输入目标金额" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <!-- 备注单独一行 -->
-        <el-form-item label="外快备注" prop="extraRemark">
-          <el-input v-model="form.extraRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
-            placeholder="请输入外快备注内容" />
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>
-
-    <!-- 查看外快盈亏历史数据走势图的弹窗 -->
-    <el-dialog title="外快盈亏历史数据走势图" :visible.sync="historyDataAnalysisOpen" :close-on-click-modal="false"
-      :show-close="true" :fullscreen="true" :destroy-on-close="true" v-loading="historyDataChartLoading" append-to-body>
-      <div id="historyDataAnalysisContainer"></div>
-      <!-- <div slot="footer" class="dialog-footer">
-        <el-button @click="handleCloseDataAnalysis">关闭</el-button>
-      </div> -->
-    </el-dialog>
+    <!-- 页面模式切换悬浮按钮（固定右下角） -->
+    <div class="mode-fab" :class="{ spinning: fabSpinning }" @click="handleTogglePageMode">
+      <span class="mode-fab-label">{{ pageMode === "extra" ? "切换至数值模拟" : "切换至盈亏记录" }}</span>
+      <span class="mode-fab-icon">
+        <i :class="pageMode === 'extra' ? 'el-icon-cpu' : 'el-icon-notebook-2'"></i>
+      </span>
+    </div>
   </div>
 </template>
 
 <script>
-import {
-  listExtra,
-  getExtra,
-  delExtra,
-  addExtra,
-  updateExtra,
-} from "@/api/fx67ll/dortmund/extra";
+import ExtraRecordPane from "./components/ExtraRecordPane/ExtraRecordPane.vue";
+import SimulatePane from "./components/SimulatePane/SimulatePane.vue";
 
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
-
-import * as echarts from "echarts";
-import _ from "underscore";
+// 页面模式本地持久缓存的key（extra外快盈亏记录 simulate数值模拟）
+const PAGE_MODE_KEY = "dortmund-extra-page-mode";
 
 export default {
   name: "DortmundExtra",
-  dicts: ["sys_yes_no"],
+  components: { ExtraRecordPane, SimulatePane },
   data() {
     return {
-      // 遮罩层
-      loading: true,
-      // 选中数组
-      ids: [],
-      // 非单个禁用
-      single: true,
-      // 非多个禁用
-      multiple: true,
-      // 显示搜索条件
-      showSearch: true,
-      // 总条数
-      total: 0,
-      // 外快盈亏记录表格数据
-      extraList: [],
-      // 弹出层标题
-      title: "",
-      // 是否显示弹出层
-      open: false,
-      // 创建时间范围
-      daterangeCreateTime: [],
-      // 更新时间范围
-      daterangeUpdateTime: [],
-      // 是否使用高级搜索
-      isMoreQuery: false,
-      // 查询参数
-      queryParams: {
-        pageNum: 1,
-        pageSize: 5,
-        extraMoney: null,
-        isWin: null,
-        winMoney: null,
-        seedMoney: null,
-        saveMoney: null,
-        targetMoney: null,
-        extraRemark: null,
-        createBy: null,
-        createTime: null,
-        updateBy: null,
-        updateTime: null,
-      },
-      // 表单参数
-      form: {
-        extraMoney: 0,
-        isWin: "",
-        winMoney: 0,
-        seedMoney: 0,
-        saveMoney: 0,
-        targetMoney: 0,
-        extraRemark: "",
-      },
-      // 表单遮罩层
-      formLoading: false,
-      // 是否是新增
-      isAdd: false,
-      // 表单校验
-      rules: {
-        extraMoney: [
-          {
-            required: true,
-            message: "当前外快总金额不能为空",
-            trigger: "blur",
-          },
-        ],
-        isWin: [
-          { required: true, message: "是否盈利不能为空", trigger: "change" },
-        ],
-        winMoney: [
-          { required: true, message: "外快盈亏金额不能为空", trigger: "blur" },
-        ],
-        seedMoney: [
-          { required: true, message: "当前投入本金不能为空", trigger: "blur" },
-        ],
-        saveMoney: [
-          {
-            required: true,
-            message: "已经落袋为安的盈利金额不能为空",
-            trigger: "change",
-          },
-        ],
-        targetMoney: [
-          { required: true, message: "目标金额不能为空", trigger: "blur" },
-        ],
-      },
-      // 外快盈亏历史数据走势图弹窗相关参数
-      historyDataAnalysisOpen: false,
-      historyDataChartLoading: false,
-      // 上一次外快数据
-      preExtraData: {
-        extraMoney: 0,
-        winMoney: 0,
-        seedMoney: 0,
-        saveMoney: 0,
-        targetMoney: 0,
-        createTime: null,
-      },
-      // 编辑模式下的本条记录原值快照
-      origForm: null,
+      // 页面模式（extra外快盈亏记录 simulate数值模拟），取本地持久缓存值
+      pageMode: localStorage.getItem(PAGE_MODE_KEY) === "simulate" ? "simulate" : "extra",
+      // 悬浮按钮点击旋转动画中状态
+      fabSpinning: false,
     };
   },
-  created() {
-    this.getList();
-  },
   methods: {
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
-    },
-    // 打开外快盈亏历史数据走势图弹窗
-    handleOpenDataAnalysis() {
+    // 切换页面模式并本地持久缓存
+    handleTogglePageMode() {
       const self = this;
-      this.historyDataAnalysisOpen = true;
-      this.historyDataChartLoading = true;
+      this.fabSpinning = true;
+      this.pageMode = this.pageMode === "extra" ? "simulate" : "extra";
+      localStorage.setItem(PAGE_MODE_KEY, this.pageMode);
       setTimeout(() => {
-        self.setChartDomHeight();
-        self.formatHistoiryListData();
+        self.fabSpinning = false;
       }, 518);
-      setTimeout(() => {
-        self.historyDataChartLoading = false;
-      }, 5918);
-    },
-    // 关闭外快盈亏历史数据走势图弹窗
-    handleCloseDataAnalysis() {
-      this.historyDataAnalysisOpen = false;
-    },
-    // 动态赋值图表高度
-    setChartDomHeight() {
-      const domHeight = window.innerHeight - 114;
-      document.getElementById("historyDataAnalysisContainer").style.height =
-        domHeight + "px";
-    },
-    // 组装历史数据
-    formatHistoiryListData() {
-      const self = this;
-      listExtra({
-        pageNum: 1,
-        pageSize: 999999999,
-      }).then((response) => {
-        const hisListData = response?.rows;
-        const chartListData = [];
-        hisListData.forEach((item) => {
-          const lastMoney = parseFloat(
-            (
-              parseFloat(item?.extraMoney || 0) -
-              parseFloat(item?.seedMoney || 0) -
-              parseFloat(item?.winMoney || 0)
-            ).toFixed(2)
-          );
-          const nowMoney = parseFloat(
-            (
-              parseFloat(item?.extraMoney || 0) -
-              parseFloat(item?.seedMoney || 0)
-            ).toFixed(2)
-          );
-          const highMoney = lastMoney > nowMoney ? lastMoney : nowMoney;
-          const lowMoney = lastMoney < nowMoney ? lastMoney : nowMoney;
-          chartListData.push([
-            item?.createTime,
-            lastMoney,
-            nowMoney,
-            lowMoney,
-            highMoney,
-          ]);
-        });
-        self.initDataAnalysisChart(chartListData);
-        self.historyDataChartLoading = false;
-      });
-    },
-    // 初始化外快盈亏历史数据走势图
-    initDataAnalysisChart(kChartData) {
-      var chartDom = document.getElementById("historyDataAnalysisContainer");
-      var myChart = echarts.init(chartDom);
-      var option;
-
-      const upColor = "#ec0000";
-      const upBorderColor = "#8A0000";
-      const downColor = "#00da3c";
-      const downBorderColor = "#008F28";
-
-      // Each item: open，close，lowest，highest
-      const data0 = splitData(kChartData);
-
-      function splitData(rawData) {
-        const categoryData = [];
-        const values = [];
-        for (var i = 0; i < rawData.length; i++) {
-          categoryData.push(rawData[i].splice(0, 1)[0]);
-          values.push(rawData[i]);
-        }
-        return {
-          categoryData: categoryData,
-          values: values,
-        };
-      }
-
-      function calculateMA(dayCount) {
-        var result = [];
-        for (var i = 0, len = data0.values.length; i < len; i++) {
-          if (i < dayCount) {
-            result.push("-");
-            continue;
-          }
-          var sum = 0;
-          for (var j = 0; j < dayCount; j++) {
-            sum += +data0.values[i - j][1];
-          }
-          result.push(parseFloat((sum / dayCount).toFixed(2)));
-        }
-        return result;
-      }
-
-      option = {
-        // title: {
-        //   text: "上证指数",
-        //   left: 0,
-        // },
-        tooltip: {
-          trigger: "axis",
-          axisPointer: {
-            type: "cross",
-          },
-        },
-        legend: {
-          // data: ["日K", "MA5", "MA10", "MA20", "MA30"],
-          data: ["外快盈亏", "MA5", "MA10", "MA20", "MA30"],
-        },
-        grid: {
-          left: "10%",
-          right: "10%",
-          bottom: "15%",
-        },
-        xAxis: {
-          type: "category",
-          data: data0.categoryData,
-          boundaryGap: false,
-          axisLine: { onZero: false },
-          splitLine: { show: false },
-          min: "dataMin",
-          max: "dataMax",
-        },
-        yAxis: {
-          scale: true,
-          splitArea: {
-            show: true,
-          },
-        },
-        dataZoom: [
-          {
-            type: "inside",
-            start: 0,
-            end: 100,
-          },
-          {
-            show: true,
-            type: "slider",
-            top: "90%",
-            start: 0,
-            end: 100,
-          },
-        ],
-        series: [
-          {
-            name: "外快盈亏",
-            type: "candlestick",
-            data: data0.values,
-            itemStyle: {
-              color: upColor,
-              color0: downColor,
-              borderColor: upBorderColor,
-              borderColor0: downBorderColor,
-            },
-            markPoint: {
-              label: {
-                formatter: function (param) {
-                  return param != null ? Math.round(param.value) + "" : "";
-                },
-              },
-              data: [
-                // // 自定义标记点
-                // {
-                //   name: "Mark",
-                //   coord: ["2023-09-18 02:02:58", 3649.9],
-                //   value: 3649.9,
-                //   itemStyle: {
-                //     color: "rgb(41,60,85)",
-                //   },
-                // },
-                // 最高标记点
-                {
-                  name: "highest value",
-                  type: "max",
-                  valueDim: "highest",
-                },
-                // 最低标记点
-                {
-                  name: "lowest value",
-                  type: "min",
-                  valueDim: "lowest",
-                },
-                // // 平均标记点
-                // {
-                //   name: "average value on close",
-                //   type: "average",
-                //   valueDim: "close",
-                // },
-              ],
-              tooltip: {
-                formatter: function (param) {
-                  return param.name + "<br>" + (param.data.coord || "");
-                },
-              },
-            },
-            markLine: {
-              symbol: ["none", "none"],
-              data: [
-                [
-                  {
-                    name: "from lowest to highest",
-                    type: "min",
-                    valueDim: "lowest",
-                    symbol: "circle",
-                    symbolSize: 10,
-                    label: {
-                      show: false,
-                    },
-                    emphasis: {
-                      label: {
-                        show: false,
-                      },
-                    },
-                  },
-                  {
-                    type: "max",
-                    valueDim: "highest",
-                    symbol: "circle",
-                    symbolSize: 10,
-                    label: {
-                      show: false,
-                    },
-                    emphasis: {
-                      label: {
-                        show: false,
-                      },
-                    },
-                  },
-                ],
-                {
-                  name: "min line on close",
-                  type: "min",
-                  valueDim: "close",
-                },
-                {
-                  name: "max line on close",
-                  type: "max",
-                  valueDim: "close",
-                },
-              ],
-            },
-          },
-          {
-            name: "MA5",
-            type: "line",
-            data: calculateMA(5),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-          {
-            name: "MA10",
-            type: "line",
-            data: calculateMA(10),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-          {
-            name: "MA20",
-            type: "line",
-            data: calculateMA(20),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-          {
-            name: "MA30",
-            type: "line",
-            data: calculateMA(30),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-        ],
-      };
-
-      option && myChart.setOption(option);
-    },
-    // 重置时间段查询
-    clearDateQueryParams() {
-      this.queryParams.beginCreateTime = null;
-      this.queryParams.endCreateTime = null;
-      this.queryParams.beginUpdateTime = null;
-      this.queryParams.endUpdateTime = null;
-    },
-    /** 查询外快盈亏记录列表 */
-    getList() {
-      this.loading = true;
-      this.clearDateQueryParams();
-      if (null != this.daterangeCreateTime && "" != this.daterangeCreateTime) {
-        this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
-        this.queryParams.endCreateTime = this.daterangeCreateTime[1];
-      }
-      if (null != this.daterangeUpdateTime && "" != this.daterangeUpdateTime) {
-        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
-        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
-      }
-      listExtra(this.queryParams).then((response) => {
-        this.extraList = this.countCurrentMoney(
-          this.formatObjectArrayNullProperty(response.rows)
-        );
-        this.total = response.total;
-        this.loading = false;
-      });
-    },
-    countCurrentMoney(list) {
-      const listResult = [];
-      list.forEach((item) => {
-        const objTmp = {
-          ...item,
-          currentMoney: (
-            parseFloat(item.extraMoney || 0) - parseFloat(item.seedMoney || 0)
-          ).toFixed(2),
-        };
-        listResult.push(objTmp);
-      });
-      return listResult;
-    },
-    // 取消按钮
-    cancel() {
-      this.open = false;
-      this.reset();
-    },
-    // 表单重置
-    reset() {
-      this.form = {
-        extraId: null,
-        extraMoney: 0,
-        isWin: "",
-        winMoney: 0,
-        seedMoney: 0,
-        saveMoney: 0,
-        targetMoney: 0,
-        extraRemark: "",
-        createBy: null,
-        createTime: null,
-        updateBy: null,
-        updateTime: null,
-      };
-      this.resetForm("form");
-    },
-    /** 高级搜索按钮操作 */
-    handleMoreQuery() {
-      this.isMoreQuery = !this.isMoreQuery;
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1;
-      this.getList();
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.daterangeCreateTime = [];
-      this.daterangeUpdateTime = [];
-      this.resetForm("queryForm");
-      this.handleQuery();
-    },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map((item) => item.extraId);
-      this.single = selection.length !== 1;
-      this.multiple = !selection.length;
-    },
-    // 外快总额监听防抖
-    handleExtraMoneyChangeDubounce: _.debounce(function (val) {
-      this.handleExtraMoneyChange(val);
-    }, 444),
-    // 外快总额监听
-    handleExtraMoneyChange(val) {
-      if (val !== "" && val != null) {
-        this.handleWinMoneyCount();
-      }
-    },
-    // 本金监听防抖
-    handleSeedMoneyChangeDubounce: _.debounce(function (val) {
-      this.handleSeedMoneyChange(val);
-    }, 444),
-    // 本金监听
-    handleSeedMoneyChange(val) {
-      if (val !== "" && val != null) {
-        this.handleWinMoneyCount();
-      }
-    },
-    // 盈亏金额手动监听防抖
-    handleWinMoneyChangeDubounce: _.debounce(function () {
-      this.handleWinMoneyChange();
-    }, 444),
-    // 盈亏金额手动监听，按正负号重算是否盈利
-    handleWinMoneyChange() {
-      const winMoney = parseFloat(this.form?.winMoney);
-      if (!isNaN(winMoney)) {
-        this.form.isWin = winMoney > 0 ? "Y" : "N";
-      }
-    },
-    // 是否盈利手动监听，与盈亏金额正负不符时弹窗提醒
-    handleIsWinChange(val) {
-      const winMoney = parseFloat(this.form?.winMoney || 0);
-      const derivedIsWin = (!isNaN(winMoney) && winMoney > 0) ? "Y" : "N";
-      if (!isNaN(winMoney) && val !== derivedIsWin) {
-        this.$modal
-          .confirm("是否盈利与盈亏金额正负不符，是否保留当前手动选择？")
-          .catch(() => {
-            this.form.isWin = derivedIsWin;
-          });
-      }
-    },
-    // 落袋金额监听防抖
-    handleSaveMoneyChangeDubounce: _.debounce(function () {
-      this.handleSaveMoneyChange();
-    }, 444),
-    // 落袋金额超过历史净盈利时提醒
-    handleSaveMoneyChange() {
-      const saveMoney = parseFloat(this.form?.saveMoney);
-      const netMoney =
-        parseFloat(this.form?.extraMoney || 0) -
-        parseFloat(this.form?.seedMoney || 0);
-      if (!isNaN(saveMoney) && !isNaN(netMoney) && saveMoney > netMoney) {
-        this.$modal.msgWarning("落袋金额已超过当前历史净盈利（总金额 - 当前本金），请确认填写无误！");
-      }
-    },
-    // 按当前表单计算盈亏金额（新增模式以最新记录为基准，编辑模式以本条记录原值为基准）
-    calcWinMoneyByForm() {
-      if (this.isAdd) {
-        const preExtraMoney = parseFloat(this.preExtraData?.extraMoney || 0);
-        const preSeedMoney = parseFloat(this.preExtraData?.seedMoney || 0);
-        return (
-          parseFloat(this.form?.extraMoney || 0) -
-          parseFloat(this.form?.seedMoney || 0) -
-          (preExtraMoney - preSeedMoney)
-        ).toFixed(2);
-      }
-      const orig = this.origForm || {};
-      const deltaExtraMoney =
-        parseFloat(this.form?.extraMoney || 0) - parseFloat(orig.extraMoney || 0);
-      const deltaSeedMoney =
-        parseFloat(this.form?.seedMoney || 0) - parseFloat(orig.seedMoney || 0);
-      return (
-        parseFloat(orig.winMoney || 0) +
-        deltaExtraMoney -
-        deltaSeedMoney
-      ).toFixed(2);
-    },
-    // 计算当前表单各类金额
-    handleWinMoneyCount() {
-      const nowWinMoney = this.calcWinMoneyByForm();
-      this.form.isWin = parseFloat(nowWinMoney) > 0 ? "Y" : "N";
-      this.form.winMoney = nowWinMoney;
-    },
-    // 查询上一次外快
-    getPreExtraMoney() {
-      const self = this;
-      const queryParams = {
-        pageNum: 1,
-        pageSize: 1,
-      };
-      this.formLoading = true;
-      listExtra(queryParams)
-        .then((res) => {
-          if (res?.code === 200) {
-            if (res?.rows && res?.rows?.length > 0 && res.rows?.[0]) {
-              const lastDataObj = res.rows[0];
-              self.preExtraData = {
-                extraMoney: parseFloat(lastDataObj?.extraMoney || 0),
-                winMoney: parseFloat(lastDataObj?.winMoney || 0),
-                seedMoney: parseFloat(lastDataObj?.seedMoney || 0),
-                saveMoney: parseFloat(lastDataObj?.saveMoney || 0),
-                targetMoney: parseFloat(lastDataObj?.targetMoney || 0),
-                createTime: lastDataObj?.createTime || null,
-              };
-              // 参考数据直接预填入表单，用户只需修改本次有变化的字段
-              self.form.extraMoney = self.preExtraData.extraMoney;
-              self.form.seedMoney = self.preExtraData.seedMoney;
-              self.form.saveMoney = self.preExtraData.saveMoney;
-              self.form.targetMoney = self.preExtraData.targetMoney;
-              // 预填后按基准计算一次，保证盈亏金额与是否盈利初始一致（本次未变动时盈亏为0，按持平处理）
-              self.handleWinMoneyCount();
-            } else {
-              self.$modal.msgWarning("暂无历史外快盈亏记录数据！");
-            }
-          } else {
-            self.$modal.msgError("查询外快盈亏记录失败！");
-          }
-        })
-        .finally(() => {
-          self.formLoading = false;
-        });
-    },
-    // 一键恢复表单为上次记录的预填数据
-    handleRestorePreExtra() {
-      this.form.extraMoney = this.preExtraData.extraMoney;
-      this.form.seedMoney = this.preExtraData.seedMoney;
-      this.form.saveMoney = this.preExtraData.saveMoney;
-      this.form.targetMoney = this.preExtraData.targetMoney;
-      this.handleWinMoneyCount();
-      this.$modal.msgSuccess("已恢复为上次记录数据");
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.isAdd = true;
-      this.reset();
-      this.title = "添加外快盈亏记录";
-      this.open = true;
-      this.getPreExtraMoney();
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.isAdd = false;
-      this.reset();
-      this.origForm = null;
-      const extraId = row.extraId || this.ids;
-      getExtra(extraId).then((response) => {
-        if (response?.data) {
-          this.form = {
-            ...this.form,
-            ...response?.data
-          };
-          this.origForm = { ...response?.data };
-        }
-        this.open = true;
-        this.title = "修改外快盈亏记录";
-      });
-    },
-    // 提交前一致性终检，返回矛盾提示列表
-    checkFormConsistency() {
-      const warnList = [];
-      const winMoney = parseFloat(this.form?.winMoney || 0);
-      const derivedIsWin = (!isNaN(winMoney) && winMoney > 0) ? "Y" : "N";
-      if (this.form?.isWin !== derivedIsWin) {
-        warnList.push("是否盈利与盈亏金额正负不一致");
-      }
-      const saveMoney = parseFloat(this.form?.saveMoney || 0);
-      const netMoney =
-        parseFloat(this.form?.extraMoney || 0) -
-        parseFloat(this.form?.seedMoney || 0);
-      if (!isNaN(saveMoney) && !isNaN(netMoney) && saveMoney > netMoney) {
-        warnList.push("落袋金额超过历史净盈利");
-      }
-      return warnList;
-    },
-    /** 提交按钮 */
-    submitForm() {
-      const self = this;
-      this.$refs["form"].validate((valid) => {
-        if (valid) {
-          const warnList = self.checkFormConsistency();
-          if (warnList && warnList.length > 0) {
-            self.$modal
-              .confirm(`检测到以下逻辑不一致：${warnList.join("；")}。是否仍要提交？`)
-              .then(function () {
-                self.doSubmitForm();
-              })
-              .catch(() => { });
-          } else {
-            self.doSubmitForm();
-          }
-        }
-      });
-    },
-    // 实际提交
-    doSubmitForm() {
-      const self = this;
-      if (self.form.extraId != null) {
-        updateExtra(self.form).then((response) => {
-          self.$modal.msgSuccess("修改成功");
-          self.open = false;
-          self.getList();
-        });
-      } else {
-        addExtra(self.form).then((response) => {
-          self.$modal.msgSuccess("新增成功");
-          self.open = false;
-          self.getList();
-        });
-      }
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      const extraIds = row.extraId || this.ids;
-      this.$modal
-        .confirm('是否确认删除外快盈亏记录编号为"' + extraIds + '"的数据项？')
-        .then(function () {
-          return delExtra(extraIds);
-        })
-        .then(() => {
-          this.getList();
-          this.$modal.msgSuccess("删除成功");
-        })
-        .catch(() => { });
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download(
-        "dortmund/extra/export",
-        {
-          ...this.queryParams,
-        },
-        `extra_${new Date().getTime()}.xlsx`
-      );
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.pre-extra-reference {
-  margin-bottom: 18px;
-  padding: 12px 16px;
-  background-color: #f8f9fb;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
+/* 页面模式切换过渡动画 */
+.mode-switch-enter-active,
+.mode-switch-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.pre-extra-reference-header {
+.mode-switch-enter,
+.mode-switch-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* 页面模式切换悬浮按钮 */
+.mode-fab {
+  position: fixed;
+  right: 32px;
+  bottom: 48px;
+  z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.pre-extra-reference-header-left {
-  display: flex;
-  align-items: baseline;
-}
-
-.pre-extra-reference-title {
+  height: 48px;
+  padding: 0 14px;
+  color: #fff;
   font-size: 14px;
-  font-weight: 600;
-  color: #303133;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(46, 204, 113, 0.45);
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-.pre-extra-reference-time {
-  margin-left: 10px;
-  font-size: 12px;
-  color: #909399;
+.mode-fab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.55);
 }
 
-.pre-extra-reference-body {
+.mode-fab:active {
+  transform: translateY(-1px) scale(0.96);
+}
+
+/* 悬浮时平滑展开提示文字 */
+.mode-fab-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.35s ease, opacity 0.35s ease, margin 0.35s ease;
+}
+
+.mode-fab:hover .mode-fab-label {
+  max-width: 120px;
+  margin-right: 8px;
+  opacity: 1;
+}
+
+.mode-fab-icon {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 20px;
 }
 
-.pre-extra-reference-item {
-  min-width: 96px;
-  margin-right: 24px;
+/* 点击时图标旋转放大动画 */
+.mode-fab.spinning .mode-fab-icon {
+  animation: mode-fab-spin 0.5s ease;
 }
 
-.pre-extra-reference-label {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 12px;
-  color: #909399;
-}
+@keyframes mode-fab-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
 
-.pre-extra-reference-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-}
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
 
-.pre-extra-reference-tip {
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #909399;
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 </style>
