@@ -1,11 +1,12 @@
 <template>
   <div class="simulate-pane">
     <!-- 数值模拟操作台 -->
-    <sim-operation-panel :sim-form="simForm" :sim-now-value="simNowValue" :sim-next-start-value="simNextStartValue"
-      :sim-next-round-no="simNextRoundNo" :sim-progress="simProgress" :sim-required-rounds="simRequiredRounds"
-      :sim-finished="simFinished" :sim-restart-pending="simRestartPending" :sim-target-hit="simTargetHit"
-      :sim-loading="simLoading" :sim-submitting="simSubmitting" :sim-last-round="simLastRound"
-      @record="handleSimRound" @restart="handleSimRestart" @delete-last="handleSimDeleteLast" />
+    <sim-operation-panel :sim-form="simForm" :sim-version-list="simVersionList" :current-version-id="currentVersionId"
+      :sim-now-value="simNowValue" :sim-next-start-value="simNextStartValue" :sim-next-round-no="simNextRoundNo"
+      :sim-progress="simProgress" :sim-required-rounds="simRequiredRounds" :sim-finished="simFinished"
+      :sim-target-hit="simTargetHit" :sim-loading="simLoading" :sim-submitting="simSubmitting"
+      :sim-last-round="simLastRound" @version-change="handleSimVersionChange" @record="handleSimRound"
+      @restart="handleSimRestart" @delete-last="handleSimDeleteLast" @manage-version="simVersionManageOpen = true" />
 
     <!-- 轮次记录 -->
     <sim-round-table :rounds="simRounds" :total="simTotal" :loading="simLoading" :page.sync="simQueryParams.pageNum"
@@ -20,6 +21,10 @@
     <sim-record-dialog :visible.sync="simRecordOpen" :is-hit="simRecordIsHit" :sim-mode="simForm.simMode"
       :coefficient="simForm.coefficient" :next-start-value="simNextStartValue" :submitting="simSubmitting"
       @confirm="submitSimRound" />
+
+    <!-- 版本管理弹窗 -->
+    <sim-version-manage-dialog :visible.sync="simVersionManageOpen" :sim-version-list="simVersionList"
+      @success="handleSimVersionManaged" />
   </div>
 </template>
 
@@ -28,16 +33,22 @@ import {
   listExtraSimulate,
   addExtraSimulate,
   delExtraSimulate,
+  listExtraSimulateVersion,
+  addExtraSimulateVersion,
 } from "@/api/fx67ll/dortmund/extraSimulate";
 
 import SimOperationPanel from "../SimOperationPanel/SimOperationPanel.vue";
 import SimRoundTable from "../SimRoundTable/SimRoundTable.vue";
 import SimCompareTable from "../SimCompareTable/SimCompareTable.vue";
 import SimRecordDialog from "../SimRecordDialog/SimRecordDialog.vue";
+import SimVersionManageDialog from "../SimVersionManageDialog/SimVersionManageDialog.vue";
+
+// 数值模拟参数本地缓存键
+const SIM_CONFIG_CACHE_KEY = "dortmund-extra-sim-config";
 
 export default {
   name: "SimulatePane",
-  components: { SimOperationPanel, SimRoundTable, SimCompareTable, SimRecordDialog },
+  components: { SimOperationPanel, SimRoundTable, SimCompareTable, SimRecordDialog, SimVersionManageDialog },
   data() {
     return {
       // 数值模拟参数配置
@@ -49,12 +60,14 @@ export default {
       },
       // 数值模拟轮次记录列表数据
       simRounds: [],
+      // 数值模拟版本记录列表数据（接口按版本倒序返回，第一条为最新版本）
+      simVersionList: [],
+      // 数值模拟当前选中的版本主键
+      currentVersionId: null,
       // 数值模拟轮次记录列表加载状态
       simLoading: false,
       // 数值模拟轮次记录保存中状态
       simSubmitting: false,
-      // 数值模拟是否已手动重置（下一轮从初始数值重新开始）
-      simRestartPending: false,
       // 数值模拟轮次记录查询参数
       simQueryParams: {
         pageNum: 1,
@@ -68,6 +81,8 @@ export default {
       simRecordOpen: false,
       // 数值模拟本轮结果（Y达成 N未达成），打开弹窗前记录
       simRecordIsHit: "Y",
+      // 数值模拟版本管理弹窗开关
+      simVersionManageOpen: false,
     };
   },
   computed: {
@@ -81,13 +96,9 @@ export default {
     simLastRound() {
       return this.simLatestRound;
     },
-    // 数值模拟下一轮是否从初始数值重新开始（无记录、上轮归零或手动重置）
+    // 数值模拟下一轮是否从初始数值重新开始（当前版本无记录或上轮归零）
     simRestartFromInitial() {
-      return (
-        !this.simLastRound ||
-        this.simLastRound.endValue <= 0 ||
-        this.simRestartPending
-      );
+      return !this.simLastRound || this.simLastRound.endValue <= 0;
     },
     // 数值模拟当前数值（最近一条记录的结束数值，无记录时为初始数值）
     simNowValue() {
@@ -170,14 +181,99 @@ export default {
     },
   },
   created() {
-    this.getSimList();
+    const self = this;
+    this.loadSimConfigCache();
+    this.getSimVersionList().then(() => {
+      self.getSimList();
+    });
+  },
+  watch: {
+    // 数值模拟参数变动时写入本地缓存，下次进入页面自动恢复
+    simForm: {
+      handler(val) {
+        localStorage.setItem(SIM_CONFIG_CACHE_KEY, JSON.stringify(val));
+      },
+      deep: true,
+    },
   },
   methods: {
+    // 载入本地缓存的参数配置，无版本选中时作为默认配置
+    loadSimConfigCache() {
+      const cached = localStorage.getItem(SIM_CONFIG_CACHE_KEY);
+      if (!cached) {
+        return;
+      }
+      try {
+        const config = JSON.parse(cached);
+        this.simForm = {
+          simMode: config.simMode === "half" ? "half" : "full",
+          initialValue: parseFloat(config.initialValue || 0) || 100,
+          coefficient: parseFloat(config.coefficient || 0) || 2,
+          targetValue: parseFloat(config.targetValue || 0) || 500000,
+        };
+      } catch (err) {
+        // 缓存解析失败时保持默认配置
+      }
+    },
+    // 查询数值模拟版本记录列表，无选中版本时默认选中最新启用版本，开启新版本后强制切换到最新版本
+    getSimVersionList(isSelectLatest) {
+      const self = this;
+      return listExtraSimulateVersion().then((response) => {
+        const rows = response?.rows || [];
+        const enabledRows = rows.filter((item) => item.delFlag !== "2");
+        self.simVersionList = rows;
+        if (
+          isSelectLatest ||
+          !enabledRows.some((item) => item.versionId === self.currentVersionId)
+        ) {
+          const latestVersion = enabledRows.length > 0 ? enabledRows[0] : null;
+          self.currentVersionId = latestVersion
+            ? latestVersion.versionId
+            : null;
+          if (latestVersion) {
+            self.loadSimVersionParams(latestVersion);
+          }
+        }
+      });
+    },
+    // 切换数值模拟版本，载入该版本的参数配置并刷新轮次记录
+    handleSimVersionChange(versionId) {
+      this.currentVersionId = versionId;
+      const version = this.simVersionList.find(
+        (item) => item.versionId === versionId
+      );
+      if (version) {
+        this.loadSimVersionParams(version);
+      }
+      this.getSimList();
+    },
+    // 载入数值模拟版本保存的参数配置
+    loadSimVersionParams(version) {
+      this.simForm.simMode = version.simMode || "full";
+      this.simForm.initialValue = parseFloat(version.initialValue || 0);
+      this.simForm.coefficient = parseFloat(version.coefficient || 0);
+      this.simForm.targetValue = parseFloat(version.targetValue || 0);
+    },
+    // 版本管理弹窗保存成功后刷新版本列表，停用当前选中版本时自动切换到最新启用版本
+    handleSimVersionManaged() {
+      this.getSimVersionList().then(() => {
+        this.getSimList();
+      });
+    },
     // 查询数值模拟轮次记录分页列表（接口按记录倒序返回）
     getSimList() {
       const self = this;
+      if (!this.currentVersionId) {
+        this.simRounds = [];
+        this.simTotal = 0;
+        this.simLatestRound = null;
+        return;
+      }
       this.simLoading = true;
-      listExtraSimulate(this.simQueryParams)
+      listExtraSimulate({
+        ...this.simQueryParams,
+        versionId: this.currentVersionId,
+      })
         .then((response) => {
           self.simRounds = (response?.rows || []).map((item) =>
             self.formatSimRound(item)
@@ -192,9 +288,14 @@ export default {
     // 查询数值模拟最近一条轮次记录，驱动下一轮开始数值与轮次
     getSimLatestRound() {
       const self = this;
+      if (!this.currentVersionId) {
+        this.simLatestRound = null;
+        return;
+      }
       listExtraSimulate({
         pageNum: 1,
         pageSize: 1,
+        versionId: this.currentVersionId,
       }).then((response) => {
         const rows = response?.rows || [];
         self.simLatestRound =
@@ -218,11 +319,23 @@ export default {
       this.simRecordIsHit = hit ? "Y" : "N";
       this.simRecordOpen = true;
     },
-    // 提交本轮结果记录，保存后下一轮从保存的结束数值继续
+    // 提交本轮结果记录，当前版本已归零或尚无版本时自动开启新版本再记录
     submitSimRound(record) {
+      const self = this;
+      if (!this.currentVersionId || this.simFinished) {
+        this.createSimVersion().then(() => {
+          self.doSubmitSimRound(record);
+        });
+      } else {
+        this.doSubmitSimRound(record);
+      }
+    },
+    // 保存本轮结果记录，保存后下一轮从保存的结束数值继续
+    doSubmitSimRound(record) {
       const self = this;
       this.simSubmitting = true;
       addExtraSimulate({
+        versionId: self.currentVersionId,
         simMode: self.simForm.simMode,
         roundNo: self.simNextRoundNo,
         startValue: self.formatSimNumber(self.simNextStartValue),
@@ -236,7 +349,6 @@ export default {
         coefficient: self.formatSimNumber(self.simForm.coefficient),
       })
         .then(() => {
-          self.simRestartPending = false;
           self.simRecordOpen = false;
           self.$modal.msgSuccess("本轮记录保存成功");
           self.getSimList();
@@ -245,12 +357,24 @@ export default {
           self.simSubmitting = false;
         });
     },
-    // 手动重置数值模拟，下一轮从初始数值重新开始，历史记录保留
+    // 以当前参数配置开启新的数值模拟版本，历史轮次归档到旧版本
+    createSimVersion() {
+      const self = this;
+      return addExtraSimulateVersion({
+        simMode: self.simForm.simMode,
+        initialValue: self.formatSimNumber(self.simForm.initialValue),
+        coefficient: self.formatSimNumber(self.simForm.coefficient),
+        targetValue: self.formatSimNumber(self.simForm.targetValue),
+      }).then(() => self.getSimVersionList(true));
+    },
+    // 手动开启新的数值模拟版本，下一轮从初始数值重新开始，历史轮次归档到旧版本
     handleSimRestart() {
-      this.simRestartPending = true;
-      this.$modal.msgSuccess(
-        `下一轮将从初始数值 ${this.formatSimNumber(this.simForm.initialValue)} 重新开始`
-      );
+      this.createSimVersion().then(() => {
+        this.$modal.msgSuccess(
+          `已开启新版本，下一轮将从初始数值 ${this.formatSimNumber(this.simForm.initialValue)} 重新开始`
+        );
+        this.getSimList();
+      });
     },
     // 删除最近一条数值模拟轮次记录，下一轮回退到上一条的结束数值
     handleSimDeleteLast() {
@@ -267,7 +391,6 @@ export default {
           return delExtraSimulate(lastRound.simId);
         })
         .then(() => {
-          self.simRestartPending = false;
           self.$modal.msgSuccess("删除成功");
           self.getSimList();
         })
