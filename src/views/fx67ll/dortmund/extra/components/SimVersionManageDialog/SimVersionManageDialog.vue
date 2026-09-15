@@ -1,27 +1,31 @@
 <template>
-  <!-- 数值模拟版本管理弹窗（版本启用停用） -->
+  <!-- 数值模拟版本管理弹窗（版本启用停用与作废） -->
   <el-dialog title="管理模拟版本" :visible.sync="dialogVisible" :close-on-click-modal="false" width="560px"
     :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body>
     <div class="sim-version-manage-tip">
       <i class="el-icon-info"></i>
-      停用后版本将不在版本下拉中展示，轮次记录仍保留，可随时重新启用；停用当前选中版本时将自动切换到最新启用版本
+      停用后版本将不在版本下拉中展示，轮次记录仍保留，可随时重新启用；作废后版本将从列表中隐藏且不可恢复；停用或作废当前选中版本时将自动切换到最新启用版本
     </div>
     <div class="sim-version-manage-list" v-loading="switching">
       <div class="sim-version-manage-item" v-for="version in simVersionList" :key="version.versionId"
         :class="{ disabled: version.delFlag === '2' }">
         <div class="sim-version-manage-info">
           <div class="sim-version-manage-title">
-            <span class="sim-version-manage-no">版本{{ version.versionNo }}</span>
+            <span class="sim-version-manage-no">{{ version.versionName || `版本${version.versionNo}` }}</span>
             <span class="sim-version-manage-tag" :class="version.simMode === 'half' ? 'half' : 'full'">{{
               version.simMode === "half" ? "半量滚动" : "全量滚动" }}</span>
           </div>
           <div class="sim-version-manage-desc">
-            初始 {{ version.initialValue }} · 系数 {{ version.coefficient }} · 目标 {{ version.targetValue }}
+            版本{{ version.versionNo }} · 初始 {{ version.initialValue }} · 系数 {{ version.coefficient }} · 目标 {{ version.targetValue }}
           </div>
           <div class="sim-version-manage-time">{{ parseTime(version.createTime, "{y}-{m}-{d} {h}:{i}") }}</div>
         </div>
-        <el-switch :value="version.delFlag === '2' ? '2' : '0'" active-value="0" inactive-value="2"
-          active-color="#2ecc71" @change="(val) => handleVersionSwitch(version, val)" />
+        <div class="sim-version-manage-actions">
+          <el-switch :value="version.delFlag === '2' ? '2' : '0'" active-value="0" inactive-value="2"
+            active-color="#2ecc71" @change="(val) => handleVersionSwitch(version, val)" />
+          <el-button type="danger" size="mini" plain icon="el-icon-delete" class="sim-version-manage-invalidate-btn"
+            @click="$emit('invalidate', version)">作废</el-button>
+        </div>
       </div>
       <div class="sim-version-manage-empty" v-if="simVersionList.length === 0">暂无版本记录</div>
     </div>
@@ -151,6 +155,23 @@ export default {
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+}
+
+.sim-version-manage-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.sim-version-manage-invalidate-btn {
+  padding: 5px 10px;
+  transition: all 0.25s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(245, 108, 108, 0.25);
+  }
 }
 
 .sim-version-manage-no {

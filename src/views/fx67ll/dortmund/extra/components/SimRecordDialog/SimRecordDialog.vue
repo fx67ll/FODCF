@@ -21,9 +21,18 @@
         </div>
       </div>
 
-      <!-- 实际回收数值录入 -->
+      <!-- 本轮轮次与实际回收数值录入 -->
       <el-form ref="simRecordForm" :model="simRecordForm" :rules="simRecordRules" label-width="0"
         class="sim-record-form">
+        <el-form-item prop="roundNo">
+          <div class="sim-record-input-label">本轮轮次</div>
+          <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0"
+            class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }"
+            placeholder="请输入本轮轮次" />
+          <div class="sim-record-tip" :class="{ danger: simRecordForm.roundNo < 0 }">
+            {{ simRecordForm.roundNo < 0 ? "轮次为负，保存后该版本将被强制作废" : "默认自动顺延可修改，支持负值" }}
+          </div>
+        </el-form-item>
         <el-form-item prop="returnValue">
           <div class="sim-record-input-label">实际回收数值</div>
           <el-input-number v-model="simRecordForm.returnValue" :controls="false" :precision="2" :min="0"
@@ -79,6 +88,11 @@ export default {
       type: Number,
       default: 0,
     },
+    // 下一轮轮次序号
+    nextRoundNo: {
+      type: Number,
+      default: 1,
+    },
     // 保存中状态
     submitting: {
       type: Boolean,
@@ -87,12 +101,20 @@ export default {
   },
   data() {
     return {
-      // 本轮结果表单（实际回收数值支持部分回本）
+      // 本轮结果表单（轮次支持负值，实际回收数值支持部分回本）
       simRecordForm: {
+        roundNo: 1,
         returnValue: 0,
       },
       // 本轮结果表单校验
       simRecordRules: {
+        roundNo: [
+          {
+            required: true,
+            message: "本轮轮次不能为空",
+            trigger: "blur",
+          },
+        ],
         returnValue: [
           {
             required: true,
@@ -150,8 +172,9 @@ export default {
     getDialogVerticalOffset(offset) {
       return getDialogVerticalOffset(offset);
     },
-    // 弹窗打开时按系数预填实际回收数值，可按实际数值修改
+    // 弹窗打开时按下一轮轮次与系数预填，可按实际数值修改
     handleDialogOpen() {
+      this.simRecordForm.roundNo = this.nextRoundNo;
       this.simRecordForm.returnValue =
         this.isHit === "Y"
           ? parseFloat(
@@ -172,6 +195,7 @@ export default {
         }
         this.$emit("confirm", {
           isHit: this.isHit,
+          roundNo: this.simRecordForm.roundNo,
           returnValue: this.simRecordForm.returnValue,
           joinValue: this.joinValue,
           endValue: this.endValue,
@@ -261,13 +285,17 @@ export default {
   color: #1f2d3d;
 }
 
-/* 实际回收数值录入 */
+/* 本轮轮次与实际回收数值录入 */
 .sim-record-form {
   margin-bottom: 16px;
   animation: simRecordFadeDown 0.3s ease 0.1s both;
 
   ::v-deep .el-form-item {
     margin-bottom: 0;
+  }
+
+  ::v-deep .el-form-item + .el-form-item {
+    margin-top: 16px;
   }
 
   ::v-deep .el-form-item__content {
@@ -300,6 +328,20 @@ export default {
       box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
     }
   }
+
+  &.round ::v-deep .el-input__inner {
+    height: 36px;
+    font-size: 15px;
+  }
+
+  &.negative ::v-deep .el-input__inner {
+    color: #ff5a5f;
+
+    &:focus {
+      border-color: #ff5a5f;
+      box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.15);
+    }
+  }
 }
 
 .sim-record-tip {
@@ -307,6 +349,10 @@ export default {
   font-size: 12px;
   color: #909399;
   text-align: center;
+
+  &.danger {
+    color: #ff5a5f;
+  }
 }
 
 /* 本轮结束数值预览 */

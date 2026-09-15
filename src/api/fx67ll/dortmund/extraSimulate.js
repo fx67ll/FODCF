@@ -27,6 +27,14 @@ export function updateExtraSimulateVersion(data) {
   });
 }
 
+// 作废数值模拟版本记录（软删除，作废后不在列表中展示）
+export function invalidateExtraSimulateVersion(versionId) {
+  return request({
+    url: "/dortmund/extra/simulate/version/invalidate/" + versionId,
+    method: "put",
+  });
+}
+
 // 查询数值模拟轮次记录列表
 export function listExtraSimulate(query) {
   return request({
