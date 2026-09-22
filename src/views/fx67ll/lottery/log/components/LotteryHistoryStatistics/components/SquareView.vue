@@ -66,6 +66,60 @@
                     </el-tab-pane>
                 </el-tabs>
             </el-tab-pane>
+
+            <!-- 排列三面板（无分区，仅一组数字） -->
+            <el-tab-pane label="排列三" name="pl3">
+                <div class="number-grid">
+                    <div v-for="item in currentPl3Data" :key="item.number" class="number-card"
+                        :class="{ 'high-frequency': item.count === maxPl3Count && maxPl3Count > 0 }"
+                        :style="{ backgroundColor: getColorByCount(item.count, maxPl3Count) }">
+                        <div class="number">{{ formatNumber(item.number) }}</div>
+                        <div class="count">{{ item.count }}次</div>
+                    </div>
+                </div>
+            </el-tab-pane>
+
+            <!-- 排列五面板（无分区，仅一组数字） -->
+            <el-tab-pane label="排列五" name="pl5">
+                <div class="number-grid">
+                    <div v-for="item in currentPl5Data" :key="item.number" class="number-card"
+                        :class="{ 'high-frequency': item.count === maxPl5Count && maxPl5Count > 0 }"
+                        :style="{ backgroundColor: getColorByCount(item.count, maxPl5Count) }">
+                        <div class="number">{{ formatNumber(item.number) }}</div>
+                        <div class="count">{{ item.count }}次</div>
+                    </div>
+                </div>
+            </el-tab-pane>
+
+            <!-- 七星彩面板 -->
+            <el-tab-pane label="七星彩" name="qxc">
+                <!-- 第二层Tab：切换七星彩的前六位/尾号 -->
+                <el-tabs v-model="qxcZone">
+                    <!-- 七星彩前六位 (0-9) -->
+                    <el-tab-pane label="前六位 (0-9)" name="front">
+                        <div class="number-grid">
+                            <div v-for="item in currentQxcFrontData" :key="item.number" class="number-card"
+                                :class="{ 'high-frequency': item.count === maxQxcFrontCount && maxQxcFrontCount > 0 }"
+                                :style="{ backgroundColor: getColorByCount(item.count, maxQxcFrontCount) }">
+                                <div class="number">{{ formatNumber(item.number) }}</div>
+                                <div class="count">{{ item.count }}次</div>
+                            </div>
+                        </div>
+                    </el-tab-pane>
+
+                    <!-- 七星彩尾号 (0-14) -->
+                    <el-tab-pane label="尾号 (0-14)" name="back">
+                        <div class="number-grid">
+                            <div v-for="item in currentQxcBackData" :key="item.number" class="number-card"
+                                :class="{ 'high-frequency': item.count === maxQxcBackCount && maxQxcBackCount > 0 }"
+                                :style="{ backgroundColor: getColorByCount(item.count, maxQxcBackCount) }">
+                                <div class="number">{{ formatNumber(item.number) }}</div>
+                                <div class="count">{{ item.count }}次</div>
+                            </div>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </el-tab-pane>
         </el-tabs>
 
         <!-- 底部色条图例 -->
@@ -92,30 +146,44 @@ export default {
             // 排序切换开关：true=按频率排序，false=按号码排序
             sortByFrequency: true,
 
-            // 当前激活的彩种 Tab ('dlt' 或 'ssq')
+            // 当前激活的彩种 Tab ('dlt'、'ssq'、'pl3'、'pl5' 或 'qxc')
             activeTab: 'dlt',
             // 大乐透当前激活的区域 ('front' 或 'back')
             dltZone: 'front',
             // 双色球当前激活的区域 ('front' 或 'back')
             ssqZone: 'front',
+            // 七星彩当前激活的区域 ('front' 前六位 或 'back' 尾号)
+            qxcZone: 'front',
 
             // --- 数据存储 (按号码升序排列) ---
             dltFrontDataNumber: [],
             dltBackDataNumber: [],
             ssqFrontDataNumber: [],
             ssqBackDataNumber: [],
+            pl3DataNumber: [],
+            pl5DataNumber: [],
+            qxcFrontDataNumber: [],
+            qxcBackDataNumber: [],
 
             // --- 数据存储 (按频率降序排列) ---
             dltFrontDataFreq: [],
             dltBackDataFreq: [],
             ssqFrontDataFreq: [],
             ssqBackDataFreq: [],
+            pl3DataFreq: [],
+            pl5DataFreq: [],
+            qxcFrontDataFreq: [],
+            qxcBackDataFreq: [],
 
             // --- 各区域的历史最大出现次数 (用于计算颜色梯度) ---
-            maxFrontCount: 0,    // 大乐透前区最大值
-            maxBackCount: 0,     // 大乐透后区最大值
-            maxFrontCountSsq: 0, // 双色球前区最大值
-            maxBackCountSsq: 0   // 双色球后区最大值
+            maxFrontCount: 0,       // 大乐透前区最大值
+            maxBackCount: 0,        // 大乐透后区最大值
+            maxFrontCountSsq: 0,    // 双色球前区最大值
+            maxBackCountSsq: 0,     // 双色球后区最大值
+            maxPl3Count: 0,         // 排列三数字最大值
+            maxPl5Count: 0,         // 排列五数字最大值
+            maxQxcFrontCount: 0,    // 七星彩前六位最大值
+            maxQxcBackCount: 0      // 七星彩尾号最大值
         }
     },
     computed: {
@@ -131,6 +199,18 @@ export default {
         },
         currentSsqBackData() {
             return this.sortByFrequency ? this.ssqBackDataFreq : this.ssqBackDataNumber
+        },
+        currentPl3Data() {
+            return this.sortByFrequency ? this.pl3DataFreq : this.pl3DataNumber
+        },
+        currentPl5Data() {
+            return this.sortByFrequency ? this.pl5DataFreq : this.pl5DataNumber
+        },
+        currentQxcFrontData() {
+            return this.sortByFrequency ? this.qxcFrontDataFreq : this.qxcFrontDataNumber
+        },
+        currentQxcBackData() {
+            return this.sortByFrequency ? this.qxcBackDataFreq : this.qxcBackDataNumber
         }
     },
     watch: {
@@ -154,6 +234,7 @@ export default {
             this.activeTab = 'dlt';
             this.dltZone = 'front';
             this.ssqZone = 'front';
+            this.qxcZone = 'front';
         },
 
         /**
@@ -168,6 +249,10 @@ export default {
             const dltBackMap = new Map()
             const ssqFrontMap = new Map()
             const ssqBackMap = new Map()
+            const pl3Map = new Map()
+            const pl5Map = new Map()
+            const qxcFrontMap = new Map()
+            const qxcBackMap = new Map()
 
             // --- 1. 初始化 Map，给每个可能的号码赋初始值 0 ---
             // 这一步确保了即使某个号码从未出现，界面上也会显示它，而不是缺失
@@ -175,10 +260,15 @@ export default {
             for (let i = 1; i <= 12; i++) dltBackMap.set(i, 0)
             for (let i = 1; i <= 33; i++) ssqFrontMap.set(i, 0)
             for (let i = 1; i <= 16; i++) ssqBackMap.set(i, 0)
+            // 数字型彩种从0开始（排列三/排列五/七星彩前六位为0-9，七星彩尾号为0-14）
+            for (let i = 0; i <= 9; i++) pl3Map.set(i, 0)
+            for (let i = 0; i <= 9; i++) pl5Map.set(i, 0)
+            for (let i = 0; i <= 9; i++) qxcFrontMap.set(i, 0)
+            for (let i = 0; i <= 14; i++) qxcBackMap.set(i, 0)
 
             // --- 2. 遍历原始数据，填充 Map ---
             rows.forEach(item => {
-                const numberType = item.numberType // 1=大乐透, 2=双色球
+                const numberType = item.numberType // 1=大乐透, 2=双色球, 3=排列三, 4=排列五, 5=七星彩
                 const zone = item.zone             // '前区' 或 '后区'
                 const count = item.occurrenceCount // 出现次数
                 // 将逗号分隔的号码字符串转为数组 (如 "1,2,3" -> [1,2,3])
@@ -197,6 +287,19 @@ export default {
                     } else if (zone === '后区') {
                         numbers.forEach(num => ssqBackMap.set(num, count))
                     }
+                } else if (numberType === 3) {
+                    // 排列三无分区，数字统一记为前区
+                    numbers.forEach(num => pl3Map.set(num, count))
+                } else if (numberType === 4) {
+                    // 排列五无分区，数字统一记为前区
+                    numbers.forEach(num => pl5Map.set(num, count))
+                } else if (numberType === 5) {
+                    // 七星彩前六位(0-9)记为前区，尾号(0-14)记为后区
+                    if (zone === '前区') {
+                        numbers.forEach(num => qxcFrontMap.set(num, count))
+                    } else if (zone === '后区') {
+                        numbers.forEach(num => qxcBackMap.set(num, count))
+                    }
                 }
             })
 
@@ -210,6 +313,10 @@ export default {
             this.dltBackDataNumber = toSortedByNumber(dltBackMap)
             this.ssqFrontDataNumber = toSortedByNumber(ssqFrontMap)
             this.ssqBackDataNumber = toSortedByNumber(ssqBackMap)
+            this.pl3DataNumber = toSortedByNumber(pl3Map)
+            this.pl5DataNumber = toSortedByNumber(pl5Map)
+            this.qxcFrontDataNumber = toSortedByNumber(qxcFrontMap)
+            this.qxcBackDataNumber = toSortedByNumber(qxcBackMap)
 
             // --- 4. 基于已排序的数组，再按【频率】排序 (频率相同则按号码排) ---
             const toSortedByFreq = (arr) => {
@@ -222,12 +329,20 @@ export default {
             this.dltBackDataFreq = toSortedByFreq(this.dltBackDataNumber)
             this.ssqFrontDataFreq = toSortedByFreq(this.ssqFrontDataNumber)
             this.ssqBackDataFreq = toSortedByFreq(this.ssqBackDataNumber)
+            this.pl3DataFreq = toSortedByFreq(this.pl3DataNumber)
+            this.pl5DataFreq = toSortedByFreq(this.pl5DataNumber)
+            this.qxcFrontDataFreq = toSortedByFreq(this.qxcFrontDataNumber)
+            this.qxcBackDataFreq = toSortedByFreq(this.qxcBackDataNumber)
 
             // --- 5. 计算各个区域的最大出现次数 (用于颜色映射) ---
             this.maxFrontCount = Math.max(...this.dltFrontDataNumber.map(d => d.count), 0)
             this.maxBackCount = Math.max(...this.dltBackDataNumber.map(d => d.count), 0)
             this.maxFrontCountSsq = Math.max(...this.ssqFrontDataNumber.map(d => d.count), 0)
             this.maxBackCountSsq = Math.max(...this.ssqBackDataNumber.map(d => d.count), 0)
+            this.maxPl3Count = Math.max(...this.pl3DataNumber.map(d => d.count), 0)
+            this.maxPl5Count = Math.max(...this.pl5DataNumber.map(d => d.count), 0)
+            this.maxQxcFrontCount = Math.max(...this.qxcFrontDataNumber.map(d => d.count), 0)
+            this.maxQxcBackCount = Math.max(...this.qxcBackDataNumber.map(d => d.count), 0)
         },
 
         /**

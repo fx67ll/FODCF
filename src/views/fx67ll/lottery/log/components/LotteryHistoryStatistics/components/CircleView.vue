@@ -63,6 +63,62 @@
                     </div>
                 </div>
             </el-tab-pane>
+
+            <!-- Tab 3：排列三 -->
+            <el-tab-pane label="排列三" name="3">
+                <!-- 号码区（0-9数字，无分区，统计接口统一记为前区） -->
+                <div class="zone-section">
+                    <h4>号码 (0-9)</h4>
+                    <div class="balls-container">
+                        <div v-for="num in getSortedNums(3, '前区', 9, 0)" :key="'front-3-' + num" class="ball-item"
+                            :class="getBallClass(3, '前区', num, false)">
+                            <span class="num-val">{{ num }}</span>
+                            <span class="num-freq">{{ getFreq(3, '前区', num) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </el-tab-pane>
+
+            <!-- Tab 4：排列五 -->
+            <el-tab-pane label="排列五" name="4">
+                <!-- 号码区（逻辑同排列三） -->
+                <div class="zone-section">
+                    <h4>号码 (0-9)</h4>
+                    <div class="balls-container">
+                        <div v-for="num in getSortedNums(4, '前区', 9, 0)" :key="'front-4-' + num" class="ball-item"
+                            :class="getBallClass(4, '前区', num, false)">
+                            <span class="num-val">{{ num }}</span>
+                            <span class="num-freq">{{ getFreq(4, '前区', num) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </el-tab-pane>
+
+            <!-- Tab 5：七星彩 -->
+            <el-tab-pane label="七星彩" name="5">
+                <!-- 前六位区（0-9数字，统计接口记为前区） -->
+                <div class="zone-section">
+                    <h4>前六位 (0-9)</h4>
+                    <div class="balls-container">
+                        <div v-for="num in getSortedNums(5, '前区', 9, 0)" :key="'front-5-' + num" class="ball-item"
+                            :class="getBallClass(5, '前区', num, false)">
+                            <span class="num-val">{{ num }}</span>
+                            <span class="num-freq">{{ getFreq(5, '前区', num) }}</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 尾号区（0-14数字，统计接口记为后区，蓝色调样式） -->
+                <div class="zone-section">
+                    <h4>尾号 (0-14)</h4>
+                    <div class="balls-container">
+                        <div v-for="num in getSortedNums(5, '后区', 14, 0)" :key="'back-5-' + num" class="ball-item"
+                            :class="getBallClass(5, '后区', num, true)">
+                            <span class="num-val">{{ num }}</span>
+                            <span class="num-freq">{{ getFreq(5, '后区', num) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </el-tab-pane>
         </el-tabs>
 
         <!-- 底部图例说明 -->
@@ -227,11 +283,12 @@ export default {
          * @param {string|number} type - 彩种类型
          * @param {string} zone - 区域
          * @param {number} maxNum - 该区域最大号码 (如35, 12, 33)
+         * @param {number} startNum - 起始号码，默认1；排列三/排列五/七星彩等数字型彩种从0开始
          * @returns {Array} 排序后的号码数组
          */
-        getSortedNums(type, zone, maxNum) {
-            // 1. 生成基础数组：[1, 2, 3, ..., maxNum]
-            const baseNums = Array.from({ length: maxNum }, (_, i) => i + 1);
+        getSortedNums(type, zone, maxNum, startNum = 1) {
+            // 1. 生成基础数组：[startNum, ..., maxNum]
+            const baseNums = Array.from({ length: maxNum - startNum + 1 }, (_, i) => i + startNum);
 
             // 2. 如果不按频次排序，直接返回按号码升序的数组
             if (!this.sortByFreq) {

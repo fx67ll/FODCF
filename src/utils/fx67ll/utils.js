@@ -628,7 +628,7 @@ export function getLotteryNumberByFrequency(data, dayOfYear) {
       item.zone === "前区"
         ? groups.DLTFront.push(item)
         : groups.DLTBack.push(item);
-    } else {
+    } else if (item.numberType === 2) {
       item.zone === "前区"
         ? groups.SSQFront.push(item)
         : groups.SSQBack.push(item);
