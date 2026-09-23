@@ -60,6 +60,9 @@
     <div v-else class="undrawn-body">
       <home-empty-state inline icon="el-icon-lock" title="暂无号码台账访问权限" desc="当前账号未开放号码台账查看权限" />
     </div>
+
+    <!-- 中奖查询动效公共组件：查询进度与结果展示与号码台账页共用 -->
+    <RewardQueryOverlay ref="rewardQueryOverlay" />
   </section>
 </template>
 
@@ -71,10 +74,11 @@ import panelRefreshMixin from "../refreshMixin";
 import PanelRefresh from "./PanelRefresh.vue";
 import AnimatedNumber from "./AnimatedNumber.vue";
 import HomeEmptyState from "./EmptyState.vue";
+import RewardQueryOverlay from "@/views/fx67ll/lottery/log/components/RewardQueryOverlay/RewardQueryOverlay.vue";
 
 export default {
   name: "HomeUndrawnNumbers",
-  components: { PanelRefresh, HomeEmptyState, AnimatedNumber },
+  components: { PanelRefresh, HomeEmptyState, AnimatedNumber, RewardQueryOverlay },
   mixins: [panelRefreshMixin],
   data() {
     return {
@@ -153,6 +157,8 @@ export default {
       if (this.queryingId) return;
       this.queryingId = item.lotteryId;
       queryRewardForRecord(this, item, {
+        // 动效组件实例：查询进度与结果统一走公共组件展示
+        presenter: this.$refs.rewardQueryOverlay,
         // 网络查询结束时立即解除按钮禁用（常见路径下比兜底更及时）
         onLoadingChange: (val) => {
           if (!val) this.queryingId = null;

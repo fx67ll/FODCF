@@ -204,7 +204,7 @@
         <template slot-scope="scope">
           <span v-if="scope.row.recordNumber === '-'">{{
             scope.row.recordNumber
-          }}</span>
+            }}</span>
           <div v-if="scope.row.recordNumberList.length > 0">
             <div v-for="(num, index) in scope.row.recordNumberList" :key="index" style="line-height: 1.8">
               <template v-if="scope.row.recordNumberHighlightList && scope.row.recordNumberHighlightList[index]">
@@ -240,7 +240,7 @@
         <template slot-scope="scope">
           <span v-if="scope.row.chaseNumber === '-'">{{
             scope.row.chaseNumber
-          }}</span>
+            }}</span>
           <div v-if="scope.row.chaseNumberList.length > 0">
             <div v-for="(num, index) in scope.row.chaseNumberList" :key="index" style="line-height: 1.8">
               <template v-if="scope.row.chaseNumberHighlightList && scope.row.chaseNumberHighlightList[index]">
@@ -457,6 +457,9 @@
 
     <!-- 查看历史号码组合弹窗 -->
     <GenerateNumbers :visible.sync="generateNumbersOpen" />
+
+    <!-- 中奖查询动效公共组件：查询进度与结果展示与首页未开奖号码卡片共用 -->
+    <RewardQueryOverlay ref="rewardQueryOverlay" />
   </div>
 </template>
 
@@ -480,10 +483,11 @@ import LotteryHistoryStatistics from "./components/LotteryHistoryStatistics/Lott
 import GenerateNumbers from "./components/GenerateNumbers/GenerateNumbers.vue";
 import RecentRewardStatistics from "./components/RecentRewardStatistics/RecentRewardStatistics.vue";
 import RecentDateCode from "./components/RecentDateCode/RecentDateCode.vue";
+import RewardQueryOverlay from "./components/RewardQueryOverlay/RewardQueryOverlay.vue";
 
 export default {
   name: "LotteryLog",
-  components: { LotteryHistoryStatistics, GenerateNumbers, RecentRewardStatistics, RecentDateCode },
+  components: { LotteryHistoryStatistics, GenerateNumbers, RecentRewardStatistics, RecentDateCode, RewardQueryOverlay },
   dicts: ["fx67ll_lottery_type", "sys_yes_no", "sys_week_type"],
   data() {
     return {
@@ -1061,6 +1065,7 @@ export default {
     /** 查询中奖信息（debounce 包装，复用共���查询逻辑） */
     handleQueryRewardDubounce: _.debounce(function (row) {
       queryRewardForRecord(this, row, {
+        presenter: this.$refs.rewardQueryOverlay,
         onLoadingChange: (val) => {
           this.qryRewardLoading = val;
         },

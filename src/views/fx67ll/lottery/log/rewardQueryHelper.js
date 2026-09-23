@@ -5,10 +5,22 @@
  * 避免两处维护同一套查询→落库→中奖校验流程。
  *
  * 流程：查外部开奖号码 → 格式化 → 落库 winningNumber → 拉取详情逐注校验中奖 →
- *      命中则弹确认框 → 保存中奖信息（isWin/winningPrice）
+ *      命中则弹确认框保存中奖信息，未中奖则静默记录本期结果（isWin/winningPrice）
+ *
+ * 第三方开奖结果先静默校验：未开奖/查询失败时不展示动效组件、直接弹原提示；
+ * 校验通过后才展示动效组件：查询中（覆盖落库与详情核对的等待）→ 匹配中 →
+ * 未中奖（温柔安慰动效、随机安慰文案）/ 中奖（关闭组件后沿用原中奖信息确认弹窗）。
  */
 import { queryRewardForApp, getLog, updateLog } from "@/api/fx67ll/lottery/log";
 import { checkLotteryResult } from "@/utils/fx67ll/utils";
+
+// 调用动效组件方法，组件缺失时安全跳过
+function present(presenter, method, ...args) {
+  if (presenter && typeof presenter[method] === "function") {
+    return presenter[method](...args);
+  }
+  return undefined;
+}
 
 // 彩种文本（与号码台账页 lotteryTypeMap.text 保持一致）
 export const LOTTERY_TYPE_TEXT = {
@@ -45,12 +57,14 @@ export function formatNumDisplay(numStr) {
  * @param {Object} [opts]
  * @param {(loading:boolean)=>void} [opts.onLoadingChange] 加载状态回调
  * @param {()=>void} [opts.onSuccess] 落库/取消后刷新回调
+ * @param {Object} [opts.presenter] RewardQueryOverlay 动效组件实例，驱动查询进度与结果展示
  */
 export function queryRewardForRecord(vm, record, opts = {}) {
   const setLoading = (val) =>
     typeof opts.onLoadingChange === "function" && opts.onLoadingChange(val);
   const refresh = () =>
     typeof opts.onSuccess === "function" && opts.onSuccess();
+  const presenter = opts.presenter || null;
 
   if (!record || !VALID_NUMBER_TYPES.includes(record.numberType)) {
     vm.$modal.msgError("数据异常，请联系管理员！");
@@ -61,7 +75,7 @@ export function queryRewardForRecord(vm, record, opts = {}) {
     return;
   }
   // 已查询过开奖信息：二次确认
-  const run = () => runRewardQuery(vm, record, setLoading, refresh);
+  const run = () => runRewardQuery(vm, record, setLoading, refresh, presenter);
   if (record.winningNumber && record.winningNumber !== "-") {
     vm.$confirm("您已查询过开奖信息，是否需要再次查询", "提示", {
       confirmButtonText: "确认",
@@ -75,8 +89,9 @@ export function queryRewardForRecord(vm, record, opts = {}) {
   }
 }
 
-// 实际查询开奖号码并落库
-function runRewardQuery(vm, record, setLoading, refresh) {
+// 实际查询开奖号码并落库：先静默查询第三方开奖结果，
+// 未开奖/查询失败时不展示动效组件、直接弹原提示，校验通过后再展示动效组件进入后续流程
+function runRewardQuery(vm, record, setLoading, refresh, presenter) {
   const logDateCode = record.dateCode;
   const logNumType = Number(record.numberType);
   const logNumId = record.lotteryId;
@@ -93,22 +108,28 @@ function runRewardQuery(vm, record, setLoading, refresh) {
           MXNZP_CODE_MAP[5],
         ];
         if (resData.openCode && zoneCodes.includes(resData.code)) {
+          // 开奖结果校验通过后才展示动效组件：滚动动效覆盖后续落库与详情核对的等待
+          present(presenter, "showQuerying", record);
           formatWinningNumber(
             vm,
             resData.openCode,
             logNumType,
             logNumId,
             setLoading,
-            refresh
+            refresh,
+            presenter
           );
         } else if (resData.openCode && plainCodes.includes(resData.code)) {
+          // 开奖结果校验通过后才展示动效组件：滚动动效覆盖后续落库与详情核对的等待
+          present(presenter, "showQuerying", record);
           saveWinningNumber(
             vm,
             resData.openCode,
             logNumType,
             logNumId,
             setLoading,
-            refresh
+            refresh,
+            presenter
           );
         } else {
           vm.$modal.msgWarning("外部接口异常，请联系管理员！");
@@ -132,7 +153,15 @@ function runRewardQuery(vm, record, setLoading, refresh) {
 }
 
 // 格式化开奖号码：把 mxnzp 的「逗号+加号」转成「逗号+横杠」，再落库
-function formatWinningNumber(vm, winNum, nType, lid, setLoading, refresh) {
+function formatWinningNumber(
+  vm,
+  winNum,
+  nType,
+  lid,
+  setLoading,
+  refresh,
+  presenter
+) {
   const numType = Number(nType);
   const originalString = winNum.replace(/\+/, "-").replace(/\+/, ",");
   const splitByDash = originalString.split("-");
@@ -145,17 +174,34 @@ function formatWinningNumber(vm, winNum, nType, lid, setLoading, refresh) {
     .map(Number)
     .sort((a, b) => a - b);
   const resultString = firstArray.join(",") + "-" + secondArray.join(",");
-  saveWinningNumber(vm, resultString, numType, lid, setLoading, refresh);
+  saveWinningNumber(
+    vm,
+    resultString,
+    numType,
+    lid,
+    setLoading,
+    refresh,
+    presenter
+  );
 }
 
 // 落库 winningNumber，成功后校验中奖
-function saveWinningNumber(vm, winNum, nType, lid, setLoading, refresh) {
+function saveWinningNumber(
+  vm,
+  winNum,
+  nType,
+  lid,
+  setLoading,
+  refresh,
+  presenter
+) {
   const numType = Number(nType);
   updateLog({ lotteryId: lid, winningNumber: winNum })
     .then((res) => {
       if (res && res.code === 200) {
-        checkIsGetReward(vm, winNum, numType, lid, refresh);
+        checkIsGetReward(vm, winNum, numType, lid, refresh, presenter);
       } else {
+        present(presenter, "close");
         vm.$modal.msgWarning("开奖号码保存失败！");
       }
     })
@@ -165,8 +211,10 @@ function saveWinningNumber(vm, winNum, nType, lid, setLoading, refresh) {
 }
 
 // 拉取详情并逐注校验中奖，命中弹确认框
-function checkIsGetReward(vm, winNum, numTp, logId, refresh) {
+function checkIsGetReward(vm, winNum, numTp, logId, refresh, presenter) {
   const numType = Number(numTp);
+  // 进入匹配阶段：开奖号码逐个揭晓动效
+  present(presenter, "showMatching", { winNum, numType });
   const isDynamic = (type, level) =>
     !!(
       DYNAMIC_PRIZE_LEVELS[type] && DYNAMIC_PRIZE_LEVELS[type].includes(level)
@@ -217,25 +265,30 @@ function checkIsGetReward(vm, winNum, numTp, logId, refresh) {
 
         if (totalRewardCount > 0) {
           const numTypeText = LOTTERY_TYPE_TEXT[numType] || "";
+          // 中奖详情行：来源改色块标签、号码等宽、奖级与金额对齐，配色与新动效组件一致
           const detailRows = winDetails
             .map(
               (d, i) => `
-                <li style="padding:4px 0;border-bottom:1px dashed #eee;">
-                  <span style="color:#909399;font-size:12px;">${i + 1}.</span>
-                  <span style="color:#2ecc71;font-weight:bold;margin:0 4px;">[${
+                <li style="display:flex;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #eef3f0;">
+                  <span style="color:#909399;font-size:12px;margin-right:6px;">${
+                    i + 1
+                  }</span>
+                  <span style="display:inline-block;padding:1px 7px;margin-right:6px;border-radius:4px;background:#e7f8ee;color:#27ad60;font-size:12px;font-weight:600;">${
                     d.source
-                  }]</span>
-                  <span style="color:#606266;">${formatNumDisplay(d.num)}</span>
-                  <span style="margin:0 4px;">—</span>
-                  <span style="color:#e6a23c;font-weight:bold;">${
+                  }</span>
+                  <span style="color:#2b3a36;font-family:Menlo,Monaco,monospace;letter-spacing:0.02em;">${formatNumDisplay(
+                    d.num
+                  )}</span>
+                  <span style="color:#b9c4be;margin:0 6px;">—</span>
+                  <span style="color:#e6a23c;font-weight:600;">${
                     d.prizeText
                   }</span>
-                  <span style="margin-left:6px;color:#ff5a5f;font-weight:bold;">￥${
+                  <span style="margin-left:6px;color:#ff5a5f;font-weight:700;">￥${
                     d.prizeAmount
                   }</span>
                   ${
                     d.dynamic
-                      ? '<span style="color:#909399;font-size:11px;">（动态）</span>'
+                      ? '<span style="margin-left:4px;color:#909399;font-size:11px;">（动态）</span>'
                       : ""
                   }
                 </li>`
@@ -244,20 +297,22 @@ function checkIsGetReward(vm, winNum, numTp, logId, refresh) {
           const dynamicTip = hasDynamic
             ? `<p style="color:#e6a23c;font-size:12px;margin:6px 0 0;">* 动态奖金为行情参考值，实际以官方公布为准</p>`
             : "";
-          vm.$confirm("", "恭喜您中奖了！", {
-            confirmButtonText: "保存",
-            cancelButtonText: "取消",
-            dangerouslyUseHTMLString: true,
-            message: `
+          // 中奖：先关闭动效组件，关闭后再沿用原中奖信息确认弹窗
+          const showWinPopup = () => {
+            vm.$confirm("", "恭喜您中奖了！", {
+              confirmButtonText: "保存",
+              cancelButtonText: "取消",
+              dangerouslyUseHTMLString: true,
+              message: `
                 <div style="font-size:14px;">
                   <p style="margin:0 0 10px;">
                     本期所购
-                    <strong style="color:#2ecc71;">${numTypeText}</strong>
+                    <strong style="color:#27ad60;">${numTypeText}</strong>
                     共
                     <strong style="color:#ff5a5f;font-size:16px;">${totalRewardCount}</strong>
                     注号码中奖
                   </p>
-                  <ul style="padding-left:12px;margin:0 0 10px;list-style:none;">${detailRows}</ul>
+                  <ul style="padding-left:0;margin:0 0 10px;list-style:none;">${detailRows}</ul>
                   <p style="margin:8px 0 4px;">
                     合计预计奖金
                     <strong style="color:#ff5a5f;font-size:18px;margin-left:4px;">￥${totalRewardPrize}</strong>
@@ -268,20 +323,34 @@ function checkIsGetReward(vm, winNum, numTp, logId, refresh) {
                     }
                   </p>
                   ${dynamicTip}
-                  <p style="margin:10px 0 0;color:#909399;font-size:13px;">是否需要为您记录中奖信息？</p>
+                  <p style="margin:10px 0 0;color:#7c8b84;font-size:13px;">是否需要为您记录中奖信息？</p>
                 </div>`,
-          })
-            .then(() => {
-              saveRewardInfo(vm, logId, "Y", totalRewardPrize, refresh);
             })
-            .catch(() => {
-              refresh();
-            });
+              .then(() => {
+                saveRewardInfo(vm, logId, "Y", totalRewardPrize, refresh);
+              })
+              .catch(() => {
+                refresh();
+              });
+          };
+          const closer = present(presenter, "close");
+          if (closer) {
+            closer.then(showWinPopup);
+          } else {
+            showWinPopup();
+          }
         } else {
-          vm.$modal.alertSuccess("开奖号码保存成功！本期未中奖！");
-          refresh();
+          // 未中奖：参照中奖记录的落库逻辑记录本期结果（isWin=N、中奖金额归零），成功时静默
+          saveRewardInfo(vm, logId, "N", 0, refresh, true);
+          // 未中奖改用温柔安慰动效（无动效组件时回退原成功提示）
+          if (presenter) {
+            presenter.showNoWin();
+          } else {
+            vm.$modal.alertSuccess("开奖号码保存成功！本期未中奖！");
+          }
         }
       } else {
+        present(presenter, "close");
         vm.$modal.msgError(
           "开奖号码保存成功，但是未查询到本期购买记录！请联系管理员！"
         );
@@ -290,15 +359,19 @@ function checkIsGetReward(vm, winNum, numTp, logId, refresh) {
     })
     .catch((error) => {
       console.error("查询历史号码详情接口异常：" + error);
+      present(presenter, "close");
       refresh();
     });
 }
 
-// 保存中奖信息（isWin / winningPrice）
-function saveRewardInfo(vm, lotteryId, isWin, winningPrice, refresh) {
+// 保存中奖信息（isWin / winningPrice）：中奖与未中奖记录共用同一落库逻辑，
+// silentSuccess 为 true 时（未中奖）成功不弹提示，避免打扰安慰动效
+function saveRewardInfo(vm, lotteryId, isWin, winningPrice, refresh, silentSuccess) {
   updateLog({ lotteryId, isWin, winningPrice }).then((res) => {
     if (res && res.code === 200) {
-      vm.$modal.msgSuccess("中奖信息保存成功！");
+      if (!silentSuccess) {
+        vm.$modal.msgSuccess("中奖信息保存成功！");
+      }
     } else {
       vm.$modal.msgWarning("中奖信息保存失败！");
     }

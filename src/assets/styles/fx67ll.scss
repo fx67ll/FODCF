@@ -89,6 +89,12 @@
 			margin-left: 1px;
 		}
 	}
+
+	/* 修复：二次确认弹窗打开后滚动列数据透出覆盖固定列内容，固定列补充白色背景遮挡 */
+	.el-table__fixed,
+	.el-table__fixed-right {
+		background-color: #fff;
+	}
 }
 
 /** 表单布局 **/
