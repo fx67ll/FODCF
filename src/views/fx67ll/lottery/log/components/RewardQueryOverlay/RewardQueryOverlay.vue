@@ -2,10 +2,11 @@
   <!--
     中奖查询动效公共组件（号码台账页与首页「未开奖号码」卡片共用）
     状态流：querying 查询中（号码球滚动，覆盖落库与详情核对的等待） → matching 匹配中（开奖号码逐个揭晓 + 逐注核对）
-           → nowin 未中奖（号码球缓缓落下、温柔安慰动效、随机安慰文案与随机图标配色，仅支持手动关闭）
+           → nowin 未中奖（号码球缓缓落下、温柔安慰动效与随机安慰文案，仅支持手动关闭）
            → win 中奖（关闭本组件，沿用原中奖信息确认弹窗）
     查询/落库/核对逻辑仍在 rewardQueryHelper.js，本组件只负责进度与结果的动效展示。
     第三方开奖结果由 helper 先静默校验，未开奖/查询失败时不展示本组件。
+    查询中/匹配中提供「跳过动画」按钮：跳过后号码直接揭晓，结果到达后立即展示，无需等待动效播完。
   -->
   <el-dialog :visible.sync="dialogVisible" :show-close="true" :close-on-click-modal="status === 'nowin'"
     :close-on-press-escape="true" width="460px" :style="`top: ${getDialogVerticalOffset(500)}`" append-to-body
@@ -51,9 +52,13 @@
         <div v-if="extraBetCount > 0" class="rq-bet rq-bet--more">… 共 {{ totalBetCount }} 注</div>
       </div>
 
-      <!-- 未中奖安慰图标 + 操作（图标与配色随机，仅手动关闭，无自动关闭） -->
+      <!-- 跳过动画：查询中冻结滚动等待结果，匹配中号码立即揭晓、结果直接展示 -->
+      <div v-if="(status === 'querying' || status === 'matching') && !skipRequested" class="rq-skip">
+        <button class="rq-skip-btn" @click="handleSkipAnimation"><i class="el-icon-d-arrow-right"></i>跳过动画</button>
+      </div>
+
+      <!-- 未中奖操作（仅手动关闭，无自动关闭） -->
       <template v-if="status === 'nowin'">
-        <div class="rq-comfort" :style="{ color: nowinDecor.color }"><i :class="[nowinDecor.icon, 'rq-comfort-icon']"></i></div>
         <div class="rq-action">
           <button class="rq-btn" @click="closeManually">知道了</button>
         </div>
@@ -118,36 +123,6 @@ const NOWIN_COMFORT_POOL = [
   { text: "期待本身，就是生活给的小确幸" },
 ];
 
-// 未中奖安慰图标池：甜品/饮品/星月等清新主题小图标，进入未中奖状态时随机展示一个
-const NOWIN_COMFORT_ICON_POOL = [
-  "el-icon-milk-tea",
-  "el-icon-ice-cream-round",
-  "el-icon-ice-cream-square",
-  "el-icon-lollipop",
-  "el-icon-apple",
-  "el-icon-cherry",
-  "el-icon-watermelon",
-  "el-icon-sugar",
-  "el-icon-dessert",
-  "el-icon-coffee-cup",
-  "el-icon-ice-tea",
-  "el-icon-moon-night",
-  "el-icon-star-on",
-  "el-icon-sunny",
-];
-
-// 未中奖安慰图标配色池：低饱和明快的清新色系，与图标独立随机搭配
-const NOWIN_COMFORT_COLOR_POOL = [
-  "#f0a050", // 蜜橙
-  "#ef8d7a", // 甜杏
-  "#e88bb0", // 樱粉
-  "#5cc48e", // 抹茶
-  "#46b8a5", // 薄荷
-  "#64b5ef", // 晴空
-  "#8f7de8", // 薰衣草
-  "#e6b94d", // 柠黄
-];
-
 export default {
   name: "RewardQueryOverlay",
   data() {
@@ -162,10 +137,10 @@ export default {
       bets: [],
       // 未中奖随机安慰文案：{ text, by? }，by 存在时以名言样式附作者署名
       nowinComfort: null,
-      // 未中奖随机安慰图标与配色：{ icon, color }，进入未中奖状态时随机挑选
-      nowinDecor: { icon: "el-icon-milk-tea", color: "#f0a050" },
       // 上下文信息
       ctx: { dateCode: "", typeText: "" },
+      // 是否已请求跳过动画：跳过后号码直接揭晓、结果立即展示
+      skipRequested: false,
       // 匹配中号码球是否已全部揭晓完成
       revealComplete: false,
       // 揭晓完成前到达的结果（nowin/win）暂存，揭晓完成后回放
@@ -222,9 +197,8 @@ export default {
       this.revealComplete = false;
       this.pendingResult = null;
       this.nowinComfort = null;
-      this.nowinDecor = { icon: "el-icon-milk-tea", color: "#f0a050" };
+      this.skipRequested = false;
       const numType = Number(record.numberType);
-      this.record = record;
       this.ctx = {
         dateCode: record.dateCode,
         typeText: LOTTERY_TYPE_TEXT[numType] || "",
@@ -262,7 +236,7 @@ export default {
           return;
         }
         this._closeResolve = resolve;
-        if (this.status === "matching" && !this.revealComplete) {
+        if (!this.skipRequested && this.status === "matching" && !this.revealComplete) {
           // 揭晓未完成：等揭晓完成后再关闭
           this.pendingResult = { type: "win" };
         } else {
@@ -307,6 +281,15 @@ export default {
         state: "hidden",
         booped: false,
       }));
+      // 已请求跳过动画：全部号码直接揭晓，立即进入结果阶段
+      if (this.skipRequested) {
+        this.balls.forEach((b) => {
+          b.state = "revealed";
+        });
+        this.revealComplete = true;
+        this.flushPending();
+        return;
+      }
       parsed.forEach((ball, idx) => {
         const t = setTimeout(() => {
           if (this.balls[idx]) {
@@ -336,11 +319,29 @@ export default {
       }
     },
 
-    // 进入未中奖状态：随机挑选安慰文案与安慰图标配色
+    // 跳过动画：查询中冻结滚动等待结果到达，匹配中则全部号码立即揭晓并直接展示结果
+    handleSkipAnimation() {
+      if (this.skipRequested) return;
+      if (this.status !== "querying" && this.status !== "matching") return;
+      this.skipRequested = true;
+      this.stopShuffle();
+      if (this.status === "matching" && !this.revealComplete) {
+        // 匹配中跳过：清掉逐个揭晓的定时器，全部号码立即揭晓
+        this.clearTimers();
+        this.balls.forEach((b) => {
+          if (b.state !== "revealed") {
+            b.state = "revealed";
+          }
+        });
+        this.revealComplete = true;
+        this.flushPending();
+      }
+    },
+
+    // 进入未中奖状态：随机挑选安慰文案
     enterNoWin() {
       this.stopShuffle();
       this.nowinComfort = this.pickComfort();
-      this.nowinDecor = this.pickDecor();
       this.status = "nowin";
     },
 
@@ -364,11 +365,10 @@ export default {
       this.balls = [];
       this.bets = [];
       this.nowinComfort = null;
-      this.nowinDecor = { icon: "el-icon-milk-tea", color: "#f0a050" };
       this.ctx = { dateCode: "", typeText: "" };
+      this.skipRequested = false;
       this.revealComplete = false;
       this.pendingResult = null;
-      this.record = null;
     },
 
     clearTimers() {
@@ -392,18 +392,6 @@ export default {
       return NOWIN_COMFORT_POOL[
         Math.floor(Math.random() * NOWIN_COMFORT_POOL.length)
       ];
-    },
-
-    // 随机挑选安慰图标与配色（图标与颜色独立随机，保持清新色调）
-    pickDecor() {
-      return {
-        icon: NOWIN_COMFORT_ICON_POOL[
-          Math.floor(Math.random() * NOWIN_COMFORT_ICON_POOL.length)
-        ],
-        color: NOWIN_COMFORT_COLOR_POOL[
-          Math.floor(Math.random() * NOWIN_COMFORT_COLOR_POOL.length)
-        ],
-      };
     },
 
     // ===== 解析工具 =====
@@ -477,12 +465,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* 弹窗容器：圆角卡片，居中偏上 */
+/* 弹窗容器：清新浅色渐变卡片（薄荷→晴空），叠加两处柔光点缀，圆角与投影更柔和 */
 ::v-deep .el-dialog {
   margin-top: 12vh !important;
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 18px 48px rgba(43, 58, 54, 0.22);
+  background:
+    radial-gradient(circle at 88% 4%, rgba(122, 205, 165, 0.16), transparent 32%),
+    radial-gradient(circle at 6% 98%, rgba(140, 180, 240, 0.15), transparent 34%),
+    linear-gradient(180deg, #f3fbf6 0%, #edf5fd 100%);
+  box-shadow: 0 16px 44px rgba(84, 128, 110, 0.2);
 }
 
 ::v-deep .el-dialog__header {
@@ -495,7 +487,7 @@ export default {
 }
 
 ::v-deep .el-dialog__body {
-  padding: 18px 24px 24px;
+  padding: 18px 24px 26px;
 }
 
 .rq-stage {
@@ -508,8 +500,9 @@ export default {
 .rq-context {
   margin-bottom: 18px;
   padding: 4px 14px;
-  color: #27ad60;
-  background: #e7f8ee;
+  color: #3aa76d;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid #d9f0e3;
   border-radius: 999px;
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -528,7 +521,7 @@ export default {
   width: 6px;
   height: 6px;
   margin: 0 6px;
-  background: #d0d7d2;
+  background: #d7e2dc;
   border-radius: 50%;
 }
 
@@ -540,13 +533,15 @@ export default {
   height: 42px;
   margin: 0 4px;
   border-radius: 50%;
+  /* 糖果感白色描边，清新浅色球面更轻盈 */
+  border: 2px solid rgba(255, 255, 255, 0.62);
   color: #fff;
   font-weight: 700;
   font-size: 16px;
   font-family: "Menlo", "Monaco", "Courier New", monospace;
-  box-shadow: 0 4px 10px rgba(43, 58, 54, 0.16);
-  /* 清新浅色球面上加轻微文字阴影，保证号码可读 */
-  text-shadow: 0 1px 2px rgba(43, 58, 54, 0.16);
+  box-shadow: 0 3px 9px rgba(84, 128, 110, 0.14);
+  /* 浅色球面上加轻微文字阴影，保证号码可读 */
+  text-shadow: 0 1px 2px rgba(43, 58, 54, 0.14);
   user-select: none;
   transition: filter 0.4s ease, opacity 0.4s ease;
 
@@ -556,16 +551,16 @@ export default {
   }
 }
 
-/* 前区：清新蜜桃珊瑚渐变（双色球/大乐透前区），弱化原高饱和红的突兀感 */
+/* 前区：清新蜜桃珊瑚渐变（双色球/大乐透前区） */
 .rq-ball--front {
-  background: linear-gradient(145deg, #ffb4a5, #fa8b78);
-  box-shadow: 0 4px 10px rgba(250, 139, 120, 0.3);
+  background: linear-gradient(145deg, #ffc9b3, #fb9a82);
+  box-shadow: 0 3px 9px rgba(251, 154, 130, 0.26);
 }
 
-/* 后区：清新晴空蓝渐变（双色球/大乐透后区），辅以同色系柔和投影 */
+/* 后区：清新晴空蓝渐变（双色球/大乐透后区） */
 .rq-ball--back {
-  background: linear-gradient(145deg, #a9cbff, #7ba7f0);
-  box-shadow: 0 4px 10px rgba(123, 167, 240, 0.3);
+  background: linear-gradient(145deg, #bed9ff, #8db3f1);
+  box-shadow: 0 3px 9px rgba(141, 179, 241, 0.26);
 }
 
 .rq-ball--shuffling {
@@ -603,30 +598,31 @@ export default {
 
 .rq-text-main {
   margin: 0 0 4px;
-  color: #2b3a36;
+  color: #3c554b;
   font-size: 16px;
   font-weight: 600;
 }
 
 .rq-text-sub {
   margin: 0;
-  color: #7c8b84;
+  color: #82998c;
   font-size: 13px;
   line-height: 1.6;
 }
 
-/* 未中奖文案卡片化：柔和底色衬托安慰语与名言署名 */
+/* 未中奖文案卡片化：半透明白色卡片衬托安慰语与名言署名 */
 .rq-stage--nowin .rq-text {
   max-width: 340px;
   margin: 0 auto 4px;
   padding: 12px 18px;
-  background: #f7faf8;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid #e3f0e9;
   border-radius: 14px;
 }
 
 .rq-text-by {
   margin: 6px 0 0;
-  color: #9aa8a1;
+  color: #9fb2a9;
   font-size: 12px;
   letter-spacing: 0.04em;
 }
@@ -645,7 +641,7 @@ export default {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #d8e6df;
+    background: #d3e7dc;
     border-radius: 99px;
   }
 }
@@ -656,7 +652,8 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #f7faf8;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e9f3ed;
   border-radius: 8px;
   font-size: 13px;
   overflow: hidden;
@@ -667,7 +664,7 @@ export default {
   padding: 1px 6px;
   border-radius: 4px;
   background: #e7f8ee;
-  color: #27ad60;
+  color: #2f9e63;
   font-size: 11px;
 }
 
@@ -677,7 +674,7 @@ export default {
 }
 
 .rq-bet-num {
-  color: #2b3a36;
+  color: #3c554b;
   font-family: "Menlo", "Monaco", "Courier New", monospace;
   letter-spacing: 0.02em;
 }
@@ -688,9 +685,10 @@ export default {
 
 .rq-bet--more {
   justify-content: center;
-  color: #7c8b84;
+  color: #82998c;
   font-size: 12px;
   background: transparent;
+  border-color: transparent;
 }
 
 /* 匹配中：逐注行流光扫过，示意正在核对 */
@@ -698,35 +696,63 @@ export default {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(46, 204, 113, 0.16), transparent);
+  background: linear-gradient(90deg, transparent, rgba(102, 205, 160, 0.18), transparent);
   animation: rq-shimmer 1.4s infinite;
 }
 
-.rq-comfort {
-  /* 颜色由 nowinDecor 随机配色内联指定 */
-  margin-top: 14px;
-  font-size: 30px;
-  animation: rq-floaty 2.4s ease-in-out infinite;
+/* 跳过动画按钮：查询中/匹配中显示，低调的半透明浅色药丸按钮 */
+.rq-skip {
+  margin-top: 18px;
+}
+
+.rq-skip-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 18px;
+  color: #6f8f81;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #dcebe2;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  i {
+    margin-right: 4px;
+    font-size: 12px;
+  }
+
+  &:hover {
+    color: #3aa76d;
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(84, 128, 110, 0.12);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .rq-action {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .rq-btn {
   padding: 8px 30px;
   color: #fff;
-  background: linear-gradient(135deg, #2ecc71, #27ad60);
+  background: linear-gradient(135deg, #5ed49a, #35b57c);
   border: 0;
   border-radius: 999px;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(46, 204, 113, 0.25);
+  box-shadow: 0 4px 10px rgba(62, 184, 128, 0.28);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(46, 204, 113, 0.32);
+    box-shadow: 0 6px 14px rgba(62, 184, 128, 0.34);
   }
 
   &:active {
@@ -785,18 +811,6 @@ export default {
 
   100% {
     transform: translateX(100%);
-  }
-}
-
-@keyframes rq-floaty {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(-4deg);
-  }
-
-  50% {
-    transform: translateY(-5px) rotate(4deg);
   }
 }
 
