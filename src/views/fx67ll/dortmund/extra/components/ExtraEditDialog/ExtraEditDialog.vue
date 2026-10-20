@@ -40,7 +40,7 @@
           </div>
         </div>
         <div class="pre-extra-reference-tip">
-          上次的总金额、当前本金、落袋金额、目标金额已自动填入下方表单，请按本次实际情况修改，盈亏金额与是否盈利将自动计算
+          上次的总金额、当前本金、落袋金额、目标金额已自动填入下方表单，请按本次实际情况修改；输入总金额或盈亏金额将按历史数据自动推算其余两项，当前本金与落袋金额独立录入，修改后不联动其他表单项
         </div>
       </div>
 
@@ -69,7 +69,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="当前本金" prop="seedMoney">
-            <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" @input="handleSeedMoneyChangeDubounce" />
+            <el-input v-model="form.seedMoney" placeholder="请输入当前投入本金" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -94,6 +94,7 @@
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
+      <el-button type="warning" plain icon="el-icon-refresh-left" @click="handleResetHistoricalData">重置历史数据</el-button>
       <el-button type="primary" @click="submitForm">确 定</el-button>
       <el-button @click="cancel">取 消</el-button>
     </div>
@@ -262,25 +263,16 @@ export default {
         this.handleWinMoneyCount();
       }
     },
-    // 本金监听防抖
-    handleSeedMoneyChangeDubounce: _.debounce(function (val) {
-      this.handleSeedMoneyChange(val);
-    }, 444),
-    // 本金监听
-    handleSeedMoneyChange(val) {
-      if (val !== "" && val != null) {
-        this.handleWinMoneyCount();
-      }
-    },
     // 盈亏金额手动监听防抖
     handleWinMoneyChangeDubounce: _.debounce(function () {
       this.handleWinMoneyChange();
     }, 444),
-    // 盈亏金额手动监听，按正负号重算是否盈利
+    // 盈亏金额手动监听，按正负号重算是否盈利，并按历史数据反推总金额
     handleWinMoneyChange() {
       const winMoney = parseFloat(this.form?.winMoney);
       if (!isNaN(winMoney)) {
         this.form.isWin = winMoney > 0 ? "Y" : "N";
+        this.form.extraMoney = this.calcExtraMoneyByForm();
       }
     },
     // 是否盈利手动监听，与盈亏金额正负不符时弹窗提醒
@@ -299,36 +291,59 @@ export default {
     handleSaveMoneyChangeDubounce: _.debounce(function () {
       this.handleSaveMoneyChange();
     }, 444),
-    // 落袋金额超过历史净盈利时提醒
+    // 落袋金额数值校验提醒：为0时无需校验，负数不可能，历史净盈利为负时只能为0，否则不能超过历史净盈利
     handleSaveMoneyChange() {
       const saveMoney = parseFloat(this.form?.saveMoney);
+      if (isNaN(saveMoney) || saveMoney === 0) {
+        return;
+      }
+      if (saveMoney < 0) {
+        this.$modal.msgWarning("落袋金额不可能为负数，请确认填写无误！");
+        return;
+      }
       const netMoney =
         parseFloat(this.form?.extraMoney || 0) -
         parseFloat(this.form?.seedMoney || 0);
-      if (!isNaN(saveMoney) && !isNaN(netMoney) && saveMoney > netMoney) {
+      if (isNaN(netMoney)) {
+        return;
+      }
+      if (netMoney < 0) {
+        this.$modal.msgWarning("历史净盈利为负数（总金额 - 当前本金 < 0），落袋金额只能为0，请确认填写无误！");
+        return;
+      }
+      if (saveMoney > netMoney) {
         this.$modal.msgWarning("落袋金额已超过当前历史净盈利（总金额 - 当前本金），请确认填写无误！");
       }
     },
-    // 按当前表单计算盈亏金额（新增模式以最新记录为基准，编辑模式以本条记录原值为基准）
-    calcWinMoneyByForm() {
+    // 计算本条记录之前的历史净盈利基准（新增模式取最新一条记录，编辑模式按本条记录原值反推）
+    calcPreNetMoney() {
       if (this.isAdd) {
-        const preExtraMoney = parseFloat(this.preExtraData?.extraMoney || 0);
-        const preSeedMoney = parseFloat(this.preExtraData?.seedMoney || 0);
         return (
-          parseFloat(this.form?.extraMoney || 0) -
-          parseFloat(this.form?.seedMoney || 0) -
-          (preExtraMoney - preSeedMoney)
-        ).toFixed(2);
+          parseFloat(this.preExtraData?.extraMoney || 0) -
+          parseFloat(this.preExtraData?.seedMoney || 0)
+        );
       }
       const orig = this.origForm || {};
-      const deltaExtraMoney =
-        parseFloat(this.form?.extraMoney || 0) - parseFloat(orig.extraMoney || 0);
-      const deltaSeedMoney =
-        parseFloat(this.form?.seedMoney || 0) - parseFloat(orig.seedMoney || 0);
       return (
-        parseFloat(orig.winMoney || 0) +
-        deltaExtraMoney -
-        deltaSeedMoney
+        parseFloat(orig.extraMoney || 0) -
+        parseFloat(orig.seedMoney || 0) -
+        parseFloat(orig.winMoney || 0)
+      );
+    },
+    // 按当前表单计算盈亏金额（新增模式以最新记录为基准，编辑模式以本条记录原值为基准）
+    calcWinMoneyByForm() {
+      return (
+        parseFloat(this.form?.extraMoney || 0) -
+        parseFloat(this.form?.seedMoney || 0) -
+        this.calcPreNetMoney()
+      ).toFixed(2);
+    },
+    // 按当前表单盈亏金额反推总金额（历史净盈利基准 + 当前本金 + 盈亏金额）
+    calcExtraMoneyByForm() {
+      return (
+        parseFloat(this.form?.winMoney || 0) +
+        parseFloat(this.form?.seedMoney || 0) +
+        this.calcPreNetMoney()
       ).toFixed(2);
     },
     // 计算当前表单各类金额
@@ -378,12 +393,34 @@ export default {
     },
     // 一键恢复表单为上次记录的预填数据
     handleRestorePreExtra() {
+      this.restorePreExtraToForm();
+      this.$modal.msgSuccess("已恢复为上次记录数据");
+    },
+    // 将上次记录数据回填表单并重算盈亏金额与是否盈利
+    restorePreExtraToForm() {
       this.form.extraMoney = this.preExtraData.extraMoney;
       this.form.seedMoney = this.preExtraData.seedMoney;
       this.form.saveMoney = this.preExtraData.saveMoney;
       this.form.targetMoney = this.preExtraData.targetMoney;
       this.handleWinMoneyCount();
-      this.$modal.msgSuccess("已恢复为上次记录数据");
+    },
+    // 重置表单为弹窗刚打开时的回显数据（录入有误时使用）
+    handleResetHistoricalData() {
+      if (this.isAdd) {
+        if (!this.preExtraData?.createTime) {
+          this.$modal.msgWarning("暂无历史外快盈亏记录数据，无法重置！");
+          return;
+        }
+        this.restorePreExtraToForm();
+      } else {
+        if (!this.origForm) {
+          this.$modal.msgWarning("暂无原始记录数据，无法重置！");
+          return;
+        }
+        this.form = { ...this.form, ...this.origForm };
+      }
+      this.$refs.form?.clearValidate();
+      this.$modal.msgSuccess("数据已重置!");
     },
     // 提交前一致性终检，返回矛盾提示列表
     checkFormConsistency() {
@@ -393,12 +430,22 @@ export default {
       if (this.form?.isWin !== derivedIsWin) {
         warnList.push("是否盈利与盈亏金额正负不一致");
       }
-      const saveMoney = parseFloat(this.form?.saveMoney || 0);
-      const netMoney =
-        parseFloat(this.form?.extraMoney || 0) -
-        parseFloat(this.form?.seedMoney || 0);
-      if (!isNaN(saveMoney) && !isNaN(netMoney) && saveMoney > netMoney) {
-        warnList.push("落袋金额超过历史净盈利");
+      const saveMoney = parseFloat(this.form?.saveMoney);
+      if (!isNaN(saveMoney) && saveMoney !== 0) {
+        if (saveMoney < 0) {
+          warnList.push("落袋金额不可能为负数");
+        } else {
+          const netMoney =
+            parseFloat(this.form?.extraMoney || 0) -
+            parseFloat(this.form?.seedMoney || 0);
+          if (!isNaN(netMoney)) {
+            if (netMoney < 0) {
+              warnList.push("历史净盈利为负数，落袋金额只能为0");
+            } else if (saveMoney > netMoney) {
+              warnList.push("落袋金额超过历史净盈利");
+            }
+          }
+        }
       }
       return warnList;
     },

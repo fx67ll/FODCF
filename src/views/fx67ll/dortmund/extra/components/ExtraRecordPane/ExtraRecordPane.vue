@@ -61,6 +61,10 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['dortmund:extra:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5" style="margin-bottom: 10px;">
+        <el-button type="warning" plain icon="el-icon-magic-stick" size="mini" :disabled="ids.length < 2"
+          @click="handleMerge" v-hasPermi="['dortmund:extra:merge']">合并</el-button>
+      </el-col>
       <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dortmund:extra:export']">
@@ -140,6 +144,9 @@
 
     <!-- 查看外快盈亏历史数据走势图的弹窗 -->
     <extra-history-chart-dialog :visible.sync="historyDataAnalysisOpen" />
+
+    <!-- 合并外快盈亏历史记录的确认弹窗 -->
+    <extra-merge-dialog :visible.sync="mergeOpen" :merge-rows="mergeRows" @success="getList" />
   </div>
 </template>
 
@@ -148,11 +155,12 @@ import { listExtra, delExtra } from "@/api/fx67ll/dortmund/extra";
 
 import ExtraEditDialog from "../ExtraEditDialog/ExtraEditDialog.vue";
 import ExtraHistoryChartDialog from "../ExtraHistoryChartDialog/ExtraHistoryChartDialog.vue";
+import ExtraMergeDialog from "../ExtraMergeDialog/ExtraMergeDialog.vue";
 
 export default {
   name: "ExtraRecordPane",
   dicts: ["sys_yes_no"],
-  components: { ExtraEditDialog, ExtraHistoryChartDialog },
+  components: { ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog },
   data() {
     return {
       // 遮罩层
@@ -197,6 +205,10 @@ export default {
       },
       // 外快盈亏历史数据走势图弹窗开关
       historyDataAnalysisOpen: false,
+      // 合并确认弹窗开关
+      mergeOpen: false,
+      // 待合并的所选行数据快照（供合并确认弹窗展示合并结果预览）
+      mergeRows: [],
     };
   },
   created() {
@@ -288,6 +300,35 @@ export default {
           this.$modal.msgSuccess("删除成功");
         })
         .catch(() => { });
+    },
+    /** 合并按钮操作：校验通过后打开合并确认弹窗，弹窗内录入备注并确认后由后台事务完成合并+删除旧数据 */
+    handleMerge() {
+      // 前置校验：至少选择两条记录
+      if (!this.ids || this.ids.length < 2) {
+        this.$modal.msgWarning("请至少选择两条记录进行合并！");
+        return;
+      }
+      // 前置校验：单次合并数量上限（与后台 MERGE_MAX_INPUT_COUNT 保持一致）
+      if (this.ids.length > 23) {
+        this.$modal.msgWarning("单次最多合并23条记录！");
+        return;
+      }
+      // 前置校验：所选记录在当前列表中必须连续（后台仍会按全量历史数据校验）
+      const selectedIndexList = [];
+      this.extraList.forEach((item, index) => {
+        if (this.ids.indexOf(item.extraId) > -1) {
+          selectedIndexList.push(index);
+        }
+      });
+      for (let i = 1; i < selectedIndexList.length; i++) {
+        if (selectedIndexList[i] !== selectedIndexList[i - 1] + 1) {
+          this.$modal.msgWarning("待合并的历史数据必须连续！");
+          return;
+        }
+      }
+      // 传入所选行数据快照供合并确认弹窗展示预览，弹窗内录入备注并确认后调用后台事务接口完成合并
+      this.mergeRows = this.extraList.filter((item) => this.ids.indexOf(item.extraId) > -1);
+      this.mergeOpen = true;
     },
     /** 导出按钮操作 */
     handleExport() {

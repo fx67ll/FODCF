@@ -42,3 +42,12 @@ export function delExtra(extraId) {
     method: 'delete'
   })
 }
+
+// 合并外快盈亏历史记录
+export function mergeExtra(data) {
+  return request({
+    url: '/dortmund/extra/merge',
+    method: 'post',
+    data: data
+  })
+}
