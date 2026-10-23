@@ -260,18 +260,26 @@ export default {
     // 外快总额监听
     handleExtraMoneyChange(val) {
       if (val !== "" && val != null) {
+        // 手动输入的总金额补齐两位小数后再参与联动计算
+        this.form.extraMoney = this.padMoneyToTwoDecimal(val);
         this.handleWinMoneyCount();
       }
+    },
+    // 金额统一补齐两位小数，无法解析为数字时原样返回
+    padMoneyToTwoDecimal(val) {
+      const money = parseFloat(val);
+      return isNaN(money) ? val : money.toFixed(2);
     },
     // 盈亏金额手动监听防抖
     handleWinMoneyChangeDubounce: _.debounce(function () {
       this.handleWinMoneyChange();
     }, 444),
-    // 盈亏金额手动监听，按正负号重算是否盈利，并按历史数据反推总金额
+    // 盈亏金额手动监听，补齐两位小数后按正负号重算是否盈利，并按历史数据反推总金额
     handleWinMoneyChange() {
       const winMoney = parseFloat(this.form?.winMoney);
       if (!isNaN(winMoney)) {
-        this.form.isWin = winMoney > 0 ? "Y" : "N";
+        this.form.winMoney = this.padMoneyToTwoDecimal(this.form.winMoney);
+        this.form.isWin = parseFloat(this.form.winMoney) > 0 ? "Y" : "N";
         this.form.extraMoney = this.calcExtraMoneyByForm();
       }
     },
@@ -454,6 +462,9 @@ export default {
       const self = this;
       this.$refs["form"].validate((valid) => {
         if (valid) {
+          // 提交前统一校验并补齐总金额与盈亏金额两位小数
+          self.form.extraMoney = self.padMoneyToTwoDecimal(self.form.extraMoney);
+          self.form.winMoney = self.padMoneyToTwoDecimal(self.form.winMoney);
           const warnList = self.checkFormConsistency();
           if (warnList && warnList.length > 0) {
             self.$modal
