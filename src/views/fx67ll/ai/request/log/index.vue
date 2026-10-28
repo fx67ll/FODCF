@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
+ * 方案已重做本页，归入执行计划第三阶段（第 15 周，调用日志改为只读）。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'AiRequestLogSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="日志编号" prop="requestLogId" v-if="isMoreQuery">
@@ -408,7 +426,7 @@ export default {
       this.queryParams.beginRequestTime = null;
       this.queryParams.endRequestTime = null;
     },
-    /** 查询调用请求日志列表 */
+    /** 查询调用请求日志列表 *\/
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -452,16 +470,16 @@ export default {
       };
       this.resetForm("form");
     },
-    /** 高级搜索按钮操作 */
+    /** 高级搜索按钮操作 *\/
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
     },
-    /** 搜索按钮操作 */
+    /** 搜索按钮操作 *\/
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作 *\/
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
@@ -472,13 +490,13 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
+    /** 新增按钮操作 *\/
     handleAdd() {
       this.reset();
       this.open = true;
       this.title = "添加调用请求日志";
     },
-    /** 修改按钮操作 */
+    /** 修改按钮操作 *\/
     handleUpdate(row) {
       this.reset();
       const requestLogId = row.requestLogId || this.ids
@@ -488,7 +506,7 @@ export default {
         this.title = "修改调用请求日志";
       });
     },
-    /** 查看按钮操作 */
+    /** 查看按钮操作 *\/
     handleView(row) {
       this.reset();
       const requestLogId = row.requestLogId || this.ids
@@ -498,7 +516,7 @@ export default {
         this.title = "查看调用请求日志";
       });
     },
-    /** 提交按钮 */
+    /** 提交按钮 *\/
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -518,7 +536,7 @@ export default {
         }
       });
     },
-    /** 删除按钮操作 */
+    /** 删除按钮操作 *\/
     handleDelete(row) {
       const requestLogIds = row.requestLogId || this.ids;
       this.$modal.confirm('是否确认删除调用请求日志编号为"' + requestLogIds + '"的数据项？')
@@ -534,7 +552,7 @@ export default {
         })
         .catch(() => { });
     },
-    /** 导出按钮操作 */
+    /** 导出按钮操作 *\/
     handleExport() {
       this.download('system/log/export', {
         ...this.queryParams
@@ -542,4 +560,8 @@ export default {
     }
   }
 };
+</script>
+
+----- original page source ends -----
+*/
 </script>

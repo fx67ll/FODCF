@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
+ * 方案已重做本页，归入【远期优化处理】。综合页去 mock 按前台方案第 8 节重写。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'DortmundInformationSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
     <div class="app-container">
         <!-- 顶部标签页导航 -->
         <el-tabs v-model="activeTab" type="border-card" class="main-tabs">
@@ -467,7 +485,7 @@ export default {
     }
 }
 
-/* AI 分析区域 */
+/* AI 分析区域 *\/
 .box-card {
     margin-bottom: 20px;
 }
@@ -482,7 +500,7 @@ export default {
     color: #606266;
 }
 
-/* 评分看板样式 */
+/* 评分看板样式 *\/
 .score-board {
     margin-top: 20px;
 }
@@ -561,3 +579,6 @@ export default {
     color: #F56C6C;
 }
 </style>
+----- original page source ends -----
+*/
+</script>

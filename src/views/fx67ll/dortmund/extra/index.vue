@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页在第 6 周之前暂不改造。
+ * 方案已重做本页，归入执行计划第一阶段（第 6–7 周，外快盈亏）。数值模拟组件仍在 extra/components，本页入口先关闭。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'DortmundExtraSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
   <div class="app-container">
     <!-- 页面内容按模式切换（外快盈亏记录/数值模拟），切换状态本地持久缓存 -->
     <transition name="mode-switch" mode="out-in">
@@ -50,7 +68,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* 页面模式切换过渡动画 */
+/* 页面模式切换过渡动画 *\/
 .mode-switch-enter-active,
 .mode-switch-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -62,7 +80,7 @@ export default {
   transform: translateY(12px);
 }
 
-/* 页面模式切换悬浮按钮 */
+/* 页面模式切换悬浮按钮 *\/
 .mode-fab {
   position: fixed;
   right: 32px;
@@ -91,7 +109,7 @@ export default {
   transform: translateY(-1px) scale(0.96);
 }
 
-/* 悬浮时平滑展开提示文字 */
+/* 悬浮时平滑展开提示文字 *\/
 .mode-fab-label {
   max-width: 0;
   overflow: hidden;
@@ -115,7 +133,7 @@ export default {
   font-size: 20px;
 }
 
-/* 点击时图标旋转放大动画 */
+/* 点击时图标旋转放大动画 *\/
 .mode-fab.spinning .mode-fab-icon {
   animation: mode-fab-spin 0.5s ease;
 }
@@ -134,3 +152,7 @@ export default {
   }
 }
 </style>
+
+----- original page source ends -----
+*/
+</script>
