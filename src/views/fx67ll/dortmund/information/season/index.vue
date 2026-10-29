@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
+ * 方案已重做本页，归入【远期优化处理】。赛季基础信息随综合页重写。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'DortmundSeasonSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="赛季编码" prop="seasonCode" v-if="isMoreQuery">
@@ -166,7 +184,7 @@
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listSeason, getSeason, delSeason, addSeason, updateSeason } from "@/api/fx67ll/dortmund/season";
 
 export default {
@@ -245,7 +263,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询赛季管理列表 */
+    /** 查询赛季管理列表 *\/
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -286,16 +304,16 @@ export default {
       };
       this.resetForm("form");
     },
-    /** 高级搜索按钮操作 */
+    /** 高级搜索按钮操作 *\/
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
     },
-    /** 搜索按钮操作 */
+    /** 搜索按钮操作 *\/
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作 *\/
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
@@ -306,13 +324,13 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
+    /** 新增按钮操作 *\/
     handleAdd() {
       this.reset();
       this.open = true;
       this.title = "添加赛季管理";
     },
-    /** 修改按钮操作 */
+    /** 修改按钮操作 *\/
     handleUpdate(row) {
       this.reset();
       const seasonId = row.seasonId || this.ids
@@ -322,7 +340,7 @@ export default {
         this.title = "修改赛季管理";
       });
     },
-    /** 提交按钮 */
+    /** 提交按钮 *\/
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -342,7 +360,7 @@ export default {
         }
       });
     },
-    /** 删除按钮操作 */
+    /** 删除按钮操作 *\/
     handleDelete(row) {
       const seasonIds = row.seasonId || this.ids;
       this.$modal.confirm('是否确认删除赛季管理编号为"' + seasonIds + '"的数据项？').then(function () {
@@ -352,7 +370,7 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
     },
-    /** 导出按钮操作 */
+    /** 导出按钮操作 *\/
     handleExport() {
       this.download('system/season/export', {
         ...this.queryParams
@@ -360,4 +378,7 @@ export default {
     }
   }
 };
+&lt;/script>
+----- original page source ends -----
+*/
 </script>

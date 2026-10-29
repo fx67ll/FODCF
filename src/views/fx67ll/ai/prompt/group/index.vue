@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
+ * 方案已重做本页，归入执行计划第三阶段（Prompt 分组），与提示语模版同期。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'AiPromptGroupSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="分组编码" prop="groupCode" v-if="isMoreQuery">
@@ -133,7 +151,7 @@
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listGroup, getGroup, delGroup, addGroup, updateGroup } from "@/api/fx67ll/ai/group";
 
 export default {
@@ -204,7 +222,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询模版分组列表 */
+    /** 查询模版分组列表 *\/
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -243,16 +261,16 @@ export default {
       };
       this.resetForm("form");
     },
-    /** 高级搜索按钮操作 */
+    /** 高级搜索按钮操作 *\/
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
     },
-    /** 搜索按钮操作 */
+    /** 搜索按钮操作 *\/
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    /** 重置按钮操作 */
+    /** 重置按钮操作 *\/
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
@@ -263,13 +281,13 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 */
+    /** 新增按钮操作 *\/
     handleAdd() {
       this.reset();
       this.open = true;
       this.title = "添加模版分组";
     },
-    /** 修改按钮操作 */
+    /** 修改按钮操作 *\/
     handleUpdate(row) {
       this.reset();
       const groupId = row.groupId || this.ids
@@ -279,7 +297,7 @@ export default {
         this.title = "修改模版分组";
       });
     },
-    /** 提交按钮 */
+    /** 提交按钮 *\/
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -299,7 +317,7 @@ export default {
         }
       });
     },
-    /** 删除按钮操作 */
+    /** 删除按钮操作 *\/
     handleDelete(row) {
       const groupIds = row.groupId || this.ids;
       this.$modal.confirm('是否确认删除模版分组编号为"' + groupIds + '"的数据项？').then(function () {
@@ -309,7 +327,7 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
     },
-    /** 导出按钮操作 */
+    /** 导出按钮操作 *\/
     handleExport() {
       this.download('system/group/export', {
         ...this.queryParams
@@ -317,4 +335,7 @@ export default {
     }
   }
 };
+&lt;/script>
+----- original page source ends -----
+*/
 </script>

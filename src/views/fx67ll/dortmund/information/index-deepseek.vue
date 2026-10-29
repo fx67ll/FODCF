@@ -1,4 +1,22 @@
 <template>
+  <div></div>
+</template>
+<script>
+/**
+ * PHASE_GATE_SUSPENDED
+ * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
+ * 本文件为综合页草稿。方案已重做，归入【远期优化处理】。
+ * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
+ */
+export default {
+  name: 'DortmundInformationDeepseekSuspended',
+  created() {
+    this.$router.replace({ path: '/404' })
+  }
+}
+/*
+----- original page source begins -----
+<template>
     <div class="app-container">
         <!-- 头部：赛季选择器 -->
         <el-row :gutter="10" class="mb8">
@@ -172,7 +190,7 @@
     </div>
 </template>
 
-<script>
+&lt;script>
 import { listSeason } from '@/api/fx67ll/dortmund/season'
 import { listMatch, addMatch } from '@/api/fx67ll/dortmund/match'
 import { listTeam } from '@/api/fx67ll/dortmund/team'
@@ -380,9 +398,9 @@ export default {
         }
     }
 }
-</script>
+&lt;/script>
 
-<style scoped>
+&lt;style scoped>
 .match-list-card .el-table {
     cursor: pointer;
 }
@@ -394,4 +412,7 @@ export default {
 .mb8 {
     margin-bottom: 8px;
 }
-</style>
+&lt;/style>
+----- original page source ends -----
+*/
+</script>
