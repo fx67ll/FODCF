@@ -261,7 +261,7 @@ export default {
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listScore, getScore, delScore, addScore, updateScore } from "@/api/fx67ll/dortmund/score";
 
 export default {
@@ -459,7 +459,7 @@ export default {
     }
   }
 };
-</script>
+&lt;/script>
 
 ----- original page source ends -----
 */

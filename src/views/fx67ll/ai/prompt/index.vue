@@ -187,7 +187,7 @@ export default {
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listTemplate, getTemplate, delTemplate, addTemplate, updateTemplate } from "@/api/fx67ll/ai/template";
 import { listGroup } from "@/api/fx67ll/ai/group";
 import { listScene } from "@/api/fx67ll/ai/scene";
@@ -401,7 +401,7 @@ export default {
     }
   }
 };
-</script>
+&lt;/script>
 
 ----- original page source ends -----
 */

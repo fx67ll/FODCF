@@ -251,7 +251,7 @@ export default {
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listModel, getModel, delModel, addModel, updateModel } from "@/api/fx67ll/ai/model";
 import { listKey } from "@/api/fx67ll/secret/key";
 
@@ -481,7 +481,7 @@ export default {
     }
   }
 };
-</script>
+&lt;/script>
 
 ----- original page source ends -----
 */

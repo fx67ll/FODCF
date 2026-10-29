@@ -34,7 +34,7 @@ export default {
   </div>
 </template>
 
-<script>
+&lt;script>
 import ExtraRecordPane from "./components/ExtraRecordPane/ExtraRecordPane.vue";
 import SimulatePane from "./components/SimulatePane/SimulatePane.vue";
 
@@ -65,9 +65,9 @@ export default {
     },
   },
 };
-</script>
+&lt;/script>
 
-<style lang="scss" scoped>
+&lt;style lang="scss" scoped>
 /* 页面模式切换过渡动画 *\/
 .mode-switch-enter-active,
 .mode-switch-leave-active {
@@ -151,7 +151,7 @@ export default {
     transform: rotate(360deg) scale(1);
   }
 }
-</style>
+&lt;/style>
 
 ----- original page source ends -----
 */

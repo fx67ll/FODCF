@@ -291,7 +291,7 @@ export default {
     </div>
 </template>
 
-<script>
+&lt;script>
 export default {
     name: "DortmundAnalysis",
     data() {
@@ -463,9 +463,9 @@ export default {
         }
     }
 };
-</script>
+&lt;/script>
 
-<style lang="scss" scoped>
+&lt;style lang="scss" scoped>
 .app-container {
     padding: 20px;
     background-color: #f0f2f5;
@@ -578,7 +578,7 @@ export default {
 .danger-btn {
     color: #F56C6C;
 }
-</style>
+&lt;/style>
 ----- original page source ends -----
 */
 </script>

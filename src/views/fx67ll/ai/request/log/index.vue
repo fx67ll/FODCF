@@ -318,7 +318,7 @@ export default {
   </div>
 </template>
 
-<script>
+&lt;script>
 import { listLog, getLog, delLog, addLog, updateLog } from "@/api/fx67ll/ai/log";
 import { listTemplate } from "@/api/fx67ll/ai/template";
 import { listGroup } from "@/api/fx67ll/ai/group";
@@ -560,7 +560,7 @@ export default {
     }
   }
 };
-</script>
+&lt;/script>
 
 ----- original page source ends -----
 */
