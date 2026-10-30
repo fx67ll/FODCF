@@ -378,12 +378,14 @@ export default {
         this.doSubmitSimRound(record);
       }
     },
-    // 保存本轮结果记录，保存后下一轮从保存的结束数值继续
+    // 保存本轮结果记录，保存后下一轮从保存的结束数值继续；可选携带关联方案计划数据
     doSubmitSimRound(record) {
       const self = this;
       this.simSubmitting = true;
       const roundNo =
         record.roundNo != null ? parseInt(record.roundNo) : this.simNextRoundNo;
+      // 关联方案计划提交规则：没动过关联区域不带 planIds、newPlans（该轮不关联）
+      const planLinkData = record.planLink || null;
       addExtraSimulate({
         versionId: self.currentVersionId,
         simMode: self.simForm.simMode,
@@ -397,6 +399,7 @@ export default {
           self.formatSimFactor(record.endValue / self.simNextStartValue)
         ),
         coefficient: self.formatSimNumber(self.simForm.coefficient),
+        ...planLinkData,
       })
         .then(() => {
           self.simRecordOpen = false;
@@ -487,17 +490,20 @@ export default {
           self.simInvalidateSubmitting = false;
         });
     },
-    // 删除最近一条数值模拟轮次记录，下一轮回退到上一条的结束数值
+    // 删除最近一条数值模拟轮次记录，下一轮回退到上一条的结束数值；该轮有关联时确认文案追加提示
     handleSimDeleteLast() {
       const self = this;
       const lastRound = this.simLastRound;
       if (!lastRound) {
         return;
       }
+      let confirmText = `是否确认删除第${lastRound.roundNo}轮记录（结束数值 ${this.formatSimNumber(lastRound.endValue)}）？删除后将从上一轮结束数值继续`;
+      // 该轮有关联方案计划时追加提示：删除同时移除该轮的关联关系
+      if (lastRound.planCount > 0) {
+        confirmText += `；同时移除该轮的 ${lastRound.planCount} 条方案计划关联`;
+      }
       this.$modal
-        .confirm(
-          `是否确认删除第${lastRound.roundNo}轮记录（结束数值 ${this.formatSimNumber(lastRound.endValue)}）？删除后将从上一轮结束数值继续`
-        )
+        .confirm(confirmText)
         .then(function () {
           return delExtraSimulate(lastRound.simId);
         })

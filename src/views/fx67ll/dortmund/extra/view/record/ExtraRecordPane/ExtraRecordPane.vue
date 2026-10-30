@@ -23,6 +23,16 @@
       <el-form-item label="目标金额" prop="targetMoney" v-if="isMoreQuery">
         <el-input v-model="queryParams.targetMoney" placeholder="请输入目标金额" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+      <el-form-item label="是否关联" prop="hasPlan" v-if="isMoreQuery">
+        <el-select v-model="queryParams.hasPlan" placeholder="请选择是否关联方案计划" clearable style="width: 160px">
+          <el-option label="已关联" value="1" />
+          <el-option label="未关联" value="0" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="方案计划" prop="planId" v-if="isMoreQuery">
+        <common-enhanced-select ref="planIdSelect" v-model="queryParams.planId" valueKey="planId" labelKey="planContent"
+          :api-func="listPlan" placeholder="请选择方案计划" :enter-callback="handleQuery" width="240px" />
+      </el-form-item>
       <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
         <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -114,6 +124,14 @@
       <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
       <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
       <el-table-column label="外快备注" align="center" prop="extraRemark" width="230" :show-overflow-tooltip="true" />
+      <el-table-column label="关联方案计划" align="center" prop="planCount" width="110">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.planCount > 0" size="small" effect="plain" type="success" class="plan-link-column-tag"
+            @click.native="handleViewRowPlans(scope.row)">{{ scope.row.planCount
+            }} 条</el-tag>
+          <span v-else>未关联</span>
+        </template>
+      </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
         <template slot-scope="scope">
@@ -147,11 +165,44 @@
 
     <!-- 合并外快盈亏历史记录的确认弹窗 -->
     <extra-merge-dialog :visible.sync="mergeOpen" :merge-rows="mergeRows" @success="getList" />
+
+    <!-- 关联方案计划只读摘要弹窗（点击列表关联列打开） -->
+    <el-dialog title="关联方案计划" :visible.sync="rowPlansOpen" :close-on-click-modal="false" width="680px"
+      :style="`top: ${getDialogVerticalOffset(440)}`" append-to-body>
+      <div class="row-plans-body" v-loading="rowPlansLoading">
+        <template v-if="rowPlansList.length > 0">
+          <div class="row-plans-item" v-for="plan in rowPlansList" :key="plan.planId">
+            <div class="row-plans-item-header">
+              <span class="row-plans-item-content">{{ plan.planContent }}</span>
+              <span class="row-plans-item-extra">倍率：{{ plan.planRate || '空' }} 金额：{{ plan.planAmount || '空'
+              }}</span>
+            </div>
+            <div class="row-plans-item-matches">
+              <el-tag v-for="match in plan.matches || []" :key="match.matchId" size="mini" effect="plain"
+                class="row-plans-match-tag">{{ formatRowPlanMatchText(match) }}</el-tag>
+            </div>
+          </div>
+        </template>
+        <div class="row-plans-empty" v-else>暂无有权查看的关联方案计划</div>
+        <div class="row-plans-hidden-tip" v-if="rowPlansHiddenCount > 0">另有 {{ rowPlansHiddenCount }}
+          条无权查看的关联，方案计划本身不会删除</div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="rowPlansOpen = false">关 闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listExtra, delExtra } from "@/api/fx67ll/dortmund/extra";
+import { listExtra, getExtra, delExtra } from "@/api/fx67ll/dortmund/extra";
+import { listPlan } from "@/api/fx67ll/dortmund/plan";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+
+import { checkPermi } from "@/utils/common/permission";
+
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 import ExtraEditDialog from "../ExtraEditDialog/ExtraEditDialog.vue";
 import ExtraHistoryChartDialog from "../ExtraHistoryChartDialog/ExtraHistoryChartDialog.vue";
@@ -160,7 +211,7 @@ import ExtraMergeDialog from "../ExtraMergeDialog/ExtraMergeDialog.vue";
 export default {
   name: "ExtraRecordPane",
   dicts: ["sys_yes_no"],
-  components: { ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog },
+  components: { CommonEnhancedSelect, ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog },
   data() {
     return {
       // 遮罩层
@@ -202,6 +253,8 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        planId: null,
+        hasPlan: null,
       },
       // 外快盈亏历史数据走势图弹窗开关
       historyDataAnalysisOpen: false,
@@ -209,9 +262,20 @@ export default {
       mergeOpen: false,
       // 待合并的所选行数据快照（供合并确认弹窗展示合并结果预览）
       mergeRows: [],
+      // 关联方案计划只读摘要弹窗开关
+      rowPlansOpen: false,
+      // 关联方案计划摘要加载状态
+      rowPlansLoading: false,
+      // 关联方案计划摘要数据（当前用户可见的集合）
+      rowPlansList: [],
+      // 关联方案计划不可见关联条数
+      rowPlansHiddenCount: 0,
     };
   },
   created() {
+    // 将导入的函数挂载到实例，以便模板中使用
+    this.listPlan = listPlan;
+
     this.getList();
   },
   methods: {
@@ -239,6 +303,7 @@ export default {
           this.formatObjectArrayNullProperty(response.rows)
         );
         this.total = response.total;
+      }).finally(() => {
         this.loading = false;
       });
     },
@@ -263,6 +328,14 @@ export default {
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
+    },
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
+    // 是否拥有方案计划查询权限（决定关联摘要是否拉取详情）
+    hasPlanQueryPermission() {
+      return checkPermi(["dortmund:plan:query"]);
     },
     /** 重置按钮操作 */
     resetQuery() {
@@ -290,8 +363,14 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const extraIds = row.extraId || this.ids;
+      // 该记录有关联方案计划时追加提示：解除关联但不删除方案计划本身（列表派生值，无关联时为0或占位符）
+      const planCount = row.planCount || 0;
+      let confirmText = '是否确认删除外快盈亏记录编号为"' + extraIds + '"的数据项？';
+      if (planCount > 0) {
+        confirmText += `同时解除 ${planCount} 条方案计划关联，方案计划本身不会删除`;
+      }
       this.$modal
-        .confirm('是否确认删除外快盈亏记录编号为"' + extraIds + '"的数据项？')
+        .confirm(confirmText)
         .then(function () {
           return delExtra(extraIds);
         })
@@ -300,6 +379,31 @@ export default {
           this.$modal.msgSuccess("删除成功");
         })
         .catch(() => { });
+    },
+    // 点击列表关联方案计划列：只读弹出当前用户可见的方案计划摘要
+    handleViewRowPlans(row) {
+      this.rowPlansList = [];
+      this.rowPlansHiddenCount = 0;
+      this.rowPlansOpen = true;
+      // 无方案计划查询权限时仅按列表条数展示，不拉详情
+      if (!this.hasPlanQueryPermission()) {
+        return;
+      }
+      this.rowPlansLoading = true;
+      getExtra(row.extraId).then((response) => {
+        this.rowPlansList = response?.data?.plans || [];
+        this.rowPlansHiddenCount = response?.data?.hiddenPlanCount || 0;
+      }).finally(() => {
+        this.rowPlansLoading = false;
+      });
+    },
+    // 摘要比赛标签文案：主队 vs 客队 + 开赛时间 + 当前赛果
+    formatRowPlanMatchText(match) {
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
+      const timeText = matchTime ? `（${matchTime}）` : "";
+      const resultText = match.matchResult ? `，赛果：${match.matchResult}` : "";
+      return `${vsText}${timeText}${resultText}`;
     },
     /** 合并按钮操作：校验通过后打开合并确认弹窗，弹窗内录入备注并确认后由后台事务完成合并+删除旧数据 */
     handleMerge() {
@@ -347,3 +451,70 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.plan-link-column-tag {
+  cursor: pointer;
+}
+
+.row-plans-body {
+  min-height: 80px;
+}
+
+.row-plans-item {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background-color: #f8f9fb;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+}
+
+.row-plans-item-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.row-plans-item-content {
+  flex: 1;
+  font-size: 13px;
+  color: #303133;
+  word-break: break-all;
+}
+
+.row-plans-item-extra {
+  flex-shrink: 0;
+  margin-left: 12px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.row-plans-item-matches {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.row-plans-match-tag {
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.row-plans-empty {
+  padding: 12px 0;
+  font-size: 13px;
+  color: #909399;
+  text-align: center;
+}
+
+.row-plans-hidden-tip {
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #a0712a;
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+  border: 1px solid #f3d19e;
+  border-left: 4px solid #e6a23c;
+  border-radius: 6px;
+}
+</style>

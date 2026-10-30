@@ -1,22 +1,4 @@
 <template>
-  <div></div>
-</template>
-<script>
-/**
- * PHASE_GATE_SUSPENDED
- * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
- * 方案已重做本页，归入【远期优化处理】。球队基础信息随综合页重写。
- * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
- */
-export default {
-  name: 'DortmundTeamSuspended',
-  created() {
-    this.$router.replace({ path: '/404' })
-  }
-}
-/*
------ original page source begins -----
-<template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="72px">
       <el-form-item label="球队编码" prop="teamCode" v-if="isMoreQuery">
@@ -83,19 +65,19 @@ export default {
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['system:team:add']">新增</el-button>
+          v-hasPermi="['dortmund:team:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['system:team:edit']">修改</el-button>
+          v-hasPermi="['dortmund:team:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['system:team:remove']">删除</el-button>
+          v-hasPermi="['dortmund:team:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['system:team:export']">导出</el-button>
+          v-hasPermi="['dortmund:team:export']">导出</el-button>
       </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -156,9 +138,9 @@ export default {
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:team:edit']">修改</el-button>
+            v-hasPermi="['dortmund:team:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['system:team:remove']">删除</el-button>
+            v-hasPermi="['dortmund:team:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -167,13 +149,14 @@ export default {
       @pagination="getList" />
 
     <!-- 添加或修改球队管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 10px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
+      :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="85px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="球队编码" prop="teamCode">
-              <el-input v-model="form.teamCode" placeholder="请输入球队编码" />
+              <!-- 编码创建后不可修改，需要更换编码时新建资源、迁移引用并停用旧资源 -->
+              <el-input v-model="form.teamCode" placeholder="请输入球队编码" :disabled="form.teamId != null" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -224,11 +207,8 @@ export default {
           </el-col>
           <el-col :span="12">
             <el-form-item label="球队状态" prop="teamStatus">
-              <!-- <el-select v-model="form.teamStatus" style="width: 100%" placeholder="请选择球队状态">
-                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
-              </el-select> -->
-              <el-switch v-model="form.teamStatus" active-value="0" inactive-value="2" />
+              <!-- 停用入口保留在当前弹窗内，停用值与后台保持一致为 1 -->
+              <el-switch v-model="form.teamStatus" active-value="0" inactive-value="1" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -251,10 +231,12 @@ export default {
   </div>
 </template>
 
-&lt;script>
+<script>
 import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/dortmund/team";
 
 import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Team",
@@ -342,7 +324,11 @@ export default {
     this.getList();
   },
   methods: {
-    /** 根据标签值获取对应的 type（配色） *\/
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
+    /** 根据标签值获取对应的 type（配色） */
     getTagType(tagValue) {
       // 从预设数组中查找匹配的标签
       const matchTag = this.teamTagOptions.find(item => item.value === tagValue);
@@ -356,7 +342,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询球队管理列表 *\/
+    /** 查询球队管理列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -401,16 +387,16 @@ export default {
       };
       this.resetForm("form");
     },
-    /** 高级搜索按钮操作 *\/
+    /** 高级搜索按钮操作 */
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
     },
-    /** 搜索按钮操作 *\/
+    /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    /** 重置按钮操作 *\/
+    /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
@@ -421,13 +407,13 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 *\/
+    /** 新增按钮操作 */
     handleAdd() {
       this.reset();
       this.open = true;
       this.title = "添加球队管理";
     },
-    /** 修改按钮操作 *\/
+    /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
       const teamId = row.teamId || this.ids
@@ -439,7 +425,7 @@ export default {
         this.title = "修改球队管理";
       });
     },
-    /** 提交按钮 *\/
+    /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -460,7 +446,7 @@ export default {
         }
       });
     },
-    /** 删除按钮操作 *\/
+    /** 删除按钮操作 */
     handleDelete(row) {
       const teamIds = row.teamId || this.ids;
       this.$modal.confirm('是否确认删除球队管理编号为"' + teamIds + '"的数据项？').then(function () {
@@ -470,15 +456,12 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
     },
-    /** 导出按钮操作 *\/
+    /** 导出按钮操作 */
     handleExport() {
-      this.download('system/team/export', {
+      this.download('dortmund/team/export', {
         ...this.queryParams
       }, `team_${new Date().getTime()}.xlsx`)
     }
   }
 };
-&lt;/script>
------ original page source ends -----
-*/
 </script>

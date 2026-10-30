@@ -1,22 +1,4 @@
 <template>
-  <div></div>
-</template>
-<script>
-/**
- * PHASE_GATE_SUSPENDED
- * 本页不在执行计划第一阶段（第 1–9 周，数据隔离前）范围内。
- * 方案已重做本页，归入【远期优化处理】。赛季基础信息随综合页重写。
- * 当前入口跳转项目 404。原页面代码保留在下方块注释中，验证通过后由负责人手工删除。
- */
-export default {
-  name: 'DortmundSeasonSuspended',
-  created() {
-    this.$router.replace({ path: '/404' })
-  }
-}
-/*
------ original page source begins -----
-<template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="赛季编码" prop="seasonCode" v-if="isMoreQuery">
@@ -63,19 +45,19 @@ export default {
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['system:season:add']">新增</el-button>
+          v-hasPermi="['dortmund:season:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['system:season:edit']">修改</el-button>
+          v-hasPermi="['dortmund:season:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['system:season:remove']">删除</el-button>
+          v-hasPermi="['dortmund:season:remove']">删除</el-button>
       </el-col>
       <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['system:season:export']">导出</el-button>
+          v-hasPermi="['dortmund:season:export']">导出</el-button>
       </el-col> -->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -117,9 +99,9 @@ export default {
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['system:season:edit']">修改</el-button>
+            v-hasPermi="['dortmund:season:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['system:season:remove']">删除</el-button>
+            v-hasPermi="['dortmund:season:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -128,13 +110,14 @@ export default {
       @pagination="getList" />
 
     <!-- 添加或修改赛季管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px" style="top: 100px"
-      append-to-body>
+    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="640px"
+      :style="`top: ${getDialogVerticalOffset(360)}`" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="赛季编码" prop="seasonCode">
-              <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" />
+              <!-- 编码创建后不可修改，需要更换编码时新建资源、迁移引用并停用旧资源 -->
+              <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" :disabled="form.seasonId != null" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -184,8 +167,10 @@ export default {
   </div>
 </template>
 
-&lt;script>
+<script>
 import { listSeason, getSeason, delSeason, addSeason, updateSeason } from "@/api/fx67ll/dortmund/season";
+
+import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "Season",
@@ -249,13 +234,17 @@ export default {
         seasonStatus: [
           { required: true, message: "赛季状态不能为空", trigger: "blur" }
         ],
-      }
+      },
     };
   },
   created() {
     this.getList();
   },
   methods: {
+    // 代理工具函数
+    getDialogVerticalOffset(offset) {
+      return getDialogVerticalOffset(offset);
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
@@ -263,7 +252,7 @@ export default {
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
     },
-    /** 查询赛季管理列表 *\/
+    /** 查询赛季管理列表 */
     getList() {
       this.loading = true;
       this.clearDateQueryParams();
@@ -304,16 +293,16 @@ export default {
       };
       this.resetForm("form");
     },
-    /** 高级搜索按钮操作 *\/
+    /** 高级搜索按钮操作 */
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
     },
-    /** 搜索按钮操作 *\/
+    /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    /** 重置按钮操作 *\/
+    /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
@@ -324,13 +313,13 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    /** 新增按钮操作 *\/
+    /** 新增按钮操作 */
     handleAdd() {
       this.reset();
       this.open = true;
       this.title = "添加赛季管理";
     },
-    /** 修改按钮操作 *\/
+    /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
       const seasonId = row.seasonId || this.ids
@@ -340,7 +329,7 @@ export default {
         this.title = "修改赛季管理";
       });
     },
-    /** 提交按钮 *\/
+    /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -360,7 +349,7 @@ export default {
         }
       });
     },
-    /** 删除按钮操作 *\/
+    /** 删除按钮操作 */
     handleDelete(row) {
       const seasonIds = row.seasonId || this.ids;
       this.$modal.confirm('是否确认删除赛季管理编号为"' + seasonIds + '"的数据项？').then(function () {
@@ -370,15 +359,12 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
     },
-    /** 导出按钮操作 *\/
+    /** 导出按钮操作 */
     handleExport() {
-      this.download('system/season/export', {
+      this.download('dortmund/season/export', {
         ...this.queryParams
       }, `season_${new Date().getTime()}.xlsx`)
     }
   }
 };
-&lt;/script>
------ original page source ends -----
-*/
 </script>

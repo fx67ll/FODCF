@@ -1,7 +1,7 @@
 <template>
   <!-- 添加或修改外快盈亏记录对话框 -->
   <el-dialog :title="title" :visible.sync="dialogVisible" :close-on-click-modal="false" width="800px"
-    :style="`top: ${getDialogVerticalOffset(isAdd ? 570 : 450)}`" append-to-body @open="handleDialogOpen">
+    :style="`top: ${getDialogVerticalOffset(isAdd ? 620 : 560)}`" append-to-body @open="handleDialogOpen">
     <el-form ref="form" :model="form" :rules="rules" v-loading="formLoading" label-width="80px">
       <!-- 新增时展示上一次记录参考 -->
       <div class="pre-extra-reference" v-if="isAdd">
@@ -92,6 +92,10 @@
         <el-input v-model="form.extraRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
           placeholder="请输入外快备注内容" />
       </el-form-item>
+
+      <!-- 关联方案计划区域（可选，默认折叠；仅有方案计划列表与查询权限时渲染） -->
+      <plan-link-selector ref="planLinkSelector" :plan-ids="planLink.planIds"
+        :hidden-plan-count="planLink.hiddenPlanCount" :plans="planLink.plans" />
     </el-form>
     <div slot="footer" class="dialog-footer">
       <el-button type="warning" plain icon="el-icon-refresh-left" @click="handleResetHistoricalData">重置历史数据</el-button>
@@ -111,11 +115,14 @@ import {
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
+import PlanLinkSelector from "../../../components/PlanLinkSelector/PlanLinkSelector.vue";
+
 import _ from "underscore";
 
 export default {
   name: "ExtraEditDialog",
   dicts: ["sys_yes_no"],
+  components: { PlanLinkSelector },
   props: {
     // 弹窗开关
     visible: {
@@ -184,6 +191,12 @@ export default {
       },
       // 编辑模式下的本条记录原值快照
       origForm: null,
+      // 关联方案计划区域回显数据（新增时空集合）
+      planLink: {
+        planIds: [],
+        hiddenPlanCount: 0,
+        plans: [],
+      },
     };
   },
   computed: {
@@ -209,6 +222,12 @@ export default {
     handleDialogOpen() {
       this.reset();
       this.origForm = null;
+      // 关联方案计划区域每次打开都重新回显（新增时空集合）
+      this.planLink = {
+        planIds: [],
+        hiddenPlanCount: 0,
+        plans: [],
+      };
       if (this.isAdd) {
         this.title = "添加外快盈亏记录";
         this.getPreExtraMoney();
@@ -226,7 +245,17 @@ export default {
             ...self.form,
             ...response?.data
           };
+          // 原值快照只保留表单字段，关联摘要等只读派生字段不进入提交
           self.origForm = { ...response?.data };
+          delete self.origForm.plans;
+          delete self.origForm.planCount;
+          delete self.origForm.hiddenPlanCount;
+          // 回显当前用户可见的关联方案计划（不可见的只计条数，不透露内容）
+          self.planLink = {
+            planIds: (response?.data?.plans || []).map((plan) => plan.planId),
+            hiddenPlanCount: response?.data?.hiddenPlanCount || 0,
+            plans: response?.data?.plans || [],
+          };
         }
       });
     },
@@ -482,14 +511,16 @@ export default {
     // 实际提交
     doSubmitForm() {
       const self = this;
+      // 关联方案计划提交规则：没动过关联区域不带 planIds、newPlans（关联保持不变）
+      const planLinkData = this.$refs["planLinkSelector"]?.getSubmitData();
       if (self.form.extraId != null) {
-        updateExtra(self.form).then((response) => {
+        updateExtra({ ...self.form, ...planLinkData }).then((response) => {
           self.$modal.msgSuccess("修改成功");
           self.dialogVisible = false;
           self.$emit("success");
         });
       } else {
-        addExtra(self.form).then((response) => {
+        addExtra({ ...self.form, ...planLinkData }).then((response) => {
           self.$modal.msgSuccess("新增成功");
           self.dialogVisible = false;
           self.$emit("success");

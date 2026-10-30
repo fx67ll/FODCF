@@ -1,7 +1,8 @@
 <template>
-  <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调，并支持自定义宽度 -->
+  <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调、多选，并支持自定义宽度 -->
   <el-select v-model="innerValue" :placeholder="placeholder" clearable filterable :filter-method="handleFilter"
-    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle" :disabled="disabled">
+    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle" :disabled="disabled"
+    :multiple="multiple" :collapse-tags="multiple">
     <el-option v-for="item in options" :key="item[valueKey]" :label="item[labelKey]" :value="item[valueKey]" />
   </el-select>
 </template>
@@ -38,10 +39,15 @@ export default {
       type: Object,
       default: () => ({})
     },
-    // 绑定值（v-model）
+    // 绑定值（v-model），多选时为数组
     value: {
-      type: [String, Number, null],
+      type: [String, Number, Array, null],
       default: null
+    },
+    // 是否多选（多选时v-model为数组）
+    multiple: {
+      type: Boolean,
+      default: false
     },
     // 回车触发的回调函数（可选）
     enterCallback: {
@@ -62,7 +68,8 @@ export default {
   },
   data() {
     return {
-      innerValue: this.value, // 内部绑定值（解决v-model双向绑定）
+      // 内部绑定值（解决v-model双向绑定，多选时空值兜底为空数组）
+      innerValue: this.multiple && this.value == null ? [] : this.value,
       options: [], // 展示的下拉选项（经过过滤后的）
       originOptions: [] // 原始接口数据（用于过滤）
     };
@@ -82,7 +89,8 @@ export default {
   watch: {
     // 监听外部value变化，同步到内部
     value(newVal) {
-      this.innerValue = newVal;
+      // 多选模式下空值兜底为空数组，避免el-select多选出现undefined
+      this.innerValue = this.multiple && newVal == null ? [] : newVal;
     },
     // 初始化时自动加载数据
     apiFunc: {

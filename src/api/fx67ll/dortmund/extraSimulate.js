@@ -44,7 +44,15 @@ export function listExtraSimulate(query) {
   });
 }
 
-// 新增数值模拟轮次记录
+// 查询数值轮次的关联方案计划（只读）
+export function getSimRoundPlans(simId) {
+  return request({
+    url: "/dortmund/extra/simulate/plans/" + simId,
+    method: "get",
+  });
+}
+
+// 新增数值模拟轮次记录（可选关联方案计划）
 export function addExtraSimulate(data) {
   return request({
     url: "/dortmund/extra/simulate",

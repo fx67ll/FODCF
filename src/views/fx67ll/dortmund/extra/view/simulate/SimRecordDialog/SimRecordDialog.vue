@@ -1,7 +1,7 @@
 <template>
   <!-- 数值模拟记录本轮结果弹窗 -->
-  <el-dialog title="记录本轮结果" :visible.sync="dialogVisible" :close-on-click-modal="false" width="480px"
-    :style="`top: ${getDialogVerticalOffset(480)}`" append-to-body @open="handleDialogOpen">
+  <el-dialog title="记录本轮结果" :visible.sync="dialogVisible" :close-on-click-modal="false" width="640px"
+    :style="`top: ${getDialogVerticalOffset(680)}`" append-to-body @open="handleDialogOpen">
     <div class="sim-record-body">
       <!-- 本轮结果徽标 -->
       <div class="sim-record-badge" :class="isHit === 'Y' ? 'success' : 'fail'">
@@ -27,11 +27,9 @@
         <el-form-item prop="roundNo">
           <div class="sim-record-input-label">本轮轮次</div>
           <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0"
-            class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }"
-            placeholder="请输入本轮轮次" />
+            class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }" placeholder="请输入本轮轮次" />
           <div class="sim-record-tip" :class="{ danger: simRecordForm.roundNo < 0 }">
-            {{ simRecordForm.roundNo < 0 ? "轮次为负，保存后该版本将被强制作废" : "默认自动顺延可修改，支持负值" }}
-          </div>
+            {{ simRecordForm.roundNo < 0 ? "轮次为负，保存后该版本将被强制作废" : "默认自动顺延可修改，支持负值" }} </div>
         </el-form-item>
         <el-form-item prop="returnValue">
           <div class="sim-record-input-label">实际回收数值</div>
@@ -49,6 +47,9 @@
         </div>
         <div class="sim-record-end-value">{{ formatSimNumber(endValue) }}</div>
       </div>
+
+      <!-- 关联方案计划区域（可选，默认折叠；新增轮次可选关联） -->
+      <plan-link-selector ref="planLinkSelector" />
     </div>
     <div slot="footer" class="dialog-footer">
       <el-button type="primary" :loading="submitting" @click="submitSimRound">确 定</el-button>
@@ -60,8 +61,11 @@
 <script>
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
+import PlanLinkSelector from "../../../components/PlanLinkSelector/PlanLinkSelector.vue";
+
 export default {
   name: "SimRecordDialog",
+  components: { PlanLinkSelector },
   props: {
     // 弹窗开关
     visible: {
@@ -178,16 +182,18 @@ export default {
       this.simRecordForm.returnValue =
         this.isHit === "Y"
           ? parseFloat(
-              (
-                this.joinValue * parseFloat(this.coefficient || 0)
-              ).toFixed(2)
-            )
+            (
+              this.joinValue * parseFloat(this.coefficient || 0)
+            ).toFixed(2)
+          )
           : 0;
       this.$nextTick(() => {
         this.$refs["simRecordForm"] && this.$refs["simRecordForm"].clearValidate();
+        // 每次打开都重置关联方案计划区域，避免上一轮的已选与新建残留
+        this.$refs["planLinkSelector"] && this.$refs["planLinkSelector"].resetSelection();
       });
     },
-    // 确认提交，交由父组件保存
+    // 确认提交，交由父组件保存（关联方案计划提交数据一并带出）
     submitSimRound() {
       this.$refs["simRecordForm"].validate((valid) => {
         if (!valid) {
@@ -199,6 +205,7 @@ export default {
           returnValue: this.simRecordForm.returnValue,
           joinValue: this.joinValue,
           endValue: this.endValue,
+          planLink: this.$refs["planLinkSelector"]?.getSubmitData(),
         });
       });
     },
@@ -217,6 +224,11 @@ export default {
 <style lang="scss" scoped>
 .sim-record-body {
   padding: 0 4px;
+}
+
+/* 关联方案计划区域贴在结束数值预览之后 */
+.sim-record-body ::v-deep .plan-link-selector {
+  margin-top: 16px;
 }
 
 /* 本轮结果徽标 */
@@ -294,7 +306,7 @@ export default {
     margin-bottom: 0;
   }
 
-  ::v-deep .el-form-item + .el-form-item {
+  ::v-deep .el-form-item+.el-form-item {
     margin-top: 16px;
   }
 

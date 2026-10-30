@@ -671,6 +671,50 @@ export function getDialogVerticalOffset(fixedHeight) {
   return `${(viewHeight - fixedHeight - 90) / 2 - 10}px`;
 }
 
+/**
+ * 按菜单 component 字符串在已注册路由中解析真实跳转路径
+ * （菜单 path 由负责人手工维护，按 component 目录结构做尾段匹配，未命中返回 null 由调用方兜底提示）
+ * @param {Object} router - vue-router 实例（页面内取 this.$router）
+ * @param {string} componentPath - 菜单 component 值，如 "fx67ll/dortmund/plan/index"
+ * @returns {string|null} 匹配到的路由完整 path，未匹配返回 null
+ */
+export function resolveRoutePathByComponent(router, componentPath) {
+  // 入参兜底：路由实例缺失或 component 非法时直接返回 null
+  if (
+    !router ||
+    typeof componentPath !== "string" ||
+    componentPath.trim() === ""
+  ) {
+    return null;
+  }
+  // 去掉 fx67ll 前缀与末尾 index，得到匹配尾段（如 dortmund/plan）
+  const tailSegments = componentPath
+    .split("/")
+    .filter(
+      (segment) => segment && segment !== "fx67ll" && segment !== "index"
+    );
+  if (tailSegments.length === 0) {
+    return null;
+  }
+  const tailText = tailSegments.join("/");
+  // getRoutes 覆盖 addRoutes 动态注册的全部路由，低版本缺省时按未命中处理
+  const routes = router.getRoutes ? router.getRoutes() : [];
+  const hit = routes.find((route) => {
+    if (!route.path || route.path === "*") {
+      return false;
+    }
+    const routeSegments = route.path.split("/").filter(Boolean);
+    if (routeSegments.length < tailSegments.length) {
+      return false;
+    }
+    return (
+      routeSegments.slice(routeSegments.length - tailSegments.length).join("/") ===
+      tailText
+    );
+  });
+  return hit ? hit.path : null;
+}
+
 // ===================== 期号计算相关（从 FODCA 迁移） =====================
 // 以下函数用于计算彩票期号（dateCode），与 FODCA pages/lottery/index/index.vue 逻辑一致。
 // dateCode 格式按彩种固定年份前缀：大乐透(type1)4位、双色球(2)/排列三(3)/排列五(4)/七星彩(5)均2位。
