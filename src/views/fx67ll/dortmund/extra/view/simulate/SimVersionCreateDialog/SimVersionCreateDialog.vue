@@ -1,7 +1,19 @@
 <template>
   <!-- 开启新版本确认弹窗（需输入版本名称，确认后才创建版本） -->
   <el-dialog title="开启新版本" :visible.sync="dialogVisible" :close-on-click-modal="false" width="520px"
-    :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body @open="handleDialogOpen">
+    :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body custom-class="sim-version-create-dialog"
+    @open="handleDialogOpen">
+    <template slot="title">
+      <div class="sim-version-create-dialog-header">
+        <div class="sim-version-create-dialog-header-icon">
+          <i class="el-icon-open"></i>
+        </div>
+        <div class="sim-version-create-dialog-header-text">
+          <div class="sim-version-create-dialog-header-title">开启新版本</div>
+          <div class="sim-version-create-dialog-header-sub">历史轮次归档旧版本，新版本从初始数值重新开始</div>
+        </div>
+      </div>
+    </template>
     <div class="sim-version-create-body">
       <!-- 开启说明 -->
       <div class="sim-version-create-banner">
@@ -158,6 +170,56 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .sim-version-create-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.sim-version-create-dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.sim-version-create-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.sim-version-create-dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.sim-version-create-dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .sim-version-create-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .sim-version-create-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
 .sim-version-create-body {
   padding: 0 4px;
 }

@@ -672,6 +672,24 @@ export function getDialogVerticalOffset(fixedHeight) {
 }
 
 /**
+ * 金额展示格式化：空值/非法值兜底返回占位符，数值原样展示（不做千分位分隔与浮点运算）
+ * @param {string|number} value - 金额值（字符串或数字）
+ * @returns {string} 原样金额字符串，空值/非法值返回 "-"
+ */
+export function formatMoneyDisplay(value) {
+  // 1. 空值兜底：null/undefined/空串直接返回占位符
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+  // 2. 转字符串后按金额格式校验（整数位+可选小数位），不匹配返回占位符（金额保持字符串处理，不做浮点计算）
+  const moneyStr = String(value).trim();
+  if (!/^(-?)(\d+)(?:\.(\d+))?$/.test(moneyStr)) {
+    return "-";
+  }
+  return moneyStr;
+}
+
+/**
  * 按菜单 component 字符串在已注册路由中解析真实跳转路径
  * （菜单 path 由负责人手工维护，按 component 目录结构做尾段匹配，未命中返回 null 由调用方兜底提示）
  * @param {Object} router - vue-router 实例（页面内取 this.$router）
@@ -708,8 +726,9 @@ export function resolveRoutePathByComponent(router, componentPath) {
       return false;
     }
     return (
-      routeSegments.slice(routeSegments.length - tailSegments.length).join("/") ===
-      tailText
+      routeSegments
+        .slice(routeSegments.length - tailSegments.length)
+        .join("/") === tailText
     );
   });
   return hit ? hit.path : null;

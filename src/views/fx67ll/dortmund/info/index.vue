@@ -129,7 +129,18 @@
 
         <!-- 信息点详情对话框（只读） -->
         <el-dialog title="信息点详情" :visible.sync="detailOpen" :close-on-click-modal="false" width="760px"
-          :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body>
+          :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body custom-class="info-detail-dialog">
+          <template slot="title">
+            <div class="info-detail-header">
+              <div class="info-detail-header-icon">
+                <i class="el-icon-document"></i>
+              </div>
+              <div class="info-detail-header-text">
+                <div class="info-detail-header-title">信息点详情</div>
+                <div class="info-detail-header-sub">只读详情展示，修改请返回列表点击操作列维护</div>
+              </div>
+            </div>
+          </template>
           <div class="info-detail-body" v-loading="detailLoading">
             <div class="info-detail-info-row">
               <div class="info-detail-info-item">
@@ -961,6 +972,56 @@ export default {
 }
 
 /* 详情对话框 */
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .info-detail-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.info-detail-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.info-detail-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.info-detail-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.info-detail-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .info-detail-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .info-detail-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
 .info-detail-body {
   min-height: 120px;
 }
@@ -975,6 +1036,15 @@ export default {
   min-width: 180px;
   margin-right: 32px;
   margin-bottom: 8px;
+  padding: 6px 10px;
+  background: #f7faf8;
+  border: 1px solid #e8f2ec;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #bfe8cf;
+  }
 }
 
 .info-detail-info-label {
@@ -1008,7 +1078,12 @@ export default {
   white-space: pre-wrap;
   background-color: #fafbfc;
   border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #bfe8cf;
+  }
 }
 
 .info-detail-team-rel {
@@ -1021,7 +1096,12 @@ export default {
   color: #303133;
   background-color: #fafbfc;
   border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #bfe8cf;
+  }
 }
 
 /* 有效性场景 */

@@ -1,7 +1,19 @@
 <template>
   <!-- 数值模拟记录本轮结果弹窗 -->
   <el-dialog title="记录本轮结果" :visible.sync="dialogVisible" :close-on-click-modal="false" width="640px"
-    :style="`top: ${getDialogVerticalOffset(680)}`" append-to-body @open="handleDialogOpen">
+    :style="`top: ${getDialogVerticalOffset(680)}`" append-to-body custom-class="sim-record-dialog"
+    @open="handleDialogOpen">
+    <template slot="title">
+      <div class="sim-record-dialog-header">
+        <div class="sim-record-dialog-header-icon">
+          <i class="el-icon-edit-outline"></i>
+        </div>
+        <div class="sim-record-dialog-header-text">
+          <div class="sim-record-dialog-header-title">记录本轮结果</div>
+          <div class="sim-record-dialog-header-sub">轮次自动顺延可修改，回收数值默认按系数计算可调整</div>
+        </div>
+      </div>
+    </template>
     <div class="sim-record-body">
       <!-- 本轮结果徽标 -->
       <div class="sim-record-badge" :class="isHit === 'Y' ? 'success' : 'fail'">
@@ -222,6 +234,56 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .sim-record-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.sim-record-dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.sim-record-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.sim-record-dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.sim-record-dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .sim-record-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .sim-record-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
 .sim-record-body {
   padding: 0 4px;
 }

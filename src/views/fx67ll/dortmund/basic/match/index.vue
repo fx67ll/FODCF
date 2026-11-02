@@ -91,8 +91,16 @@
           <el-table-column type="selection" width="55" align="center" />
           <el-table-column label="比赛编号" align="center" prop="matchId" width="80" fixed="left" />
           <el-table-column label="所属赛季" align="center" prop="seasonName" width="80" fixed="left" />
-          <el-table-column label="主队名称" align="center" prop="homeTeamName" width="190" fixed="left" />
-          <el-table-column label="客队名称" align="center" prop="awayTeamName" width="190" fixed="left" />
+          <el-table-column label="主队名称" align="center" prop="homeTeamName" width="190" fixed="left">
+            <template slot-scope="scope">
+              <span class="match-team-name home">{{ scope.row.homeTeamName || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="客队名称" align="center" prop="awayTeamName" width="190" fixed="left">
+            <template slot-scope="scope">
+              <span class="match-team-name away">{{ scope.row.awayTeamName || "-" }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="比赛时间" align="center" prop="matchTime" width="150">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
@@ -923,6 +931,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 总览场景球队名称列：主客队双色胶囊，便于快速区分对阵双方 */
+.match-team-name {
+  display: inline-block;
+  max-width: 170px;
+  padding: 2px 10px;
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+
+  &.home {
+    color: #27ad60;
+    background: #e7f8ee;
+  }
+
+  &.away {
+    color: #5a7d9a;
+    background: #ecf3f8;
+  }
+}
+
 /* 场景切换过渡动画 */
 .scene-switch-enter-active,
 .scene-switch-leave-active {

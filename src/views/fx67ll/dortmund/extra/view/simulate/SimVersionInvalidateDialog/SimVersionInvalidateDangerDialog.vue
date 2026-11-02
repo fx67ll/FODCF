@@ -1,7 +1,19 @@
 <template>
   <!-- 版本作废第二步确认弹窗（输入"确认作废"完成安全验证） -->
   <el-dialog title="作废版本二次确认" :visible.sync="dialogVisible" width="500px" :close-on-click-modal="false"
-    :style="`top: ${getDialogVerticalOffset(430)}`" append-to-body @open="handleDialogOpen" @close="handleCancel">
+    :style="`top: ${getDialogVerticalOffset(430)}`" append-to-body custom-class="sim-invalidate-danger-dialog"
+    @open="handleDialogOpen" @close="handleCancel">
+    <template slot="title">
+      <div class="invalidate-danger-header">
+        <div class="invalidate-danger-header-icon">
+          <i class="el-icon-warning"></i>
+        </div>
+        <div class="invalidate-danger-header-text">
+          <div class="invalidate-danger-header-title">作废版本二次确认</div>
+          <div class="invalidate-danger-header-sub">第二步：输入"确认作废"完成安全验证</div>
+        </div>
+      </div>
+    </template>
     <div class="confirm-content">
       <!-- 危险操作警告横幅 -->
       <div class="extreme-danger-banner">
@@ -11,7 +23,7 @@
         <div class="danger-banner-body">
           <div class="danger-banner-title">极度危险操作 · 最终确认</div>
           <div class="danger-banner-desc">即将作废「{{ versionInfo.versionName || `版本${versionInfo.versionNo}`
-            }}」，作废后版本从列表中隐藏且不可恢复，请完成下方验证后谨慎执行</div>
+          }}」，作废后版本从列表中隐藏且不可恢复，请完成下方验证后谨慎执行</div>
         </div>
       </div>
 
@@ -134,6 +146,56 @@ export default {
 </script>
 
 <style scoped>
+/* 弹窗视觉语言：圆角与红色危险风格（与 extra/simulate 弹窗同一风格体系，危险操作保持红色基调） */
+::v-deep .sim-invalidate-danger-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(245, 108, 108, 0.18);
+}
+
+.invalidate-danger-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f7f0f0;
+}
+
+.invalidate-danger-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #f56c6c 0%, #e74c3c 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(245, 108, 108, 0.3);
+}
+
+.invalidate-danger-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #c0392b;
+}
+
+.invalidate-danger-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #b08d8d;
+}
+
+::v-deep .sim-invalidate-danger-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .sim-invalidate-danger-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f7f0f0;
+}
+
 .extreme-danger-banner {
   display: flex;
   align-items: flex-start;
@@ -142,7 +204,8 @@ export default {
   background: linear-gradient(135deg, #fff1f0 0%, #ffe4e4 100%);
   border: 1px solid #ffb3b3;
   border-left: 4px solid #f56c6c;
-  border-radius: 6px;
+  border-radius: 8px;
+  animation: invalidateDangerFadeUp 0.3s ease both;
 }
 
 .danger-banner-icon {
@@ -215,5 +278,18 @@ export default {
   font-size: 12px;
   color: #409eff;
   line-height: 1.6;
+  animation: invalidateDangerFadeUp 0.3s ease 0.1s both;
+}
+
+@keyframes invalidateDangerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

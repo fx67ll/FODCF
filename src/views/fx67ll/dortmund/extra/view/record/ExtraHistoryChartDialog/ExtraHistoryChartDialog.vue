@@ -1,8 +1,19 @@
 <template>
   <!-- 查看外快盈亏历史数据走势图的弹窗 -->
-  <el-dialog title="外快盈亏历史数据走势图" :visible.sync="dialogVisible" :close-on-click-modal="false"
-    :show-close="true" :fullscreen="true" :destroy-on-close="true" v-loading="historyDataChartLoading" append-to-body
-    @open="handleDialogOpen">
+  <el-dialog title="外快盈亏历史数据走势图" :visible.sync="dialogVisible" :close-on-click-modal="false" :show-close="true"
+    :fullscreen="true" :destroy-on-close="true" v-loading="historyDataChartLoading" append-to-body
+    custom-class="extra-history-chart-dialog" @open="handleDialogOpen">
+    <template slot="title">
+      <div class="chart-dialog-header">
+        <div class="chart-dialog-header-icon">
+          <i class="el-icon-data-line"></i>
+        </div>
+        <div class="chart-dialog-header-text">
+          <div class="chart-dialog-header-title">外快盈亏历史数据走势图</div>
+          <div class="chart-dialog-header-sub">红涨绿跌蜡烛图叠加均线，支持滚轮与滑块缩放查看局部区间</div>
+        </div>
+      </div>
+    </template>
     <div id="historyDataAnalysisContainer"></div>
   </el-dialog>
 </template>
@@ -328,3 +339,38 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+/* 全屏弹窗头部：渐变图标与说明文案（图表本身由 echarts 渲染） */
+.chart-dialog-header {
+  display: flex;
+  align-items: center;
+}
+
+.chart-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.chart-dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.chart-dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+</style>

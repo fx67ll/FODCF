@@ -1,7 +1,18 @@
 <template>
   <!-- 数值模拟版本管理弹窗（版本启用停用与作废） -->
   <el-dialog title="管理模拟版本" :visible.sync="dialogVisible" :close-on-click-modal="false" width="560px"
-    :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body>
+    :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body custom-class="sim-version-manage-dialog">
+    <template slot="title">
+      <div class="sim-version-manage-dialog-header">
+        <div class="sim-version-manage-dialog-header-icon">
+          <i class="el-icon-files"></i>
+        </div>
+        <div class="sim-version-manage-dialog-header-text">
+          <div class="sim-version-manage-dialog-header-title">管理模拟版本</div>
+          <div class="sim-version-manage-dialog-header-sub">启用停用随时可逆，作废不可恢复</div>
+        </div>
+      </div>
+    </template>
     <div class="sim-version-manage-tip">
       <i class="el-icon-info"></i>
       停用后版本将不在版本下拉中展示，轮次记录仍保留，可随时重新启用；作废后版本将从列表中隐藏且不可恢复；停用或作废当前选中版本时将自动切换到最新启用版本
@@ -16,7 +27,8 @@
               version.simMode === "half" ? "半量滚动" : "全量滚动" }}</span>
           </div>
           <div class="sim-version-manage-desc">
-            版本{{ version.versionNo }} · 初始 {{ version.initialValue }} · 系数 {{ version.coefficient }} · 目标 {{ version.targetValue }}
+            版本{{ version.versionNo }} · 初始 {{ version.initialValue }} · 系数 {{ version.coefficient }} · 目标 {{
+              version.targetValue }}
           </div>
           <div class="sim-version-manage-time">{{ parseTime(version.createTime, "{y}-{m}-{d} {h}:{i}") }}</div>
         </div>
@@ -98,6 +110,56 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .sim-version-manage-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.sim-version-manage-dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.sim-version-manage-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.sim-version-manage-dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.sim-version-manage-dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .sim-version-manage-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .sim-version-manage-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
 .sim-version-manage-tip {
   display: flex;
   align-items: flex-start;
@@ -133,6 +195,7 @@ export default {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.25s ease;
+  animation: simVersionItemFadeUp 0.3s ease both;
 
   &:hover {
     border-color: #2ecc71;
@@ -212,5 +275,17 @@ export default {
   font-size: 13px;
   color: #909399;
   text-align: center;
+}
+
+@keyframes simVersionItemFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

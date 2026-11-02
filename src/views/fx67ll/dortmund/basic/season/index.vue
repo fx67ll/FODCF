@@ -111,7 +111,18 @@
 
     <!-- 添加或修改赛季管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="640px"
-      :style="`top: ${getDialogVerticalOffset(360)}`" append-to-body>
+      :style="`top: ${getDialogVerticalOffset(360)}`" append-to-body custom-class="season-edit-dialog">
+      <template slot="title">
+        <div class="dialog-header">
+          <div class="dialog-header-icon">
+            <i class="el-icon-trophy"></i>
+          </div>
+          <div class="dialog-header-text">
+            <div class="dialog-header-title">{{ title }}</div>
+            <div class="dialog-header-sub">赛季是全部业务的数据底座，编码创建后不可修改</div>
+          </div>
+        </div>
+      </template>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -368,3 +379,72 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标、入场动画（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .season-edit-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+/* 表单区随弹窗打开做阶梯入场 */
+::v-deep .season-edit-dialog .el-dialog__body {
+  padding-top: 18px;
+}
+
+::v-deep .season-edit-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
+::v-deep .season-edit-dialog .el-dialog__body .el-form {
+  animation: seasonFormFadeUp 0.3s ease 0.05s both;
+}
+
+@keyframes seasonFormFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

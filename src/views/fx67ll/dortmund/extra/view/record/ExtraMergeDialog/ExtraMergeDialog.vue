@@ -1,7 +1,19 @@
 <template>
   <!-- 合并外快盈亏历史记录确认对话框（展示合并结果预览，支持录入合并后新备注） -->
   <el-dialog title="合并历史数据" :visible.sync="dialogVisible" :close-on-click-modal="false" width="560px"
-    :style="`top: ${getDialogVerticalOffset(500)}`" append-to-body @open="handleDialogOpen">
+    :style="`top: ${getDialogVerticalOffset(500)}`" append-to-body custom-class="extra-merge-dialog"
+    @open="handleDialogOpen">
+    <template slot="title">
+      <div class="dialog-header">
+        <div class="dialog-header-icon">
+          <i class="el-icon-magic-stick"></i>
+        </div>
+        <div class="dialog-header-text">
+          <div class="dialog-header-title">合并历史数据</div>
+          <div class="dialog-header-sub">所选连续记录合并为一条新记录，原数据将被删除</div>
+        </div>
+      </div>
+    </template>
     <div class="merge-dialog-content">
       <!-- 合并结果预览面板 -->
       <div class="merge-preview">
@@ -198,11 +210,62 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .extra-merge-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(230, 162, 60, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #e6a23c 0%, #f39c12 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(230, 162, 60, 0.3);
+}
+
+.dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .extra-merge-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .extra-merge-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
 .merge-preview {
   padding: 12px 16px;
-  background-color: #f8f9fb;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #fdf9f1 0%, #f8f9fb 100%);
+  border: 1px solid #f0e4cf;
+  border-radius: 10px;
+  animation: mergePreviewFadeUp 0.3s ease 0.05s both;
 }
 
 .merge-preview-header {
@@ -290,6 +353,7 @@ export default {
   border: 1px solid #f3d19e;
   border-left: 4px solid #e6a23c;
   border-radius: 6px;
+  animation: mergePreviewFadeUp 0.3s ease 0.1s both;
 }
 
 .merge-warning-icon {
@@ -320,5 +384,18 @@ export default {
 
 .merge-remark-form {
   margin-top: 16px;
+  animation: mergePreviewFadeUp 0.3s ease 0.15s both;
+}
+
+@keyframes mergePreviewFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

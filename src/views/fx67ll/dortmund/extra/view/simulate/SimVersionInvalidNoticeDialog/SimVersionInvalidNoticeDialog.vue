@@ -1,7 +1,7 @@
 <template>
   <!-- 版本强制作废系统通知弹窗（轮次为负时版本被强制作废） -->
   <el-dialog title="系统通知" :visible.sync="dialogVisible" :close-on-click-modal="false" width="480px"
-    :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body>
+    :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body custom-class="sim-invalid-notice-dialog">
     <div class="sim-invalid-notice-body">
       <!-- 警告图标 -->
       <div class="sim-invalid-notice-icon">
@@ -86,6 +86,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角（与 extra/simulate 弹窗同一风格体系，强制作废通知保持红色基调） */
+::v-deep .sim-invalid-notice-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(255, 90, 95, 0.18);
+}
+
+::v-deep .sim-invalid-notice-dialog .el-dialog__body {
+  padding-top: 18px;
+}
+
+::v-deep .sim-invalid-notice-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f7f0f0;
+}
+
 .sim-invalid-notice-body {
   padding: 0 4px;
   text-align: center;

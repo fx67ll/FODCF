@@ -10,6 +10,7 @@
         <div class="workflow-hero-text">
           <h2>自由发电机计划 · 需求全流程</h2>
           <p>从数据基石到运行观测共六个阶段，点击已上线节点直达页面，未上线节点开发中敬请期待</p>
+          <p class="workflow-hero-hint">{{ progressHintText }}</p>
         </div>
       </div>
       <div class="workflow-hero-progress">
@@ -21,24 +22,28 @@
       </div>
     </div>
 
-    <!-- 图例说明 -->
+    <!-- 图例说明（附实时统计） -->
     <div class="workflow-legend">
       <span class="legend-item">
-        <span class="legend-dot done"></span> 已上线，点击节点跳转页面
+        <span class="legend-dot done"></span> 已上线 {{ doneNodeCount }} 个，点击节点跳转页面
       </span>
       <span class="legend-item">
-        <span class="legend-dot todo"></span> 开发中，敬请期待
+        <span class="legend-dot todo"></span> 开发中 {{ todoNodeCount }} 个，敬请期待
       </span>
     </div>
 
-    <!-- 阶段时间轴：节点左右交错排布，窄屏自动收起为单侧 -->
-    <div class="workflow-timeline">
+    <!-- 阶段时间轴：节点左右交错排布，窄屏自动收起为单侧；脊柱按上线进度渐变填色 -->
+    <div class="workflow-timeline" :style="{ '--wf-spine-progress': spineProgressPercent + '%' }">
       <div class="workflow-stage" v-for="(stage, stageIndex) in stages" :key="stage.title"
         :style="{ animationDelay: stageIndex * 0.08 + 's' }">
-        <!-- 阶段标题横幅 -->
-        <div class="stage-banner" :class="{ done: isStageDone(stage) }">
+        <!-- 阶段标题横幅（推进前沿阶段带呼吸圆点） -->
+        <div class="stage-banner" :class="{ done: isStageDone(stage), frontier: stageIndex === frontierStageIndex }">
+          <span class="stage-banner-pulse" v-if="stageIndex === frontierStageIndex"></span>
           <span class="stage-banner-no">{{ stageIndex + 1 }}</span>
           <span class="stage-banner-title">{{ stage.title }}</span>
+          <span class="stage-banner-count" :class="{ done: isStageDone(stage) }">
+            {{ stageDoneCount(stage) }}/{{ stage.nodes.length }}
+          </span>
           <span class="stage-banner-status" :class="{ done: isStageDone(stage) }">
             {{ isStageDone(stage) ? "已上线" : "开发中" }}
           </span>
@@ -50,15 +55,22 @@
           <div class="stage-node-card"
             :class="[{ done: node.done, todo: !node.done }, { jumping: jumpingKey === node.key }]"
             @click="handleNodeClick(node)">
+            <span class="stage-node-corner" v-if="!node.done">开发中</span>
             <div class="stage-node-icon">
               <i :class="node.icon"></i>
+              <span class="stage-node-badge" v-if="node.done">
+                <i class="el-icon-check"></i>
+              </span>
+              <span class="stage-node-lock" v-else>
+                <i class="el-icon-lock"></i>
+              </span>
             </div>
             <div class="stage-node-info">
               <div class="stage-node-title">{{ node.title }}</div>
               <div class="stage-node-desc">{{ node.desc }}</div>
             </div>
             <div class="stage-node-tail">
-              <i class="el-icon-circle-check" v-if="node.done"></i>
+              <i class="el-icon-position" v-if="node.done"></i>
               <i class="el-icon-time" v-else></i>
             </div>
           </div>
@@ -147,6 +159,10 @@ export default {
     doneNodeCount() {
       return this.stages.reduce((sum, stage) => sum + stage.nodes.filter((node) => node.done).length, 0);
     },
+    // 未上线节点数
+    todoNodeCount() {
+      return this.totalNodeCount - this.doneNodeCount;
+    },
     // 全部节点数
     totalNodeCount() {
       return this.stages.reduce((sum, stage) => sum + stage.nodes.length, 0);
@@ -155,11 +171,31 @@ export default {
     progressPercent() {
       return this.totalNodeCount === 0 ? 0 : Math.round((this.doneNodeCount / this.totalNodeCount) * 100);
     },
+    // 当前推进前沿阶段下标（第一个存在未上线节点的阶段，全部上线时返回-1）
+    frontierStageIndex() {
+      return this.stages.findIndex((stage) => !this.isStageDone(stage));
+    },
+    // 顶部进度提示文案：全部上线与推进中两种口径
+    progressHintText() {
+      if (this.frontierStageIndex === -1) {
+        return `全部 ${this.totalNodeCount} 个节点已上线，全流程交付完成`;
+      }
+      const frontierStage = this.stages[this.frontierStageIndex];
+      return `已上线 ${this.doneNodeCount}/${this.totalNodeCount} · 当前推进至「${frontierStage.title}」`;
+    },
+    // 脊柱渐变填色的截止位置：按上线节点占比把绿色段收在推进边界处
+    spineProgressPercent() {
+      return this.progressPercent;
+    },
   },
   methods: {
     // 阶段是否全部节点已上线
     isStageDone(stage) {
       return stage.nodes.every((node) => node.done);
+    },
+    // 阶段内已上线节点数（横幅进度用）
+    stageDoneCount(stage) {
+      return stage.nodes.filter((node) => node.done).length;
     },
     // 节点左右交错：按全局节点序号交替，左偶右奇
     nodeSide(targetNode) {
@@ -232,7 +268,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 22px;
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f2fbf6 100%);
   border: 1px solid var(--wf-border);
   border-radius: 18px;
   box-shadow: var(--wf-shadow);
@@ -258,6 +294,11 @@ export default {
   background: linear-gradient(135deg, var(--wf-primary) 0%, var(--wf-primary-dark) 100%);
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(46, 204, 113, 0.3);
+  transition: transform 0.25s ease;
+
+  &:hover {
+    transform: rotate(-6deg) scale(1.05);
+  }
 }
 
 .workflow-hero-text h2 {
@@ -270,6 +311,13 @@ export default {
   margin: 0;
   font-size: 13px;
   color: var(--wf-muted);
+}
+
+/* 当前进度提示行 */
+.workflow-hero-hint {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  color: var(--wf-primary-dark);
 }
 
 .workflow-hero-progress {
@@ -341,16 +389,21 @@ export default {
   margin: 0 auto;
   padding: 26px 0 10px;
 
-  /* 中央脊柱 */
+  /* 中央脊柱：绿色段按上线进度截止，之后回落为灰色（--wf-spine-progress 由行内样式注入） */
   &::before {
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
     left: 50%;
-    width: 2px;
-    margin-left: -1px;
-    background: linear-gradient(to bottom, var(--wf-primary) 0%, var(--wf-border) 100%);
+    width: 3px;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom,
+        var(--wf-primary) 0%,
+        var(--wf-primary) var(--wf-spine-progress, 0%),
+        var(--wf-border) var(--wf-spine-progress, 0%),
+        var(--wf-border) 100%);
   }
 }
 
@@ -372,10 +425,25 @@ export default {
   border: 1px solid var(--wf-border);
   border-radius: 999px;
   box-shadow: var(--wf-shadow);
+  transition: border-color 0.25s ease;
 
   &.done {
     border-color: var(--wf-primary);
   }
+
+  /* 推进前沿阶段：呼吸圆点提示当前进度所在 */
+  &.frontier {
+    border-color: var(--wf-primary-dark);
+  }
+}
+
+.stage-banner-pulse {
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--wf-primary);
+  border-radius: 50%;
+  animation: frontierPulse 1.6s ease infinite;
 }
 
 .stage-banner-no {
@@ -401,8 +469,23 @@ export default {
   font-weight: 600;
 }
 
-.stage-banner-status {
+/* 阶段进度小徽标：n/m */
+.stage-banner-count {
   margin-left: 10px;
+  padding: 1px 8px;
+  font-size: 12px;
+  color: var(--wf-muted);
+  background: #f0f4f2;
+  border-radius: 999px;
+
+  &.done {
+    color: var(--wf-primary-dark);
+    background: var(--wf-primary-soft);
+  }
+}
+
+.stage-banner-status {
+  margin-left: 6px;
   padding: 1px 8px;
   font-size: 12px;
   color: var(--wf-muted);
@@ -474,6 +557,7 @@ export default {
 }
 
 .stage-node-card {
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
@@ -492,9 +576,10 @@ export default {
     box-shadow: var(--wf-shadow-hover);
   }
 
-  /* 未上线节点置灰不可点，点击仅提示 */
+  /* 未上线节点：虚线边框置灰不可点，点击仅提示 */
   &.todo {
     background: #fafcfb;
+    border: 1px dashed #ccd8d2;
 
     .stage-node-title,
     .stage-node-desc {
@@ -513,7 +598,23 @@ export default {
   }
 }
 
+/* 未上线节点右上角"开发中"角标 */
+.stage-node-corner {
+  position: absolute;
+  top: -1px;
+  right: 14px;
+  z-index: 1;
+  padding: 1px 8px;
+  font-size: 11px;
+  color: #9aa8a1;
+  background: #f0f4f2;
+  border: 1px solid #e2eee7;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
 .stage-node-icon {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -525,11 +626,50 @@ export default {
   color: #fff;
   background: linear-gradient(135deg, var(--wf-primary) 0%, var(--wf-primary-dark) 100%);
   border-radius: 10px;
+  transition: transform 0.25s ease;
+}
+
+.stage-node-card.done:hover .stage-node-icon {
+  transform: rotate(-6deg) scale(1.06);
 }
 
 .stage-node-card.todo .stage-node-icon {
   color: #9faea6;
   background: #f0f4f2;
+}
+
+/* 已上线节点图标右下角对勾徽标 */
+.stage-node-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 11px;
+  color: #fff;
+  background: var(--wf-primary);
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+/* 未上线节点图标右下角小锁徽标 */
+.stage-node-lock {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  color: #fff;
+  background: #c6d1cb;
+  border: 2px solid #fff;
+  border-radius: 50%;
 }
 
 .stage-node-info {
@@ -554,6 +694,11 @@ export default {
   margin-left: 10px;
   font-size: 18px;
   color: var(--wf-primary);
+  transition: transform 0.25s ease;
+}
+
+.stage-node-card.done:hover .stage-node-tail {
+  transform: translateX(3px);
 }
 
 /* ===== 动画 ===== */
@@ -580,6 +725,18 @@ export default {
 
   100% {
     transform: scale(1.03);
+  }
+}
+
+@keyframes frontierPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 7px rgba(46, 204, 113, 0);
   }
 }
 

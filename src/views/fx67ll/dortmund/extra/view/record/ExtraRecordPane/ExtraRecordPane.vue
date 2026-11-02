@@ -97,32 +97,31 @@
       </el-table-column>
       <el-table-column label="本次外快盈亏金额" align="center" prop="winMoney" fixed="left" width="130">
         <template slot-scope="scope">
-          <span style="color: #ff5a5f" v-if="scope.row.isWin !== 'Y' && parseFloat(scope.row.winMoney) < 0">{{
-            scope.row.winMoney }}</span>
-          <span style="color: #999999" v-if="
-            scope.row.isWin !== 'Y' &&
-            parseFloat(scope.row.winMoney || 0) === 0
-          ">{{ scope.row.winMoney }}</span>
-          <span style="color: #2ecc71" v-if="scope.row.isWin === 'Y'">{{
-            scope.row.winMoney
-          }}</span>
+          <span :class="['money-text', getMoneyClass(scope.row.isWin === 'Y' ? 1 : parseFloat(scope.row.winMoney))]">{{
+            formatMoneyDisplay(scope.row.winMoney) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="历史总盈亏金额" align="center" prop="currentMoney" width="120">
         <template slot-scope="scope">
-          <span style="color: #ff5a5f" v-if="scope.row.currentMoney < 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "")
-          }}</span>
-          <span style="color: #999999" v-if="parseInt(scope.row.currentMoney || 0) === 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "") }}</span>
-          <span style="color: #2ecc71" v-if="scope.row.currentMoney > 0">{{
-            scope.row.currentMoney.replace(/\.?0+$/, "")
-          }}</span>
+          <span :class="['money-text', getMoneyClass(parseFloat(scope.row.currentMoney))]">{{
+            formatMoneyDisplay(scope.row.currentMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="100" />
-      <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170" />
-      <el-table-column label="目标金额" align="center" prop="targetMoney" width="80" />
+      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="100">
+        <template slot-scope="scope">
+          <span>{{ formatMoneyDisplay(scope.row.seedMoney) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170">
+        <template slot-scope="scope">
+          <span>{{ formatMoneyDisplay(scope.row.saveMoney) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="目标金额" align="center" prop="targetMoney" width="80">
+        <template slot-scope="scope">
+          <span>{{ formatMoneyDisplay(scope.row.targetMoney) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="外快备注" align="center" prop="extraRemark" width="230" :show-overflow-tooltip="true" />
       <el-table-column label="关联方案计划" align="center" prop="planCount" width="110">
         <template slot-scope="scope">
@@ -167,30 +166,8 @@
     <extra-merge-dialog :visible.sync="mergeOpen" :merge-rows="mergeRows" @success="getList" />
 
     <!-- 关联方案计划只读摘要弹窗（点击列表关联列打开） -->
-    <el-dialog title="关联方案计划" :visible.sync="rowPlansOpen" :close-on-click-modal="false" width="680px"
-      :style="`top: ${getDialogVerticalOffset(440)}`" append-to-body>
-      <div class="row-plans-body" v-loading="rowPlansLoading">
-        <template v-if="rowPlansList.length > 0">
-          <div class="row-plans-item" v-for="plan in rowPlansList" :key="plan.planId">
-            <div class="row-plans-item-header">
-              <span class="row-plans-item-content">{{ plan.planContent }}</span>
-              <span class="row-plans-item-extra">倍率：{{ plan.planRate || '空' }} 金额：{{ plan.planAmount || '空'
-              }}</span>
-            </div>
-            <div class="row-plans-item-matches">
-              <el-tag v-for="match in plan.matches || []" :key="match.matchId" size="mini" effect="plain"
-                class="row-plans-match-tag">{{ formatRowPlanMatchText(match) }}</el-tag>
-            </div>
-          </div>
-        </template>
-        <div class="row-plans-empty" v-else>暂无有权查看的关联方案计划</div>
-        <div class="row-plans-hidden-tip" v-if="rowPlansHiddenCount > 0">另有 {{ rowPlansHiddenCount }}
-          条无权查看的关联，方案计划本身不会删除</div>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="rowPlansOpen = false">关 闭</el-button>
-      </div>
-    </el-dialog>
+    <plan-summary-dialog :visible.sync="rowPlansOpen" title="关联方案计划" :loading="rowPlansLoading" :plans="rowPlansList"
+      :hidden-count="rowPlansHiddenCount" />
   </div>
 </template>
 
@@ -198,7 +175,7 @@
 import { listExtra, getExtra, delExtra } from "@/api/fx67ll/dortmund/extra";
 import { listPlan } from "@/api/fx67ll/dortmund/plan";
 
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import { getDialogVerticalOffset, formatMoneyDisplay } from "@/utils/fx67ll/utils";
 
 import { checkPermi } from "@/utils/common/permission";
 
@@ -207,11 +184,13 @@ import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import ExtraEditDialog from "../ExtraEditDialog/ExtraEditDialog.vue";
 import ExtraHistoryChartDialog from "../ExtraHistoryChartDialog/ExtraHistoryChartDialog.vue";
 import ExtraMergeDialog from "../ExtraMergeDialog/ExtraMergeDialog.vue";
+import PlanSummaryDialog from "../../../components/PlanSummaryDialog/index.vue";
+
 
 export default {
   name: "ExtraRecordPane",
   dicts: ["sys_yes_no"],
-  components: { CommonEnhancedSelect, ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog },
+  components: { CommonEnhancedSelect, ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog },
   data() {
     return {
       // 遮罩层
@@ -333,6 +312,18 @@ export default {
     getDialogVerticalOffset(offset) {
       return getDialogVerticalOffset(offset);
     },
+    // 金额展示代理（空值/非法值返回占位符，数值原样展示）
+    formatMoneyDisplay(value) {
+      return formatMoneyDisplay(value);
+    },
+    // 金额正负配色：正数绿、负数红、零灰
+    getMoneyClass(value) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue) || numValue === 0) {
+        return "money-zero";
+      }
+      return numValue > 0 ? "money-win" : "money-lose";
+    },
     // 是否拥有方案计划查询权限（决定关联摘要是否拉取详情）
     hasPlanQueryPermission() {
       return checkPermi(["dortmund:plan:query"]);
@@ -397,14 +388,6 @@ export default {
         this.rowPlansLoading = false;
       });
     },
-    // 摘要比赛标签文案：主队 vs 客队 + 开赛时间 + 当前赛果
-    formatRowPlanMatchText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
-      const timeText = matchTime ? `（${matchTime}）` : "";
-      const resultText = match.matchResult ? `，赛果：${match.matchResult}` : "";
-      return `${vsText}${timeText}${resultText}`;
-    },
     /** 合并按钮操作：校验通过后打开合并确认弹窗，弹窗内录入备注并确认后由后台事务完成合并+删除旧数据 */
     handleMerge() {
       // 前置校验：至少选择两条记录
@@ -453,68 +436,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 金额列配色：正数绿、负数红、零灰 */
+.money-text {
+
+  &.money-win,
+  &.money-lose {
+    font-weight: 600;
+  }
+
+  &.money-win {
+    color: #2ecc71;
+  }
+
+  &.money-lose {
+    color: #ff5a5f;
+  }
+
+  &.money-zero {
+    color: #999999;
+  }
+}
+
 .plan-link-column-tag {
   cursor: pointer;
-}
-
-.row-plans-body {
-  min-height: 80px;
-}
-
-.row-plans-item {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background-color: #f8f9fb;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-}
-
-.row-plans-item-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.row-plans-item-content {
-  flex: 1;
-  font-size: 13px;
-  color: #303133;
-  word-break: break-all;
-}
-
-.row-plans-item-extra {
-  flex-shrink: 0;
-  margin-left: 12px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.row-plans-item-matches {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.row-plans-match-tag {
-  margin-right: 4px;
-  margin-bottom: 4px;
-}
-
-.row-plans-empty {
-  padding: 12px 0;
-  font-size: 13px;
-  color: #909399;
-  text-align: center;
-}
-
-.row-plans-hidden-tip {
-  padding: 8px 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #a0712a;
-  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
-  border: 1px solid #f3d19e;
-  border-left: 4px solid #e6a23c;
-  border-radius: 6px;
 }
 </style>

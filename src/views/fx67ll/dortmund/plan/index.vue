@@ -62,12 +62,12 @@
             :show-overflow-tooltip="true" />
           <el-table-column label="录入倍率" align="center" prop="planRate" width="90">
             <template slot-scope="scope">
-              <span>{{ scope.row.planRate || '' }}</span>
+              <span class="plan-rate-tag">{{ scope.row.planRate || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="录入金额" align="center" prop="planAmount" width="100">
+          <el-table-column label="录入金额" align="center" prop="planAmount" width="110">
             <template slot-scope="scope">
-              <span>{{ scope.row.planAmount || '' }}</span>
+              <span class="plan-amount-text">{{ formatMoneyDisplay(scope.row.planAmount) }}</span>
             </template>
           </el-table-column>
           <el-table-column label="关联比赛" align="center" prop="matchSummary" min-width="260"
@@ -273,7 +273,7 @@
               <div class="plan-review-info-item">
                 <span class="plan-review-info-label">更新时间</span>
                 <span class="plan-review-info-value">{{ parseTime(detailModel.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-                  }}</span>
+                }}</span>
               </div>
             </div>
             <div class="plan-review-content">{{ detailModel.planContent }}</div>
@@ -329,6 +329,8 @@ import { listTeam } from "@/api/fx67ll/dortmund/team";
 import { listMatch } from "@/api/fx67ll/dortmund/match";
 
 import { teamVenueOptions } from "@/utils/constant/football";
+
+import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 
 import { checkPermi } from "@/utils/common/permission";
 
@@ -677,6 +679,10 @@ export default {
       const vsText = matches.map(item => `${item.homeTeamName || ""}vs${item.awayTeamName || ""}`).join("、");
       return `共${matches.length}场：${vsText}`;
     },
+    // 代理金额展示工具（空值/非法值返回占位符，数值原样展示）
+    formatMoneyDisplay(value) {
+      return formatMoneyDisplay(value);
+    },
     /** 提交按钮：构建请求体后提交，失败时保留已填文字、选择与图片 */
     submitEditForm() {
       this.$refs["editForm"].validate(valid => {
@@ -755,6 +761,24 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 列表录入倍率/金额列：胶囊与金额展示 */
+.plan-rate-tag {
+  display: inline-block;
+  min-width: 40px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #27ad60;
+  background: #e7f8ee;
+  border-radius: 999px;
+}
+
+.plan-amount-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2b3a36;
+}
+
 /* 场景切换过渡动画 */
 .scene-switch-enter-active,
 .scene-switch-leave-active {

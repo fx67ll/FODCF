@@ -21,8 +21,8 @@
 
     <!-- 图片预览 -->
     <el-dialog title="预览" :visible.sync="dialogVisible" :close-on-click-modal="false" width="800"
-      :style="`top: ${getDialogVerticalOffset(444)}`" append-to-body>
-      <img :src="dialogImageUrl" style="display: block; max-width: 100%; margin: 0 auto" />
+      :style="`top: ${getDialogVerticalOffset(444)}`" append-to-body custom-class="plan-image-preview-dialog">
+      <img :src="dialogImageUrl" class="plan-image-preview-img" />
     </el-dialog>
   </div>
 </template>
@@ -205,5 +205,37 @@ export default {
 .el-list-leave-active {
   opacity: 0;
   transform: translateY(0);
+}
+
+// 预览弹窗：圆角深色底衬托图片
+::v-deep .plan-image-preview-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+::v-deep .plan-image-preview-dialog .el-dialog__body {
+  padding: 16px;
+  background: #1f2d3d;
+}
+
+.plan-image-preview-img {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 10px;
+  animation: planImagePreviewFadeIn 0.3s ease both;
+}
+
+@keyframes planImagePreviewFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

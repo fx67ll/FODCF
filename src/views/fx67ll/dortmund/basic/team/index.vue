@@ -93,13 +93,13 @@
       <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" width="80">
         <template slot-scope="scope">
           <!-- 判断Logo地址是否有效（非空、非'-'） -->
-          <div v-if="scope.row.teamLogoUrl && scope.row.teamLogoUrl !== '-'">
-            <el-image :src="scope.row.teamLogoUrl" fit="cover" style="width: 50px; height: 50px; border-radius: 4px;"
+          <div v-if="scope.row.teamLogoUrl && scope.row.teamLogoUrl !== '-'" class="team-logo-cell">
+            <el-image :src="scope.row.teamLogoUrl" fit="cover" class="team-logo-img"
               :preview-src-list="[scope.row.teamLogoUrl]" placeholder="加载中..." error-icon="el-icon-picture-outline" />
           </div>
           <!-- 无效地址时显示占位文本/图标 -->
-          <div v-else style="color: #909399; font-size: 12px;">
-            <i class="el-icon-picture-outline" style="margin-right: 4px;"></i>
+          <div v-else class="team-logo-empty">
+            <i class="el-icon-picture-outline"></i>
             暂无Logo
           </div>
         </template>
@@ -150,7 +150,18 @@
 
     <!-- 添加或修改球队管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
-      :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body>
+      :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body custom-class="team-edit-dialog">
+      <template slot="title">
+        <div class="dialog-header">
+          <div class="dialog-header-icon">
+            <i class="el-icon-s-flag"></i>
+          </div>
+          <div class="dialog-header-text">
+            <div class="dialog-header-title">{{ title }}</div>
+            <div class="dialog-header-sub">球队受比赛引用时停用而非删除，编码创建后不可修改</div>
+          </div>
+        </div>
+      </template>
       <el-form ref="form" :model="form" :rules="rules" label-width="85px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -465,3 +476,107 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+/* 列表Logo单元格：固定尺寸圆角预览 */
+.team-logo-cell {
+  display: inline-flex;
+
+  .team-logo-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    border: 1px solid #e2eee7;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.06);
+    }
+  }
+}
+
+.team-logo-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  color: #a8b5af;
+  font-size: 11px;
+  background: #f4f8f6;
+  border: 1px dashed #dce9e2;
+  border-radius: 8px;
+
+  i {
+    margin-right: 3px;
+    font-size: 14px;
+  }
+}
+
+/* 弹窗视觉语言：圆角、渐变图标、入场动画（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .team-edit-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .team-edit-dialog .el-dialog__body {
+  padding-top: 18px;
+}
+
+::v-deep .team-edit-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
+/* 表单区随弹窗打开做阶梯入场 */
+::v-deep .team-edit-dialog .el-dialog__body .el-form {
+  animation: teamFormFadeUp 0.3s ease 0.05s both;
+}
+
+@keyframes teamFormFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

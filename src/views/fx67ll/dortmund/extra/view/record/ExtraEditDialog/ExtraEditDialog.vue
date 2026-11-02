@@ -1,7 +1,19 @@
 <template>
   <!-- 添加或修改外快盈亏记录对话框 -->
   <el-dialog :title="title" :visible.sync="dialogVisible" :close-on-click-modal="false" width="800px"
-    :style="`top: ${getDialogVerticalOffset(isAdd ? 620 : 560)}`" append-to-body @open="handleDialogOpen">
+    :style="`top: ${getDialogVerticalOffset(isAdd ? 620 : 560)}`" append-to-body custom-class="extra-edit-dialog"
+    @open="handleDialogOpen">
+    <template slot="title">
+      <div class="dialog-header">
+        <div class="dialog-header-icon">
+          <i class="el-icon-coin"></i>
+        </div>
+        <div class="dialog-header-text">
+          <div class="dialog-header-title">{{ title }}</div>
+          <div class="dialog-header-sub">金额联动自动推算，落袋金额独立录入不联动其他表单项</div>
+        </div>
+      </div>
+    </template>
     <el-form ref="form" :model="form" :rules="rules" v-loading="formLoading" label-width="80px">
       <!-- 新增时展示上一次记录参考 -->
       <div class="pre-extra-reference" v-if="isAdd">
@@ -532,12 +544,68 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
+::v-deep .extra-edit-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
+}
+
+.dialog-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.dialog-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+::v-deep .extra-edit-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .extra-edit-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f0f4f2;
+}
+
+/* 表单区随弹窗打开做阶梯入场 */
+::v-deep .extra-edit-dialog .el-dialog__body .el-form {
+  animation: extraEditFormFadeUp 0.3s ease 0.05s both;
+}
+
 .pre-extra-reference {
   margin-bottom: 18px;
   padding: 12px 16px;
-  background-color: #f8f9fb;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #f2fbf6 0%, #f8f9fb 100%);
+  border: 1px solid #dceee4;
+  border-radius: 10px;
+  animation: extraEditFormFadeUp 0.3s ease 0.1s both;
 }
 
 .pre-extra-reference-header {
@@ -592,5 +660,17 @@ export default {
   font-size: 12px;
   line-height: 1.5;
   color: #909399;
+}
+
+@keyframes extraEditFormFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

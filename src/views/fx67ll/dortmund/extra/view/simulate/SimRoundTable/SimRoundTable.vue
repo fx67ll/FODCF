@@ -64,40 +64,19 @@
       :page-sizes="[10, 23, 50, 100]" @pagination="$emit('pagination')" />
 
     <!-- 关联方案计划只读摘要弹窗（点击轮次关联列打开，已有轮次没有补关联入口） -->
-    <el-dialog title="本轮关联方案计划" :visible.sync="roundPlansOpen" :close-on-click-modal="false" width="680px"
-      :style="`top: ${getDialogVerticalOffset(440)}`" append-to-body>
-      <div class="round-plans-body" v-loading="roundPlansLoading">
-        <template v-if="roundPlansList.length > 0">
-          <div class="round-plans-item" v-for="plan in roundPlansList" :key="plan.planId">
-            <div class="round-plans-item-header">
-              <span class="round-plans-item-content">{{ plan.planContent }}</span>
-              <span class="round-plans-item-extra">倍率：{{ plan.planRate || '空' }} 金额：{{ plan.planAmount || '空'
-                }}</span>
-            </div>
-            <div class="round-plans-item-matches">
-              <el-tag v-for="match in plan.matches || []" :key="match.matchId" size="mini" effect="plain"
-                class="round-plans-match-tag">{{ formatRoundPlanMatchText(match) }}</el-tag>
-            </div>
-          </div>
-        </template>
-        <div class="round-plans-empty" v-else>暂无有权查看的关联方案计划</div>
-        <div class="round-plans-hidden-tip" v-if="roundPlansHiddenCount > 0">另有 {{ roundPlansHiddenCount }}
-          条无权查看的关联</div>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="roundPlansOpen = false">关 闭</el-button>
-      </div>
-    </el-dialog>
+    <plan-summary-dialog :visible.sync="roundPlansOpen" title="本轮关联方案计划" :loading="roundPlansLoading"
+      :plans="roundPlansList" :hidden-count="roundPlansHiddenCount" />
   </div>
 </template>
 
 <script>
 import { getSimRoundPlans } from "@/api/fx67ll/dortmund/extraSimulate";
 
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import PlanSummaryDialog from "../../../components/PlanSummaryDialog/index.vue";
 
 export default {
   name: "SimRoundTable",
+  components: { PlanSummaryDialog },
   props: {
     // 轮次记录列表数据
     rounds: {
@@ -156,10 +135,6 @@ export default {
     },
   },
   methods: {
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
-    },
     // 点击轮次关联方案计划列：只读弹出当前用户可见的方案计划摘要
     handleViewRoundPlans(row) {
       this.roundPlansList = [];
@@ -172,14 +147,6 @@ export default {
       }).finally(() => {
         this.roundPlansLoading = false;
       });
-    },
-    // 摘要比赛标签文案：主队 vs 客队 + 开赛时间 + 当前赛果
-    formatRoundPlanMatchText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
-      const timeText = matchTime ? `（${matchTime}）` : "";
-      const resultText = match.matchResult ? `，赛果：${match.matchResult}` : "";
-      return `${vsText}${timeText}${resultText}`;
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
@@ -217,66 +184,5 @@ export default {
 
 .round-plan-count-tag {
   cursor: pointer;
-}
-
-.round-plans-body {
-  min-height: 80px;
-}
-
-.round-plans-item {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background-color: #f8f9fb;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-}
-
-.round-plans-item-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.round-plans-item-content {
-  flex: 1;
-  font-size: 13px;
-  color: #303133;
-  word-break: break-all;
-}
-
-.round-plans-item-extra {
-  flex-shrink: 0;
-  margin-left: 12px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.round-plans-item-matches {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.round-plans-match-tag {
-  margin-right: 4px;
-  margin-bottom: 4px;
-}
-
-.round-plans-empty {
-  padding: 12px 0;
-  font-size: 13px;
-  color: #909399;
-  text-align: center;
-}
-
-.round-plans-hidden-tip {
-  padding: 8px 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #a0712a;
-  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
-  border: 1px solid #f3d19e;
-  border-left: 4px solid #e6a23c;
-  border-radius: 6px;
 }
 </style>

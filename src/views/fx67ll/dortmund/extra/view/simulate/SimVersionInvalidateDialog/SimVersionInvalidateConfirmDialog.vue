@@ -1,7 +1,19 @@
 <template>
   <!-- 版本作废第一步确认弹窗（展示版本信息与作废影响，倒计时后方可确认） -->
   <el-dialog title="作废版本安全确认" :visible.sync="dialogVisible" width="520px" :close-on-click-modal="false"
-    :style="`top: ${getDialogVerticalOffset(560)}`" append-to-body @open="handleDialogOpen" @close="handleDialogClose">
+    :style="`top: ${getDialogVerticalOffset(560)}`" append-to-body custom-class="sim-invalidate-confirm-dialog"
+    @open="handleDialogOpen" @close="handleDialogClose">
+    <template slot="title">
+      <div class="invalidate-confirm-header">
+        <div class="invalidate-confirm-header-icon">
+          <i class="el-icon-warning-outline"></i>
+        </div>
+        <div class="invalidate-confirm-header-text">
+          <div class="invalidate-confirm-header-title">作废版本安全确认</div>
+          <div class="invalidate-confirm-header-sub">第一步：请先仔细阅读作废影响说明</div>
+        </div>
+      </div>
+    </template>
     <div class="confirm-content">
       <!-- 危险操作警告横幅 -->
       <div class="extreme-danger-banner">
@@ -129,6 +141,56 @@ export default {
 </script>
 
 <style scoped>
+/* 弹窗视觉语言：圆角与红色危险风格（与 extra/simulate 弹窗同一风格体系，危险操作保持红色基调） */
+::v-deep .sim-invalidate-confirm-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 18px 44px rgba(245, 108, 108, 0.18);
+}
+
+.invalidate-confirm-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f7f0f0;
+}
+
+.invalidate-confirm-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #f56c6c 0%, #e74c3c 100%);
+  border-radius: 11px;
+  box-shadow: 0 5px 12px rgba(245, 108, 108, 0.3);
+}
+
+.invalidate-confirm-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #c0392b;
+}
+
+.invalidate-confirm-header-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #b08d8d;
+}
+
+::v-deep .sim-invalidate-confirm-dialog .el-dialog__body {
+  padding-top: 16px;
+}
+
+::v-deep .sim-invalidate-confirm-dialog .el-dialog__footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #f7f0f0;
+}
+
 .extreme-danger-banner {
   display: flex;
   align-items: flex-start;
@@ -137,7 +199,8 @@ export default {
   background: linear-gradient(135deg, #fff1f0 0%, #ffe4e4 100%);
   border: 1px solid #ffb3b3;
   border-left: 4px solid #f56c6c;
-  border-radius: 6px;
+  border-radius: 8px;
+  animation: invalidateConfirmFadeUp 0.3s ease both;
 }
 
 .danger-banner-icon {
@@ -203,5 +266,18 @@ export default {
   border-radius: 5px;
   font-size: 13px;
   color: #389e0d;
+  animation: invalidateConfirmFadeUp 0.3s ease 0.1s both;
+}
+
+@keyframes invalidateConfirmFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
