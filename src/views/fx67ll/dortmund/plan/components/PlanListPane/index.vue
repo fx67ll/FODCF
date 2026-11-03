@@ -3,7 +3,7 @@
   <div class="plan-list-pane">
     <el-table v-loading="loading" :data="rows" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="方案计划正文" align="center" prop="planContent" min-width="260" fixed="left"
+      <el-table-column label="方案计划" align="center" prop="planContent" min-width="260" fixed="left"
         :show-overflow-tooltip="true" />
       <el-table-column label="录入倍率" align="center" prop="planRate" width="90">
         <template slot-scope="scope">

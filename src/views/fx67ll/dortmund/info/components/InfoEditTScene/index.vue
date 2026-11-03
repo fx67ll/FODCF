@@ -105,9 +105,9 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="采集或录入时间" prop="collectTime">
+            <el-form-item label="信息采集时间" prop="collectTime">
               <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择采集或录入时间">
+                value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择信息采集时间">
               </el-date-picker>
               <div class="info-edit-field-hint">信息被采集或录入系统的时间点</div>
             </el-form-item>
@@ -228,7 +228,7 @@ export default {
           { required: true, message: "信息来源名称不能为空", trigger: "blur" }
         ],
         collectTime: [
-          { required: true, message: "采集或录入时间不能为空", trigger: "blur" }
+          { required: true, message: "信息采集时间不能为空", trigger: "blur" }
         ],
         effectiveStartTime: [
           { validator: checkEffectiveTimeWindow, trigger: "blur" }

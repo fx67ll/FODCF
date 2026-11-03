@@ -51,9 +51,9 @@
               <span>当场新建方案计划（比赛只能选已有正常比赛，与保存同一事务）</span>
             </div>
             <el-form ref="newPlanForm" :model="newPlanForm" :rules="newPlanRules" label-width="110px">
-              <el-form-item label="方案计划正文" prop="planContent">
+              <el-form-item label="方案计划" prop="planContent">
                 <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="1023" show-word-limit
-                  placeholder="请输入方案计划正文" />
+                  placeholder="请输入方案计划" />
               </el-form-item>
               <el-form-item label="录入倍率" prop="planRate">
                 <el-input v-model="newPlanForm.planRate" placeholder="请输入录入倍率（可空，有值时必须大于0）" />
@@ -205,7 +205,7 @@ export default {
       // 当场新建方案计划表单校验
       newPlanRules: {
         planContent: [
-          { required: true, message: "方案计划正文不能为空", trigger: "blur" }
+          { required: true, message: "方案计划不能为空", trigger: "blur" }
         ],
         planRate: [
           { validator: checkPlanRate, trigger: "blur" }

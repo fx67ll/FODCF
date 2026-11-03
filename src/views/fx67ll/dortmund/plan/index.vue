@@ -7,8 +7,8 @@
       <div key="list" v-if="pageScene === 'list'">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
           label-width="84px">
-          <el-form-item label="方案计划正文" prop="planContent">
-            <el-input v-model="queryParams.planContent" placeholder="请输入方案计划正文关键字" clearable
+          <el-form-item label="方案计划" prop="planContent" v-if="isMoreQuery">
+            <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="关联比赛" prop="matchId">
@@ -16,7 +16,7 @@
               labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" placeholder="请选择关联比赛"
               :enter-callback="handleQuery" />
           </el-form-item>
-          <el-form-item label="创建时间">
+          <el-form-item label="创建时间" v-if="isMoreQuery">
             <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
               type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
               clearable></el-date-picker>

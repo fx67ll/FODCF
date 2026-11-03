@@ -73,7 +73,7 @@
             "{y}-{m}-{d}{h}:{i}:{s}") || '空' }}</span>
         </div>
         <div class="info-detail-info-item">
-          <span class="info-detail-info-label">采集或录入时间</span>
+          <span class="info-detail-info-label">信息采集时间</span>
           <span class="info-detail-info-value">{{ parseTime(detailModel.collectTime, "{y}-{m}-{d} {h}:{i}:{s}")
             || '空' }}</span>
         </div>

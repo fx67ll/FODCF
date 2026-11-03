@@ -31,9 +31,9 @@
             </div>
             <el-row :gutter="20">
               <el-col :span="24">
-                <el-form-item label="方案计划正文" prop="planContent">
+                <el-form-item label="方案计划" prop="planContent">
                   <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
-                    placeholder="请输入方案计划正文" />
+                    placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
@@ -345,7 +345,7 @@ export default {
       // 编写场景表单校验
       editRules: {
         planContent: [
-          { required: true, message: "方案计划正文不能为空", trigger: "blur" }
+          { required: true, message: "方案计划不能为空", trigger: "blur" }
         ],
         planRate: [
           { validator: checkPlanRate, trigger: "blur" }

@@ -14,11 +14,11 @@
                 :value="dict.value"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType !== 'M'">
+          <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType !== 'M' && isMoreQuery">
             <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
               labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
           </el-form-item>
-          <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M'">
+          <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M' && isMoreQuery">
             <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
               labelKey="matchName" :api-func="listMatch" placeholder="请选择所属比赛" :enter-callback="handleQuery" />
           </el-form-item>
@@ -26,7 +26,7 @@
             <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
               @keyup.enter.native="handleQuery" />
           </el-form-item>
-          <el-form-item label="信息点状态" prop="pointStatus">
+          <el-form-item label="信息点状态" prop="pointStatus" v-if="isMoreQuery">
             <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable>
               <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                 :value="dict.value"></el-option>
