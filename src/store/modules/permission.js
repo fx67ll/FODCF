@@ -12,6 +12,8 @@ const permission = {
     defaultRoutes: [],
     topbarRouters: [],
     sidebarRouters: [],
+    // 后端原始菜单路由数据（保留 component 字符串，供页面按菜单 component 解析真实跳转路径）
+    menuRouters: [],
   },
   mutations: {
     SET_ROUTES: (state, routes) => {
@@ -27,6 +29,9 @@ const permission = {
     SET_SIDEBAR_ROUTERS: (state, routes) => {
       state.sidebarRouters = routes;
     },
+    SET_MENU_ROUTERS: (state, routers) => {
+      state.menuRouters = routers;
+    },
   },
   actions: {
     // 生成路由
@@ -34,6 +39,8 @@ const permission = {
       return new Promise(resolve => {
         // 向后端请求路由数据
         getRouters().then(res => {
+          // 原始菜单树单独留存（component 仍是字符串，供页面按菜单 component 匹配跳转路径）
+          commit('SET_MENU_ROUTERS', res.data || []);
           const sdata = JSON.parse(JSON.stringify(res.data));
           const rdata = JSON.parse(JSON.stringify(res.data));
           const sidebarRoutes = filterAsyncRouter(sdata);

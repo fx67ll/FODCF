@@ -67,492 +67,71 @@
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
           </el-col>
           <!-- 信息点没有删除动作，不渲染删除按钮 -->
+          <!-- 展示视图切换：卡片视图为默认，偏好持久化到本地缓存 -->
+          <el-col :span="1.5" style="margin-bottom: 10px;">
+            <el-radio-group v-model="viewMode" size="mini" @change="handleViewModeChange">
+              <el-radio-button label="card">卡片视图</el-radio-button>
+              <el-radio-button label="list">列表视图</el-radio-button>
+            </el-radio-group>
+          </el-col>
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="infoPointList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="信息点类型" align="center" prop="infoPointType" width="100" fixed="left">
-            <template slot-scope="scope">
-              <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="scope.row.infoPointType" />
-            </template>
-          </el-table-column>
-          <el-table-column label="所属赛季" align="center" prop="seasonName" width="110" fixed="left" />
-          <el-table-column label="所属比赛" align="center" prop="matchId" width="200" :show-overflow-tooltip="true"
-            fixed="left">
-            <template slot-scope="scope">
-              <span>{{ formatMatchColumnText(scope.row) || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="关联球队" align="center" prop="teamRels" min-width="180" :show-overflow-tooltip="true">
-            <template slot-scope="scope">
-              <span>{{ formatTeamRelsText(scope.row) || '-' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="信息点标题" align="center" prop="pointTitle" min-width="160"
-            :show-overflow-tooltip="true" />
-          <el-table-column label="信息点内容" align="center" prop="pointContent" min-width="200"
-            :show-overflow-tooltip="true" />
-          <el-table-column label="信息来源" align="center" prop="sourceName" width="120" :show-overflow-tooltip="true" />
-          <el-table-column label="来源发布时间" align="center" prop="sourcePublishTime" width="160">
-            <template slot-scope="scope">
-              <span>{{ parseTime(scope.row.sourcePublishTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="信息点状态" align="center" prop="pointStatus" width="90">
-            <template slot-scope="scope">
-              <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.pointStatus" />
-            </template>
-          </el-table-column>
-          <el-table-column label="是否可公开" align="center" prop="allowPublic" width="100">
-            <template slot-scope="scope">
-              <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="scope.row.allowPublic" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
-            <template slot-scope="scope">
-              <el-button size="mini" type="text" icon="el-icon-view" @click="handleViewDetail(scope.row)"
-                v-hasPermi="['dortmund:info:point:query']">详情</el-button>
-              <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
-              <el-button size="mini" type="text"
-                :icon="scope.row.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'"
-                @click="handleChangeStatus(scope.row)" v-hasPermi="['dortmund:info:point:changeStatus']">{{
-                  scope.row.pointStatus === '0' ? '停用' : '启用'
-                }}</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- 卡片视图（默认） -->
+        <info-card-pane v-if="viewMode === 'card'" :rows="infoPointList" :loading="loading" @detail="handleViewDetail"
+          @update="handleUpdate" @changeStatus="handleChangeStatus" />
+
+        <!-- 列表视图（原总览列表） -->
+        <info-list-pane v-else :rows="infoPointList" :loading="loading" @selection-change="handleSelectionChange"
+          @detail="handleViewDetail" @update="handleUpdate" @changeStatus="handleChangeStatus" />
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
           :limit.sync="queryParams.pageSize" @pagination="getList" />
 
         <!-- 信息点详情对话框（只读） -->
-        <el-dialog title="信息点详情" :visible.sync="detailOpen" :close-on-click-modal="false" width="760px"
-          :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body custom-class="info-detail-dialog">
-          <template slot="title">
-            <div class="info-detail-header">
-              <div class="info-detail-header-icon">
-                <i class="el-icon-document"></i>
-              </div>
-              <div class="info-detail-header-text">
-                <div class="info-detail-header-title">信息点详情</div>
-                <div class="info-detail-header-sub">只读详情展示，修改请返回列表点击操作列维护</div>
-              </div>
-            </div>
-          </template>
-          <div class="info-detail-body" v-loading="detailLoading">
-            <div class="info-detail-info-row">
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">信息点类型</span>
-                <span class="info-detail-info-value">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="detailModel.infoPointType" />
-                </span>
-              </div>
-              <div class="info-detail-info-item" v-if="detailModel.infoPointType === 'T'">
-                <span class="info-detail-info-label">所属赛季</span>
-                <span class="info-detail-info-value">{{ detailModel.seasonName || '空' }}</span>
-              </div>
-              <div class="info-detail-info-item" v-if="detailModel.infoPointType === 'M'">
-                <span class="info-detail-info-label">所属比赛</span>
-                <span class="info-detail-info-value">{{ formatMatchColumnText(detailModel) }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">信息点状态</span>
-                <span class="info-detail-info-value">
-                  <dict-tag :options="dict.type.sys_normal_disable" :value="detailModel.pointStatus" />
-                </span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">是否可公开</span>
-                <span class="info-detail-info-value">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="detailModel.allowPublic" />
-                </span>
-              </div>
-            </div>
-            <div class="info-detail-field">
-              <div class="info-detail-field-label">信息点标题</div>
-              <div class="info-detail-field-value">{{ detailModel.pointTitle || '空' }}</div>
-            </div>
-            <div class="info-detail-field">
-              <div class="info-detail-field-label">信息点内容</div>
-              <div class="info-detail-field-value">{{ detailModel.pointContent || '空' }}</div>
-            </div>
-            <div class="info-detail-field" v-if="detailModel.infoPointType === 'T'">
-              <div class="info-detail-field-label">关联球队（含历史停用关系）</div>
-              <div class="info-detail-field-value">
-                <template v-if="(detailModel.teamRels || []).length">
-                  <div v-for="rel in detailModel.teamRels" :key="rel.relationId" class="info-detail-team-rel">
-                    <span>{{ rel.teamName || ('球队' + rel.teamId) }}</span>
-                    <dict-tag :options="dict.type.fx67ll_dortmund_relation_status" :value="rel.relationStatus" />
-                  </div>
-                </template>
-                <span v-else>空</span>
-              </div>
-            </div>
-            <div class="info-detail-info-row">
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">信息来源</span>
-                <span class="info-detail-info-value">{{ detailModel.sourceName || '空' }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">来源发布时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.sourcePublishTime,
-                  "{y}-{m}-{d}{h}:{i}:{s}") || '空' }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">采集或录入时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.collectTime, "{y}-{m}-{d} {h}:{i}:{s}")
-                  || '空' }}</span>
-              </div>
-            </div>
-            <div class="info-detail-info-row">
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">生效时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.effectiveStartTime,
-                  "{y}-{m}-{d}{h}:{i}:{s}") || '不限制' }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">失效时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.effectiveEndTime,
-                  "{y}-{m}-{d}{h}:{i}:{s}") || '不限制' }}</span>
-              </div>
-            </div>
-            <div class="info-detail-field" v-if="detailModel.pointRemark">
-              <div class="info-detail-field-label">备注</div>
-              <div class="info-detail-field-value">{{ detailModel.pointRemark }}</div>
-            </div>
-            <div class="info-detail-info-row">
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">记录创建者</span>
-                <span class="info-detail-info-value">{{ detailModel.createBy || '空' }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">记录创建时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.createTime, "{y}-{m}-{d} {h}:{i}:{s}")
-                  || '空' }}</span>
-              </div>
-              <div class="info-detail-info-item">
-                <span class="info-detail-info-label">记录更新时间</span>
-                <span class="info-detail-info-value">{{ parseTime(detailModel.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-                  || '空' }}</span>
-              </div>
-            </div>
-          </div>
-          <div slot="footer" class="dialog-footer">
-            <el-button @click="detailOpen = false">关 闭</el-button>
-          </div>
-        </el-dialog>
+        <info-detail-dialog :visible.sync="detailOpen" :detail-model="detailModel" :detail-loading="detailLoading" />
       </div>
 
-      <!-- T类型录入场景：赛季 → 球队 → 内容 → 来源和时间窗 -->
-      <div key="editT" v-else-if="pageScene === 'editT'" class="info-edit-scene">
-        <div class="info-edit-header">
-          <div class="info-edit-header-left">
-            <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
-            <span class="info-edit-title">{{ editMode === "add" ? "新增赛季球队信息点" : "修改赛季球队信息点" }}</span>
-          </div>
-        </div>
+      <!-- T类型录入场景：赛季 → 球队 → 内容 → 来源和时间窗（绿色赛季风格） -->
+      <info-edit-t-scene key="editT" v-else-if="pageScene === 'editT'" :edit-mode="editMode" :initial-form="editForm"
+        :edit-loading="editLoading" :submitting="submitting" @back="handleSceneBack" @save="handleSceneSave" />
 
-        <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="110px" class="info-edit-form"
-          v-loading="editLoading">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="所属赛季" prop="seasonId">
-                <!-- 新增时下拉选择；修改时归属只读展示（已关联赛季可能已被停用，不在正常赛季选项内） -->
-                <common-enhanced-select v-if="editMode === 'add'" ref="seasonSelect" v-model="editForm.seasonId"
-                  valueKey="seasonId" labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
-                <el-input v-else :value="editForm.seasonName || ('赛季' + editForm.seasonId)" disabled />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="关联球队" prop="teamIds">
-                <!-- 可选球队只限启用且在数据范围内的球队，不按赛季过滤；修改时保持已有关系不变可不改 -->
-                <el-select v-model="editForm.teamIds" style="width: 100%" multiple filterable placeholder="请选择关联球队（可多选）"
-                  :disabled="editMode !== 'add'">
-                  <el-option v-for="team in teamOptions" :key="team.teamId" :label="team.teamName"
-                    :value="team.teamId" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="信息点标题" prop="pointTitle">
-                <el-input v-model="editForm.pointTitle" :maxlength="1023" placeholder="请输入信息点标题" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="信息点内容" prop="pointContent">
-                <el-input v-model="editForm.pointContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
-                  placeholder="请输入客观信息内容" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="信息来源名称" prop="sourceName">
-                <el-input v-model="editForm.sourceName" :maxlength="1023" placeholder="请输入信息来源名称" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="来源地址" prop="sourceUrl">
-                <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="来源发布时间" prop="sourcePublishTime">
-                <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择来源发布时间">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="采集或录入时间" prop="collectTime">
-                <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择采集或录入时间">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="生效时间" prop="effectiveStartTime">
-                <el-date-picker clearable v-model="editForm.effectiveStartTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择生效时间（空表示不限制）">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="失效时间" prop="effectiveEndTime">
-                <el-date-picker clearable v-model="editForm.effectiveEndTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择失效时间（空表示不限制）">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="是否可公开" prop="allowPublic">
-                <el-radio-group v-model="editForm.allowPublic">
-                  <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
-                    :label="dict.value">{{
-                      dict.label }}</el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="备注" prop="pointRemark">
-                <el-input v-model="editForm.pointRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
-                  placeholder="请输入备注" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <!-- 状态只通过启停动作修改，录入与修改表单不出现状态控件 -->
-        </el-form>
-
-        <div class="info-edit-footer">
-          <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-          <el-button @click="handleBackToList">返回总览</el-button>
-        </div>
-      </div>
-
-      <!-- M类型录入场景：先定比赛，再写内容和来源 -->
-      <div key="editM" v-else-if="pageScene === 'editM'" class="info-edit-scene">
-        <div class="info-edit-header">
-          <div class="info-edit-header-left">
-            <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
-            <span class="info-edit-title">{{ editMode === "add" ? "新增比赛临时信息点" : "修改比赛临时信息点" }}</span>
-          </div>
-        </div>
-
-        <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="110px" class="info-edit-form"
-          v-loading="editLoading">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="所属比赛" prop="matchId">
-                <!-- 新增时下拉选择；修改时归属只读展示（已关联比赛可能已被关闭，不在正常比赛选项内） -->
-                <common-enhanced-select v-if="editMode === 'add'" ref="matchSelect" v-model="editForm.matchId"
-                  valueKey="matchId" labelKey="matchName" :api-func="listMatch" placeholder="请选择所属比赛" />
-                <el-input v-else :value="formatMatchColumnText(editForm)" disabled />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="信息点标题" prop="pointTitle">
-                <el-input v-model="editForm.pointTitle" :maxlength="1023" placeholder="请输入信息点标题" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="信息点内容" prop="pointContent">
-                <el-input v-model="editForm.pointContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
-                  placeholder="请输入客观信息内容" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="信息来源名称" prop="sourceName">
-                <el-input v-model="editForm.sourceName" :maxlength="1023" placeholder="请输入信息来源名称" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="来源地址" prop="sourceUrl">
-                <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="来源发布时间" prop="sourcePublishTime">
-                <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择来源发布时间">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="采集或录入时间" prop="collectTime">
-                <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择采集或录入时间">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="生效时间" prop="effectiveStartTime">
-                <el-date-picker clearable v-model="editForm.effectiveStartTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择生效时间（空表示不限制）">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="失效时间" prop="effectiveEndTime">
-                <el-date-picker clearable v-model="editForm.effectiveEndTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择失效时间（空表示不限制）">
-                </el-date-picker>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="是否可公开" prop="allowPublic">
-                <el-radio-group v-model="editForm.allowPublic">
-                  <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
-                    :label="dict.value">{{
-                      dict.label }}</el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="备注" prop="pointRemark">
-                <el-input v-model="editForm.pointRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
-                  placeholder="请输入备注" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-
-        <div class="info-edit-footer">
-          <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-          <el-button @click="handleBackToList">返回总览</el-button>
-        </div>
-      </div>
+      <!-- M类型录入场景：先定比赛，再写内容和来源（蓝色比赛风格） -->
+      <info-edit-m-scene key="editM" v-else-if="pageScene === 'editM'" :edit-mode="editMode" :initial-form="editForm"
+        :edit-loading="editLoading" :submitting="submitting" @back="handleSceneBack" @save="handleSceneSave" />
 
       <!-- 有效性场景：按一场比赛只读分出「将进入分析」和「被排除」 -->
-      <div key="valid" v-else class="info-valid-scene">
-        <div class="info-edit-header">
-          <div class="info-edit-header-left">
-            <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
-            <span class="info-edit-title">信息点有效性</span>
-          </div>
-        </div>
-
-        <div class="info-valid-search">
-          <common-enhanced-select ref="validMatchSelect" v-model="validMatchId" valueKey="matchId" labelKey="matchName"
-            :api-func="listMatch" placeholder="请选择要查询有效性的比赛" @change="handleValidMatchChange" />
-        </div>
-
-        <div v-loading="validLoading">
-          <!-- 将进入分析 -->
-          <div class="info-valid-group">
-            <div class="info-valid-group-header">
-              <span class="info-valid-group-title success"><i class="el-icon-circle-check"></i> 将进入分析（{{
-                validList.length }} 条）</span>
-            </div>
-            <el-table :data="validList" empty-text="暂无将进入分析的信息点">
-              <el-table-column label="信息点类型" align="center" prop="infoPointType" width="100">
-                <template slot-scope="scope">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="scope.row.infoPointType" />
-                </template>
-              </el-table-column>
-              <el-table-column label="信息点标题" align="center" prop="pointTitle" min-width="160"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="信息点内容" align="center" prop="pointContent" min-width="200"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="信息来源" align="center" prop="sourceName" width="120"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="是否可公开" align="center" prop="allowPublic" width="100">
-                <template slot-scope="scope">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="scope.row.allowPublic" />
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-
-          <!-- 被排除 -->
-          <div class="info-valid-group">
-            <div class="info-valid-group-header">
-              <span class="info-valid-group-title danger"><i class="el-icon-circle-close"></i> 被排除（{{
-                excludedList.length }} 条）</span>
-            </div>
-            <el-table :data="excludedList" empty-text="暂无被排除的信息点">
-              <el-table-column label="信息点类型" align="center" prop="infoPointType" width="100">
-                <template slot-scope="scope">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="scope.row.infoPointType" />
-                </template>
-              </el-table-column>
-              <el-table-column label="信息点标题" align="center" prop="pointTitle" min-width="160"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="信息点内容" align="center" prop="pointContent" min-width="200"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="信息来源" align="center" prop="sourceName" width="120"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="排除原因" align="center" prop="excludeReason" width="240"
-                :show-overflow-tooltip="true" />
-              <el-table-column label="是否可公开" align="center" prop="allowPublic" width="100">
-                <template slot-scope="scope">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="scope.row.allowPublic" />
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
-      </div>
+      <info-valid-scene key="valid" v-else @back="handleSceneBack" />
     </transition>
   </div>
 </template>
 
 <script>
-import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, changeInfoPointStatus, listValidInfoPoint } from "@/api/fx67ll/dortmund/infoPoint";
+import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, changeInfoPointStatus } from "@/api/fx67ll/dortmund/infoPoint";
 import { listSeason } from "@/api/fx67ll/dortmund/season";
-import { listTeam } from "@/api/fx67ll/dortmund/team";
 import { listMatch } from "@/api/fx67ll/dortmund/match";
 
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
-
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import InfoCardPane from "./components/InfoCardPane/index.vue";
+import InfoListPane from "./components/InfoListPane/index.vue";
+import InfoDetailDialog from "./components/InfoDetailDialog/index.vue";
+import InfoEditTScene from "./components/InfoEditTScene/index.vue";
+import InfoEditMScene from "./components/InfoEditMScene/index.vue";
+import InfoValidScene from "./components/InfoValidScene/index.vue";
+
+// 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
+const VIEW_MODE_KEY = "dortmund-info-view-mode";
 
 export default {
   name: "Info",
-  dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public", "fx67ll_dortmund_relation_status"],
-  components: { CommonEnhancedSelect },
+  dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
+  components: { CommonEnhancedSelect, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene },
   data() {
-    // 生效时间窗两端都有值时，开始不得晚于结束
-    const checkEffectiveTimeWindow = (rule, value, callback) => {
-      if (this.editForm.effectiveStartTime && this.editForm.effectiveEndTime
-        && this.editForm.effectiveStartTime > this.editForm.effectiveEndTime) {
-        callback(new Error("生效时间不得晚于失效时间"));
-        return;
-      }
-      callback();
-    };
     return {
       // 页面场景（list总览列表 editT赛季球队录入 editM比赛临时录入 valid有效性查询）
       pageScene: "list",
+      // 总览列表展示视图（card卡片视图默认 list列表视图），偏好持久化到本地缓存
+      viewMode: "card",
       // 录入场景模式（add新增 update修改）
       editMode: "add",
       // 遮罩层
@@ -565,8 +144,6 @@ export default {
       detailOpen: false,
       // 详情加载状态
       detailLoading: false,
-      // 有效性场景加载状态
-      validLoading: false,
       // 选中数组
       ids: [],
       // 非单个禁用
@@ -598,57 +175,13 @@ export default {
       },
       // 完整只读详情（详情对话框展示）
       detailModel: {},
-      // 录入场景表单参数
+      // 录入场景初始表单（进入录入场景前由父页面构建，场景组件复制出可编辑副本）
       editForm: {},
-      // 录入场景表单校验
-      editRules: {
-        seasonId: [
-          { required: true, message: "所属赛季不能为空", trigger: "change" }
-        ],
-        teamIds: [
-          { required: true, type: "array", min: 1, message: "至少要关联一支球队", trigger: "change" }
-        ],
-        matchId: [
-          { required: true, message: "所属比赛不能为空", trigger: "change" }
-        ],
-        pointTitle: [
-          { required: true, message: "信息点标题不能为空", trigger: "blur" }
-        ],
-        pointContent: [
-          { required: true, message: "信息点内容不能为空", trigger: "blur" }
-        ],
-        sourceName: [
-          { required: true, message: "信息来源名称不能为空", trigger: "blur" }
-        ],
-        collectTime: [
-          { required: true, message: "采集或录入时间不能为空", trigger: "blur" }
-        ],
-        effectiveStartTime: [
-          { validator: checkEffectiveTimeWindow, trigger: "blur" }
-        ],
-        effectiveEndTime: [
-          { validator: checkEffectiveTimeWindow, trigger: "blur" }
-        ],
-      },
-      // T类型可选球队选项（只含启用且在数据范围内的球队，不按赛季过滤）
-      teamOptions: [],
-      // 有效性场景所选比赛
-      validMatchId: null,
-      // 有效性查询结果
-      validResultList: [],
     };
   },
-  computed: {
-    // 有效性场景：将进入分析的信息点
-    validList() {
-      return this.validResultList.filter(item => item.valid);
-    },
-    // 有效性场景：被排除的信息点
-    excludedList() {
-      return this.validResultList.filter(item => !item.valid);
-    },
-  },
   created() {
+    // 读取本地缓存的展示视图偏好（非法值兜底为卡片视图）
+    this.viewMode = localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "card";
     // 将导入的函数挂载到实例，以便模板中使用
     this.listSeason = listSeason;
     // 比赛下拉包装接口：为每个选项拼装 matchName 展示文案（后台比赛数据无 matchName 冗余字段）
@@ -664,10 +197,17 @@ export default {
 
     this.getList();
   },
+  activated() {
+    // 路由缓存复用时同步本地缓存的展示视图偏好，保持切换即时生效
+    const cachedMode = localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "card";
+    if (cachedMode !== this.viewMode) {
+      this.viewMode = cachedMode;
+    }
+  },
   methods: {
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
+    // 展示视图切换：偏好写入本地缓存，仅切换展示不重新拉取数据
+    handleViewModeChange(mode) {
+      localStorage.setItem(VIEW_MODE_KEY, mode);
     },
     // 重置时间段查询
     clearDateQueryParams() {
@@ -719,44 +259,17 @@ export default {
       this.single = selection.length !== 1
       this.multiple = !selection.length
     },
-    // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
-    formatMatchVsTimeText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
-      return matchTime ? `${vsText}（${matchTime}）` : vsText;
-    },
-    // 比赛列展示文案：主队 vs 客队 + 开赛时间
-    formatMatchColumnText(row) {
-      if (row.infoPointType !== "M" || !row.matchId) {
-        return "";
-      }
-      return this.formatMatchVsTimeText(row);
-    },
-    // 关联球队摘要：当前有效关系在前，停用历史在后
-    formatTeamRelsText(row) {
-      if (row.infoPointType !== "T" || !(row.teamRels || []).length) {
-        return "";
-      }
-      return row.teamRels.map(rel => rel.teamName || ("球队" + rel.teamId)).join("、");
-    },
-    // 加载T类型可选球队选项（只取启用球队，与CommonEnhancedSelect数据口径一致）
-    loadTeamOptions() {
-      listTeam({ pageNum: 1, pageSize: 1023, teamStatus: "0", isNeedSort: "Y" }).then(response => {
-        this.teamOptions = response.rows || [];
-      });
-    },
     /** 新增T类型信息点：进入赛季球队录入场景 */
     handleAddT() {
       this.editMode = "add";
-      this.pageScene = "editT";
       this.resetEditScene("T");
-      this.loadTeamOptions();
+      this.pageScene = "editT";
     },
     /** 新增M类型信息点：进入比赛临时录入场景 */
     handleAddM() {
       this.editMode = "add";
-      this.pageScene = "editM";
       this.resetEditScene("M");
+      this.pageScene = "editM";
     },
     /** 修改按钮操作：拉取详情后按类型进入对应录入场景 */
     handleUpdate(row) {
@@ -765,8 +278,7 @@ export default {
       getInfoPoint(infoPointId).then(response => {
         const detail = response.data || {};
         this.editMode = "update";
-        this.pageScene = detail.infoPointType === "T" ? "editT" : "editM";
-        // 从详情中挑选允许修改的字段构建更新表单；类型、归属和状态只读，状态只走启停动作
+        // 从详情中挑选允许修改的字段构建初始表单；类型、归属和状态只读，状态只走启停动作
         this.editForm = {
           infoPointId: detail.infoPointId,
           infoPointType: detail.infoPointType,
@@ -789,17 +301,12 @@ export default {
           allowPublic: detail.allowPublic || "0",
           pointRemark: detail.pointRemark,
         };
-        if (this.pageScene === "editT") {
-          this.loadTeamOptions();
-        }
-        this.$nextTick(() => {
-          this.$refs["editForm"] && this.$refs["editForm"].clearValidate();
-        });
+        this.pageScene = detail.infoPointType === "T" ? "editT" : "editM";
       }).finally(() => {
         this.editLoading = false;
       });
     },
-    // 重置录入场景表单
+    // 重置录入场景初始表单（场景组件每次进入重新挂载，自带可选球队加载与表单重置）
     resetEditScene(infoPointType) {
       this.editForm = {
         infoPointId: null,
@@ -818,64 +325,24 @@ export default {
         allowPublic: "0",
         pointRemark: null,
       };
-      this.$nextTick(() => {
-        this.$refs["editForm"] && this.$refs["editForm"].clearValidate();
-      });
     },
-    // 返回总览并刷新列表
-    handleBackToList() {
+    // 场景返回总览并刷新列表
+    handleSceneBack() {
       this.pageScene = "list";
       this.getList();
     },
-    // 类型字段按场景清理：T不提交matchId，M不提交seasonId和teamIds
-    buildSubmitData() {
-      const data = {
-        pointTitle: this.editForm.pointTitle,
-        pointContent: this.editForm.pointContent,
-        sourceName: this.editForm.sourceName,
-        sourceUrl: this.editForm.sourceUrl,
-        sourcePublishTime: this.editForm.sourcePublishTime,
-        collectTime: this.editForm.collectTime,
-        effectiveStartTime: this.editForm.effectiveStartTime,
-        effectiveEndTime: this.editForm.effectiveEndTime,
-        allowPublic: this.editForm.allowPublic,
-        pointRemark: this.editForm.pointRemark,
-      };
-      if (this.editMode === "add") {
-        data.infoPointType = this.editForm.infoPointType;
-        if (this.editForm.infoPointType === "T") {
-          data.seasonId = this.editForm.seasonId;
-          data.teamIds = this.editForm.teamIds || [];
-        } else {
-          data.matchId = this.editForm.matchId;
-        }
-      } else {
-        data.infoPointId = this.editForm.infoPointId;
-        // 修改时类型与归属只读，球队集合为空表示保持现有关系不变
-        if (this.editForm.infoPointType === "T") {
-          data.teamIds = this.editForm.teamIds || [];
-        }
-      }
-      return data;
-    },
-    /** 提交按钮 */
-    submitEditForm() {
-      this.$refs["editForm"].validate(valid => {
-        if (!valid) {
-          return;
-        }
-        const isAdd = this.editMode === "add";
-        const data = this.buildSubmitData();
-        this.submitting = true;
-        const request = isAdd ? addInfoPoint(data) : updateInfoPoint(data);
-        request.then(response => {
-          this.$modal.msgSuccess(isAdd ? "新增成功" : "修改成功");
-          this.handleBackToList();
-        }).catch(() => {
-          // 保存失败时留在录入场景并保留已填内容，可直接重试
-        }).finally(() => {
-          this.submitting = false;
-        });
+    // 场景保存：录入场景校验并构建请求体后回传，父页面负责提交
+    handleSceneSave(data) {
+      const isAdd = this.editMode === "add";
+      this.submitting = true;
+      const request = isAdd ? addInfoPoint(data) : updateInfoPoint(data);
+      request.then(() => {
+        this.$modal.msgSuccess(isAdd ? "新增成功" : "修改成功");
+        this.handleSceneBack();
+      }).catch(() => {
+        // 保存失败时留在录入场景并保留已填内容，可直接重试
+      }).finally(() => {
+        this.submitting = false;
       });
     },
     /** 启停按钮操作：状态动作成功后重新拉取列表 */
@@ -900,22 +367,11 @@ export default {
         this.detailLoading = false;
       });
     },
-    // 有效性场景：所选比赛变化后查询
-    handleValidMatchChange(val) {
-      if (val == null || val === "") {
-        this.validResultList = [];
-        return;
-      }
-      this.getValidList(val);
-    },
-    // 查询比赛的有效信息点（只读，不录入、不执行分析）
-    getValidList(matchId) {
-      this.validLoading = true;
-      listValidInfoPoint(matchId).then(response => {
-        this.validResultList = response.data || [];
-      }).finally(() => {
-        this.validLoading = false;
-      });
+    // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
+    formatMatchVsTimeText(match) {
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
+      return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },
   }
 };
@@ -932,215 +388,5 @@ export default {
 .scene-switch-leave-to {
   opacity: 0;
   transform: translateY(12px);
-}
-
-/* 录入场景头部 */
-.info-edit-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.info-edit-header-left {
-  display: flex;
-  align-items: center;
-}
-
-.info-edit-title {
-  margin-left: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.info-edit-form {
-  padding: 20px 20px 4px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-/* 录入场景底部按钮 */
-.info-edit-footer {
-  margin-top: 16px;
-  padding: 14px 20px;
-  text-align: center;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-/* 详情对话框 */
-/* 弹窗视觉语言：圆角、渐变图标（与 extra/simulate 弹窗同一风格体系） */
-::v-deep .info-detail-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 18px 44px rgba(46, 204, 113, 0.18);
-}
-
-.info-detail-header {
-  display: flex;
-  align-items: center;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid #f0f4f2;
-}
-
-.info-detail-header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  margin-right: 12px;
-  font-size: 20px;
-  color: #fff;
-  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
-  border-radius: 11px;
-  box-shadow: 0 5px 12px rgba(46, 204, 113, 0.3);
-}
-
-.info-detail-header-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #2b3a36;
-}
-
-.info-detail-header-sub {
-  margin-top: 2px;
-  font-size: 12px;
-  color: #7c8b84;
-}
-
-::v-deep .info-detail-dialog .el-dialog__body {
-  padding-top: 16px;
-}
-
-::v-deep .info-detail-dialog .el-dialog__footer {
-  padding: 14px 20px 18px;
-  border-top: 1px solid #f0f4f2;
-}
-
-.info-detail-body {
-  min-height: 120px;
-}
-
-.info-detail-info-row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.info-detail-info-item {
-  min-width: 180px;
-  margin-right: 32px;
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  background: #f7faf8;
-  border: 1px solid #e8f2ec;
-  border-radius: 8px;
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: #bfe8cf;
-  }
-}
-
-.info-detail-info-label {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.info-detail-info-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.info-detail-field {
-  margin-bottom: 12px;
-}
-
-.info-detail-field-label {
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.info-detail-field-value {
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #303133;
-  white-space: pre-wrap;
-  background-color: #fafbfc;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: #bfe8cf;
-  }
-}
-
-.info-detail-team-rel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 12px;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #303133;
-  background-color: #fafbfc;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: #bfe8cf;
-  }
-}
-
-/* 有效性场景 */
-.info-valid-search {
-  margin-bottom: 16px;
-}
-
-.info-valid-search .el-select {
-  width: 360px;
-}
-
-.info-valid-group {
-  margin-bottom: 16px;
-  padding: 16px 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.info-valid-group-header {
-  margin-bottom: 12px;
-}
-
-.info-valid-group-title {
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.info-valid-group-title i {
-  margin-right: 6px;
-}
-
-.info-valid-group-title.success {
-  color: #2ecc71;
-}
-
-.info-valid-group-title.danger {
-  color: #ff5a5f;
 }
 </style>

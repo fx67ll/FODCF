@@ -734,6 +734,62 @@ export function resolveRoutePathByComponent(router, componentPath) {
   return hit ? hit.path : null;
 }
 
+/**
+ * 按菜单 component 字符串在后端原始菜单路由树中解析真实跳转路径
+ * （菜单树为 getRouters 返回并留存的原始数据，根节点 path 为绝对路径、子节点为相对路径，
+ *   匹配时忽略空段与末尾 index 段，兼容 fx67ll/dortmund/plan/index 与 fx67ll/dortmund/plan 两种配置）
+ * @param {Array} menuRouters - 原始菜单路由树（store 的 permission.menuRouters）
+ * @param {string} componentPath - 菜单 component 值，如 "fx67ll/dortmund/plan/index"
+ * @returns {string|null} 匹配到的菜单完整路径（带前导斜杠），未匹配返回 null
+ */
+export function resolveRoutePathByMenuComponent(menuRouters, componentPath) {
+  // 入参兜底：菜单树缺失或非法时直接返回 null，交由调用方走兜底链路
+  if (!Array.isArray(menuRouters) || menuRouters.length === 0) {
+    return null;
+  }
+  if (typeof componentPath !== "string" || componentPath.trim() === "") {
+    return null;
+  }
+  const targetText = normalizeMenuComponentText(componentPath);
+  if (!targetText) {
+    return null;
+  }
+  // 深度优先遍历菜单树：根节点 path 已是绝对路径，子节点按父路径拼接成全路径
+  const findInNodes = (nodes, parentPath) => {
+    for (const node of nodes || []) {
+      if (!node || typeof node.path !== "string" || node.path === "") {
+        continue;
+      }
+      // 子节点相对路径与父路径拼接；根节点本身即绝对路径
+      const fullPath = node.path.startsWith("/")
+        ? node.path
+        : parentPath + "/" + node.path;
+      const nodeComponentText = node.component
+        ? normalizeMenuComponentText(node.component)
+        : "";
+      if (nodeComponentText && nodeComponentText === targetText) {
+        return fullPath.startsWith("/") ? fullPath : "/" + fullPath;
+      }
+      if (node.children && node.children.length > 0) {
+        const hitPath = findInNodes(node.children, fullPath);
+        if (hitPath) {
+          return hitPath;
+        }
+      }
+    }
+    return null;
+  };
+  return findInNodes(menuRouters, "");
+}
+
+// 菜单 component 字符串归一化：去空段与末尾 index 段后以斜杠连接
+function normalizeMenuComponentText(componentPath) {
+  const segments = componentPath
+    .split("/")
+    .filter((segment) => segment && segment !== "index");
+  return segments.join("/");
+}
+
 // ===================== 期号计算相关（从 FODCA 迁移） =====================
 // 以下函数用于计算彩票期号（dateCode），与 FODCA pages/lottery/index/index.vue 逻辑一致。
 // dateCode 格式按彩种固定年份前缀：大乐透(type1)4位、双色球(2)/排列三(3)/排列五(4)/七星彩(5)均2位。
