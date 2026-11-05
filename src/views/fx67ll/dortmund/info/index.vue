@@ -1,89 +1,90 @@
 <template>
-  <div class="app-container">
+  <div class="app-container dl-page">
     <!-- 场景切换：总览列表 / T录入 / M录入 / 有效性 -->
     <transition name="scene-switch" mode="out-in">
 
       <!-- 总览列表场景 -->
       <div key="list" v-if="pageScene === 'list'">
-        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
-          label-width="90px">
-          <el-form-item label="信息点类型" prop="infoPointType">
-            <el-select v-model="queryParams.infoPointType" placeholder="请选择信息点类型" clearable
-              @change="handleQueryTypeChange">
-              <el-option v-for="dict in dict.type.fx67ll_dortmund_info_point_type" :key="dict.value" :label="dict.label"
-                :value="dict.value"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType !== 'M' && isMoreQuery">
-            <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
-              labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
-          </el-form-item>
-          <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M' && isMoreQuery">
-            <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
-              labelKey="matchName" :api-func="listMatch" placeholder="请选择所属比赛" :enter-callback="handleQuery" />
-          </el-form-item>
-          <el-form-item label="信息点标题" prop="pointTitle">
-            <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
-              @keyup.enter.native="handleQuery" />
-          </el-form-item>
-          <el-form-item label="信息点状态" prop="pointStatus" v-if="isMoreQuery">
-            <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable>
-              <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                :value="dict.value"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="是否可公开" prop="allowPublic" v-if="isMoreQuery">
-            <el-select v-model="queryParams.allowPublic" placeholder="请选择是否可公开" clearable>
-              <el-option v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value" :label="dict.label"
-                :value="dict.value"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="创建时间" v-if="isMoreQuery">
-            <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-              type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-              clearable></el-date-picker>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-            <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-              @click="handleMoreQuery">
-              {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
-            </el-button>
-          </el-form-item>
-        </el-form>
+        <transition name="dl-filter">
+          <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
+            v-show="showSearch" label-width="90px">
+            <el-form-item label="信息点类型" prop="infoPointType">
+              <el-select v-model="queryParams.infoPointType" placeholder="请选择信息点类型" clearable
+                @change="handleQueryTypeChange">
+                <el-option v-for="dict in dict.type.fx67ll_dortmund_info_point_type" :key="dict.value"
+                  :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType !== 'M' && isMoreQuery">
+              <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
+                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
+            </el-form-item>
+            <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M' && isMoreQuery">
+              <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
+                labelKey="matchName" :api-func="listMatch" placeholder="请选择所属比赛" :enter-callback="handleQuery" />
+            </el-form-item>
+            <el-form-item label="信息点标题" prop="pointTitle">
+              <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
+                @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="信息点状态" prop="pointStatus" v-if="isMoreQuery">
+              <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable>
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="是否可公开" prop="allowPublic" v-if="isMoreQuery">
+              <el-select v-model="queryParams.allowPublic" placeholder="请选择是否可公开" clearable>
+                <el-option v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="创建时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
+                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable></el-date-picker>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+                @click="handleMoreQuery">
+                {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </transition>
 
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5" style="margin-bottom: 10px;">
+        <div class="dl-toolbar">
+          <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAddT"
               v-hasPermi="['dortmund:info:point:add']">新增赛季球队信息点</el-button>
-          </el-col>
-          <el-col :span="1.5" style="margin-bottom: 10px;">
             <el-button type="success" plain icon="el-icon-plus" size="mini" @click="handleAddM"
               v-hasPermi="['dortmund:info:point:add']">新增比赛临时信息点</el-button>
-          </el-col>
-          <el-col :span="1.5" style="margin-bottom: 10px;">
             <el-button type="warning" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
-          </el-col>
-          <!-- 信息点没有删除动作，不渲染删除按钮 -->
-          <!-- 展示视图切换：卡片视图为默认，偏好持久化到本地缓存 -->
-          <el-col :span="1.5" style="margin-bottom: 10px;">
-            <el-radio-group v-model="viewMode" size="mini" @change="handleViewModeChange">
-              <el-radio-button label="card">卡片视图</el-radio-button>
-              <el-radio-button label="list">列表视图</el-radio-button>
-            </el-radio-group>
-          </el-col>
-          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
+            <!-- 信息点没有删除动作，不渲染删除按钮 -->
+            <transition name="dl-chip">
+              <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
+              }} 项</span>
+            </transition>
+          </div>
+          <div class="dl-toolbar-side">
+            <!-- 展示视图切换：卡片视图为默认，偏好持久化到本地缓存 -->
+            <view-switch v-model="viewMode" @change="handleViewModeChange" />
+            <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+          </div>
+        </div>
 
-        <!-- 卡片视图（默认） -->
-        <info-card-pane v-if="viewMode === 'card'" :rows="infoPointList" :loading="loading" @detail="handleViewDetail"
-          @update="handleUpdate" @changeStatus="handleChangeStatus" />
-
-        <!-- 列表视图（原总览列表） -->
-        <info-list-pane v-else :rows="infoPointList" :loading="loading" @selection-change="handleSelectionChange"
-          @detail="handleViewDetail" @update="handleUpdate" @changeStatus="handleChangeStatus" />
+        <!-- 卡片视图（默认）/ 列表视图（原总览列表），切换带过渡 -->
+        <transition name="dl-view" mode="out-in">
+          <info-card-pane v-if="viewMode === 'card'" key="card" :rows="infoPointList" :loading="loading"
+            @detail="handleViewDetail" @update="handleUpdate" @changeStatus="handleChangeStatus" />
+          <div v-else key="list" class="dl-list-card">
+            <info-list-pane :rows="infoPointList" :loading="loading" @selection-change="handleSelectionChange"
+              @detail="handleViewDetail" @update="handleUpdate" @changeStatus="handleChangeStatus" />
+          </div>
+        </transition>
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
           :limit.sync="queryParams.pageSize" @pagination="getList" />
@@ -112,6 +113,7 @@ import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listMatch } from "@/api/fx67ll/dortmund/match";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import InfoCardPane from "./components/InfoCardPane/index.vue";
 import InfoListPane from "./components/InfoListPane/index.vue";
 import InfoDetailDialog from "./components/InfoDetailDialog/index.vue";
@@ -125,7 +127,7 @@ const VIEW_MODE_KEY = "dortmund-info-view-mode";
 export default {
   name: "Info",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
-  components: { CommonEnhancedSelect, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene },
+  components: { CommonEnhancedSelect, ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene },
   data() {
     return {
       // 页面场景（list总览列表 editT赛季球队录入 editM比赛临时录入 valid有效性查询）

@@ -1,77 +1,76 @@
 <template>
-  <div class="app-container">
+  <div class="app-container dl-page">
     <!-- 场景切换：总览列表 / 编写 / 回顾 -->
     <transition name="scene-switch" mode="out-in">
 
       <!-- 总览列表场景 -->
       <div key="list" v-if="pageScene === 'list'">
-        <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
-          label-width="84px">
-          <el-form-item label="方案计划" prop="planContent" v-if="isMoreQuery">
-            <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
-              @keyup.enter.native="handleQuery" />
-          </el-form-item>
-          <el-form-item label="关联比赛" prop="matchId">
-            <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
-              labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" placeholder="请选择关联比赛"
-              :enter-callback="handleQuery" />
-          </el-form-item>
-          <el-form-item label="创建时间" v-if="isMoreQuery">
-            <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-              type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-              clearable></el-date-picker>
-          </el-form-item>
-          <el-form-item label="更新时间" v-if="isMoreQuery">
-            <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-              type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-              clearable></el-date-picker>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-            <el-button type="info" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-              @click="handleMoreQuery">
-              {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
-            </el-button>
-          </el-form-item>
-        </el-form>
+        <transition name="dl-filter">
+          <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
+            v-show="showSearch" label-width="84px">
+            <el-form-item label="方案计划" prop="planContent" v-if="isMoreQuery">
+              <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
+                @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="关联比赛" prop="matchId">
+              <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
+                labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" placeholder="请选择关联比赛"
+                :enter-callback="handleQuery" />
+            </el-form-item>
+            <el-form-item label="创建时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
+                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable></el-date-picker>
+            </el-form-item>
+            <el-form-item label="更新时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
+                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable></el-date-picker>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+                @click="handleMoreQuery">
+                {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </transition>
 
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5" style="margin-bottom: 10px;">
+        <div class="dl-toolbar">
+          <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
               v-hasPermi="['dortmund:plan:add']">新增</el-button>
-          </el-col>
-          <el-col :span="1.5" style="margin-bottom: 10px;">
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:plan:edit']">修改</el-button>
-          </el-col>
-          <el-col :span="1.5" style="margin-bottom: 10px;">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
               v-hasPermi="['dortmund:plan:remove']">删除</el-button>
-          </el-col>
-          <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
-            <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['dortmund:plan:export']">导出</el-button>
-          </el-col> -->
-          <!-- 展示视图切换：卡片视图为默认，偏好持久化到本地缓存 -->
-          <el-col :span="1.5" style="margin-bottom: 10px;">
-            <el-radio-group v-model="viewMode" size="mini" @change="handleViewModeChange">
-              <el-radio-button label="card">卡片视图</el-radio-button>
-              <el-radio-button label="list">列表视图</el-radio-button>
-            </el-radio-group>
-          </el-col>
-          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
+            <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+              v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
+            <transition name="dl-chip">
+              <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
+              }} 项</span>
+            </transition>
+          </div>
+          <div class="dl-toolbar-side">
+            <!-- 展示视图切换：卡片视图为默认，偏好持久化到本地缓存 -->
+            <view-switch v-model="viewMode" @change="handleViewModeChange" />
+            <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+          </div>
+        </div>
 
-        <!-- 卡片视图（默认） -->
-        <plan-card-pane v-if="viewMode === 'card'" :rows="planList" :loading="loading"
-          :show-image-count="hasImageQueryPermission" @review="handleReview" @update="handleUpdate"
-          @delete="handleDelete" />
-
-        <!-- 列表视图（原总览列表） -->
-        <plan-list-pane v-else :rows="planList" :loading="loading" :show-image-count="hasImageQueryPermission"
-          @selection-change="handleSelectionChange" @review="handleReview" @update="handleUpdate"
-          @delete="handleDelete" />
+        <!-- 卡片视图（默认）/ 列表视图（原总览列表），切换带过渡 -->
+        <transition name="dl-view" mode="out-in">
+          <plan-card-pane v-if="viewMode === 'card'" key="card" :rows="planList" :loading="loading"
+            :show-image-count="hasImageQueryPermission" @review="handleReview" @update="handleUpdate"
+            @delete="handleDelete" />
+          <div v-else key="list" class="dl-list-card">
+            <plan-list-pane :rows="planList" :loading="loading" :show-image-count="hasImageQueryPermission"
+              @selection-change="handleSelectionChange" @review="handleReview" @update="handleUpdate"
+              @delete="handleDelete" />
+          </div>
+        </transition>
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
           :limit.sync="queryParams.pageSize" @pagination="getList" />
@@ -97,6 +96,7 @@ import { listMatch } from "@/api/fx67ll/dortmund/match";
 import { checkPermi } from "@/utils/common/permission";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
 import PlanEditScene from "./components/PlanEditScene/index.vue";
@@ -107,7 +107,7 @@ const VIEW_MODE_KEY = "dortmund-plan-view-mode";
 
 export default {
   name: "Plan",
-  components: { CommonEnhancedSelect, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene },
+  components: { CommonEnhancedSelect, ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene },
   data() {
     return {
       // 页面场景（list总览列表 edit编写 review回顾）

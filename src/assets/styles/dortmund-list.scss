@@ -1,0 +1,423 @@
+/**
+ * 多特蒙德模块列表页统一样式（搜索筛选区 / 操作按钮栏 / 列表容器）
+ * 全部以 .dl-page 为根作用域，仅对挂载了该类名的页面生效，不污染其他模块。
+ * 主题色取自布局层注入的 --current-color（默认 #2ecc71），未注入时回退为同色绿。
+ */
+
+$dl-border: #e3eee8;
+$dl-shadow: 0 6px 20px rgba(46, 204, 113, 0.08);
+$dl-theme: var(--current-color, #2ecc71);
+
+/* 主题色透明度着色：支持 color-mix 的浏览器跟随主题，否则回退默认绿 */
+@mixin dl-tint($percent, $fallback) {
+  background-color: $fallback;
+
+  @supports (background-color: color-mix(in srgb, red 10%, transparent)) {
+    background-color: color-mix(in srgb, #{$dl-theme} #{$percent}, transparent);
+  }
+}
+
+@keyframes dlRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dlItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dlRowIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- 搜索筛选区显隐过渡 ---------- */
+.dl-filter-enter-active,
+.dl-filter-leave-active {
+  overflow: hidden;
+  transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.35s ease,
+    margin 0.35s ease, padding 0.35s ease;
+}
+
+.dl-filter-enter-to,
+.dl-filter-leave {
+  max-height: 640px;
+}
+
+.dl-filter-enter,
+.dl-filter-leave-to {
+  max-height: 0;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ---------- 卡片 / 列表视图内容切换过渡 ---------- */
+.dl-view-enter-active,
+.dl-view-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.dl-view-enter {
+  opacity: 0;
+  transform: translateY(10px) scale(0.99);
+}
+
+.dl-view-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* ---------- 已选数量胶囊过渡 ---------- */
+.dl-chip-enter-active,
+.dl-chip-leave-active {
+  transition: opacity 0.2s ease,
+    transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.dl-chip-enter,
+.dl-chip-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.dl-page {
+  /* ========== 搜索筛选区 ========== */
+  .dl-filter {
+    position: relative;
+    padding: 18px 20px 4px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid $dl-border;
+    border-radius: 14px;
+    box-shadow: $dl-shadow;
+    animation: dlRise 0.4s ease both;
+
+    /* 左侧主题色强调条 */
+    &::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 3px;
+      content: "";
+      background: linear-gradient(180deg, $dl-theme, rgba(46, 204, 113, 0.25));
+    }
+
+    .el-form-item {
+      margin-bottom: 14px;
+      animation: dlItemIn 0.3s ease both;
+
+      @for $i from 1 through 8 {
+        &:nth-child(#{$i}) {
+          animation-delay: #{$i * 0.03}s;
+        }
+      }
+    }
+
+    .el-form-item__label {
+      font-weight: 500;
+      color: #5b6b64;
+    }
+
+    .el-input__inner,
+    .el-range-editor.el-input__inner {
+      border-radius: 8px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .el-input__inner:hover,
+    .el-range-editor.el-input__inner:hover {
+      border-color: $dl-theme;
+    }
+
+    .el-input__inner:focus,
+    .el-range-editor.is-active,
+    .el-range-editor.is-active:hover,
+    .el-select .el-input.is-focus .el-input__inner {
+      border-color: $dl-theme;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.14);
+    }
+
+    /* 搜索 / 重置 / 高级搜索 */
+    .el-button {
+      border-radius: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+        background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: scale(0.96);
+      }
+    }
+
+    .el-button--primary {
+      box-shadow: 0 4px 10px rgba(46, 204, 113, 0.28);
+
+      &:hover {
+        box-shadow: 0 6px 14px rgba(46, 204, 113, 0.38);
+      }
+    }
+
+    .el-button.dl-more-btn {
+      color: #7c8b84;
+      background: transparent;
+      border: 1px dashed #c9d8cf;
+
+      &:hover {
+        color: $dl-theme;
+        border-color: $dl-theme;
+        @include dl-tint(8%, rgba(46, 204, 113, 0.08));
+      }
+
+      i {
+        transition: transform 0.3s ease;
+      }
+
+      &:hover i {
+        transform: scale(1.2) rotate(8deg);
+      }
+    }
+  }
+
+  /* ========== 操作按钮栏 ========== */
+  .dl-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    background: #fff;
+    border: 1px solid $dl-border;
+    border-radius: 12px;
+    box-shadow: $dl-shadow;
+    animation: dlRise 0.4s ease 0.06s both;
+  }
+
+  .dl-toolbar-actions,
+  .dl-toolbar-side {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dl-toolbar-side {
+    gap: 12px;
+  }
+
+  .dl-toolbar .el-button {
+    margin-left: 0;
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+      background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &:not(.is-disabled):hover {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &:not(.is-disabled):active {
+      transform: scale(0.95);
+    }
+  }
+
+  /* 已选数量胶囊 */
+  .dl-selected-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 28px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 28px;
+    color: $dl-theme;
+    border-radius: 999px;
+    @include dl-tint(12%, #e7f8ee);
+
+    i {
+      margin-right: 4px;
+    }
+  }
+
+  /* 右侧通用工具栏（搜索显隐 / 刷新）：去掉浮动，圆形按钮交互强化 */
+  .dl-toolbar .top-right-btn {
+    float: none;
+    margin-right: 0 !important;
+
+    .el-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .el-button.is-circle {
+      color: #6b7c74;
+      border-color: $dl-border;
+
+      &:hover {
+        color: #fff;
+        background: $dl-theme;
+        border-color: $dl-theme;
+      }
+
+      [class^="el-icon-"] {
+        display: inline-block;
+        transition: transform 0.4s ease;
+      }
+
+      &:hover .el-icon-refresh {
+        transform: rotate(180deg);
+      }
+
+      &:hover .el-icon-search {
+        transform: scale(1.15);
+      }
+    }
+  }
+
+  /* ========== 列表容器 ========== */
+  .dl-list-card {
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid $dl-border;
+    border-radius: 14px;
+    box-shadow: $dl-shadow;
+    animation: dlRise 0.4s ease 0.12s both;
+
+    .el-table {
+      /* 去掉底部横线，让容器圆角更干净 */
+      &::before {
+        display: none;
+      }
+
+      .el-table__header-wrapper th,
+      .el-table__fixed-header-wrapper th {
+        font-weight: 600;
+        color: #44604f;
+        background-color: #f3f9f5;
+        border-bottom: 1px solid $dl-border;
+      }
+
+      td.el-table__cell {
+        border-bottom: 1px solid #f0f5f2;
+      }
+
+      .el-table__body tr {
+        animation: dlRowIn 0.3s ease both;
+
+        @for $i from 1 through 12 {
+          &:nth-child(#{$i}) {
+            animation-delay: #{$i * 0.03}s;
+          }
+        }
+      }
+
+      &.el-table--enable-row-hover
+        .el-table__body
+        tr:hover
+        > td.el-table__cell {
+        @include dl-tint(7%, #f0faf4);
+      }
+
+      .el-table__body tr.current-row > td.el-table__cell {
+        @include dl-tint(10%, #e7f8ee);
+      }
+
+      /* 操作列文字按钮：悬停浮现主题色底 */
+      .fixed-width .el-button--mini {
+        padding: 4px 6px;
+        margin-left: 2px;
+        border-radius: 6px;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          @include dl-tint(10%, #e7f8ee);
+        }
+      }
+    }
+
+    .el-table__empty-text {
+      color: #9aa8a1;
+    }
+  }
+
+  /* ========== 分页 ========== */
+  .pagination-container {
+    margin-top: 14px;
+
+    .el-pagination.is-background {
+      .btn-prev,
+      .btn-next,
+      .el-pager li {
+        border-radius: 8px;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+
+      .el-pager li:not(.disabled):not(.active):hover {
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dl-page {
+    .dl-filter {
+      padding: 14px 12px 2px;
+    }
+
+    .dl-toolbar {
+      padding: 8px 10px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-page {
+    .dl-filter,
+    .dl-filter .el-form-item,
+    .dl-toolbar,
+    .dl-list-card,
+    .dl-list-card .el-table .el-table__body tr {
+      animation: none;
+    }
+  }
+
+  .dl-filter-enter-active,
+  .dl-filter-leave-active,
+  .dl-view-enter-active,
+  .dl-view-leave-active,
+  .dl-chip-enter-active,
+  .dl-chip-leave-active {
+    transition: none;
+  }
+}

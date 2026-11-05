@@ -7,6 +7,7 @@ import "./assets/styles/element-variables.scss";
 
 import "@/assets/styles/index.scss"; // global css
 import "@/assets/styles/fx67ll.scss"; // fx67ll css
+import "@/assets/styles/dortmund-list.scss"; // 多特蒙德列表页统一样式
 import App from "./App";
 import store from "./store";
 import router from "./router";
