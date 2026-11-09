@@ -56,7 +56,7 @@
           <template v-if="(detailModel.teamRels || []).length">
             <div v-for="rel in detailModel.teamRels" :key="rel.relationId" class="info-detail-team-rel">
               <span>{{ rel.teamName || ('球队' + rel.teamId) }}</span>
-              <dict-tag :options="dict.type.fx67ll_dortmund_relation_status" :value="rel.relationStatus" />
+              <dict-tag :options="dict.type.sys_normal_disable" :value="rel.relationStatus" />
             </div>
           </template>
           <span v-else>空</span>
@@ -122,7 +122,7 @@ import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "InfoDetailDialog",
-  dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public", "fx67ll_dortmund_relation_status"],
+  dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
   props: {
     // 对话框开关（父页面 .sync 维护）
     visible: {
