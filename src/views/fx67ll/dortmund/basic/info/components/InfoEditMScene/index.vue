@@ -42,13 +42,16 @@
           </div>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="所属比赛" prop="matchId">
-              <!-- 新增时下拉选择；修改时归属只读展示（已关联比赛可能已被关闭，不在正常比赛选项内） -->
-              <common-enhanced-select v-if="editMode === 'add'" ref="matchSelect" v-model="editForm.matchId"
-                valueKey="matchId" labelKey="matchName" :api-func="listMatch" placeholder="请选择所属比赛"
-                @change="handleMatchSelectChange" />
+          <el-col :xs="24" :md="16">
+            <el-form-item label="关联比赛" prop="matchId">
+              <div class="info-match-picker" v-if="editMode === 'add'">
+                <el-input :value="formatMatchVsTimeText(selectedMatchRow)" readonly placeholder="请选择关联比赛"
+                  prefix-icon="el-icon-football" @focus="matchSelectorVisible = true" />
+                <el-button type="primary" plain icon="el-icon-s-operation"
+                  @click="matchSelectorVisible = true">选择比赛</el-button>
+              </div>
               <el-input v-else :value="formatMatchColumnText(editForm)" disabled />
+              <div class="info-edit-field-hint" v-if="editMode === 'add'">选择后将实时展示对阵与开赛时间</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -86,24 +89,24 @@
           <span class="info-edit-card-title">来源与时间</span>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="信息来源名称" prop="sourceName">
               <el-input v-model="editForm.sourceName" :maxlength="1023" placeholder="请输入信息来源名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源地址" prop="sourceUrl">
               <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源发布时间" prop="sourcePublishTime">
               <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
                 value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择来源发布时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="信息采集时间" prop="collectTime">
               <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
                 value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择信息采集时间">
@@ -136,7 +139,7 @@
           <span class="info-edit-card-title">附加设置</span>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="是否可公开" prop="allowPublic">
               <el-radio-group v-model="editForm.allowPublic">
                 <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
@@ -160,18 +163,20 @@
       <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
       <el-button @click="handleBackToList">返回总览</el-button>
     </div>
+
+    <dortmund-match-selector-modal :visible.sync="matchSelectorVisible"
+      :selected-items="selectedMatchRow && selectedMatchRow.matchId ? [selectedMatchRow] : []"
+      @confirm="handleMatchSelectorConfirm" />
   </div>
 </template>
 
 <script>
-import { listMatch } from "@/api/fx67ll/dortmund/match";
-
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 
 export default {
   name: "InfoEditMScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { CommonEnhancedSelect },
+  components: { DortmundMatchSelectorModal },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {
@@ -210,7 +215,7 @@ export default {
       // 录入场景表单校验
       editRules: {
         matchId: [
-          { required: true, message: "所属比赛不能为空", trigger: "change" }
+          { required: true, message: "关联比赛不能为空", trigger: "change" }
         ],
         pointTitle: [
           { required: true, message: "信息点标题不能为空", trigger: "blur" }
@@ -232,7 +237,8 @@ export default {
         ],
       },
       // M类型新增时所选比赛的完整行（VS横幅展示用，仅编辑场景展示不进入提交数据）
-      selectedMatchRow: {},
+      selectedMatchRow: this.buildSelectedMatch(),
+      matchSelectorVisible: false,
     };
   },
   computed: {
@@ -261,19 +267,18 @@ export default {
       };
     },
   },
-  created() {
-    // 比赛下拉包装接口：为每个选项拼装 matchName 展示文案（后台比赛数据无 matchName 冗余字段）
-    this.listMatch = (query) => {
-      return listMatch(query).then((response) => {
-        const rows = (response.rows || []).map((match) => ({
-          ...match,
-          matchName: this.formatMatchVsTimeText(match),
-        }));
-        return { ...response, rows };
-      });
-    };
-  },
   methods: {
+    buildSelectedMatch() {
+      const initial = this.initialForm || {};
+      return initial.matchId ? {
+        matchId: initial.matchId,
+        matchCode: initial.matchCode,
+        matchSummary: initial.matchSummary,
+        homeTeamName: initial.homeTeamName,
+        awayTeamName: initial.awayTeamName,
+        matchTime: initial.matchTime,
+      } : {};
+    },
     // 从父页面传入的初始表单复制出本场景可编辑副本（避免直接改动父页面数据）
     buildEditForm() {
       const initial = this.initialForm || {};
@@ -297,19 +302,22 @@ export default {
         pointRemark: initial.pointRemark || null,
       };
     },
-    // 新增时比赛选择变化：暂存所选比赛行供VS横幅展示（清空选择时同步清空）
-    handleMatchSelectChange(val) {
-      const selectRef = this.$refs["matchSelect"];
-      // originOptions为全量已加载选项，不受输入过滤影响
-      const options = (selectRef && selectRef.originOptions) || [];
-      const row = options.find((match) => match.matchId === val);
-      this.selectedMatchRow = row || {};
+    handleMatchSelectorConfirm(match) {
+      this.selectedMatchRow = match || {};
+      this.editForm.matchId = match ? match.matchId : null;
+      this.$nextTick(() => {
+        this.$refs.editForm && this.$refs.editForm.clearValidate("matchId");
+      });
     },
     // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
     formatMatchVsTimeText(match) {
+      if (!match || !match.matchId) {
+        return "";
+      }
       const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
-      return matchTime ? `${vsText}（${matchTime}）` : vsText;
+      const vsText = [match.homeTeamName, match.awayTeamName].filter(Boolean).join(" vs ");
+      const matchText = vsText || match.matchSummary || match.matchCode || `比赛 ${match.matchId}`;
+      return matchTime ? `${matchText}（${matchTime}）` : matchText;
     },
     // 比赛列展示文案：主队 vs 客队 + 开赛时间
     formatMatchColumnText(row) {
@@ -520,6 +528,22 @@ export default {
   color: #909399;
 }
 
+.info-match-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .el-button {
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+}
+
 /* 生效时间窗并排布局 */
 .info-edit-time-row {
   display: flex;
@@ -620,5 +644,30 @@ export default {
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
   animation: infoEditFadeUp 0.3s ease 0.2s both;
+}
+
+@media (max-width: 767px) {
+  .info-edit-hero {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .info-edit-hero-type,
+  .info-edit-card-tip {
+    display: none;
+  }
+
+  .info-edit-card {
+    padding: 14px 12px 6px;
+  }
+
+  .info-match-picker {
+    align-items: stretch;
+    flex-direction: column;
+
+    .el-button {
+      align-self: flex-start;
+    }
+  }
 }
 </style>

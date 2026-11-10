@@ -59,7 +59,7 @@
           <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAddT"
               v-hasPermi="['dortmund:info:point:add']">新增赛季球队信息点</el-button>
-            <el-button type="success" plain icon="el-icon-plus" size="mini" @click="handleAddM"
+            <el-button type="primary" icon="el-icon-football" size="mini" class="info-add-match-btn" @click="handleAddM"
               v-hasPermi="['dortmund:info:point:add']">新增比赛临时信息点</el-button>
             <el-button type="warning" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
@@ -382,6 +382,24 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.info-add-match-btn {
+  color: #fff;
+  background: var(--current-color, #2ecc71);
+  border-color: var(--current-color, #2ecc71);
+  box-shadow: 0 5px 12px rgba(31, 61, 46, 0.18);
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover,
+  &:focus {
+    color: #fff;
+    background: var(--current-color, #2ecc71);
+    border-color: var(--current-color, #2ecc71);
+    box-shadow: 0 7px 16px rgba(31, 61, 46, 0.22);
+    filter: brightness(0.94);
+    transform: translateY(-1px);
+  }
+}
+
 /* 场景切换过渡动画 */
 .scene-switch-enter-active,
 .scene-switch-leave-active {

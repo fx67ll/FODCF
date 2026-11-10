@@ -8,9 +8,11 @@
           <p>设定目标金额，选择可生成比赛，一次得到可复核的候选组合</p>
         </div>
       </div>
-      <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-        v-hasPermi="['dortmund:return:export']">导出组合</el-button>
-      <el-button type="primary" plain icon="el-icon-time" size="mini" @click="historyVisible = true">历史批次</el-button>
+      <div class="return-hero-actions">
+        <el-button type="primary" plain icon="el-icon-time" size="mini" @click="historyVisible = true">历史批次</el-button>
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['dortmund:return:export']">导出组合</el-button>
+      </div>
     </div>
 
     <el-row :gutter="18" class="return-main">
@@ -208,7 +210,7 @@
         <div class="return-detail-card">
           <div class="return-detail-title">{{ combinationDetail.combinationTitle || combinationDetail.combinationCode ||
             "-"
-            }}</div>
+          }}</div>
           <div class="return-detail-grid">
             <span><label>组合倍率</label>{{ combinationDetail.combinedOdds || "-" }}</span>
             <span><label>预计回报</label>{{ formatMoneyDisplay(combinationDetail.estimatedReturn) }}</span>
@@ -217,7 +219,7 @@
           </div>
           <div class="combination-reason" v-if="combinationDetail.combinationReason">{{
             combinationDetail.combinationReason
-            }}</div>
+          }}</div>
         </div>
         <div class="return-detail-card" v-if="hasImageQueryPermission">
           <div class="return-detail-title">组合图片（{{ (combinationDetail.imageObjectKeys || []).length }}/3）</div>
@@ -510,6 +512,18 @@ export default {
 .return-hero-left {
   display: flex;
   align-items: center;
+}
+
+.return-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: 10px;
+
+  .el-button+.el-button {
+    margin-left: 0;
+  }
 }
 
 .return-hero-icon {
@@ -901,6 +915,11 @@ export default {
   .return-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .return-hero-actions {
+    justify-content: flex-end;
+    width: 100%;
   }
 }
 </style>

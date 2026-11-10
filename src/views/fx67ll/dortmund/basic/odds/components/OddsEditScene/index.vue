@@ -53,12 +53,15 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
-              <div class="odds-inline-control">
+              <div class="odds-match-picker">
                 <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                  @focus="matchSelectorVisible = true" />
-                <el-button type="text" icon="el-icon-circle-plus-outline" @click="toggleNewMatch">当场新建比赛
-                </el-button>
+                  prefix-icon="el-icon-football" @focus="matchSelectorVisible = true" />
+                <el-button type="primary" plain icon="el-icon-s-operation"
+                  @click="matchSelectorVisible = true">选择比赛</el-button>
+                <el-button type="text" class="odds-create-match-btn" icon="el-icon-circle-plus-outline"
+                  @click="toggleNewMatch">当场新建比赛</el-button>
               </div>
+              <div class="odds-association-hint">可选择已有比赛，或在当前倍率记录中同步新建一场比赛</div>
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId" v-else-if="editMode === 'add' && newMatchVisible">
               <div class="odds-inline-control">
@@ -74,6 +77,11 @@
 
         <transition name="odds-panel">
           <div class="odds-new-match" v-if="editMode === 'add' && newMatchVisible">
+            <div class="odds-new-match-title">
+              <i class="el-icon-football"></i>
+              <span>当场新建比赛资料</span>
+              <small>赛季、主队、客队和比赛时间均为必填</small>
+            </div>
             <el-row :gutter="20">
               <el-col :xs="24" :md="12">
                 <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
@@ -342,6 +350,10 @@ export default {
         if (!valid) {
           return;
         }
+        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId === this.editForm.newMatch.awayTeamId) {
+          this.$modal.msgError("新比赛的主队和客队不能相同");
+          return;
+        }
         const data = {
           oddsCode: this.editForm.oddsCode,
           sourceTime: this.editForm.sourceTime,
@@ -531,12 +543,48 @@ export default {
 .odds-inline-control {
   display: flex;
   align-items: center;
+  gap: 12px;
   width: 100%;
 }
 
-.odds-inline-control .el-select {
+.odds-inline-control .el-select,
+.odds-inline-control .el-input {
   flex: 1;
   min-width: 0;
+}
+
+.odds-inline-control .el-button,
+.odds-inline-control .el-tag {
+  flex-shrink: 0;
+}
+
+.odds-match-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .el-button {
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+}
+
+.odds-create-match-btn {
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+.odds-association-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #909399;
 }
 
 .odds-new-match {
@@ -545,6 +593,27 @@ export default {
   background: #f6fbf8;
   border: 1px dashed #cbe8d8;
   border-radius: 12px;
+}
+
+.odds-new-match-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b3a36;
+
+  i {
+    color: var(--odds-accent-dark);
+  }
+
+  small {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: #909399;
+  }
 }
 
 .odds-matrix-grid {
@@ -602,6 +671,30 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .odds-inline-control {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .odds-inline-control .el-button {
+    align-self: flex-start;
+  }
+
+  .odds-match-picker {
+    align-items: stretch;
+    flex-wrap: wrap;
+
+    .el-input {
+      flex-basis: 100%;
+    }
+  }
+
+  .odds-new-match-title small {
+    display: none;
   }
 }
 </style>

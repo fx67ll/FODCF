@@ -1,210 +1,242 @@
 <template>
   <!-- 比赛编排场景：新增/修改共用整页，按填写顺序铺开（进入场景时从父页面初始表单复制出可编辑副本） -->
   <div class="match-edit-scene">
-    <div class="match-edit-header">
-      <div class="match-edit-header-left">
-        <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
-        <span class="match-edit-title">{{ editMode === "add" ? "新增比赛" : "修改比赛" }}</span>
+    <div class="match-edit-hero">
+      <div class="match-edit-hero-left">
+        <div class="match-edit-hero-icon"><i class="el-icon-football"></i></div>
+        <div class="match-edit-hero-text">
+          <div class="match-edit-hero-title-row">
+            <h2>{{ editMode === "add" ? "新增比赛" : "修改比赛" }}</h2>
+            <span class="match-edit-hero-type">Match · 比赛编排</span>
+          </div>
+          <p>按基础信息、同步赔率和关联信息点分区维护比赛资料</p>
+        </div>
       </div>
+      <el-button type="text" icon="el-icon-back" class="match-edit-hero-back" @click="handleBackToList">返回总览</el-button>
     </div>
 
     <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="85px" class="match-edit-form"
       v-loading="editLoading">
-      <el-row :gutter="20">
-        <!-- 所属赛季：可选已有，也可当场新增（仅新增比赛时，修改时不支持当场新建） -->
-        <el-col :span="12">
-          <el-form-item label="所属赛季" prop="seasonId">
-            <div class="match-edit-item">
-              <common-enhanced-select ref="editSeasonSelect" v-model="editForm.seasonId" valueKey="seasonId"
-                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季"
-                :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
-              <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
-                {{ newSeasonVisible ? "收起当场新增" : "当场新增赛季" }}
-              </el-button>
+      <div class="match-edit-card">
+        <div class="match-edit-card-header">
+          <span class="match-edit-card-chip"><i class="el-icon-document"></i></span>
+          <span class="match-edit-card-title">基础信息</span>
+          <span class="match-edit-card-tip">先确认赛季、对阵与开赛时间</span>
+        </div>
+        <el-row :gutter="20">
+          <!-- 所属赛季：可选已有，也可当场新增（仅新增比赛时，修改时不支持当场新建） -->
+          <el-col :xs="24" :md="12">
+            <el-form-item label="所属赛季" prop="seasonId">
+              <div class="match-edit-item">
+                <common-enhanced-select ref="editSeasonSelect" v-model="editForm.seasonId" valueKey="seasonId"
+                  labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季"
+                  :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
+                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
+                  v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
+                  {{ newSeasonVisible ? "收起当场新增" : "当场新增赛季" }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-col>
+          <!-- 比赛时间：带时分秒，与后台 datetime 列和唯一索引一致 -->
+          <el-col :xs="24" :md="12">
+            <el-form-item label="比赛时间" prop="matchTime">
+              <el-date-picker clearable v-model="editForm.matchTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
+                style="width: 100%" placeholder="请选择比赛时间">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+
+          <!-- 当场新增赛季滑出面板（面板组件v-if重新挂载自带表单重置） -->
+          <el-col :span="24" v-if="newSeasonVisible">
+            <transition name="slide-panel">
+              <match-new-season-panel ref="newSeasonPanel" />
+            </transition>
+          </el-col>
+
+          <!-- 主队 -->
+          <el-col :xs="24" :md="12">
+            <el-form-item label="主队名称" prop="homeTeamId">
+              <div class="match-edit-item">
+                <el-input :value="selectedHomeTeam ? selectedHomeTeam.teamName : ''" readonly placeholder="请选择主队名称"
+                  :disabled="newHomeTeamVisible || editMode !== 'add'" @focus="openTeamSelector('home')" />
+                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
+                  v-if="editMode === 'add'" @click="toggleNewTeamPanel('home')">
+                  {{ newHomeTeamVisible ? "收起当场新增" : "当场新增主队" }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-col>
+          <!-- 客队 -->
+          <el-col :xs="24" :md="12">
+            <el-form-item label="客队名称" prop="awayTeamId">
+              <div class="match-edit-item">
+                <el-input :value="selectedAwayTeam ? selectedAwayTeam.teamName : ''" readonly placeholder="请选择客队名称"
+                  :disabled="newAwayTeamVisible || editMode !== 'add'" @focus="openTeamSelector('away')" />
+                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
+                  v-if="editMode === 'add'" @click="toggleNewTeamPanel('away')">
+                  {{ newAwayTeamVisible ? "收起当场新增" : "当场新增客队" }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-col>
+
+          <!-- 当场新增主队面板 -->
+          <el-col :span="24" v-if="newHomeTeamVisible">
+            <transition name="slide-panel">
+              <match-new-team-panel ref="newHomeTeamPanel" side="home" />
+            </transition>
+          </el-col>
+
+          <!-- 当场新增客队面板 -->
+          <el-col :span="24" v-if="newAwayTeamVisible">
+            <transition name="slide-panel">
+              <match-new-team-panel ref="newAwayTeamPanel" side="away" />
+            </transition>
+          </el-col>
+
+          <el-col :xs="24" :md="12">
+            <el-form-item label="比赛编码" prop="matchCode">
+              <el-input v-model="editForm.matchCode" maxlength="23" show-word-limit placeholder="必填，不超过23个字符"
+                :disabled="editMode !== 'add'" />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :md="12">
+            <el-form-item label="比赛场地" prop="matchVenue">
+              <el-select v-model="editForm.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
+                allow-create default-first-option>
+                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :md="12">
+            <el-form-item label="比赛状态" prop="matchStatus">
+              <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态">
+                <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :md="12">
+            <el-form-item label="比赛结果" prop="matchResult">
+              <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable>
+                <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="比赛备注" prop="matchRemark">
+              <el-input v-model="editForm.matchRemark" type="textarea" placeholder="请输入比赛备注内容" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <div class="match-edit-card">
+        <div class="match-edit-card-header">
+          <span class="match-edit-card-chip"><i class="el-icon-odometer"></i></span>
+          <span class="match-edit-card-title">同步赔率</span>
+          <span class="match-edit-card-tip">{{ editMode === "add" ? "可随比赛同步创建首条有效 odds" : "维护当前有效 odds 版本" }}</span>
+        </div>
+        <el-row :gutter="20">
+          <el-col :span="24" v-if="editMode === 'update' && editForm.matchId">
+            <dortmund-odds-inline-editor :match-id="editForm.matchId" @refresh="$emit('saved')" />
+          </el-col>
+
+          <el-col :span="24" v-if="editMode === 'add'">
+            <el-form-item label="同步 odds">
+              <div class="match-odds-toggle">
+                <el-tag :type="newOddsVisible ? 'success' : 'info'" size="small">
+                  {{ newOddsVisible ? "保存时同步创建有效 odds" : "关闭时不提交 odds" }}
+                </el-tag>
+                <el-button type="text" icon="el-icon-circle-plus-outline" @click="toggleNewOdds">
+                  {{ newOddsVisible ? "收起 odds 表单" : "同时创建 odds" }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="24" v-if="editMode === 'add' && newOddsVisible">
+            <div class="match-odds-panel">
+              <div class="match-odds-panel-title">
+                <i class="el-icon-odometer"></i>
+                <span>首条有效 odds</span>
+              </div>
+              <el-row :gutter="12">
+                <el-col :xs="24" :md="8">
+                  <el-form-item label="记录编码" prop="newOdds.oddsCode" label-width="80px">
+                    <el-input v-model="editForm.newOdds.oddsCode" maxlength="23" show-word-limit placeholder="必填" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :md="8">
+                  <el-form-item label="来源时间" prop="newOdds.sourceTime" label-width="80px">
+                    <el-date-picker v-model="editForm.newOdds.sourceTime" type="datetime"
+                      value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="必选" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :md="8">
+                  <el-form-item label="让分值" prop="newOdds.handicapValue" label-width="80px">
+                    <el-input v-model="editForm.newOdds.handicapValue" placeholder="必填" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="12" v-for="row in oddsRows" :key="row.key">
+                <el-col :xs="24" :md="4">
+                  <div class="match-odds-type">
+                    <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="row.type" />
+                  </div>
+                </el-col>
+                <el-col :xs="24" :md="10">
+                  <el-form-item label="赔率" :prop="'newOdds.' + row.oddsField" label-width="58px">
+                    <el-input v-model="editForm.newOdds[row.oddsField]" placeholder="大于 0" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :md="10">
+                  <el-form-item label="权重" :prop="'newOdds.' + row.weightField" label-width="58px">
+                    <el-input v-model="editForm.newOdds[row.weightField]" placeholder="空默认 100" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
             </div>
-          </el-form-item>
-        </el-col>
-        <!-- 比赛时间：带时分秒，与后台 datetime 列和唯一索引一致 -->
-        <el-col :span="12">
-          <el-form-item label="比赛时间" prop="matchTime">
-            <el-date-picker clearable v-model="editForm.matchTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 100%" placeholder="请选择比赛时间">
-            </el-date-picker>
-          </el-form-item>
-        </el-col>
+          </el-col>
+        </el-row>
+      </div>
 
-        <!-- 当场新增赛季滑出面板（面板组件v-if重新挂载自带表单重置） -->
-        <el-col :span="24" v-if="newSeasonVisible">
-          <transition name="slide-panel">
-            <match-new-season-panel ref="newSeasonPanel" />
-          </transition>
-        </el-col>
-
-        <!-- 主队 -->
-        <el-col :span="12">
-          <el-form-item label="主队名称" prop="homeTeamId">
-            <div class="match-edit-item">
-              <el-input :value="selectedHomeTeam ? selectedHomeTeam.teamName : ''" readonly placeholder="请选择主队名称"
-                :disabled="newHomeTeamVisible || editMode !== 'add'" @focus="openTeamSelector('home')" />
-              <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                v-if="editMode === 'add'" @click="toggleNewTeamPanel('home')">
-                {{ newHomeTeamVisible ? "收起当场新增" : "当场新增主队" }}
-              </el-button>
-            </div>
-          </el-form-item>
-        </el-col>
-        <!-- 客队 -->
-        <el-col :span="12">
-          <el-form-item label="客队名称" prop="awayTeamId">
-            <div class="match-edit-item">
-              <el-input :value="selectedAwayTeam ? selectedAwayTeam.teamName : ''" readonly placeholder="请选择客队名称"
-                :disabled="newAwayTeamVisible || editMode !== 'add'" @focus="openTeamSelector('away')" />
-              <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                v-if="editMode === 'add'" @click="toggleNewTeamPanel('away')">
-                {{ newAwayTeamVisible ? "收起当场新增" : "当场新增客队" }}
-              </el-button>
-            </div>
-          </el-form-item>
-        </el-col>
-
-        <!-- 当场新增主队面板 -->
-        <el-col :span="24" v-if="newHomeTeamVisible">
-          <transition name="slide-panel">
-            <match-new-team-panel ref="newHomeTeamPanel" side="home" />
-          </transition>
-        </el-col>
-
-        <!-- 当场新增客队面板 -->
-        <el-col :span="24" v-if="newAwayTeamVisible">
-          <transition name="slide-panel">
-            <match-new-team-panel ref="newAwayTeamPanel" side="away" />
-          </transition>
-        </el-col>
-
-        <el-col :span="12">
-          <el-form-item label="比赛编码" prop="matchCode">
-            <el-input v-model="editForm.matchCode" maxlength="23" show-word-limit placeholder="必填，不超过23个字符"
-              :disabled="editMode !== 'add'" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="比赛场地" prop="matchVenue">
-            <el-select v-model="editForm.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
-              allow-create default-first-option>
-              <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="比赛状态" prop="matchStatus">
-            <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态">
-              <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
-                :value="dict.value"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="比赛结果" prop="matchResult">
-            <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable>
-              <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
-                :value="dict.value"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="24">
-          <el-form-item label="比赛备注" prop="matchRemark">
-            <el-input v-model="editForm.matchRemark" type="textarea" placeholder="请输入比赛备注内容" />
-          </el-form-item>
-        </el-col>
-
-        <el-col :span="24" v-if="editMode === 'update' && editForm.matchId">
-          <div class="match-linked-panel">
+      <div class="match-edit-card">
+        <div class="match-edit-card-header">
+          <span class="match-edit-card-chip"><i class="el-icon-notebook-2"></i></span>
+          <span class="match-edit-card-title">关联信息点</span>
+          <span class="match-edit-card-tip">{{ editMode === "add" ? "草稿将随比赛同步创建" : "维护比赛临时信息" }}</span>
+        </div>
+        <el-row :gutter="20">
+          <el-col :span="24" v-if="editMode === 'update' && editForm.matchId">
             <dortmund-info-point-inline-editor anchor-type="match" :match-id="editForm.matchId"
               @refresh="$emit('saved')" />
-            <dortmund-odds-inline-editor :match-id="editForm.matchId" @refresh="$emit('saved')" />
-          </div>
-        </el-col>
-
-        <el-col :span="24" v-if="editMode === 'add'">
-          <el-form-item label="同步 odds">
-            <div class="match-odds-toggle">
-              <el-tag :type="newOddsVisible ? 'success' : 'info'" size="small">
-                {{ newOddsVisible ? "保存时同步创建有效 odds" : "关闭时不提交 odds" }}
-              </el-tag>
-              <el-button type="text" icon="el-icon-circle-plus-outline" @click="toggleNewOdds">
-                {{ newOddsVisible ? "收起 odds 表单" : "同时创建 odds" }}
-              </el-button>
+          </el-col>
+          <el-col :span="24" v-if="editMode === 'add'">
+            <div class="match-info-panel">
+              <div class="match-draft-info-header">
+                <span><i class="el-icon-notebook-2"></i>关联信息点（{{ newInfoPoints.length }} 条）</span>
+                <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
+              </div>
+              <el-table :data="newInfoPoints" size="small" empty-text="暂无关联信息点">
+                <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
+                <el-table-column label="内容" prop="pointContent" min-width="200" show-overflow-tooltip />
+                <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
+                <el-table-column label="操作" align="center" width="110">
+                  <template slot-scope="scope">
+                    <el-button size="mini" type="text" icon="el-icon-edit"
+                      @click="openDraftInfo(scope.row)">编辑</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-delete"
+                      @click="removeDraftInfo(scope.$index)">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
-          </el-form-item>
-        </el-col>
-
-        <el-col :span="24" v-if="editMode === 'add' && newOddsVisible">
-          <div class="match-odds-panel">
-            <div class="match-odds-panel-title">
-              <i class="el-icon-odometer"></i>
-              <span>首条有效 odds</span>
-            </div>
-            <el-row :gutter="12">
-              <el-col :span="8">
-                <el-form-item label="记录编码" prop="newOdds.oddsCode" label-width="80px">
-                  <el-input v-model="editForm.newOdds.oddsCode" maxlength="23" show-word-limit placeholder="必填" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="来源时间" prop="newOdds.sourceTime" label-width="80px">
-                  <el-date-picker v-model="editForm.newOdds.sourceTime" type="datetime"
-                    value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="必选" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="让分值" prop="newOdds.handicapValue" label-width="80px">
-                  <el-input v-model="editForm.newOdds.handicapValue" placeholder="必填" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="12" v-for="row in oddsRows" :key="row.key">
-              <el-col :span="4">
-                <div class="match-odds-type">
-                  <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="row.type" />
-                </div>
-              </el-col>
-              <el-col :span="10">
-                <el-form-item label="赔率" :prop="'newOdds.' + row.oddsField" label-width="58px">
-                  <el-input v-model="editForm.newOdds[row.oddsField]" placeholder="大于 0" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="10">
-                <el-form-item label="权重" :prop="'newOdds.' + row.weightField" label-width="58px">
-                  <el-input v-model="editForm.newOdds[row.weightField]" placeholder="空默认 100" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </div>
-        </el-col>
-
-        <el-col :span="24" v-if="editMode === 'add'">
-          <div class="match-linked-panel">
-            <div class="match-draft-info-header">
-              <span><i class="el-icon-notebook-2"></i>关联信息点（{{ newInfoPoints.length }} 条）</span>
-              <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
-            </div>
-            <el-table :data="newInfoPoints" size="small" empty-text="暂无关联信息点">
-              <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
-              <el-table-column label="内容" prop="pointContent" min-width="200" show-overflow-tooltip />
-              <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
-              <el-table-column label="操作" align="center" width="110">
-                <template slot-scope="scope">
-                  <el-button size="mini" type="text" icon="el-icon-edit"
-                    @click="openDraftInfo(scope.row)">编辑</el-button>
-                  <el-button size="mini" type="text" icon="el-icon-delete"
-                    @click="removeDraftInfo(scope.$index)">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </el-col>
-      </el-row>
+          </el-col>
+        </el-row>
+      </div>
     </el-form>
 
     <div class="match-edit-footer">
@@ -216,15 +248,15 @@
       @confirm="handleTeamSelectorConfirm" />
 
     <el-dialog :visible.sync="draftInfoVisible" :title="draftInfoIndex >= 0 ? '编辑关联信息点' : '新增关联信息点'" width="760px"
-      append-to-body :close-on-click-modal="false">
+      append-to-body custom-class="match-draft-info-dialog" :close-on-click-modal="false">
       <el-form ref="draftInfoForm" :model="draftInfoForm" :rules="draftInfoRules" label-width="104px">
         <el-row :gutter="16">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="信息标题" prop="pointTitle">
               <el-input v-model="draftInfoForm.pointTitle" maxlength="255" show-word-limit placeholder="请输入信息标题" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="采集时间" prop="collectTime">
               <el-date-picker v-model="draftInfoForm.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                 style="width: 100%" placeholder="请选择采集时间" />
@@ -236,12 +268,12 @@
                 placeholder="请输入客观信息内容" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源名称" prop="sourceName">
               <el-input v-model="draftInfoForm.sourceName" maxlength="255" placeholder="请输入来源名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源地址" prop="sourceUrl">
               <el-input v-model="draftInfoForm.sourceUrl" maxlength="512" placeholder="请输入来源地址" />
             </el-form-item>
@@ -687,47 +719,154 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* 编排场景头部 */
-.match-edit-header {
+.match-edit-scene {
+  --match-accent: #2ecc71;
+  --match-accent-dark: #27ad60;
+  --match-accent-soft: #e7f8ee;
+}
+
+.match-edit-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #fff 0%, #f2fbf6 100%);
+  border: 1px solid #e2eee7;
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
+  animation: matchEditFadeUp 0.3s ease both;
 }
 
-.match-edit-header-left {
+.match-edit-hero-left,
+.match-edit-hero-title-row {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
-.match-edit-title {
-  margin-left: 12px;
+.match-edit-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  margin-right: 14px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ad60 100%);
+  border-radius: 13px;
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.3);
+  transition: transform 0.25s ease;
+
+  &:hover {
+    transform: rotate(-6deg) scale(1.05);
+  }
+}
+
+.match-edit-hero-text h2 {
+  margin: 0;
   font-size: 16px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.match-edit-hero-text p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #7c8b84;
+}
+
+.match-edit-hero-type {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  margin-left: 10px;
+  font-size: 12px;
   font-weight: 600;
-  color: #303133;
+  color: var(--match-accent-dark);
+  background: var(--match-accent-soft);
+  border-radius: 999px;
+}
+
+.match-edit-hero-back {
+  flex-shrink: 0;
 }
 
 .match-edit-form {
-  padding: 20px 20px 4px;
-  background-color: #fff;
+  padding: 0;
+  background: none;
+}
+
+.match-edit-card {
+  padding: 16px 20px 8px;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid #e2eee7;
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
+  animation: matchEditFadeUp 0.3s ease both;
+
+  &:nth-of-type(2) {
+    animation-delay: 0.05s;
+  }
+
+  &:nth-of-type(3) {
+    animation-delay: 0.1s;
+  }
+}
+
+.match-edit-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.match-edit-card-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  font-size: 14px;
+  color: var(--match-accent-dark);
+  background: var(--match-accent-soft);
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.match-edit-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.match-edit-card-tip {
+  padding: 1px 8px;
+  margin-left: 10px;
+  font-size: 12px;
+  color: #909399;
+  background: #f0f4f2;
+  border-radius: 999px;
 }
 
 /* 选择器与当场新增入口同行排布 */
 .match-edit-item {
   display: flex;
   align-items: center;
+  gap: 10px;
   width: 100%;
 }
 
-.match-edit-item .el-select {
+.match-edit-item .el-select,
+.match-edit-item .el-input {
   flex: 1;
+  min-width: 0;
 }
 
 .match-edit-inline-btn {
   flex-shrink: 0;
-  margin-left: 8px;
   padding: 0 4px;
 }
 
@@ -767,17 +906,12 @@ export default {
   font-size: 12px;
 }
 
-.match-linked-panel {
+.match-info-panel {
   padding: 14px;
-  margin: 4px 0 14px;
+  margin-bottom: 10px;
   background: linear-gradient(135deg, #f8fafc 0%, #f2fbf6 100%);
   border: 1px solid #dcebe3;
-  border-left: 4px solid #2ecc71;
   border-radius: 12px;
-}
-
-.match-linked-panel>*+* {
-  margin-top: 16px;
 }
 
 .match-draft-info-header {
@@ -821,11 +955,62 @@ export default {
 
 /* 编排场景底部按钮 */
 .match-edit-footer {
-  margin-top: 16px;
+  margin-top: 4px;
   padding: 14px 20px;
   text-align: center;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border: 1px solid #e2eee7;
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
+  animation: matchEditFadeUp 0.3s ease 0.15s both;
+}
+
+@keyframes matchEditFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .match-edit-hero {
+    align-items: flex-start;
+  }
+
+  .match-edit-hero-type,
+  .match-edit-card-tip {
+    display: none;
+  }
+
+  .match-edit-card {
+    padding: 14px 12px 6px;
+  }
+
+  .match-edit-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .match-edit-inline-btn {
+    align-self: flex-start;
+  }
+}
+</style>
+
+<style lang="scss">
+@media (max-width: 800px) {
+  .match-draft-info-dialog {
+    width: calc(100% - 24px) !important;
+    margin-top: 5vh !important;
+
+    .el-dialog__body {
+      padding: 18px 14px 8px;
+    }
+  }
 }
 </style>

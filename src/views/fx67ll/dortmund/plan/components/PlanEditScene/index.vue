@@ -38,12 +38,12 @@
                     placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :md="12">
                 <el-form-item label="录入倍率" prop="planRate">
                   <el-input v-model="editForm.planRate" placeholder="请输入录入倍率（可空，有值时必须大于0）" />
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :md="12">
                 <el-form-item label="录入金额" prop="planAmount">
                   <el-input v-model="editForm.planAmount" placeholder="请输入录入金额（可空，有值时必须大于等于0）" />
                 </el-form-item>
@@ -69,9 +69,12 @@
               </span>
             </div>
             <el-form-item label="回报组合" prop="combinationIds">
-              <common-enhanced-select ref="combinationSelect" v-model="editForm.combinationIds" valueKey="combinationId"
-                labelKey="combinationName" :api-func="loadCombinationOptions" multiple placeholder="请选择已采用的回报组合"
-                @change="handleCombinationChange" />
+              <div class="plan-combination-selector">
+                <el-input :value="selectedCombinationSummary" readonly placeholder="请选择已采用的回报组合"
+                  prefix-icon="el-icon-trophy" @focus="combinationSelectorVisible = true" />
+                <el-button type="primary" plain icon="el-icon-s-operation"
+                  @click="combinationSelectorVisible = true">选择组合</el-button>
+              </div>
             </el-form-item>
             <div class="plan-edit-tip">
               比赛清单由组合明细自动派生并去重，不能直接增删比赛
@@ -79,12 +82,20 @@
             <div class="plan-combination-empty" v-if="!selectedCombinationCount && readonlyMatches.length">
               历史记录，尚未关联回报组合
             </div>
+            <div class="plan-combination-load-error" v-if="combinationDetailErrorIds.length" role="alert">
+              <i class="el-icon-warning-outline"></i>
+              <span>{{ combinationDetailErrorIds.length }} 条组合明细未完整加载，已保留选择，可重试恢复预览。</span>
+              <el-button type="text" icon="el-icon-refresh" @click="retryCombinationDetails">重试加载</el-button>
+            </div>
             <div class="plan-combination-list" v-if="selectedCombinationCount">
               <div class="plan-combination-item" v-for="combination in selectedCombinationPreviewList"
                 :key="combination.combinationId">
-                <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode
-                }}</span>
-                <span class="plan-combination-metrics">
+                <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode ||
+                  `组合 ${combination.combinationId}` }}</span>
+                <span class="plan-combination-metrics is-error" v-if="combination._detailLoadFailed">
+                  明细加载失败
+                </span>
+                <span class="plan-combination-metrics" v-else>
                   回报 {{ formatMoneyDisplay(combination.estimatedReturn) }} · {{ combination.matchCount ||
                     (combination.matches || []).length }}场
                 </span>
@@ -156,18 +167,20 @@
         </div>
       </div>
     </div>
+
+    <dortmund-combination-selector-modal :visible.sync="combinationSelectorVisible" multiple
+      :selected-items="combinationDetails" @confirm="handleCombinationSelectorConfirm" />
   </div>
 </template>
 
 <script>
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
-import { listPlanReturnOptions } from "@/api/fx67ll/dortmund/plan";
 import { getCombination, getGeneration } from "@/api/fx67ll/dortmund/returnCombination";
+import DortmundCombinationSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundCombinationSelectorModal/index";
 
 export default {
   name: "PlanEditScene",
-  components: { CommonEnhancedSelect },
+  components: { DortmundCombinationSelectorModal },
   props: {
     // 编写场景模式（add新增 update修改）
     editMode: {
@@ -242,12 +255,13 @@ export default {
           { required: true, message: "请至少选择一条已采用的回报组合", trigger: "change" }
         ],
       },
-      // 已采用的回报组合选项缓存
-      combinationOptions: [],
       // 选中组合的明细缓存
       combinationDetails: [],
       // 明细加载状态
       detailLoading: false,
+      combinationSelectorVisible: false,
+      combinationLoadSerial: 0,
+      combinationDetailErrorIds: [],
     };
   },
   computed: {
@@ -260,6 +274,15 @@ export default {
     // 已选回报组合数量
     selectedCombinationCount() {
       return (this.editForm.combinationIds || []).length;
+    },
+    selectedCombinationSummary() {
+      const count = this.selectedCombinationCount;
+      if (!count) {
+        return "";
+      }
+      const first = this.selectedCombinationPreviewList[0];
+      const firstName = first && (first.combinationTitle || first.combinationCode);
+      return count === 1 && firstName ? firstName : `已选择 ${count} 条已采用组合`;
     },
     // 已选组合的只读预览（优先使用已加载明细，退回选项摘要）
     selectedCombinationPreviewList() {
@@ -297,18 +320,12 @@ export default {
       return { planRate, planAmount };
     },
   },
+  created() {
+    if (this.editForm.combinationIds.length) {
+      this.handleCombinationChange(this.editForm.combinationIds);
+    }
+  },
   methods: {
-    // 组合选项包装：为每个选项拼装展示名称
-    loadCombinationOptions() {
-      return listPlanReturnOptions().then((response) => {
-        const rows = (response.data || []).map((item) => ({
-          ...item,
-          combinationName: `${item.combinationTitle || item.combinationCode}（回报 ${item.estimatedReturn || 0}）`,
-        }));
-        this.combinationOptions = rows;
-        return { rows };
-      });
-    },
     // 从父页面传入的初始表单复制出本场景可编辑副本
     buildEditForm() {
       const initial = this.initialForm || {};
@@ -323,43 +340,108 @@ export default {
     },
     // 组合多选变化：拉取最新明细并生成前端预览
     handleCombinationChange(combinationIds) {
-      const selectedIds = combinationIds || [];
+      const selectedIds = [...new Set((combinationIds || []).filter((id) => id !== null && id !== undefined))];
+      const loadSerial = ++this.combinationLoadSerial;
       const loadedMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
-      const missingIds = selectedIds.filter((id) => !loadedMap.has(id));
+      this.combinationDetails = selectedIds.map((id) => loadedMap.get(id) || this.createCombinationPlaceholder(id));
+      const missingIds = selectedIds.filter((id) => {
+        const detail = loadedMap.get(id);
+        return !detail || detail._detailLoaded !== true || detail._partialLoadError;
+      });
       if (!missingIds.length) {
-        this.combinationDetails = selectedIds.map((id) => loadedMap.get(id)).filter(Boolean);
+        this.combinationDetailErrorIds = this.combinationDetailErrorIds.filter((id) => selectedIds.includes(id));
+        this.detailLoading = false;
         return;
       }
       this.detailLoading = true;
-      Promise.all(missingIds.map((combinationId) => this.loadCombinationDetail(combinationId)))
-        .then((details) => {
-          details.forEach((detail) => {
-            loadedMap.set(detail.combinationId, detail);
+      Promise.all(missingIds.map((combinationId) => this.loadCombinationDetail(combinationId)
+        .then((detail) => ({ combinationId, detail }))
+        .catch(() => ({ combinationId, detail: null }))))
+        .then((results) => {
+          if (loadSerial !== this.combinationLoadSerial) {
+            return;
+          }
+          const detailMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
+          const errorIds = new Set(this.combinationDetailErrorIds.filter((id) => selectedIds.includes(id)));
+          results.forEach(({ combinationId, detail }) => {
+            if (detail) {
+              detailMap.set(combinationId, detail);
+              if (detail._partialLoadError) {
+                errorIds.add(combinationId);
+              } else {
+                errorIds.delete(combinationId);
+              }
+            } else {
+              detailMap.set(combinationId, this.createCombinationPlaceholder(
+                combinationId,
+                detailMap.get(combinationId),
+                true
+              ));
+              errorIds.add(combinationId);
+            }
           });
-          this.combinationDetails = selectedIds.map((id) => loadedMap.get(id)).filter(Boolean);
-        })
-        .catch(() => {
-          this.combinationDetails = [];
+          this.combinationDetails = selectedIds.map((id) => detailMap.get(id));
+          this.combinationDetailErrorIds = [...errorIds];
         })
         .finally(() => {
-          this.detailLoading = false;
+          if (loadSerial === this.combinationLoadSerial) {
+            this.detailLoading = false;
+          }
         });
+    },
+    handleCombinationSelectorConfirm(combinations) {
+      const selectedRows = Array.isArray(combinations) ? combinations.filter(Boolean) : [];
+      this.editForm.combinationIds = selectedRows.map((item) => item.combinationId);
+      const detailMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
+      selectedRows.forEach((item) => {
+        detailMap.set(item.combinationId, { ...(detailMap.get(item.combinationId) || {}), ...item });
+      });
+      this.combinationDetails = this.editForm.combinationIds.map((id) => (
+        detailMap.get(id) || this.createCombinationPlaceholder(id)
+      ));
+      this.handleCombinationChange(this.editForm.combinationIds);
+      this.$nextTick(() => {
+        this.$refs.editForm && this.$refs.editForm.clearValidate("combinationIds");
+      });
     },
     // 拉取单条组合与所属生成批次，组合内容只读
     loadCombinationDetail(combinationId) {
       return getCombination(combinationId).then((combinationResponse) => {
-        const combination = (combinationResponse && combinationResponse.data) || {};
+        const combination = {
+          combinationId,
+          ...((combinationResponse && combinationResponse.data) || {}),
+        };
         if (!combination.generationId) {
-          return combination;
+          return { ...combination, _detailLoaded: true };
         }
         return getGeneration(combination.generationId).then((generationResponse) => {
           const generation = (generationResponse && generationResponse.data) || {};
           return {
             ...combination,
             generationInputAmount: generation.inputAmount || 0,
+            _detailLoaded: true,
           };
-        });
+        }).catch(() => ({
+          ...combination,
+          generationInputAmount: 0,
+          _detailLoaded: true,
+          _partialLoadError: true,
+        }));
       });
+    },
+    createCombinationPlaceholder(combinationId, source = {}, loadFailed = false) {
+      return {
+        ...source,
+        combinationId,
+        combinationTitle: source.combinationTitle || source.combinationCode || `组合 ${combinationId}`,
+        _detailLoaded: false,
+        _detailLoadFailed: loadFailed,
+      };
+    },
+    retryCombinationDetails() {
+      if (!this.detailLoading) {
+        this.handleCombinationChange([...(this.editForm.combinationIds || [])]);
+      }
     },
     // 清空手工调整字段，最终值以后端保存响应为准
     resetManualAdjustment() {
@@ -550,6 +632,21 @@ export default {
   margin-left: auto;
 }
 
+.plan-combination-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .el-button {
+    flex-shrink: 0;
+  }
+}
+
 .plan-new-match-panel .plan-edit-tip {
   padding-left: 14px;
 }
@@ -571,6 +668,25 @@ export default {
   background: #fdf6ec;
   border: 1px dashed #f5e6c8;
   border-radius: 10px;
+}
+
+.plan-combination-load-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #a66a18;
+  background: #fdf6ec;
+  border: 1px solid #f5dfbb;
+  border-radius: 10px;
+
+  .el-button {
+    flex-shrink: 0;
+    padding: 0;
+    margin-left: auto;
+  }
 }
 
 .plan-combination-list {
@@ -610,6 +726,10 @@ export default {
   flex-shrink: 0;
   font-size: 11px;
   color: #7c8b84;
+
+  &.is-error {
+    color: #e6a23c;
+  }
 }
 
 /* 已关联但后来被关闭的比赛只读标签 */
@@ -935,6 +1055,30 @@ export default {
 @media screen and (max-width: 1100px) {
   .plan-edit-preview {
     display: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .plan-combination-selector {
+    align-items: stretch;
+    flex-direction: column;
+
+    .el-button {
+      align-self: flex-start;
+    }
+  }
+
+  .plan-edit-tip {
+    padding-left: 0;
+  }
+
+  .plan-combination-load-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+
+    .el-button {
+      margin-left: 22px;
+    }
   }
 }
 

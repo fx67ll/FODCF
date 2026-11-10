@@ -31,7 +31,7 @@
           <span class="info-edit-card-tip" v-if="editMode === 'update'">归属创建后不可修改</span>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="所属赛季" prop="seasonId">
               <!-- 新增时下拉选择；修改时归属只读展示（已关联赛季可能已被停用，不在正常赛季选项内） -->
               <common-enhanced-select v-if="editMode === 'add'" ref="seasonSelect" v-model="editForm.seasonId"
@@ -39,12 +39,14 @@
               <el-input v-else :value="editForm.seasonName || ('赛季' + editForm.seasonId)" disabled />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="关联球队" prop="teamIds">
               <!-- 可选球队只限启用且在数据范围内的球队，不按赛季过滤；修改时保持已有关系不变可不改 -->
               <div v-if="editMode === 'add'" class="info-team-control">
                 <el-input :value="formatSelectedTeams(selectedTeams)" readonly placeholder="请选择关联球队（可多选）"
                   @focus="teamSelectorVisible = true" />
+                <el-button type="primary" plain icon="el-icon-s-operation"
+                  @click="teamSelectorVisible = true">选择球队</el-button>
               </div>
               <div v-else class="info-team-readonly">
                 <el-tag v-for="team in selectedTeams" :key="team.teamId" size="small">{{ team.teamName }}</el-tag>
@@ -90,24 +92,24 @@
           <span class="info-edit-card-title">来源与时间</span>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="信息来源名称" prop="sourceName">
               <el-input v-model="editForm.sourceName" :maxlength="1023" placeholder="请输入信息来源名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源地址" prop="sourceUrl">
               <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源发布时间" prop="sourcePublishTime">
               <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
                 value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择来源发布时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="信息采集时间" prop="collectTime">
               <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
                 value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择信息采集时间">
@@ -140,7 +142,7 @@
           <span class="info-edit-card-title">附加设置</span>
         </div>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="是否可公开" prop="allowPublic">
               <el-radio-group v-model="editForm.allowPublic">
                 <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
@@ -485,6 +487,22 @@ export default {
   color: #909399;
 }
 
+.info-team-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .el-button {
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+}
+
 /* 生效时间窗并排布局 */
 .info-edit-time-row {
   display: flex;
@@ -523,5 +541,35 @@ export default {
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
   animation: infoEditFadeUp 0.3s ease 0.2s both;
+}
+
+@media (max-width: 767px) {
+  .info-edit-hero {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .info-edit-hero-type,
+  .info-edit-card-tip {
+    display: none;
+  }
+
+  .info-edit-card {
+    padding: 14px 12px 6px;
+  }
+
+  .info-team-control,
+  .info-edit-time-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .info-team-control .el-button {
+    align-self: flex-start;
+  }
+
+  .info-edit-time-connector {
+    display: none;
+  }
 }
 </style>

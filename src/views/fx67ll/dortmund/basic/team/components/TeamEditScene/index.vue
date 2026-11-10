@@ -151,13 +151,13 @@
       append-to-body custom-class="team-draft-info-dialog" :close-on-click-modal="false">
       <el-form ref="draftForm" :model="draftForm" :rules="draftRules" label-width="104px">
         <el-row :gutter="16">
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="所属赛季" prop="seasonId">
               <common-enhanced-select v-model="draftForm.seasonId" valueKey="seasonId" labelKey="seasonName"
                 :api-func="listSeason" placeholder="请选择所属赛季" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="采集时间" prop="collectTime">
               <el-date-picker v-model="draftForm.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                 style="width: 100%" placeholder="请选择采集时间" />
@@ -174,12 +174,12 @@
                 placeholder="请输入客观信息内容" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源名称" prop="sourceName">
               <el-input v-model="draftForm.sourceName" maxlength="255" placeholder="请输入来源名称" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="来源地址" prop="sourceUrl">
               <el-input v-model="draftForm.sourceUrl" maxlength="512" placeholder="请输入来源地址" />
             </el-form-item>
@@ -491,6 +491,34 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .team-edit-hero {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .team-edit-card {
+    padding: 14px 12px 6px;
+  }
+
+  .team-edit-card-tip {
+    display: none;
+  }
+}
+</style>
+
+<style lang="scss">
+@media (max-width: 800px) {
+  .team-draft-info-dialog {
+    width: calc(100% - 24px) !important;
+    margin-top: 5vh !important;
+
+    .el-dialog__body {
+      padding: 18px 14px 8px;
+    }
   }
 }
 </style>
