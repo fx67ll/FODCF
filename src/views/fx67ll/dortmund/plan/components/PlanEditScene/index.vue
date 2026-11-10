@@ -9,7 +9,7 @@
         </div>
         <div class="plan-edit-hero-text">
           <h2>{{ editMode === "add" ? "编写方案计划" : "修改方案计划" }}</h2>
-          <p>填写正文与金额后关联比赛，至少关联一场，可当场新建比赛一并保存</p>
+          <p>填写正文后关联已采用回报组合，系统自动派生比赛并汇总金额</p>
         </div>
       </div>
       <el-button type="text" icon="el-icon-back" class="plan-edit-hero-back" @click="handleBackToList">返回总览
@@ -28,6 +28,8 @@
                 <i class="el-icon-edit-outline"></i>
               </span>
               <span class="plan-edit-card-title">方案内容</span>
+              <el-button type="text" icon="el-icon-refresh-left" class="plan-edit-new-toggle"
+                @click="resetManualAdjustment">恢复自动值</el-button>
             </div>
             <el-row :gutter="20">
               <el-col :span="24">
@@ -55,136 +57,39 @@
             </el-row>
           </div>
 
-          <!-- 分区二：关联比赛 -->
-          <div class="plan-edit-card">
+          <!-- 分区二：关联回报组合 -->
+          <div class="plan-edit-card" v-loading="detailLoading">
             <div class="plan-edit-card-header">
               <span class="plan-edit-card-chip">
-                <i class="el-icon-football"></i>
+                <i class="el-icon-trophy"></i>
               </span>
-              <span class="plan-edit-card-title">关联比赛</span>
-              <span class="plan-edit-card-count" :class="{ ok: previewMatchCount > 0 }">
-                共{{ previewMatchCount }}场
+              <span class="plan-edit-card-title">关联回报组合</span>
+              <span class="plan-edit-card-count" :class="{ ok: selectedCombinationCount > 0 }">
+                共{{ selectedCombinationCount }}条
               </span>
-              <el-button type="text" icon="el-icon-circle-plus-outline" class="plan-edit-new-toggle"
-                v-if="hasPlanAddPermission" @click="toggleNewMatchPanel">
-                {{ newMatchVisible ? "收起当场新建" : "当场新建比赛" }}
-              </el-button>
             </div>
-
-            <el-form-item label="已有比赛" prop="matchIds">
-              <common-enhanced-select ref="editMatchSelect" v-model="editForm.matchIds" valueKey="matchId"
-                labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" multiple
-                placeholder="请选择已有正常比赛（可多选）" @change="handleMatchIdsChange" />
+            <el-form-item label="回报组合" prop="combinationIds">
+              <common-enhanced-select ref="combinationSelect" v-model="editForm.combinationIds" valueKey="combinationId"
+                labelKey="combinationName" :api-func="loadCombinationOptions" multiple placeholder="请选择已采用的回报组合"
+                @change="handleCombinationChange" />
             </el-form-item>
             <div class="plan-edit-tip">
-              已关联、后来被关闭的比赛保持只读展示，不能再新选已关闭比赛
+              比赛清单由组合明细自动派生并去重，不能直接增删比赛
             </div>
-            <!-- 已关联但后来被关闭的比赛：只读展示 -->
-            <div class="plan-closed-match-list" v-if="closedMatchList.length > 0">
-              <el-tag v-for="match in closedMatchList" :key="match.matchId" size="small" type="info"
-                style="margin-right: 4px; margin-bottom: 4px;">
-                {{ formatMatchLabel(match) }}（已关闭）
-              </el-tag>
+            <div class="plan-combination-empty" v-if="!selectedCombinationCount && readonlyMatches.length">
+              历史记录，尚未关联回报组合
             </div>
-
-            <!-- 当场新建比赛滑出面板（同页面板，只能选已有赛季和球队，与方案计划同一事务） -->
-            <transition name="slide-panel" @before-enter="handlePanelBeforeEnter" @enter="handlePanelEnter"
-              @leave="handlePanelLeave">
-              <div class="plan-new-match-panel" :class="{ shake: newMatchShake }" v-if="newMatchVisible">
-                <div class="plan-new-match-panel-title">
-                  <i class="el-icon-collection-tag"></i>
-                  <span>当场新建比赛（只能选择已有赛季和球队，资料状态必须为正常，与方案计划同一事务保存）</span>
-                </div>
-                <!-- 对阵行：主队 VS 客队 -->
-                <el-row :gutter="12" class="plan-new-match-vs-row">
-                  <el-col :span="10">
-                    <el-form-item label="主队名称" prop="newMatch.homeTeamId" label-width="76px">
-                      <common-enhanced-select ref="newMatchHomeTeamSelect" v-model="editForm.newMatch.homeTeamId"
-                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择已有主队" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="4" class="plan-new-match-vs-col">
-                    <span class="plan-new-match-vs">VS</span>
-                  </el-col>
-                  <el-col :span="10">
-                    <el-form-item label="客队名称" prop="newMatch.awayTeamId" label-width="76px">
-                      <common-enhanced-select ref="newMatchAwayTeamSelect" v-model="editForm.newMatch.awayTeamId"
-                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择已有客队" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-                <el-row :gutter="20">
-                  <el-col :span="12">
-                    <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="90px">
-                      <common-enhanced-select ref="newMatchSeasonSelect" v-model="editForm.newMatch.seasonId"
-                        valueKey="seasonId" labelKey="seasonName" :api-func="listSeason" placeholder="请选择已有赛季" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="90px">
-                      <el-date-picker clearable v-model="editForm.newMatch.matchTime" type="datetime"
-                        value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择比赛时间">
-                      </el-date-picker>
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="比赛场地" label-width="90px">
-                      <el-select v-model="editForm.newMatch.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地"
-                        clearable filterable allow-create default-first-option>
-                        <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label"
-                          :value="item.value" />
-                      </el-select>
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="12">
-                    <el-form-item label="比赛备注" label-width="90px">
-                      <el-input v-model="editForm.newMatch.matchRemark" placeholder="请输入比赛备注内容" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-                <div class="plan-edit-tip">
-                  没有可选的赛季或球队时，请前往赛季页或球队页先创建；赛果仍只能在比赛页补填
-                </div>
-                <div class="plan-new-match-actions">
-                  <el-button type="success" plain icon="el-icon-plus" size="mini" :disabled="!isNewMatchFilled"
-                    @click="handleAddNewMatch">加入本场</el-button>
-                </div>
+            <div class="plan-combination-list" v-if="selectedCombinationCount">
+              <div class="plan-combination-item" v-for="combination in selectedCombinationPreviewList"
+                :key="combination.combinationId">
+                <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode
+                }}</span>
+                <span class="plan-combination-metrics">
+                  回报 {{ formatMoneyDisplay(combination.estimatedReturn) }} · {{ combination.matchCount ||
+                    (combination.matches || []).length }}场
+                </span>
               </div>
-            </transition>
-
-            <!-- 已加入的当场新建比赛：小卡片，可移除可继续编辑 -->
-            <transition-group name="match-card-pop" tag="div" class="plan-new-match-list"
-              v-if="newMatchList.length > 0">
-              <div class="plan-new-match-item" v-for="(match, index) in newMatchList" :key="'new' + index">
-                <div class="plan-new-match-item-main">
-                  <span class="plan-new-match-item-vs">
-                    {{ formatNewMatchVsText(match) }}
-                  </span>
-                  <span class="plan-new-match-item-time">{{ formatNewMatchTimeText(match) }}</span>
-                </div>
-                <div class="plan-new-match-item-sub" v-if="match.matchVenue || match.matchRemark">
-                  {{ [match.matchVenue, match.matchRemark].filter(Boolean).join(" · ") }}
-                </div>
-                <div class="plan-new-match-item-ops">
-                  <el-button type="text" size="mini" icon="el-icon-edit" @click="handleEditNewMatch(index)">编辑
-                  </el-button>
-                  <el-button type="text" size="mini" icon="el-icon-delete"
-                    @click="handleRemoveNewMatch(index)">移除</el-button>
-                </div>
-              </div>
-            </transition-group>
-          </div>
-
-          <!-- 分区三：图片区（仅指定用户渲染） -->
-          <div class="plan-edit-card" v-if="hasImageUploadPermission">
-            <div class="plan-edit-card-header">
-              <span class="plan-edit-card-chip">
-                <i class="el-icon-picture-outline"></i>
-              </span>
-              <span class="plan-edit-card-title">方案计划图片</span>
-              <span class="plan-edit-card-count">{{ (editForm.planImageObjectKeys || []).length }} / 2</span>
             </div>
-            <plan-image-upload v-model="editForm.planImageObjectKeys" />
           </div>
         </el-form>
 
@@ -202,28 +107,31 @@
             <span>实时摘要</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">关联比赛</span>
-            <span class="plan-preview-value" :class="{ ok: previewMatchCount > 0 }">
-              {{ previewMatchCount > 0 ? "已关联 " + previewMatchCount + " 场" : "尚未关联" }}
+            <span class="plan-preview-label">组合数</span>
+            <span class="plan-preview-value" :class="{ ok: selectedCombinationCount > 0 }">
+              {{ selectedCombinationCount || "尚未关联" }}
             </span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">录入倍率</span>
-            <span class="plan-preview-value">{{ editForm.planRate || "空" }}</span>
+            <span class="plan-preview-label">自动倍率</span>
+            <span class="plan-preview-value">{{ autoPreview.planRate || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">录入金额</span>
-            <span class="plan-preview-value">{{ editForm.planAmount || "空" }}</span>
+            <span class="plan-preview-label">自动金额</span>
+            <span class="plan-preview-value">{{ autoPreview.planAmount || "按组合保存后生成" }}</span>
           </div>
-          <div class="plan-preview-row" v-if="hasImageUploadPermission">
-            <span class="plan-preview-label">方案图片</span>
-            <span class="plan-preview-value">{{ (editForm.planImageObjectKeys || []).length }} 张</span>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">手工倍率</span>
+            <span class="plan-preview-value">{{ editForm.planRate || "使用自动值" }}</span>
           </div>
-          <!-- 完整度提示：镜像提交校验口径 -->
-          <div class="plan-preview-hint" :class="previewMatchCount > 0 ? 'ok' : 'warn'">
-            <i :class="previewMatchCount > 0 ? 'el-icon-success' : 'el-icon-warning-outline'"></i>
-            <span v-if="previewMatchCount > 0">已满足「至少关联一场比赛」的保存条件</span>
-            <span v-else>保存前至少要关联一场比赛，已有比赛或当场新建均可</span>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">手工金额</span>
+            <span class="plan-preview-value">{{ editForm.planAmount || "使用自动值" }}</span>
+          </div>
+          <div class="plan-preview-hint" :class="selectedCombinationCount > 0 ? 'ok' : 'warn'">
+            <i :class="selectedCombinationCount > 0 ? 'el-icon-success' : 'el-icon-warning-outline'"></i>
+            <span v-if="selectedCombinationCount > 0">已按组合明细派生 {{ derivedMatchCount }} 场去重比赛</span>
+            <span v-else>请至少选择一条已采用的回报组合</span>
           </div>
         </div>
 
@@ -236,23 +144,14 @@
           <div class="plan-preview-content">{{ editForm.planContent }}</div>
         </div>
 
-        <!-- 已选比赛预览（已有比赛取多选展示文案，当场新建取小卡片口径） -->
-        <div class="plan-preview-card" v-if="previewMatchCount > 0">
+        <!-- 已派生比赛预览（只读，来源为组合明细） -->
+        <div class="plan-preview-card" v-if="derivedMatches.length > 0">
           <div class="plan-preview-title">
             <i class="el-icon-football"></i>
             <span>比赛清单</span>
           </div>
-          <div class="plan-preview-match" v-for="(match, index) in closedMatchList" :key="'p-closed-' + index">
+          <div class="plan-preview-match" v-for="(match, index) in derivedMatches" :key="'p-open-' + index">
             <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
-            <span class="plan-preview-match-flag">已关闭</span>
-          </div>
-          <div class="plan-preview-match" v-for="(match, index) in selectedMatchPreviewList" :key="'p-open-' + index">
-            <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
-          </div>
-          <div class="plan-preview-match plan-preview-match-new" v-for="(match, index) in newMatchList"
-            :key="'p-new-' + index">
-            <span class="plan-preview-match-vs">{{ formatNewMatchVsText(match) }}</span>
-            <span class="plan-preview-match-flag">新建</span>
           </div>
         </div>
       </div>
@@ -261,18 +160,14 @@
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
-import { listTeam } from "@/api/fx67ll/dortmund/team";
-import { listMatch } from "@/api/fx67ll/dortmund/match";
-
-import { teamVenueOptions } from "@/utils/constant/football";
-
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
-import PlanImageUpload from "../PlanImageUpload/index";
+import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
+import { listPlanReturnOptions } from "@/api/fx67ll/dortmund/plan";
+import { getCombination, getGeneration } from "@/api/fx67ll/dortmund/returnCombination";
 
 export default {
   name: "PlanEditScene",
-  components: { CommonEnhancedSelect, PlanImageUpload },
+  components: { CommonEnhancedSelect },
   props: {
     // 编写场景模式（add新增 update修改）
     editMode: {
@@ -284,8 +179,8 @@ export default {
       type: Object,
       default: () => ({}),
     },
-    // 修改时已关联、后来被关闭的比赛（只读展示，后端保持原关联不动）
-    closedMatchList: {
+    // 修改时由后端派生的历史比赛（只读展示）
+    readonlyMatches: {
       type: Array,
       default: () => [],
     },
@@ -296,16 +191,6 @@ export default {
     },
     // 编写场景提交中状态
     submitting: {
-      type: Boolean,
-      default: false,
-    },
-    // 是否拥有图片上传权限（仅指定用户，决定图片分区是否渲染）
-    hasImageUploadPermission: {
-      type: Boolean,
-      default: false,
-    },
-    // 是否拥有方案计划新增权限（决定当场新建比赛入口是否显示）
-    hasPlanAddPermission: {
       type: Boolean,
       default: false,
     },
@@ -353,27 +238,16 @@ export default {
         planAmount: [
           { validator: checkPlanAmount, trigger: "blur" }
         ],
-        "newMatch.seasonId": [
-          { required: true, message: "新比赛所属赛季不能为空", trigger: "change" }
-        ],
-        "newMatch.homeTeamId": [
-          { required: true, message: "新比赛主队不能为空", trigger: "change" }
-        ],
-        "newMatch.awayTeamId": [
-          { required: true, message: "新比赛客队不能为空", trigger: "change" }
-        ],
-        "newMatch.matchTime": [
-          { required: true, message: "新比赛比赛时间不能为空", trigger: "blur" }
+        combinationIds: [
+          { required: true, message: "请至少选择一条已采用的回报组合", trigger: "change" }
         ],
       },
-      // 当场新建比赛面板开关
-      newMatchVisible: false,
-      // 当场新建比赛面板校验失败抖动标记（触发shake动画后自动清除）
-      newMatchShake: false,
-      // 已加入的当场新建比赛列表（提交进 newMatches）
-      newMatchList: [],
-      // 球场预设选项数组
-      teamVenueOptions,
+      // 已采用的回报组合选项缓存
+      combinationOptions: [],
+      // 选中组合的明细缓存
+      combinationDetails: [],
+      // 明细加载状态
+      detailLoading: false,
     };
   },
   computed: {
@@ -383,36 +257,59 @@ export default {
       return newMatch.seasonId != null && newMatch.homeTeamId != null && newMatch.awayTeamId != null
         && newMatch.matchTime != null && newMatch.matchTime !== "";
     },
-    // 编写场景已关联比赛总数（已有比赛 + 当场新建，修改时另含已关闭比赛）
-    previewMatchCount() {
-      return (this.editForm.matchIds || []).length + this.newMatchList.length + this.closedMatchList.length;
+    // 已选回报组合数量
+    selectedCombinationCount() {
+      return (this.editForm.combinationIds || []).length;
     },
-    // 编写场景已选正常比赛对象预览列表（从多选组件已加载选项里取，取不到时兜底空）
-    selectedMatchPreviewList() {
-      const selectRef = this.$refs["editMatchSelect"];
-      // originOptions为全量已加载选项，不受输入过滤影响
-      const options = (selectRef && selectRef.originOptions) || [];
-      const idSet = new Set(this.editForm.matchIds || []);
-      return options.filter((match) => idSet.has(match.matchId));
+    // 已选组合的只读预览（优先使用已加载明细，退回选项摘要）
+    selectedCombinationPreviewList() {
+      const selectedIds = new Set(this.editForm.combinationIds || []);
+      return this.combinationDetails.filter((item) => selectedIds.has(item.combinationId));
     },
-  },
-  created() {
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listSeason = listSeason;
-    this.listTeam = listTeam;
-    // 比赛下拉包装接口：为每个选项拼装 matchName 展示文案（后台比赛数据无 matchName 冗余字段）
-    this.listMatch = (query) => {
-      return listMatch(query).then((response) => {
-        const rows = (response.rows || []).map((match) => ({
-          ...match,
-          matchName: this.formatMatchLabel(match),
-        }));
-        return { ...response, rows };
+    // 组合明细派生并去重后的比赛清单
+    derivedMatches() {
+      const matchMap = new Map();
+      this.combinationDetails.forEach((combination) => {
+        (combination.matches || []).forEach((match) => {
+          if (match.matchId != null && !matchMap.has(match.matchId)) {
+            matchMap.set(match.matchId, match);
+          }
+        });
       });
-    };
+      return Array.from(matchMap.values());
+    },
+    derivedMatchCount() {
+      return this.derivedMatches.length;
+    },
+    // 自动值前端预览：自动金额取预计回报合计，自动倍率用总回报 / 总基础金额
+    autoPreview() {
+      if (!this.combinationDetails.length) {
+        return { planRate: null, planAmount: null };
+      }
+      let totalReturn = 0;
+      let totalInput = 0;
+      this.combinationDetails.forEach((combination) => {
+        totalReturn += Number(combination.estimatedReturn || 0);
+        totalInput += Number(combination.generationInputAmount || 0);
+      });
+      const planAmount = totalInput > 0 ? totalReturn.toFixed(2) : null;
+      const planRate = totalInput > 0 ? (totalReturn / totalInput).toFixed(4) : null;
+      return { planRate, planAmount };
+    },
   },
   methods: {
-    // 从父页面传入的初始表单复制出本场景可编辑副本（避免直接改动父页面数据）
+    // 组合选项包装：为每个选项拼装展示名称
+    loadCombinationOptions() {
+      return listPlanReturnOptions().then((response) => {
+        const rows = (response.data || []).map((item) => ({
+          ...item,
+          combinationName: `${item.combinationTitle || item.combinationCode}（回报 ${item.estimatedReturn || 0}）`,
+        }));
+        this.combinationOptions = rows;
+        return { rows };
+      });
+    },
+    // 从父页面传入的初始表单复制出本场景可编辑副本
     buildEditForm() {
       const initial = this.initialForm || {};
       return {
@@ -421,157 +318,56 @@ export default {
         planRate: initial.planRate || null,
         planAmount: initial.planAmount || null,
         planRemark: initial.planRemark || null,
-        matchIds: [...(initial.matchIds || [])],
-        newMatches: [],
-        planImageObjectKeys: [...(initial.planImageObjectKeys || [])],
-        // 当场新建比赛面板表单同步初始化，避免展开面板取值报错
-        newMatch: this.buildEmptyNewMatch(),
+        combinationIds: [...(initial.combinationIds || [])],
       };
     },
-    // 构建当场新建比赛的空表单对象
-    buildEmptyNewMatch() {
-      return {
-        seasonId: null,
-        homeTeamId: null,
-        awayTeamId: null,
-        matchTime: null,
-        matchVenue: null,
-        matchRemark: null,
-      };
-    },
-    // 展开/收起当场新建比赛面板
-    toggleNewMatchPanel() {
-      this.newMatchVisible = !this.newMatchVisible;
-      if (!this.newMatchVisible) {
-        this.editForm.newMatch = this.buildEmptyNewMatch();
+    // 组合多选变化：拉取最新明细并生成前端预览
+    handleCombinationChange(combinationIds) {
+      const selectedIds = combinationIds || [];
+      const loadedMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
+      const missingIds = selectedIds.filter((id) => !loadedMap.has(id));
+      if (!missingIds.length) {
+        this.combinationDetails = selectedIds.map((id) => loadedMap.get(id)).filter(Boolean);
+        return;
       }
-      this.$nextTick(() => {
-        this.$refs["editForm"] && this.$refs["editForm"].clearValidate();
-      });
+      this.detailLoading = true;
+      Promise.all(missingIds.map((combinationId) => this.loadCombinationDetail(combinationId)))
+        .then((details) => {
+          details.forEach((detail) => {
+            loadedMap.set(detail.combinationId, detail);
+          });
+          this.combinationDetails = selectedIds.map((id) => loadedMap.get(id)).filter(Boolean);
+        })
+        .catch(() => {
+          this.combinationDetails = [];
+        })
+        .finally(() => {
+          this.detailLoading = false;
+        });
     },
-    // 比赛多选变化：暂存到 editForm.matchIds
-    handleMatchIdsChange(val) {
-      this.editForm.matchIds = val;
-    },
-    // 当场新建比赛加入已建列表
-    handleAddNewMatch() {
-      this.$refs["editForm"].validateField(["newMatch.seasonId", "newMatch.homeTeamId", "newMatch.awayTeamId", "newMatch.matchTime"], (errMsg) => {
-        if (errMsg) {
-          // 校验失败时面板抖动提示，短暂展示后自动复位
-          this.newMatchShake = true;
-          setTimeout(() => {
-            this.newMatchShake = false;
-          }, 450);
-          return;
+    // 拉取单条组合与所属生成批次，组合内容只读
+    loadCombinationDetail(combinationId) {
+      return getCombination(combinationId).then((combinationResponse) => {
+        const combination = (combinationResponse && combinationResponse.data) || {};
+        if (!combination.generationId) {
+          return combination;
         }
-        const newMatch = this.editForm.newMatch;
-        if (newMatch.homeTeamId === newMatch.awayTeamId) {
-          this.$modal.msgError("新比赛主队和客队不能相同！");
-          this.newMatchShake = true;
-          setTimeout(() => {
-            this.newMatchShake = false;
-          }, 450);
-          return;
-        }
-        this.newMatchList.push({ ...newMatch });
-        // 加入后清空面板内容，可继续新建下一场
-        this.editForm.newMatch = this.buildEmptyNewMatch();
-        this.$nextTick(() => {
-          this.$refs["editForm"] && this.$refs["editForm"].clearValidate();
+        return getGeneration(combination.generationId).then((generationResponse) => {
+          const generation = (generationResponse && generationResponse.data) || {};
+          return {
+            ...combination,
+            generationInputAmount: generation.inputAmount || 0,
+          };
         });
       });
     },
-    // 移除一条已加入的当场新建比赛
-    handleRemoveNewMatch(index) {
-      this.newMatchList.splice(index, 1);
-    },
-    // 一键回填编辑一条已加入的当场新建比赛（面板已有未加入草稿时提示先处理草稿）
-    handleEditNewMatch(index) {
-      const draft = this.editForm.newMatch || {};
-      const draftFilled = draft.seasonId != null || draft.homeTeamId != null || draft.awayTeamId != null
-        || draft.matchTime != null;
-      if (this.newMatchVisible && draftFilled) {
-        this.$modal.msgWarning("请先处理面板中未加入的比赛草稿，再编辑已加入的比赛");
-        return;
-      }
-      const [match] = this.newMatchList.splice(index, 1);
-      if (!match) {
-        return;
-      }
-      this.editForm.newMatch = { ...match };
-      this.newMatchVisible = true;
+    // 清空手工调整字段，最终值以后端保存响应为准
+    resetManualAdjustment() {
+      this.editForm.planRate = null;
+      this.editForm.planAmount = null;
       this.$nextTick(() => {
-        this.$refs["editForm"] && this.$refs["editForm"].clearValidate();
+        this.$refs.editForm && this.$refs.editForm.clearValidate(["planRate", "planAmount"]);
       });
-    },
-    // 面板展开动画：进入前记录真实高度，从零高度开始过渡
-    handlePanelBeforeEnter(el) {
-      el.style.maxHeight = "0px";
-      el.style.opacity = "0";
-      el.style.overflow = "hidden";
-    },
-    // 面板展开动画：过渡到真实高度后复位样式，保证内容自适应
-    handlePanelEnter(el, done) {
-      const targetHeight = el.scrollHeight ? el.scrollHeight + "px" : "600px";
-      el.style.transition = "max-height 0.35s ease, opacity 0.3s ease";
-      // 强制回流后再赋目标高度，确保过渡生效
-      // eslint-disable-next-line no-unused-expressions
-      el.offsetHeight;
-      el.style.maxHeight = targetHeight;
-      el.style.opacity = "1";
-      let finished = false;
-      const finish = () => {
-        if (finished) {
-          return;
-        }
-        finished = true;
-        el.removeEventListener("transitionend", onEnd);
-        el.style.transition = "";
-        el.style.maxHeight = "";
-        el.style.opacity = "";
-        el.style.overflow = "";
-        done();
-      };
-      // 只认max-height结束事件，避免opacity先结束提前复位样式
-      const onEnd = (event) => {
-        if (event.target === el && event.propertyName === "max-height") {
-          finish();
-        }
-      };
-      el.addEventListener("transitionend", onEnd);
-      setTimeout(finish, 400);
-    },
-    // 面板收起动画：从当前高度过渡回零后完成移除
-    handlePanelLeave(el, done) {
-      const startHeight = el.scrollHeight ? el.scrollHeight + "px" : "600px";
-      el.style.maxHeight = startHeight;
-      el.style.opacity = "1";
-      el.style.overflow = "hidden";
-      el.style.transition = "max-height 0.3s ease, opacity 0.25s ease";
-      // eslint-disable-next-line no-unused-expressions
-      el.offsetHeight;
-      el.style.maxHeight = "0px";
-      el.style.opacity = "0";
-      let finished = false;
-      const finish = () => {
-        if (finished) {
-          return;
-        }
-        finished = true;
-        el.removeEventListener("transitionend", onEnd);
-        el.style.transition = "";
-        el.style.maxHeight = "";
-        el.style.opacity = "";
-        el.style.overflow = "";
-        done();
-      };
-      const onEnd = (event) => {
-        if (event.target === el && event.propertyName === "max-height") {
-          finish();
-        }
-      };
-      el.addEventListener("transitionend", onEnd);
-      setTimeout(finish, 350);
     },
     // 返回总览（交由父页面切回列表场景并刷新）
     handleBackToList() {
@@ -583,38 +379,13 @@ export default {
       const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },
-    // 当场新建比赛对阵文案：从已选主客队行取球队名（面板选择未经过本地映射，取不到时兜底占位）
-    formatNewMatchVsText(match) {
-      const homeName = this.findTeamNameById(match.homeTeamId);
-      const awayName = this.findTeamNameById(match.awayTeamId);
-      return `${homeName} vs ${awayName}`;
+    formatMoneyDisplay(value) {
+      return formatMoneyDisplay(value);
     },
-    // 按球队ID取球队名（取不到时兜底占位，供当场新建比赛卡片与预览展示）
-    findTeamNameById(teamId) {
-      const candidates = [this.$refs["newMatchHomeTeamSelect"], this.$refs["newMatchAwayTeamSelect"]]
-        .map((ref) => (ref && ref.originOptions) || [])
-        .flat();
-      const team = candidates.find((item) => item.teamId === teamId);
-      return (team && team.teamName) || "球队";
-    },
-    // 当场新建比赛时间文案（时间为空时兜底占位）
-    formatNewMatchTimeText(match) {
-      return this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}") || "时间待定";
-    },
-    /** 提交按钮：校验通过后构建请求体交由父页面提交，失败时保留已填文字、选择与图片 */
+    /** 提交按钮：校验通过后构建请求体交由父页面提交，失败时保留已填文字和组合选择 */
     submitEditForm() {
       this.$refs["editForm"].validate(valid => {
         if (!valid) {
-          return;
-        }
-        // 至少一场比赛（已有比赛 + 当场新建，修改时后端另保留已关联的关闭比赛）
-        const totalMatchCount = (this.editForm.matchIds || []).length + this.newMatchList.length;
-        if (this.editMode === "add" && totalMatchCount === 0) {
-          this.$modal.msgError("方案计划至少要关联一场比赛！");
-          return;
-        }
-        if (this.editMode === "update" && totalMatchCount === 0 && this.closedMatchList.length === 0) {
-          this.$modal.msgError("方案计划保存后至少要关联一场比赛！");
           return;
         }
         const isAdd = this.editMode === "add";
@@ -623,24 +394,10 @@ export default {
           planRate: this.editForm.planRate,
           planAmount: this.editForm.planAmount,
           planRemark: this.editForm.planRemark,
-          matchIds: this.editForm.matchIds || [],
-          newMatches: this.newMatchList.map(match => ({
-            seasonId: match.seasonId,
-            homeTeamId: match.homeTeamId,
-            awayTeamId: match.awayTeamId,
-            matchTime: match.matchTime,
-            matchVenue: match.matchVenue,
-            // 新建比赛资料状态必须为正常，赛果可空
-            matchStatus: "0",
-            matchRemark: match.matchRemark,
-          })),
+          combinationIds: this.editForm.combinationIds || [],
         };
         if (!isAdd) {
           data.planId = this.editForm.planId;
-        }
-        // 图片对象键只在拥有上传权限且操作过图片区时提交（全部移除时为空数组）
-        if (this.hasImageUploadPermission) {
-          data.planImageObjectKeys = this.editForm.planImageObjectKeys || [];
         }
         this.$emit("save", data);
       });
@@ -803,6 +560,56 @@ export default {
   font-size: 12px;
   line-height: 1.5;
   color: #909399;
+}
+
+.plan-combination-empty {
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #b88230;
+  text-align: center;
+  background: #fdf6ec;
+  border: 1px dashed #f5e6c8;
+  border-radius: 10px;
+}
+
+.plan-combination-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.plan-combination-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #f9fcfa;
+  border: 1px solid #e8f2ed;
+  border-radius: 10px;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+
+  &:hover {
+    border-color: #2ecc71;
+    box-shadow: 0 6px 14px rgba(46, 204, 113, 0.12);
+    transform: translateY(-1px);
+  }
+}
+
+.plan-combination-title {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2b3a36;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.plan-combination-metrics {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #7c8b84;
 }
 
 /* 已关联但后来被关闭的比赛只读标签 */

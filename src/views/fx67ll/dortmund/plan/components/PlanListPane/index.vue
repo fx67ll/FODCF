@@ -20,11 +20,7 @@
           <span>{{ formatMatchSummary(scope.row) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="图片张数" align="center" prop="planImageObjectKeys" width="80" v-if="showImageCount">
-        <template slot-scope="scope">
-          <span>{{ (scope.row.planImageObjectKeys || []).length }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column label="组合倍率" align="center" prop="calculatedPlanRate" width="92" />
       <el-table-column label="其他说明" align="center" prop="planRemark" width="180" :show-overflow-tooltip="true" />
       <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
@@ -59,11 +55,6 @@ export default {
     },
     // 列表加载状态
     loading: {
-      type: Boolean,
-      default: false,
-    },
-    // 是否拥有图片查询权限（决定列表是否展示图片张数列）
-    showImageCount: {
       type: Boolean,
       default: false,
     },

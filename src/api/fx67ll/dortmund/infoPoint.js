@@ -35,6 +35,14 @@ export function updateInfoPoint(data) {
   });
 }
 
+// 删除统一信息点
+export function delInfoPoint(infoPointIds) {
+  return request({
+    url: "/dortmund/info/point/" + infoPointIds,
+    method: "delete",
+  });
+}
+
 // 启用/停用统一信息点
 export function changeInfoPointStatus(data) {
   return request({

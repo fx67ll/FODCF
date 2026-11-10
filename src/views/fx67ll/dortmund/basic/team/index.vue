@@ -1,250 +1,169 @@
 <template>
   <div class="app-container dl-page">
-    <transition name="dl-filter">
-      <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
-        label-width="72px">
-        <el-form-item label="球队编码" prop="teamCode" v-if="isMoreQuery">
-          <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable @keyup.enter.native="handleQuery" />
-        </el-form-item>
-        <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
-        <el-form-item label="搜索球队" prop="teamName">
-          <el-input v-model="queryParams.teamName" placeholder="请输入球队全称/昵称/简称/英文" clearable
-            @keyup.enter.native="handleQuery" />
-        </el-form-item>
-        <el-form-item label="球队全称" prop="teamName" v-if="isMoreQuery">
-          <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable @keyup.enter.native="handleQuery" />
-        </el-form-item>
-        <el-form-item label="球队昵称" prop="teamNameShort" v-if="isMoreQuery">
-          <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称/简称" clearable
-            @keyup.enter.native="handleQuery" />
-        </el-form-item>
-        <el-form-item label="球队英文" prop="teamNameEn" v-if="isMoreQuery">
-          <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable
-            @keyup.enter.native="handleQuery" />
-        </el-form-item>
-        <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
-          <el-select v-model="queryParams.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
-            allow-create default-first-option>
-            <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="地区/联赛" prop="teamCountry">
-          <el-select v-model="queryParams.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable
-            filterable allow-create default-first-option>
-            <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
-          <el-select v-model="queryParams.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
-            multiple allow-create default-first-option>
-            <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
-          <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
-            @keyup.enter.native="handleQuery">
-            <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-              :value="dict.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="创建时间" v-if="isMoreQuery">
-          <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-            range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
-        </el-form-item>
-        <el-form-item label="更新时间" v-if="isMoreQuery">
-          <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-            range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-          <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-          <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-            @click="handleMoreQuery">
-            {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </transition>
+    <template v-if="!open">
+      <transition name="dl-filter">
+        <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
+          label-width="72px">
+          <el-form-item label="球队编码" prop="teamCode" v-if="isMoreQuery">
+            <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
+          <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
+          <el-form-item label="搜索球队" prop="teamName">
+            <el-input v-model="queryParams.teamName" placeholder="请输入球队全称/昵称/简称/英文" clearable
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
+          <el-form-item label="球队全称" prop="teamName" v-if="isMoreQuery">
+            <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
+          <el-form-item label="球队昵称" prop="teamNameShort" v-if="isMoreQuery">
+            <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称/简称" clearable
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
+          <el-form-item label="球队英文" prop="teamNameEn" v-if="isMoreQuery">
+            <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable
+              @keyup.enter.native="handleQuery" />
+          </el-form-item>
+          <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
+            <el-select v-model="queryParams.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
+              allow-create default-first-option>
+              <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="地区/联赛" prop="teamCountry">
+            <el-select v-model="queryParams.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable
+              filterable allow-create default-first-option>
+              <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
+            <el-select v-model="queryParams.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
+              allow-create default-first-option>
+              <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
+            <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
+              @keyup.enter.native="handleQuery">
+              <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                :value="dict.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="创建时间" v-if="isMoreQuery">
+            <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
+              type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+              clearable></el-date-picker>
+          </el-form-item>
+          <el-form-item label="更新时间" v-if="isMoreQuery">
+            <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
+              type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+              clearable></el-date-picker>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+            <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+              @click="handleMoreQuery">
+              {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </transition>
 
-    <div class="dl-toolbar">
-      <div class="dl-toolbar-actions">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['dortmund:team:add']">新增</el-button>
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-          v-hasPermi="['dortmund:team:edit']">修改</el-button>
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-          v-hasPermi="['dortmund:team:remove']">删除</el-button>
-        <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+      <div class="dl-toolbar">
+        <div class="dl-toolbar-actions">
+          <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+            v-hasPermi="['dortmund:team:add']">新增</el-button>
+          <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+            v-hasPermi="['dortmund:team:edit']">修改</el-button>
+          <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+            v-hasPermi="['dortmund:team:remove']">删除</el-button>
+          <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dortmund:team:export']">导出</el-button> -->
-        <transition name="dl-chip">
-          <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length }}
-            项</span>
-        </transition>
-      </div>
-      <div class="dl-toolbar-side">
-        <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
-      </div>
-    </div>
-
-    <div class="dl-list-card">
-      <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="球队编码" align="center" prop="teamCode" width="80" :show-overflow-tooltip="true"
-          fixed="left" />
-        <el-table-column label="球队全称" align="center" prop="teamName" width="190" :show-overflow-tooltip="true"
-          fixed="left" />
-        <el-table-column label="球队昵称" align="center" prop="teamNameShort" width="100" :show-overflow-tooltip="true" />
-        <el-table-column label="球队英文" align="center" prop="teamNameEn" width="150" :show-overflow-tooltip="true" />
-        <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" width="80">
-          <template slot-scope="scope">
-            <!-- 判断Logo地址是否有效（非空、非'-'） -->
-            <div v-if="scope.row.teamLogoUrl && scope.row.teamLogoUrl !== '-'" class="team-logo-cell">
-              <el-image :src="scope.row.teamLogoUrl" fit="cover" class="team-logo-img"
-                :preview-src-list="[scope.row.teamLogoUrl]" placeholder="加载中..." error-icon="el-icon-picture-outline" />
-            </div>
-            <!-- 无效地址时显示占位文本/图标 -->
-            <div v-else class="team-logo-empty">
-              <i class="el-icon-picture-outline"></i>
-              暂无Logo
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="球队主场" align="center" prop="teamVenue" width="190" :show-overflow-tooltip="true" />
-        <el-table-column label="地区/联赛" align="center" prop="teamCountry" />
-        <el-table-column label="球队标签" align="center" prop="teamTag" width="230">
-          <template slot-scope="scope">
-            <!-- 遍历拆分后的标签数组，匹配对应 type 渲染彩色标签 -->
-            <el-tag v-for="(tag, index) in scope.row.teamTag" :key="index" size="mini" :type="getTagType(tag.trim())"
-              style="margin-right: 4px; margin-bottom: 4px;">
-              {{ tag.trim() }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="球队状态" align="center" prop="teamStatus" width="80">
-          <template slot-scope="scope">
-            <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.teamStatus" />
-          </template>
-        </el-table-column>
-        <el-table-column label="球队排序" align="center" prop="teamSort" width="100" sortable="teamSort"
-          :sort-orders="['descending', 'ascending']" />
-        <el-table-column label="球队备注" align="center" prop="teamRemark" width="230" :show-overflow-tooltip="true" />
-        <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
-        <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
-          <template slot-scope="scope">
-            <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
-        <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
-          <template slot-scope="scope">
-            <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
-          <template slot-scope="scope">
-            <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-              v-hasPermi="['dortmund:team:edit']">修改</el-button>
-            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-              v-hasPermi="['dortmund:team:remove']">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
-
-    <!-- 添加或修改球队管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="800px"
-      :style="`top: ${getDialogVerticalOffset(420)}`" append-to-body custom-class="team-edit-dialog">
-      <template slot="title">
-        <div class="dialog-header">
-          <div class="dialog-header-icon">
-            <i class="el-icon-s-flag"></i>
-          </div>
-          <div class="dialog-header-text">
-            <div class="dialog-header-title">{{ title }}</div>
-            <div class="dialog-header-sub">球队受比赛引用时停用而非删除，编码创建后不可修改</div>
-          </div>
+          <transition name="dl-chip">
+            <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length }}
+              项</span>
+          </transition>
         </div>
-      </template>
-      <el-form ref="form" :model="form" :rules="rules" label-width="85px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="球队编码" prop="teamCode">
-              <!-- 编码创建后不可修改，需要更换编码时新建资源、迁移引用并停用旧资源 -->
-              <el-input v-model="form.teamCode" placeholder="请输入球队编码" :disabled="form.teamId != null" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队全称" prop="teamName">
-              <el-input v-model="form.teamName" placeholder="请输入球队中文全称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队昵称" prop="teamNameShort">
-              <el-input v-model="form.teamNameShort" placeholder="请输入球队昵称/简称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队英文" prop="teamNameEn">
-              <el-input v-model="form.teamNameEn" placeholder="请输入球队英文名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队主场" prop="teamVenue">
-              <el-select v-model="form.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
-                allow-create default-first-option>
-                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="地区/联赛" prop="teamCountry">
-              <el-select v-model="form.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable filterable
-                allow-create default-first-option>
-                <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label"
-                  :value="item.value" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <!-- https://vip.fx67ll.com/vip-api/getRandomAvatar?isNeedMoreMosaic=Y&avatarBlockNum=6&avatarPadding=19 -->
-            <el-form-item label="球队Logo" prop="teamLogoUrl">
-              <el-input v-model="form.teamLogoUrl" placeholder="请输入球队Logo图片的链接地址" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="球队标签" prop="teamTag">
-              <el-select v-model="form.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
-                multiple allow-create default-first-option>
-                <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队状态" prop="teamStatus">
-              <!-- 停用入口保留在当前弹窗内，停用值与后台保持一致为 1 -->
-              <el-switch v-model="form.teamStatus" active-value="0" inactive-value="1" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="球队排序" prop="teamSort">
-              <el-input v-model="form.teamSort" type="number" min="0" max="1023" step="1" placeholder="请输入球队排序" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="球队备注" prop="teamRemark">
-              <el-input v-model="form.teamRemark" type="textarea" placeholder="请输入球队备注内容" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <div class="dl-toolbar-side">
+          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+        </div>
       </div>
-    </el-dialog>
+
+      <div class="dl-list-card">
+        <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column label="球队编码" align="center" prop="teamCode" width="80" :show-overflow-tooltip="true"
+            fixed="left" />
+          <el-table-column label="球队全称" align="center" prop="teamName" width="190" :show-overflow-tooltip="true"
+            fixed="left" />
+          <el-table-column label="球队昵称" align="center" prop="teamNameShort" width="100" :show-overflow-tooltip="true" />
+          <el-table-column label="球队英文" align="center" prop="teamNameEn" width="150" :show-overflow-tooltip="true" />
+          <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" width="80">
+            <template slot-scope="scope">
+              <!-- 判断Logo地址是否有效（非空、非'-'） -->
+              <div v-if="scope.row.teamLogoUrl && scope.row.teamLogoUrl !== '-'" class="team-logo-cell">
+                <el-image :src="scope.row.teamLogoUrl" fit="cover" class="team-logo-img"
+                  :preview-src-list="[scope.row.teamLogoUrl]" placeholder="加载中..."
+                  error-icon="el-icon-picture-outline" />
+              </div>
+              <!-- 无效地址时显示占位文本/图标 -->
+              <div v-else class="team-logo-empty">
+                <i class="el-icon-picture-outline"></i>
+                暂无Logo
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="球队主场" align="center" prop="teamVenue" width="190" :show-overflow-tooltip="true" />
+          <el-table-column label="地区/联赛" align="center" prop="teamCountry" />
+          <el-table-column label="球队标签" align="center" prop="teamTag" width="230">
+            <template slot-scope="scope">
+              <!-- 遍历拆分后的标签数组，匹配对应 type 渲染彩色标签 -->
+              <el-tag v-for="(tag, index) in scope.row.teamTag" :key="index" size="mini" :type="getTagType(tag.trim())"
+                style="margin-right: 4px; margin-bottom: 4px;">
+                {{ tag.trim() }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="球队状态" align="center" prop="teamStatus" width="80">
+            <template slot-scope="scope">
+              <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.teamStatus" />
+            </template>
+          </el-table-column>
+          <el-table-column label="球队排序" align="center" prop="teamSort" width="100" sortable="teamSort"
+            :sort-orders="['descending', 'ascending']" />
+          <el-table-column label="球队备注" align="center" prop="teamRemark" width="230" :show-overflow-tooltip="true" />
+          <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
+          <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
+            <template slot-scope="scope">
+              <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
+          <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
+            <template slot-scope="scope">
+              <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
+            <template slot-scope="scope">
+              <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+                v-hasPermi="['dortmund:team:edit']">修改</el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+                v-hasPermi="['dortmund:team:remove']">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+        @pagination="getList" />
+    </template>
+
+    <!-- 添加或修改球队管理二级页面 -->
+    <team-edit-scene v-else key="edit" :edit-mode="editMode" :initial-form="form" :submitting="submitting"
+      @back="cancel" @save="submitForm" />
   </div>
 </template>
 
@@ -254,10 +173,12 @@ import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/do
 import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import TeamEditScene from "./components/TeamEditScene/index.vue";
 
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
+  components: { TeamEditScene },
   data() {
     return {
       // 遮罩层
@@ -278,6 +199,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 编辑场景模式
+      editMode: "add",
+      // 编辑提交状态
+      submitting: false,
       // 创建时间范围
       daterangeCreateTime: [],
       // 更新时间范围
@@ -375,6 +300,10 @@ export default {
         const teamListTmp = (response.rows || []).map(item => ({ ...item, teamTag: item.teamTag ? item.teamTag.split(',').map(t => t.trim()) : [] }));
         this.teamList = this.formatObjectArrayNullProperty(teamListTmp);
         this.total = response.total;
+      }).catch(() => {
+        this.teamList = [];
+        this.total = 0;
+      }).finally(() => {
         this.loading = false;
       });
     },
@@ -427,6 +356,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.editMode = "add";
       this.open = true;
       this.title = "添加球队管理";
     },
@@ -438,29 +368,24 @@ export default {
         const formDataObj = response.data;
         formDataObj.teamTag = formDataObj?.teamTag ? formDataObj.teamTag?.split(",") || [] : '';
         this.form = formDataObj;
+        this.editMode = "update";
         this.open = true;
         this.title = "修改球队管理";
+      }).catch(() => {
+        this.$modal.msgError("获取球队详情失败");
       });
     },
     /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          this.form.teamTag = this.form?.teamTag?.length ? this.form.teamTag.join(",") : '';
-          if (this.form.teamId != null) {
-            updateTeam(this.form).then(response => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addTeam(this.form).then(response => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
+    submitForm(formData) {
+      this.submitting = true;
+      const request = formData.teamId != null ? updateTeam(formData) : addTeam(formData);
+      request.then(() => {
+        this.$modal.msgSuccess(formData.teamId != null ? "修改成功" : "新增成功");
+        this.open = false;
+        this.getList();
+      }).catch(() => {
+      }).finally(() => {
+        this.submitting = false;
       });
     },
     /** 删除按钮操作 */

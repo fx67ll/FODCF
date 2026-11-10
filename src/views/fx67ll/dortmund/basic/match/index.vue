@@ -8,6 +8,18 @@
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
+            <el-form-item label="主队名称" prop="homeTeamId">
+              <el-input :value="formatSelectedTeam(selectedHomeTeam)" readonly placeholder="请选择主队名称"
+                @focus="openTeamSelector('home')" />
+            </el-form-item>
+            <el-form-item label="客队名称" prop="awayTeamId">
+              <el-input :value="formatSelectedTeam(selectedAwayTeam)" readonly placeholder="请选择客队名称"
+                @focus="openTeamSelector('away')" />
+            </el-form-item>
+            <el-form-item label="比赛编码" prop="matchCode">
+              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable
+                @keyup.enter.native="handleQuery" />
+            </el-form-item>
             <el-form-item label="比赛编号" prop="matchId" v-if="isMoreQuery">
               <el-input v-model="queryParams.matchId" type="number" min="1" step="1" placeholder="请输入比赛编号" clearable
                 @keyup.enter.native="handleQuery" />
@@ -15,14 +27,6 @@
             <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
               <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
                 labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
-            </el-form-item>
-            <el-form-item label="主队名称" prop="homeTeamId">
-              <common-enhanced-select ref="homeTeamSelect" v-model="queryParams.homeTeamId" valueKey="teamId"
-                labelKey="teamName" :api-func="listTeam" placeholder="请选择主队名称" :enter-callback="handleQuery" />
-            </el-form-item>
-            <el-form-item label="客队名称" prop="awayTeamId">
-              <common-enhanced-select ref="awayTeamSelect" v-model="queryParams.awayTeamId" valueKey="teamId"
-                labelKey="teamName" :api-func="listTeam" placeholder="请选择客队名称" :enter-callback="handleQuery" />
             </el-form-item>
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker v-model="daterangeMatchTime" style="width: 240px" value-format="yyyy-MM-dd"
@@ -95,6 +99,8 @@
             <el-table-column type="selection" width="55" align="center" />
             <el-table-column label="比赛编号" align="center" prop="matchId" width="80" fixed="left" />
             <el-table-column label="所属赛季" align="center" prop="seasonName" width="80" fixed="left" />
+            <el-table-column label="比赛编码" align="center" prop="matchCode" width="140" fixed="left"
+              show-overflow-tooltip />
             <el-table-column label="主队名称" align="center" prop="homeTeamName" width="190" fixed="left">
               <template slot-scope="scope">
                 <span class="match-team-name home">{{ scope.row.homeTeamName || "-" }}</span>
@@ -136,12 +142,14 @@
                 <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
+            <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="190">
               <template slot-scope="scope">
                 <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
                   v-hasPermi="['dortmund:match:edit']">修改</el-button>
                 <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
                   v-hasPermi="['dortmund:match:remove']">删除</el-button>
+                <el-button size="mini" type="text" icon="el-icon-odometer" @click="handleOdds(scope.row)"
+                  v-hasPermi="['dortmund:odds:list']">odds</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -153,25 +161,30 @@
 
       <!-- 比赛编排场景：新增/修改共用整页，按填写顺序铺开 -->
       <match-edit-scene key="edit" v-else ref="editScene" :edit-mode="editMode" :initial-form="editForm"
-        :edit-loading="editLoading" :submitting="submitting" @back="handleSceneBack" @save="handleSceneSave" />
+        :edit-loading="editLoading" :submitting="submitting" @back="handleSceneBack" @save="handleSceneSave"
+        @saved="getList" />
     </transition>
+
+    <dortmund-team-selector-modal :visible.sync="teamSelectorVisible"
+      :selected-items="teamSelectorSide === 'home' ? [selectedHomeTeam] : [selectedAwayTeam]"
+      @confirm="handleTeamSelectorConfirm" />
   </div>
 </template>
 
 <script>
 import { listMatch, getMatch, delMatch, addMatch, updateMatch } from "@/api/fx67ll/dortmund/match";
 import { listSeason } from "@/api/fx67ll/dortmund/season";
-import { listTeam } from "@/api/fx67ll/dortmund/team";
 
 import { teamVenueOptions } from "@/utils/constant/football";
 
+import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import MatchEditScene from "./components/MatchEditScene/index";
 
 export default {
   name: "Match",
   dicts: ["sys_notice_status", "fx67ll_match_result"],
-  components: { CommonEnhancedSelect, MatchEditScene },
+  components: { CommonEnhancedSelect, MatchEditScene, DortmundTeamSelectorModal },
   data() {
     return {
       // 页面场景（list总览列表 edit比赛编排）
@@ -209,6 +222,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         matchId: null,
+        matchCode: null,
         seasonId: null,
         homeTeamId: null,
         awayTeamId: null,
@@ -224,6 +238,10 @@ export default {
       },
       // 编排场景初始表单（进入编排场景前由父页面构建，场景组件复制出可编辑副本）
       editForm: {},
+      selectedHomeTeam: null,
+      selectedAwayTeam: null,
+      teamSelectorVisible: false,
+      teamSelectorSide: "home",
       // 球场预设选项数组（查询表单比赛场地可选项）
       teamVenueOptions,
     };
@@ -231,7 +249,6 @@ export default {
   created() {
     // 将导入的函数挂载到实例，以便模板中使用
     this.listSeason = listSeason;
-    this.listTeam = listTeam;
 
     this.getList();
   },
@@ -280,7 +297,25 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.selectedHomeTeam = null;
+      this.selectedAwayTeam = null;
       this.handleQuery();
+    },
+    openTeamSelector(side) {
+      this.teamSelectorSide = side;
+      this.teamSelectorVisible = true;
+    },
+    formatSelectedTeam(team) {
+      return team ? team.teamName : "";
+    },
+    handleTeamSelectorConfirm(team) {
+      if (this.teamSelectorSide === "home") {
+        this.selectedHomeTeam = team || null;
+        this.queryParams.homeTeamId = team ? team.teamId : null;
+      } else {
+        this.selectedAwayTeam = team || null;
+        this.queryParams.awayTeamId = team ? team.teamId : null;
+      }
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -304,6 +339,7 @@ export default {
         // 从详情中挑选允许修改的字段构建初始表单，后台字段不进入可编辑控件
         this.editForm = {
           matchId: detail.matchId,
+          matchCode: detail.matchCode,
           seasonId: detail.seasonId,
           homeTeamId: detail.homeTeamId,
           awayTeamId: detail.awayTeamId,
@@ -322,6 +358,7 @@ export default {
     resetEditScene() {
       this.editForm = {
         matchId: null,
+        matchCode: null,
         seasonId: null,
         homeTeamId: null,
         awayTeamId: null,
@@ -336,6 +373,9 @@ export default {
     handleSceneBack() {
       this.pageScene = "list";
       this.getList();
+    },
+    handleOdds(row) {
+      this.$router.push({ path: "/dortmund/odds", query: { matchId: row.matchId } });
     },
     // 场景保存：编排场景校验并构建请求体后回传，父页面负责提交
     handleSceneSave(data) {

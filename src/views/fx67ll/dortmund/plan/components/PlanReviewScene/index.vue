@@ -6,6 +6,9 @@
         <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
         <span class="plan-edit-title">方案计划回顾</span>
       </div>
+      <el-button v-if="hasSummaryPermission && (detailModel.combinationIds || []).length" type="primary" plain
+        icon="el-icon-document-copy" size="mini" :loading="summaryLoading" @click="$emit('copy-summary')">复制摘要
+      </el-button>
     </div>
 
     <div class="plan-review-body" v-loading="reviewLoading">
@@ -55,17 +58,6 @@
         </el-table>
       </div>
 
-      <!-- 图片（有权限时，最多两张，只读） -->
-      <div class="plan-review-card" v-if="hasImageQueryPermission">
-        <div class="plan-review-card-title">方案计划图片（{{ (detailModel.planImageObjectKeys || []).length }} / 2）</div>
-        <div class="plan-review-image-list">
-          <el-image v-for="(objectKey, index) in detailModel.planImageObjectKeys || []" :key="index"
-            :src="baseUrl + objectKey" fit="cover"
-            style="width: 120px; height: 120px; border-radius: 6px; margin-right: 10px;"
-            :preview-src-list="imagePreviewList" />
-          <span class="plan-review-image-empty" v-if="!(detailModel.planImageObjectKeys || []).length">暂无图片</span>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -85,22 +77,15 @@ export default {
       type: Boolean,
       default: false,
     },
-    // 是否拥有图片查询权限（决定图片区是否渲染）
-    hasImageQueryPermission: {
+    // 是否拥有方案计划摘要权限
+    hasSummaryPermission: {
       type: Boolean,
       default: false,
     },
-  },
-  data() {
-    return {
-      // 图片预览基础地址
-      baseUrl: process.env.VUE_APP_BASE_API,
-    };
-  },
-  computed: {
-    // 回顾场景图片预览集合（完整地址）
-    imagePreviewList() {
-      return (this.detailModel.planImageObjectKeys || []).map((objectKey) => this.baseUrl + objectKey);
+    // 复制摘要前的刷新请求状态
+    summaryLoading: {
+      type: Boolean,
+      default: false,
     },
   },
   methods: {

@@ -8,14 +8,13 @@
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="84px">
-            <el-form-item label="方案计划" prop="planContent" v-if="isMoreQuery">
+            <el-form-item label="方案计划" prop="planContent">
               <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId">
-              <common-enhanced-select ref="matchSelect" v-model="queryParams.matchId" valueKey="matchId"
-                labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" placeholder="请选择关联比赛"
-                :enter-callback="handleQuery" />
+              <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
+                @focus="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
@@ -63,12 +62,10 @@
         <!-- 卡片视图（默认）/ 列表视图（原总览列表），切换带过渡 -->
         <transition name="dl-view" mode="out-in">
           <plan-card-pane v-if="viewMode === 'card'" key="card" :rows="planList" :loading="loading"
-            :show-image-count="hasImageQueryPermission" @review="handleReview" @update="handleUpdate"
-            @delete="handleDelete" />
+            @review="handleReview" @update="handleUpdate" @delete="handleDelete" />
           <div v-else key="list" class="dl-list-card">
-            <plan-list-pane :rows="planList" :loading="loading" :show-image-count="hasImageQueryPermission"
-              @selection-change="handleSelectionChange" @review="handleReview" @update="handleUpdate"
-              @delete="handleDelete" />
+            <plan-list-pane :rows="planList" :loading="loading" @selection-change="handleSelectionChange"
+              @review="handleReview" @update="handleUpdate" @delete="handleDelete" />
           </div>
         </transition>
 
@@ -78,24 +75,26 @@
 
       <!-- 编写场景：创建/修改共用整页（组件内持有表单副本与当场新建面板） -->
       <plan-edit-scene key="edit" v-else-if="pageScene === 'edit'" :edit-mode="editMode" :initial-form="editForm"
-        :closed-match-list="closedMatchList" :edit-loading="editLoading" :submitting="submitting"
-        :has-image-upload-permission="hasImageUploadPermission" :has-plan-add-permission="hasPlanAddPermission"
+        :readonly-matches="readonlyMatchList" :edit-loading="editLoading" :submitting="submitting"
         @back="handleSceneBack" @save="handleSceneSave" />
 
       <!-- 回顾场景：整页只读 -->
       <plan-review-scene key="review" v-else :detail-model="detailModel" :review-loading="reviewLoading"
-        :has-image-query-permission="hasImageQueryPermission" @back="handleSceneBack" />
+        :has-summary-permission="hasSummaryPermission" :summary-loading="summaryLoading"
+        @copy-summary="handleCopySummary" @back="handleSceneBack" />
     </transition>
+
+    <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" :selected-items="[selectedMatch]"
+      @confirm="handleMatchSelectorConfirm" />
   </div>
 </template>
 
 <script>
 import { listPlan, getPlan, addPlan, updatePlan, delPlan } from "@/api/fx67ll/dortmund/plan";
-import { listMatch } from "@/api/fx67ll/dortmund/match";
-
+import { refreshPlanSummary } from "@/api/fx67ll/dortmund/plan";
 import { checkPermi } from "@/utils/common/permission";
 
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
@@ -107,7 +106,7 @@ const VIEW_MODE_KEY = "dortmund-plan-view-mode";
 
 export default {
   name: "Plan",
-  components: { CommonEnhancedSelect, ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene },
+  components: { ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene, DortmundMatchSelectorModal },
   data() {
     return {
       // 页面场景（list总览列表 edit编写 review回顾）
@@ -140,6 +139,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      selectedMatch: null,
+      matchSelectorVisible: false,
       // 是否使用高级搜索
       isMoreQuery: false,
       // 查询参数
@@ -158,21 +159,14 @@ export default {
       // 编写场景初始表单（进入编写场景前由父页面构建，场景组件复制出可编辑副本）
       editForm: {},
       // 修改时已关联、后来被关闭的比赛（只读展示传入编写场景，后端保持原关联不动）
-      closedMatchList: [],
+      readonlyMatchList: [],
+      summaryLoading: false,
     };
   },
   computed: {
-    // 是否拥有图片上传权限（仅指定用户）
-    hasImageUploadPermission() {
-      return checkPermi(["dortmund:plan:image:upload"]);
-    },
-    // 是否拥有图片查询权限（决定列表图片张数列与回顾图片区是否渲染）
-    hasImageQueryPermission() {
-      return checkPermi(["dortmund:plan:image:query"]);
-    },
-    // 是否拥有方案计划新增权限（决定当场新建比赛入口是否显示）
-    hasPlanAddPermission() {
-      return checkPermi(["dortmund:plan:add"]);
+    // 方案计划摘要仅对授权用户开放
+    hasSummaryPermission() {
+      return checkPermi(["dortmund:plan:summary"]);
     },
   },
   created() {
@@ -241,7 +235,17 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.selectedMatch = null;
       this.handleQuery();
+    },
+    formatSelectedMatch(match) {
+      const matchTime = this.parseTime(match?.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const teams = [match?.homeTeamName, match?.awayTeamName].filter(Boolean).join(" vs ");
+      return teams ? `${teams}${matchTime ? `（${matchTime}）` : ""}` : (match?.matchCode || "");
+    },
+    handleMatchSelectorConfirm(match) {
+      this.selectedMatch = match || null;
+      this.queryParams.matchId = match ? match.matchId : null;
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -263,10 +267,7 @@ export default {
       this.editLoading = true;
       getPlan(planId).then(response => {
         const detail = response.data || {};
-        // 已关联比赛中后来被关闭的保持只读展示并维持关联，正常比赛进多选框
-        const matches = detail.matches || [];
-        this.closedMatchList = matches.filter(item => item.matchStatus !== "0");
-        const openMatchIds = matches.filter(item => item.matchStatus === "0").map(item => item.matchId);
+        this.readonlyMatchList = detail.matches || [];
         // 从详情中挑选允许修改的字段构建初始表单，后台字段不进入可编辑控件
         this.editForm = {
           planId: detail.planId,
@@ -274,8 +275,7 @@ export default {
           planRate: detail.planRate,
           planAmount: detail.planAmount,
           planRemark: detail.planRemark,
-          matchIds: openMatchIds,
-          planImageObjectKeys: detail.planImageObjectKeys || [],
+          combinationIds: detail.combinationIds || [],
         };
         this.pageScene = "edit";
       }).finally(() => {
@@ -293,7 +293,53 @@ export default {
         this.reviewLoading = false;
       });
     },
-    // 重置编写场景初始表单与只读关闭比赛列表（场景组件每次进入重新挂载，自带面板与当场新建表单重置）
+    // 先刷新保存摘要，再把服务端最新文本写入剪贴板
+    handleCopySummary() {
+      const planId = this.detailModel.planId;
+      if (!planId) {
+        return;
+      }
+      this.summaryLoading = true;
+      refreshPlanSummary(planId).then((response) => {
+        const content = (response.data && response.data.content) || "";
+        if (!content) {
+          this.$modal.msgWarning("暂无可复制的方案摘要");
+          return;
+        }
+        this.copyText(content, () => {
+          this.$modal.msgSuccess("摘要已复制");
+        });
+      }).catch(() => {
+      }).finally(() => {
+        this.summaryLoading = false;
+      });
+    },
+    // 优先使用异步剪贴板，非安全上下文降级为临时输入框
+    copyText(text, done) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopyText(text, done));
+        return;
+      }
+      this.fallbackCopyText(text, done);
+    },
+    fallbackCopyText(text, done) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        if (document.execCommand("copy")) {
+          done();
+        } else {
+          throw new Error("copy failed");
+        }
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    },
+    // 重置编写场景初始表单与历史派生比赛列表
     resetEditScene() {
       this.editForm = {
         planId: null,
@@ -301,10 +347,9 @@ export default {
         planRate: null,
         planAmount: null,
         planRemark: null,
-        matchIds: [],
-        planImageObjectKeys: [],
+        combinationIds: [],
       };
-      this.closedMatchList = [];
+      this.readonlyMatchList = [];
     },
     // 场景返回总览并刷新列表
     handleSceneBack() {

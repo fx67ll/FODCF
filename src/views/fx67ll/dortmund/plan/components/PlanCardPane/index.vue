@@ -11,7 +11,7 @@
         <div class="plan-card-meta">
           <span class="plan-card-amount" v-if="plan.planAmount">金额 {{ plan.planAmount }}</span>
           <span class="plan-card-count" v-if="plan.matches && plan.matches.length">共{{ plan.matches.length }}场</span>
-          <span class="plan-card-images" v-if="showImageCount">图片 {{ (plan.planImageObjectKeys || []).length }}张</span>
+          <span class="plan-card-images">组合 {{ plan.matchCount || 0 }}场</span>
         </div>
         <div class="plan-card-matches" v-if="plan.matches && plan.matches.length">
           <el-tag v-for="match in plan.matches.slice(0, 3)" :key="match.matchId" size="mini" effect="plain"
@@ -51,11 +51,6 @@ export default {
     },
     // 列表加载状态
     loading: {
-      type: Boolean,
-      default: false,
-    },
-    // 是否拥有图片查询权限（决定卡片是否展示图片张数）
-    showImageCount: {
       type: Boolean,
       default: false,
     },

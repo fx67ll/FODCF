@@ -118,7 +118,7 @@
 
     <!-- 添加或修改赛季管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="640px"
-      :style="`top: ${getDialogVerticalOffset(360)}`" append-to-body custom-class="season-edit-dialog">
+      :style="`top: ${getDialogVerticalOffset(400)}`" append-to-body custom-class="season-edit-dialog">
       <template slot="title">
         <div class="dialog-header">
           <div class="dialog-header-icon">
