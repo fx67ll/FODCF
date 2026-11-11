@@ -30,10 +30,9 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-                @click="isMoreQuery = !isMoreQuery">
+              <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+                size="mini" @click="isMoreQuery = !isMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
               </el-button>
             </el-form-item>
@@ -44,9 +43,8 @@
           <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
               v-hasPermi="['dortmund:odds:add']">新增</el-button>
-            <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['dortmund:odds:export']">导出</el-button>
-            <el-button icon="el-icon-refresh" size="mini" @click="getList">刷新</el-button>
+            <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+              v-hasPermi="['dortmund:odds:export']">导出</el-button> -->
           </div>
           <div class="dl-toolbar-side">
             <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -77,12 +75,12 @@
             </el-table-column>
             <el-table-column label="操作" align="center" width="190" fixed="right">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" icon="el-icon-view" @click="handleDetail(scope.row)"
-                  v-hasPermi="['dortmund:odds:query']">详情</el-button>
-                <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                  v-hasPermi="['dortmund:odds:edit']">修改</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
+                  @click="handleDetail(scope.row)" v-hasPermi="['dortmund:odds:query']">详情</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+                  @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:odds:edit']">修改</el-button>
                 <el-dropdown class="odds-more-dropdown" @command="handleCommand">
-                  <el-button size="mini" type="text" icon="el-icon-more" />
+                  <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-more" />
                   <el-dropdown-menu slot="dropdown">
                     <el-dropdown-item :command="{ action: 'activate', row: scope.row }"
                       v-if="scope.row.activeFlag !== 'Y'"
@@ -426,4 +424,8 @@ export default {
   opacity: 0;
   transform: translateY(10px);
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

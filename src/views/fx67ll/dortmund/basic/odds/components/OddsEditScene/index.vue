@@ -13,7 +13,8 @@
           <p>维护比赛六类赔率与手工权重，保存后可单独设为有效版本</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="odds-edit-hero-back" @click="handleBackToList">返回总览
+      <el-button type="text" class="dortmund-theme-text odds-edit-hero-back" icon="el-icon-back"
+        @click="handleBackToList">返回总览
       </el-button>
     </div>
 
@@ -53,14 +54,15 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
-              <dortmund-match-binding-control :display-text="formatSelectedMatch(selectedMatch)" show-create
+              <dortmund-binding-control :display-text="formatSelectedMatch(selectedMatch)" show-create
                 @select="matchSelectorVisible = true" @create="toggleNewMatch" />
               <div class="odds-association-hint">可选择已有比赛，或在当前倍率记录中同步新建一场比赛</div>
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId" v-else-if="editMode === 'add' && newMatchVisible">
               <div class="odds-inline-control">
                 <el-tag type="success" size="small"><i class="el-icon-plus"></i> 当场新建比赛</el-tag>
-                <el-button type="text" icon="el-icon-close" @click="toggleNewMatch">改选已有比赛</el-button>
+                <el-button type="text" class="dortmund-theme-text" icon="el-icon-close"
+                  @click="toggleNewMatch">改选已有比赛</el-button>
               </div>
             </el-form-item>
             <el-form-item label="关联比赛" v-else>
@@ -145,8 +147,8 @@
     </el-form>
 
     <div class="odds-edit-footer">
-      <el-button type="primary" :loading="submitting" @click="submitForm">保 存</el-button>
-      <el-button @click="handleBackToList">返回总览</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitForm">保 存</el-button>
+      <el-button class="dortmund-theme-cancel" @click="handleBackToList">返回总览</el-button>
     </div>
 
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible"
@@ -158,12 +160,12 @@
 import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
-import DortmundMatchBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundMatchBindingControl/index";
+import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
 export default {
   name: "OddsEditScene",
   dicts: ["fx67ll_dortmund_odds_type"],
-  components: { DortmundMatchSelectorModal, DortmundMatchBindingControl },
+  components: { DortmundMatchSelectorModal, DortmundBindingControl },
   props: {
     editMode: {
       type: String,

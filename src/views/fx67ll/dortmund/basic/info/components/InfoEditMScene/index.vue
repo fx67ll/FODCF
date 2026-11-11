@@ -15,7 +15,8 @@
           <p>绑定单场比赛，适用于围绕该场比赛的临时性信息</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="info-edit-hero-back" @click="handleBackToList">返回总览
+      <el-button type="text" class="dortmund-theme-text info-edit-hero-back" icon="el-icon-back"
+        @click="handleBackToList">返回总览
       </el-button>
     </div>
 
@@ -44,14 +45,15 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
-              <dortmund-match-binding-control :display-text="formatMatchVsTimeText(selectedMatchRow)" show-create
+              <dortmund-binding-control :display-text="formatMatchVsTimeText(selectedMatchRow)" show-create
                 @select="matchSelectorVisible = true" @create="toggleNewMatch" />
               <div class="info-edit-field-hint">可选择已有比赛，或在当前信息点中同步新建一场比赛</div>
             </el-form-item>
             <el-form-item label="关联比赛" v-else-if="editMode === 'add' && newMatchVisible">
               <div class="info-new-match-control">
                 <el-tag type="success" size="small"><i class="el-icon-plus"></i> 当场新建比赛</el-tag>
-                <el-button type="text" icon="el-icon-close" @click="toggleNewMatch">改选已有比赛</el-button>
+                <el-button type="text" class="dortmund-theme-text" icon="el-icon-close"
+                  @click="toggleNewMatch">改选已有比赛</el-button>
               </div>
             </el-form-item>
             <el-form-item label="关联比赛" v-else>
@@ -204,8 +206,9 @@
     </el-form>
 
     <div class="info-edit-footer">
-      <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-      <el-button @click="handleBackToList">返回总览</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保
+        存</el-button>
+      <el-button class="dortmund-theme-cancel" @click="handleBackToList">返回总览</el-button>
     </div>
 
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible"
@@ -218,13 +221,13 @@
 import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
-import DortmundMatchBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundMatchBindingControl/index";
+import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "InfoEditMScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { DortmundMatchSelectorModal, DortmundMatchBindingControl, CommonEnhancedSelect },
+  components: { DortmundMatchSelectorModal, DortmundBindingControl, CommonEnhancedSelect },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {

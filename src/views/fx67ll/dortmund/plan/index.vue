@@ -28,9 +28,9 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-                @click="handleMoreQuery">
+              <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+                size="mini" @click="handleMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
               </el-button>
             </el-form-item>
@@ -49,7 +49,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -408,4 +408,8 @@ export default {
   opacity: 0;
   transform: translateY(12px);
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

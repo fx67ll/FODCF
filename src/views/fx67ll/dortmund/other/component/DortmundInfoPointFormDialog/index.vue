@@ -24,11 +24,9 @@
         </el-col>
         <el-col v-if="showTeams" :xs="24" :md="12">
           <el-form-item label="关联球队" prop="teamIds">
-            <div class="info-point-team-picker">
-              <el-input :value="formatSelectedTeams(selectedTeams)" readonly placeholder="请选择关联球队"
-                @click="$emit('select-teams')" />
-              <el-button type="primary" plain icon="el-icon-s-operation" @click="$emit('select-teams')">选择球队</el-button>
-            </div>
+            <dortmund-binding-control entity-type="team" select-label="选择球队"
+              :display-text="formatSelectedTeams(selectedTeams)" placeholder="请选择关联球队"
+              @select="$emit('select-teams')" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -77,7 +75,7 @@
         </el-col>
         <el-col v-if="showAdvanced" :xs="24" :md="12">
           <el-form-item label="是否公开" prop="allowPublic">
-            <el-radio-group v-model="localForm.allowPublic">
+            <el-radio-group v-model="localForm.allowPublic" class="dortmund-theme-radio">
               <el-radio label="0">不可公开</el-radio>
               <el-radio label="1">可公开</el-radio>
             </el-radio-group>
@@ -92,8 +90,10 @@
       </el-row>
     </el-form>
     <div slot="footer" class="dialog-footer">
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ submitLabel }}</el-button>
-      <el-button @click="handleCancel">取 消</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="handleSubmit">{{
+        submitLabel
+        }}</el-button>
+      <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -104,10 +104,11 @@ import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
 export default {
   name: "DortmundInfoPointFormDialog",
-  components: { CommonEnhancedSelect },
+  components: { CommonEnhancedSelect, DortmundBindingControl },
   props: {
     visible: { type: Boolean, default: false },
     value: { type: Object, default: () => ({}) },
@@ -253,22 +254,15 @@ export default {
   color: #7c8b84;
 }
 
-.info-point-team-picker,
 .info-point-time-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.info-point-team-picker .el-input,
 .info-point-time-row .el-date-editor {
   flex: 1;
   min-width: 0;
-}
-
-.info-point-team-picker .el-button {
-  flex-shrink: 0;
-  margin-left: 0;
 }
 
 .info-point-time-row>span {
@@ -279,14 +273,9 @@ export default {
 
 @media (max-width: 767px) {
 
-  .info-point-team-picker,
   .info-point-time-row {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .info-point-team-picker .el-button {
-    align-self: flex-start;
   }
 
   .info-point-time-row>span {

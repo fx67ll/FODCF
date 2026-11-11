@@ -30,12 +30,12 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-view" @click="$emit('review', scope.row)"
-            v-hasPermi="['dortmund:plan:query']">回顾</el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="$emit('update', scope.row)"
-            v-hasPermi="['dortmund:plan:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="$emit('delete', scope.row)"
-            v-hasPermi="['dortmund:plan:remove']">删除</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
+            @click="$emit('review', scope.row)" v-hasPermi="['dortmund:plan:query']">回顾</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+            @click="$emit('update', scope.row)" v-hasPermi="['dortmund:plan:edit']">修改</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
+            @click="$emit('delete', scope.row)" v-hasPermi="['dortmund:plan:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

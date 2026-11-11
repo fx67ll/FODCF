@@ -112,7 +112,7 @@
       </div>
     </div>
     <div slot="footer" class="dialog-footer">
-      <el-button @click="dialogVisible = false">关 闭</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" @click="dialogVisible = false">关 闭</el-button>
     </div>
   </el-dialog>
 </template>

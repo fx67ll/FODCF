@@ -12,7 +12,8 @@
           <p>填写正文后关联已采用回报组合，系统自动派生比赛并汇总金额</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="plan-edit-hero-back" @click="handleBackToList">返回总览
+      <el-button type="text" class="dortmund-theme-text plan-edit-hero-back" icon="el-icon-back"
+        @click="handleBackToList">返回总览
       </el-button>
     </div>
 
@@ -28,7 +29,7 @@
                 <i class="el-icon-edit-outline"></i>
               </span>
               <span class="plan-edit-card-title">方案内容</span>
-              <el-button type="text" icon="el-icon-refresh-left" class="plan-edit-new-toggle"
+              <el-button type="text" class="dortmund-theme-text plan-edit-new-toggle" icon="el-icon-refresh-left"
                 @click="resetManualAdjustment">恢复自动值</el-button>
             </div>
             <el-row :gutter="20">
@@ -72,7 +73,7 @@
               <div class="plan-combination-selector">
                 <el-input :value="selectedCombinationSummary" readonly placeholder="请选择已采用的回报组合"
                   prefix-icon="el-icon-trophy" @click="combinationSelectorVisible = true" />
-                <el-button type="primary" plain icon="el-icon-s-operation"
+                <el-button type="success" plain icon="el-icon-s-operation"
                   @click="combinationSelectorVisible = true">选择组合</el-button>
               </div>
             </el-form-item>
@@ -85,7 +86,8 @@
             <div class="plan-combination-load-error" v-if="combinationDetailErrorIds.length" role="alert">
               <i class="el-icon-warning-outline"></i>
               <span>{{ combinationDetailErrorIds.length }} 条组合明细未完整加载，已保留选择，可重试恢复预览。</span>
-              <el-button type="text" icon="el-icon-refresh" @click="retryCombinationDetails">重试加载</el-button>
+              <el-button type="text" class="dortmund-theme-text" icon="el-icon-refresh"
+                @click="retryCombinationDetails">重试加载</el-button>
             </div>
             <div class="plan-combination-list" v-if="selectedCombinationCount">
               <div class="plan-combination-item" v-for="combination in selectedCombinationPreviewList"
@@ -105,8 +107,9 @@
         </el-form>
 
         <div class="plan-edit-footer">
-          <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-          <el-button @click="handleBackToList">返回总览</el-button>
+          <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保
+            存</el-button>
+          <el-button class="dortmund-theme-cancel" @click="handleBackToList">返回总览</el-button>
         </div>
       </div>
 

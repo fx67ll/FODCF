@@ -19,7 +19,7 @@
             class="info-card-team-tag">{{ team.teamName || ('球队' + team.teamId) }}</el-tag>
           <span class="info-card-team-more" v-if="visibleTeamRels(point).length > 3">+{{ visibleTeamRels(point).length -
             3
-          }}支</span>
+            }}支</span>
         </div>
         <div class="info-card-meta">
           <span v-if="point.infoPointType === 'M' && formatMatchText(point)">比赛：{{ formatMatchText(point) }}</span>
@@ -30,12 +30,13 @@
         </div>
         <div class="info-card-footer">
           <span class="info-card-actions">
-            <el-button size="mini" type="text" icon="el-icon-view" @click="$emit('detail', point)"
-              v-hasPermi="['dortmund:info:point:query']">详情</el-button>
-            <el-button size="mini" type="text" icon="el-icon-edit" @click="$emit('update', point)"
-              v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
-            <el-button size="mini" type="text" :icon="point.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'"
-              @click="$emit('changeStatus', point)" v-hasPermi="['dortmund:info:point:changeStatus']">{{
+            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
+              @click="$emit('detail', point)" v-hasPermi="['dortmund:info:point:query']">详情</el-button>
+            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+              @click="$emit('update', point)" v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
+            <el-button size="mini" type="text" class="dortmund-theme-text"
+              :icon="point.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'" @click="$emit('changeStatus', point)"
+              v-hasPermi="['dortmund:info:point:changeStatus']">{{
                 point.pointStatus === '0' ? '停用' : '启用'
               }}</el-button>
           </span>

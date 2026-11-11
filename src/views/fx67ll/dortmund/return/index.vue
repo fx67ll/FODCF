@@ -57,13 +57,13 @@
           <div class="generate-warning" v-if="missingOddsCount > 0">
             <i class="el-icon-warning-outline"></i>
             <span>{{ missingOddsCount }} 场比赛缺少有效 odds，不参与生成。</span>
-            <el-button type="text" size="mini" @click="gotoOddsPage">去维护</el-button>
+            <el-button type="text" size="mini" class="dortmund-theme-text" @click="gotoOddsPage">去维护</el-button>
           </div>
           <div class="return-image-block" v-if="hasImageUploadPermission">
             <div class="return-image-title">组合图片</div>
             <return-image-upload v-model="generateForm.imageObjectKeys" />
           </div>
-          <el-button type="primary" class="generate-btn" icon="el-icon-magic-stick" :loading="generateLoading"
+          <el-button type="success" class="generate-btn" icon="el-icon-magic-stick" :loading="generateLoading"
             @click="handleGenerate" v-hasPermi="['dortmund:return:generate']">生成候选组合</el-button>
         </div>
       </el-col>
@@ -94,14 +94,14 @@
                 </div>
               </div>
               <div class="candidate-actions">
-                <el-button size="mini" type="text" icon="el-icon-view"
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
                   @click="handleCombinationDetail(combination)">详情</el-button>
-                <el-button v-if="combination.adoptedFlag !== 'Y'" size="mini" type="text" icon="el-icon-check"
-                  :loading="reviewingId === combination.combinationId" @click="handleReview(combination, 'Y')"
-                  v-hasPermi="['dortmund:return:review']">采用</el-button>
-                <el-button v-if="combination.adoptedFlag === 'Y'" size="mini" type="text" icon="el-icon-close"
-                  :loading="reviewingId === combination.combinationId" @click="handleReview(combination, 'N')"
-                  v-hasPermi="['dortmund:return:review']">不采用</el-button>
+                <el-button v-if="combination.adoptedFlag !== 'Y'" size="mini" type="text" class="dortmund-theme-text"
+                  icon="el-icon-check" :loading="reviewingId === combination.combinationId"
+                  @click="handleReview(combination, 'Y')" v-hasPermi="['dortmund:return:review']">采用</el-button>
+                <el-button v-if="combination.adoptedFlag === 'Y'" size="mini" type="text" class="dortmund-theme-text"
+                  icon="el-icon-close" :loading="reviewingId === combination.combinationId"
+                  @click="handleReview(combination, 'N')" v-hasPermi="['dortmund:return:review']">不采用</el-button>
               </div>
             </div>
           </transition-group>
@@ -146,7 +146,8 @@
             </el-table-column>
             <el-table-column label="操作" align="center" width="80">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" @click="handleCombinationDetail(scope.row)">查看</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text"
+                  @click="handleCombinationDetail(scope.row)">查看</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -168,7 +169,8 @@
         <div class="history-filter-card">
           <div class="history-filter-heading">
             <span><i class="el-icon-search"></i>筛选条件</span>
-            <el-button type="text" icon="el-icon-refresh-left" @click="resetBatchQuery">重置</el-button>
+            <el-button type="text" class="dortmund-theme-text" icon="el-icon-refresh-left"
+              @click="resetBatchQuery">重置</el-button>
           </div>
           <div class="batch-filter">
             <el-select v-model="batchQuery.generationStatus" placeholder="状态" size="mini" clearable
@@ -210,12 +212,12 @@
               <el-table-column label="组合数" align="center" prop="generatedCount" width="76" />
               <el-table-column label="完成时间" align="center" width="150">
                 <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-"
-                  }}</template>
+                }}</template>
               </el-table-column>
               <el-table-column label="操作" align="center" width="90" fixed="right">
                 <template slot-scope="scope">
-                  <el-button size="mini" type="text" icon="el-icon-view" v-hasPermi="['dortmund:return:query']"
-                    @click="handleGenerationDetail(scope.row)">详情</el-button>
+                  <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
+                    v-hasPermi="['dortmund:return:query']" @click="handleGenerationDetail(scope.row)">详情</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -225,7 +227,7 @@
           <div v-if="!batchLoading && !batchList.length" class="history-empty">
             <i class="el-icon-time"></i>
             <span>暂无符合条件的历史批次</span>
-            <el-button type="text" @click="resetBatchQuery">清除筛选</el-button>
+            <el-button type="text" class="dortmund-theme-text" @click="resetBatchQuery">清除筛选</el-button>
           </div>
         </div>
       </div>
@@ -1134,4 +1136,8 @@ export default {
     }
   }
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

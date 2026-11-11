@@ -3,10 +3,11 @@
   <div class="plan-review-scene">
     <div class="plan-edit-header">
       <div class="plan-edit-header-left">
-        <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
+        <el-button type="text" class="dortmund-theme-text" icon="el-icon-back"
+          @click="handleBackToList">返回总览</el-button>
         <span class="plan-edit-title">方案计划回顾</span>
       </div>
-      <el-button v-if="hasSummaryPermission && (detailModel.combinationIds || []).length" type="primary" plain
+      <el-button v-if="hasSummaryPermission && (detailModel.combinationIds || []).length" type="success" plain
         icon="el-icon-document-copy" size="mini" :loading="summaryLoading" @click="$emit('copy-summary')">复制摘要
       </el-button>
     </div>
@@ -26,7 +27,7 @@
           <div class="plan-review-info-item">
             <span class="plan-review-info-label">更新时间</span>
             <span class="plan-review-info-value">{{ parseTime(detailModel.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-            }}</span>
+              }}</span>
           </div>
         </div>
         <div class="plan-review-content">{{ detailModel.planContent }}</div>

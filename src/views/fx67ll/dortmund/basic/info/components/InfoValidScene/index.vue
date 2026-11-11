@@ -3,7 +3,8 @@
   <div class="info-valid-scene">
     <div class="info-edit-header">
       <div class="info-edit-header-left">
-        <el-button type="text" icon="el-icon-back" @click="handleBackToList">返回总览</el-button>
+        <el-button type="text" class="dortmund-theme-text" icon="el-icon-back"
+          @click="handleBackToList">返回总览</el-button>
         <span class="info-edit-title">信息点有效性</span>
       </div>
     </div>

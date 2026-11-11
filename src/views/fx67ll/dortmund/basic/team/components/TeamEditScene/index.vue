@@ -13,13 +13,13 @@
           <p>球队编码创建后不可修改；被比赛引用时建议停用而非删除</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="team-edit-back" @click="$emit('back')">返回列表</el-button>
+      <el-button type="text" class="dortmund-theme-text team-edit-back" icon="el-icon-back" @click="$emit('back')">返回总览</el-button>
     </div>
 
     <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="92px" class="team-edit-form">
       <div class="team-edit-card">
         <div class="team-edit-card-header">
-          <span class="team-edit-card-chip"><i class="el-icon-id-card"></i></span>
+          <span class="team-edit-card-chip"><i class="el-icon-postcard"></i></span>
           <span class="team-edit-card-title">球队标识</span>
         </div>
         <el-row :gutter="20">
@@ -94,7 +94,7 @@
         <el-row :gutter="20">
           <el-col :xs="24" :md="8">
             <el-form-item label="球队状态" prop="teamStatus">
-              <el-switch v-model="editForm.teamStatus" active-value="0" inactive-value="1" />
+              <el-switch v-model="editForm.teamStatus" active-value="0" inactive-value="1" class="dortmund-theme-switch" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="8">
@@ -124,7 +124,7 @@
         <template v-else>
           <div class="team-info-header">
             <span class="team-info-count">已添加 {{ newInfoPoints.length }} 条</span>
-            <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
+            <el-button type="success" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
           </div>
           <el-table :data="newInfoPoints" size="small" empty-text="暂无关联信息点">
             <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
@@ -132,8 +132,8 @@
             <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
             <el-table-column label="操作" align="center" width="110">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" icon="el-icon-edit" @click="openDraftInfo(scope.row)">编辑</el-button>
-                <el-button size="mini" type="text" icon="el-icon-delete"
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit" @click="openDraftInfo(scope.row)">编辑</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
                   @click="removeDraftInfo(scope.$index)">删除</el-button>
               </template>
             </el-table-column>
@@ -143,8 +143,8 @@
     </el-form>
 
     <div class="team-edit-footer">
-      <el-button @click="$emit('back')">取 消</el-button>
-      <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
+        <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保 存</el-button>
+        <el-button class="dortmund-theme-cancel" @click="$emit('back')">返回总览</el-button>
     </div>
 
     <dortmund-info-point-form-dialog :visible.sync="draftVisible" :value="draftForm"

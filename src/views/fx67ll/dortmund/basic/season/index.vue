@@ -38,9 +38,9 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-          <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-          <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-            @click="handleMoreQuery">
+          <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+          <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+            size="mini" @click="handleMoreQuery">
             {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
           </el-button>
         </el-form-item>
@@ -104,10 +104,10 @@
         </el-table-column>
         <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
           <template slot-scope="scope">
-            <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-              v-hasPermi="['dortmund:season:edit']">修改</el-button>
-            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-              v-hasPermi="['dortmund:season:remove']">删除</el-button>
+            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+              @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:season:edit']">修改</el-button>
+            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
+              @click="handleDelete(scope.row)" v-hasPermi="['dortmund:season:remove']">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -178,8 +178,8 @@
         </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="success" class="dortmund-theme-confirm" @click="submitForm">确 定</el-button>
+        <el-button class="dortmund-theme-cancel" @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -454,4 +454,8 @@ export default {
     transform: translateY(0);
   }
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

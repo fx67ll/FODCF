@@ -40,11 +40,12 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-view" @click="$emit('detail', scope.row)"
-            v-hasPermi="['dortmund:info:point:query']">详情</el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="$emit('update', scope.row)"
-            v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
-          <el-button size="mini" type="text" :icon="scope.row.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'"
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
+            @click="$emit('detail', scope.row)" v-hasPermi="['dortmund:info:point:query']">详情</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+            @click="$emit('update', scope.row)" v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text"
+            :icon="scope.row.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'"
             @click="$emit('changeStatus', scope.row)" v-hasPermi="['dortmund:info:point:changeStatus']">{{
               scope.row.pointStatus === '0' ? '停用' : '启用'
             }}</el-button>

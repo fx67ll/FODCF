@@ -8,21 +8,21 @@
         </el-tag>
       </div>
       <div>
-        <el-button size="mini" type="text" icon="el-icon-edit" :disabled="!activeOdds" @click="openEditor(activeOdds)"
-          v-hasPermi="['dortmund:odds:add']">编辑为新版本</el-button>
-        <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="openEditor()"
+        <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit" :disabled="!activeOdds"
+          @click="openEditor(activeOdds)" v-hasPermi="['dortmund:odds:add']">编辑为新版本</el-button>
+        <el-button size="mini" type="success" plain icon="el-icon-plus" @click="openEditor()"
           v-hasPermi="['dortmund:odds:add']">新增版本</el-button>
-        <el-button size="mini" type="text" icon="el-icon-delete" :disabled="!activeOdds || deleting"
-          @click="handleRemove" v-hasPermi="['dortmund:odds:remove']">删除</el-button>
+        <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
+          :disabled="!activeOdds || deleting" @click="handleRemove" v-hasPermi="['dortmund:odds:remove']">删除</el-button>
       </div>
     </div>
 
     <el-descriptions v-if="activeOdds" :column="3" size="small" border class="odds-inline-detail">
       <el-descriptions-item label="来源时间">{{ parseTime(activeOdds.sourceTime, "{y}-{m}-{d} {h}:{i}") || "-"
-        }}</el-descriptions-item>
+      }}</el-descriptions-item>
       <el-descriptions-item label="让分值">{{ activeOdds.handicapValue || "-" }}</el-descriptions-item>
       <el-descriptions-item label="创建时间">{{ parseTime(activeOdds.createTime, "{y}-{m}-{d} {h}:{i}") || "-"
-        }}</el-descriptions-item>
+      }}</el-descriptions-item>
       <el-descriptions-item label="主胜赔率">{{ activeOdds.homeWinOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="平局赔率">{{ activeOdds.drawOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="客胜赔率">{{ activeOdds.awayWinOdds || "-" }}</el-descriptions-item>
@@ -124,8 +124,9 @@
         </el-row>
       </el-form>
       <div slot="footer">
-        <el-button @click="editorVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">保 存</el-button>
+        <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="handleSubmit">保
+          存</el-button>
+        <el-button class="dortmund-theme-cancel" @click="editorVisible = false">取 消</el-button>
       </div>
     </el-dialog>
   </div>

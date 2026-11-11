@@ -5,7 +5,7 @@
         <i class="el-icon-notebook-2"></i>关联信息点
         <span>{{ rows.length }} 条</span>
       </div>
-      <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openAdd"
+      <el-button type="success" plain size="mini" icon="el-icon-plus" @click="openAdd"
         v-hasPermi="['dortmund:info:point:add']">新增</el-button>
     </div>
 
@@ -15,7 +15,7 @@
       <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
       <el-table-column label="生效时间" align="center" width="160">
         <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}") || "-"
-        }}</template>
+          }}</template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
         <template slot-scope="scope">
@@ -24,10 +24,10 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="140" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="openEdit(scope.row)"
-            v-hasPermi="['dortmund:info:point:edit']">编辑</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleRemove(scope.row)"
-            v-hasPermi="['dortmund:info:point:remove']">删除</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+            @click="openEdit(scope.row)" v-hasPermi="['dortmund:info:point:edit']">编辑</el-button>
+          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
+            @click="handleRemove(scope.row)" v-hasPermi="['dortmund:info:point:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

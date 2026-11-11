@@ -46,9 +46,9 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-                @click="handleMoreQuery">
+              <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+                size="mini" @click="handleMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
               </el-button>
             </el-form-item>
@@ -61,7 +61,7 @@
               v-hasPermi="['dortmund:info:point:add']">新增赛季球队信息点</el-button>
             <el-button type="primary" icon="el-icon-football" size="mini" class="info-add-match-btn" @click="handleAddM"
               v-hasPermi="['dortmund:info:point:add']">新增比赛临时信息点</el-button>
-            <el-button type="warning" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+            <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
             <!-- 信息点没有删除动作，不渲染删除按钮 -->
             <transition name="dl-chip">
@@ -417,4 +417,8 @@ export default {
   opacity: 0;
   transform: translateY(12px);
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

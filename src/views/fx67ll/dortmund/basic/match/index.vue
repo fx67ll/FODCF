@@ -65,9 +65,9 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-              <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
-              <el-button class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
-                @click="handleMoreQuery">
+              <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
+                size="mini" @click="handleMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
               </el-button>
             </el-form-item>
@@ -144,12 +144,12 @@
             </el-table-column>
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="190">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                  v-hasPermi="['dortmund:match:edit']">修改</el-button>
-                <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                  v-hasPermi="['dortmund:match:remove']">删除</el-button>
-                <el-button size="mini" type="text" icon="el-icon-odometer" @click="handleOdds(scope.row)"
-                  v-hasPermi="['dortmund:odds:list']">odds</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+                  @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:match:edit']">修改</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
+                  @click="handleDelete(scope.row)" v-hasPermi="['dortmund:match:remove']">删除</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-odometer"
+                  @click="handleOdds(scope.row)" v-hasPermi="['dortmund:odds:list']">odds</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -446,4 +446,8 @@ export default {
   opacity: 0;
   transform: translateY(12px);
 }
+</style>
+
+<style lang="scss">
+@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

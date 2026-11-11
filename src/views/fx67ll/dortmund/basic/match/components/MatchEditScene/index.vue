@@ -12,7 +12,8 @@
           <p>按基础信息、同步赔率和关联信息点分区维护比赛资料</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="match-edit-hero-back" @click="handleBackToList">返回总览</el-button>
+      <el-button type="text" class="dortmund-theme-text match-edit-hero-back" icon="el-icon-back"
+        @click="handleBackToList">返回总览</el-button>
     </div>
 
     <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="85px" class="match-edit-form"
@@ -31,8 +32,8 @@
                 <common-enhanced-select ref="editSeasonSelect" v-model="editForm.seasonId" valueKey="seasonId"
                   labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季"
                   :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
-                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                  v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
+                <el-button type="text" class="dortmund-theme-text match-edit-inline-btn"
+                  icon="el-icon-circle-plus-outline" v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
                   {{ newSeasonVisible ? "收起当场新增" : "当场新增赛季" }}
                 </el-button>
               </div>
@@ -58,10 +59,12 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="主队名称" prop="homeTeamId">
               <div class="match-edit-item">
-                <el-input :value="selectedHomeTeam ? selectedHomeTeam.teamName : ''" readonly placeholder="请选择主队名称"
-                  :disabled="newHomeTeamVisible || editMode !== 'add'" @click="openTeamSelector('home')" />
-                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                  v-if="editMode === 'add'" @click="toggleNewTeamPanel('home')">
+                <dortmund-binding-control entity-type="team" select-label="选择主队" create-label="当场新建主队"
+                  :display-text="selectedHomeTeam ? selectedHomeTeam.teamName : ''"
+                  :disabled="newHomeTeamVisible || editMode !== 'add'" :create-disabled="editMode !== 'add'"
+                  @select="openTeamSelector('home')" @create="toggleNewTeamPanel('home')" />
+                <el-button type="text" class="dortmund-theme-text match-edit-inline-btn"
+                  icon="el-icon-circle-plus-outline" v-if="editMode === 'add'" @click="toggleNewTeamPanel('home')">
                   {{ newHomeTeamVisible ? "收起当场新增" : "当场新增主队" }}
                 </el-button>
               </div>
@@ -71,10 +74,12 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="客队名称" prop="awayTeamId">
               <div class="match-edit-item">
-                <el-input :value="selectedAwayTeam ? selectedAwayTeam.teamName : ''" readonly placeholder="请选择客队名称"
-                  :disabled="newAwayTeamVisible || editMode !== 'add'" @click="openTeamSelector('away')" />
-                <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
-                  v-if="editMode === 'add'" @click="toggleNewTeamPanel('away')">
+                <dortmund-binding-control entity-type="team" select-label="选择客队" create-label="当场新建客队"
+                  :display-text="selectedAwayTeam ? selectedAwayTeam.teamName : ''"
+                  :disabled="newAwayTeamVisible || editMode !== 'add'" :create-disabled="editMode !== 'add'"
+                  @select="openTeamSelector('away')" @create="toggleNewTeamPanel('away')" />
+                <el-button type="text" class="dortmund-theme-text match-edit-inline-btn"
+                  icon="el-icon-circle-plus-outline" v-if="editMode === 'add'" @click="toggleNewTeamPanel('away')">
                   {{ newAwayTeamVisible ? "收起当场新增" : "当场新增客队" }}
                 </el-button>
               </div>
@@ -150,7 +155,8 @@
                 <el-tag :type="newOddsVisible ? 'success' : 'info'" size="small">
                   {{ newOddsVisible ? "保存时同步创建有效 odds" : "关闭时不提交 odds" }}
                 </el-tag>
-                <el-button type="text" icon="el-icon-circle-plus-outline" @click="toggleNewOdds">
+                <el-button type="text" class="dortmund-theme-text" icon="el-icon-circle-plus-outline"
+                  @click="toggleNewOdds">
                   {{ newOddsVisible ? "收起 odds 表单" : "同时创建 odds" }}
                 </el-button>
               </div>
@@ -218,7 +224,7 @@
             <div class="match-info-panel">
               <div class="match-draft-info-header">
                 <span><i class="el-icon-notebook-2"></i>关联信息点（{{ newInfoPoints.length }} 条）</span>
-                <el-button type="primary" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
+                <el-button type="success" plain size="mini" icon="el-icon-plus" @click="openDraftInfo">新增</el-button>
               </div>
               <el-table :data="newInfoPoints" size="small" empty-text="暂无关联信息点">
                 <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
@@ -226,9 +232,9 @@
                 <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
                 <el-table-column label="操作" align="center" width="110">
                   <template slot-scope="scope">
-                    <el-button size="mini" type="text" icon="el-icon-edit"
+                    <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
                       @click="openDraftInfo(scope.row)">编辑</el-button>
-                    <el-button size="mini" type="text" icon="el-icon-delete"
+                    <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
                       @click="removeDraftInfo(scope.$index)">删除</el-button>
                   </template>
                 </el-table-column>
@@ -240,8 +246,9 @@
     </el-form>
 
     <div class="match-edit-footer">
-      <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-      <el-button @click="handleBackToList">返回总览</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保
+        存</el-button>
+      <el-button class="dortmund-theme-cancel" @click="handleBackToList">返回总览</el-button>
     </div>
     <dortmund-team-selector-modal :visible.sync="teamSelectorVisible"
       :selected-items="teamSelectorSide === 'home' ? [selectedHomeTeam] : [selectedAwayTeam]"
@@ -255,6 +262,7 @@
 <script>
 import { listSeason } from "@/api/fx67ll/dortmund/season";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
+import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
 import { teamVenueOptions } from "@/utils/constant/football";
 
@@ -268,7 +276,7 @@ export default {
   name: "MatchEditScene",
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
-    CommonEnhancedSelect, MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal,
+    CommonEnhancedSelect, MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
     DortmundInfoPointFormDialog, DortmundOddsInlineEditor
   },
   props: {

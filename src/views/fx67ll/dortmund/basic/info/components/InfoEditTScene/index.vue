@@ -15,7 +15,8 @@
           <p>绑定赛季与至少一支球队，适用于长期有效的赛季球队类信息</p>
         </div>
       </div>
-      <el-button type="text" icon="el-icon-back" class="info-edit-hero-back" @click="handleBackToList">返回总览
+      <el-button type="text" class="dortmund-theme-text info-edit-hero-back" icon="el-icon-back"
+        @click="handleBackToList">返回总览
       </el-button>
     </div>
 
@@ -45,7 +46,7 @@
               <div v-if="editMode === 'add'" class="info-team-control">
                 <el-input :value="formatSelectedTeams(selectedTeams)" readonly placeholder="请选择关联球队（可多选）"
                   @click="teamSelectorVisible = true" />
-                <el-button type="primary" plain icon="el-icon-s-operation"
+                <el-button type="success" plain icon="el-icon-s-operation"
                   @click="teamSelectorVisible = true">选择球队</el-button>
               </div>
               <div v-else class="info-team-readonly">
@@ -144,7 +145,7 @@
         <el-row :gutter="20">
           <el-col :xs="24" :md="12">
             <el-form-item label="是否可公开" prop="allowPublic">
-              <el-radio-group v-model="editForm.allowPublic">
+              <el-radio-group v-model="editForm.allowPublic" class="dortmund-theme-radio">
                 <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
                   :label="dict.value">{{
                     dict.label }}</el-radio>
@@ -164,8 +165,9 @@
     </el-form>
 
     <div class="info-edit-footer">
-      <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
-      <el-button @click="handleBackToList">返回总览</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保
+        存</el-button>
+      <el-button class="dortmund-theme-cancel" @click="handleBackToList">返回总览</el-button>
     </div>
 
     <dortmund-team-selector-modal :visible.sync="teamSelectorVisible" multiple :selected-items="selectedTeams"
