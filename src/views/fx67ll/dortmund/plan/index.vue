@@ -14,7 +14,7 @@
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                @focus="matchSelectorVisible = true" />
+                @click="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
@@ -49,7 +49,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">

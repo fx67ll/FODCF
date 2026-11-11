@@ -147,63 +147,19 @@
       <el-button type="primary" :loading="submitting" @click="submitEditForm">保 存</el-button>
     </div>
 
-    <el-dialog :visible.sync="draftVisible" :title="draftIndex >= 0 ? '编辑关联信息点' : '新增关联信息点'" width="760px"
-      append-to-body custom-class="team-draft-info-dialog" :close-on-click-modal="false">
-      <el-form ref="draftForm" :model="draftForm" :rules="draftRules" label-width="104px">
-        <el-row :gutter="16">
-          <el-col :xs="24" :md="12">
-            <el-form-item label="所属赛季" prop="seasonId">
-              <common-enhanced-select v-model="draftForm.seasonId" valueKey="seasonId" labelKey="seasonName"
-                :api-func="listSeason" placeholder="请选择所属赛季" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="采集时间" prop="collectTime">
-              <el-date-picker v-model="draftForm.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择采集时间" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="信息标题" prop="pointTitle">
-              <el-input v-model="draftForm.pointTitle" maxlength="255" show-word-limit placeholder="请输入信息标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="信息内容" prop="pointContent">
-              <el-input v-model="draftForm.pointContent" type="textarea" :rows="4" maxlength="1023" show-word-limit
-                placeholder="请输入客观信息内容" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="来源名称" prop="sourceName">
-              <el-input v-model="draftForm.sourceName" maxlength="255" placeholder="请输入来源名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="来源地址" prop="sourceUrl">
-              <el-input v-model="draftForm.sourceUrl" maxlength="512" placeholder="请输入来源地址" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer">
-        <el-button @click="draftVisible = false">取 消</el-button>
-        <el-button type="primary" @click="saveDraftInfo">确 定</el-button>
-      </div>
-    </el-dialog>
+    <dortmund-info-point-form-dialog :visible.sync="draftVisible" :value="draftForm"
+      :mode="draftIndex >= 0 ? 'update' : 'add'" info-point-type="T" show-season @save="saveDraftInfo" />
   </div>
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
-import DortmundInfoPointInlineEditor from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointInlineEditor/index.vue";
+import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
 
 export default {
   name: "TeamEditScene",
   dicts: ["sys_normal_disable"],
-  components: { CommonEnhancedSelect, DortmundInfoPointInlineEditor },
+  components: { DortmundInfoPointFormDialog },
   props: {
     editMode: {
       type: String,
@@ -221,7 +177,6 @@ export default {
   },
   data() {
     return {
-      listSeason,
       teamCountryOptions,
       teamTagOptions,
       teamVenueOptions,
@@ -243,15 +198,6 @@ export default {
         teamCountry: [{ required: true, message: "地区/联赛不能为空", trigger: "change" }],
         teamTag: [{ required: true, type: "array", min: 1, message: "球队标签不能为空", trigger: "change" }],
         teamStatus: [{ required: true, message: "球队状态不能为空", trigger: "change" }],
-      };
-    },
-    draftRules() {
-      return {
-        seasonId: [{ required: true, message: "所属赛季不能为空", trigger: "change" }],
-        pointTitle: [{ required: true, message: "信息标题不能为空", trigger: "blur" }],
-        pointContent: [{ required: true, message: "信息内容不能为空", trigger: "blur" }],
-        sourceName: [{ required: true, message: "来源名称不能为空", trigger: "blur" }],
-        collectTime: [{ required: true, message: "采集时间不能为空", trigger: "change" }],
       };
     },
   },
@@ -306,23 +252,15 @@ export default {
         this.draftForm = this.buildDraftForm();
       }
       this.draftVisible = true;
-      this.$nextTick(() => {
-        this.$refs.draftForm && this.$refs.draftForm.clearValidate();
-      });
     },
-    saveDraftInfo() {
-      this.$refs.draftForm.validate((valid) => {
-        if (!valid) {
-          return;
-        }
-        const data = { ...this.draftForm, infoPointType: "T" };
-        if (this.draftIndex >= 0) {
-          this.newInfoPoints.splice(this.draftIndex, 1, data);
-        } else {
-          this.newInfoPoints.push(data);
-        }
-        this.draftVisible = false;
-      });
+    saveDraftInfo(form) {
+      const data = { ...form, infoPointType: "T" };
+      if (this.draftIndex >= 0) {
+        this.newInfoPoints.splice(this.draftIndex, 1, data);
+      } else {
+        this.newInfoPoints.push(data);
+      }
+      this.draftVisible = false;
     },
     removeDraftInfo(index) {
       this.newInfoPoints.splice(index, 1);
@@ -460,7 +398,7 @@ export default {
 
 .team-edit-card-tip,
 .team-info-count {
-  margin-left: 10px;
+  margin: 0 10px;
   color: #7c8b84;
   font-size: 12px;
 }

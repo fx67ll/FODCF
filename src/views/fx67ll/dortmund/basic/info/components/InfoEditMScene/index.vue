@@ -42,17 +42,61 @@
           </div>
         </div>
         <el-row :gutter="20">
-          <el-col :xs="24" :md="16">
-            <el-form-item label="关联比赛" prop="matchId">
-              <div class="info-match-picker" v-if="editMode === 'add'">
-                <el-input :value="formatMatchVsTimeText(selectedMatchRow)" readonly placeholder="请选择关联比赛"
-                  prefix-icon="el-icon-football" @focus="matchSelectorVisible = true" />
-                <el-button type="primary" plain icon="el-icon-s-operation"
-                  @click="matchSelectorVisible = true">选择比赛</el-button>
-              </div>
-              <el-input v-else :value="formatMatchColumnText(editForm)" disabled />
-              <div class="info-edit-field-hint" v-if="editMode === 'add'">选择后将实时展示对阵与开赛时间</div>
+          <el-col :span="24">
+            <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
+              <dortmund-match-binding-control :display-text="formatMatchVsTimeText(selectedMatchRow)" show-create
+                @select="matchSelectorVisible = true" @create="toggleNewMatch" />
+              <div class="info-edit-field-hint">可选择已有比赛，或在当前信息点中同步新建一场比赛</div>
             </el-form-item>
+            <el-form-item label="关联比赛" v-else-if="editMode === 'add' && newMatchVisible">
+              <div class="info-new-match-control">
+                <el-tag type="success" size="small"><i class="el-icon-plus"></i> 当场新建比赛</el-tag>
+                <el-button type="text" icon="el-icon-close" @click="toggleNewMatch">改选已有比赛</el-button>
+              </div>
+            </el-form-item>
+            <el-form-item label="关联比赛" v-else>
+              <el-input :value="formatMatchColumnText(editForm)" disabled />
+            </el-form-item>
+            <transition name="info-panel">
+              <div class="info-new-match" v-if="editMode === 'add' && newMatchVisible">
+                <div class="info-new-match-title">
+                  <i class="el-icon-football"></i>
+                  <span>当场新建比赛资料</span>
+                  <small>赛季、主队、客队和比赛时间均为必填</small>
+                </div>
+                <el-row :gutter="20">
+                  <el-col :xs="24" :md="12">
+                    <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
+                      <common-enhanced-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId"
+                        valueKey="seasonId" labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :md="12">
+                    <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="96px">
+                      <el-date-picker v-model="editForm.newMatch.matchTime" type="datetime"
+                        value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择比赛时间" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :md="12">
+                    <el-form-item label="主队" prop="newMatch.homeTeamId" label-width="96px">
+                      <common-enhanced-select ref="newHomeTeamSelect" v-model="editForm.newMatch.homeTeamId"
+                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择主队" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :md="12">
+                    <el-form-item label="客队" prop="newMatch.awayTeamId" label-width="96px">
+                      <common-enhanced-select ref="newAwayTeamSelect" v-model="editForm.newMatch.awayTeamId"
+                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择客队" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="24">
+                    <el-form-item label="比赛备注" label-width="96px">
+                      <el-input v-model="editForm.newMatch.matchRemark" placeholder="请输入比赛备注" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </div>
+            </transition>
           </el-col>
         </el-row>
       </div>
@@ -95,8 +139,8 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="来源地址" prop="sourceUrl">
-              <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
+            <el-form-item label="信息来源地址" prop="sourceUrl">
+              <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入信息来源地址" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -171,12 +215,16 @@
 </template>
 
 <script>
+import { listSeason } from "@/api/fx67ll/dortmund/season";
+import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import DortmundMatchBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundMatchBindingControl/index";
+import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
 export default {
   name: "InfoEditMScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { DortmundMatchSelectorModal },
+  components: { DortmundMatchSelectorModal, DortmundMatchBindingControl, CommonEnhancedSelect },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {
@@ -210,12 +258,24 @@ export default {
       callback();
     };
     return {
+      listSeason,
+      listTeam,
       // 录入场景表单参数（创建与修改共用，从父页面初始表单复制）
       editForm: this.buildEditForm(),
+      newMatchVisible: false,
       // 录入场景表单校验
       editRules: {
         matchId: [
-          { required: true, message: "关联比赛不能为空", trigger: "change" }
+          {
+            validator: (rule, value, callback) => {
+              if (this.newMatchVisible || (value != null && value !== "")) {
+                callback();
+                return;
+              }
+              callback(new Error("请选择关联比赛或当场新建比赛"));
+            },
+            trigger: "change",
+          }
         ],
         pointTitle: [
           { required: true, message: "信息点标题不能为空", trigger: "blur" }
@@ -235,6 +295,10 @@ export default {
         effectiveEndTime: [
           { validator: checkEffectiveTimeWindow, trigger: "blur" }
         ],
+        "newMatch.seasonId": [{ required: true, message: "新比赛所属赛季不能为空", trigger: "change" }],
+        "newMatch.homeTeamId": [{ required: true, message: "新比赛主队不能为空", trigger: "change" }],
+        "newMatch.awayTeamId": [{ required: true, message: "新比赛客队不能为空", trigger: "change" }],
+        "newMatch.matchTime": [{ required: true, message: "新比赛比赛时间不能为空", trigger: "change" }],
       },
       // M类型新增时所选比赛的完整行（VS横幅展示用，仅编辑场景展示不进入提交数据）
       selectedMatchRow: this.buildSelectedMatch(),
@@ -300,6 +364,13 @@ export default {
         effectiveEndTime: initial.effectiveEndTime || null,
         allowPublic: initial.allowPublic || "0",
         pointRemark: initial.pointRemark || null,
+        newMatch: {
+          seasonId: null,
+          homeTeamId: null,
+          awayTeamId: null,
+          matchTime: null,
+          matchRemark: null,
+        },
       };
     },
     handleMatchSelectorConfirm(match) {
@@ -307,6 +378,16 @@ export default {
       this.editForm.matchId = match ? match.matchId : null;
       this.$nextTick(() => {
         this.$refs.editForm && this.$refs.editForm.clearValidate("matchId");
+      });
+    },
+    toggleNewMatch() {
+      this.newMatchVisible = !this.newMatchVisible;
+      if (this.newMatchVisible) {
+        this.selectedMatchRow = {};
+        this.editForm.matchId = null;
+      }
+      this.$nextTick(() => {
+        this.$refs.editForm && this.$refs.editForm.clearValidate(["matchId"]);
       });
     },
     // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
@@ -346,7 +427,17 @@ export default {
       };
       if (this.editMode === "add") {
         data.infoPointType = "M";
-        data.matchId = this.editForm.matchId;
+        if (this.newMatchVisible) {
+          data.newMatch = {
+            seasonId: this.editForm.newMatch.seasonId,
+            homeTeamId: this.editForm.newMatch.homeTeamId,
+            awayTeamId: this.editForm.newMatch.awayTeamId,
+            matchTime: this.editForm.newMatch.matchTime,
+            matchRemark: this.editForm.newMatch.matchRemark,
+          };
+        } else {
+          data.matchId = this.editForm.matchId;
+        }
       } else {
         data.infoPointId = this.editForm.infoPointId;
       }
@@ -356,6 +447,10 @@ export default {
     submitEditForm() {
       this.$refs["editForm"].validate(valid => {
         if (!valid) {
+          return;
+        }
+        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId === this.editForm.newMatch.awayTeamId) {
+          this.$modal.msgError("新比赛的主队和客队不能相同");
           return;
         }
         this.$emit("save", this.buildSubmitData());
@@ -377,11 +472,11 @@ export default {
 }
 
 .info-edit-scene-m {
-  --info-accent: #5a7d9a;
-  --info-accent-dark: #46687f;
-  --info-accent-soft: #ecf3f8;
-  --info-accent-ramp: linear-gradient(135deg, #5a7d9a 0%, #46687f 100%);
-  --info-accent-shadow: rgba(90, 125, 154, 0.3);
+  --info-accent: var(--current-color, #2ecc71);
+  --info-accent-dark: var(--current-color, #27ad60);
+  --info-accent-soft: #e7f8ee;
+  --info-accent-ramp: linear-gradient(135deg, var(--current-color, #2ecc71) 0%, #27ad60 100%);
+  --info-accent-shadow: rgba(46, 204, 113, 0.3);
 }
 
 .info-edit-hero {
@@ -528,20 +623,56 @@ export default {
   color: #909399;
 }
 
-.info-match-picker {
+.info-new-match-control {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
 
-  .el-input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .el-button {
+  .el-button,
+  .el-tag {
     flex-shrink: 0;
-    margin-left: 0;
   }
+}
+
+.info-new-match {
+  padding: 12px 14px 0;
+  margin-top: 2px;
+  background: #f6fbf8;
+  border: 1px dashed #cbe8d8;
+  border-radius: 12px;
+}
+
+.info-new-match-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b3a36;
+
+  i {
+    color: var(--info-accent-dark);
+  }
+
+  small {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: #909399;
+  }
+}
+
+.info-panel-enter-active,
+.info-panel-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.info-panel-enter,
+.info-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* 生效时间窗并排布局 */
@@ -596,7 +727,7 @@ export default {
   font-weight: 700;
   color: var(--info-accent-dark);
   background: var(--info-accent-soft);
-  border: 1px solid #cfe0ec;
+  border: 1px solid #cbe8d8;
   border-radius: 50%;
   animation: infoVsPulse 1.8s ease infinite;
 }
@@ -647,6 +778,15 @@ export default {
 }
 
 @media (max-width: 767px) {
+  .info-new-match-control {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .info-new-match-title small {
+    display: none;
+  }
+
   .info-edit-hero {
     align-items: flex-start;
     padding: 14px;
@@ -661,13 +801,5 @@ export default {
     padding: 14px 12px 6px;
   }
 
-  .info-match-picker {
-    align-items: stretch;
-    flex-direction: column;
-
-    .el-button {
-      align-self: flex-start;
-    }
-  }
 }
 </style>

@@ -15,7 +15,7 @@
       <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
       <el-table-column label="生效时间" align="center" width="160">
         <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}") || "-"
-          }}</template>
+        }}</template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="80">
         <template slot-scope="scope">
@@ -32,87 +32,10 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog :visible.sync="editorVisible" :title="editorMode === 'add' ? '新增关联信息点' : '编辑关联信息点'" width="860px"
-      append-to-body custom-class="info-inline-dialog" :close-on-click-modal="false">
-      <el-form ref="editorForm" :model="form" :rules="rules" label-width="104px" v-loading="submitting || editLoading">
-        <el-row :gutter="16">
-          <el-col :span="12" v-if="anchorType === 'team'">
-            <el-form-item label="所属赛季" prop="seasonId">
-              <common-enhanced-select ref="seasonSelect" v-model="form.seasonId" valueKey="seasonId"
-                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12" v-if="anchorType === 'team'">
-            <el-form-item label="关联球队" prop="teamIds">
-              <el-input :value="formatSelectedTeams(selectedTeams)" readonly placeholder="请选择关联球队"
-                @focus="teamSelectorVisible = true" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="信息标题" prop="pointTitle">
-              <el-input v-model="form.pointTitle" maxlength="255" show-word-limit placeholder="请输入信息标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="信息内容" prop="pointContent">
-              <el-input v-model="form.pointContent" type="textarea" :rows="4" maxlength="1023" show-word-limit
-                placeholder="请输入客观信息内容" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="来源名称" prop="sourceName">
-              <el-input v-model="form.sourceName" maxlength="255" placeholder="请输入来源名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="来源地址" prop="sourceUrl">
-              <el-input v-model="form.sourceUrl" maxlength="512" placeholder="请输入来源地址" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="发布时间" prop="sourcePublishTime">
-              <el-date-picker v-model="form.sourcePublishTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择发布时间" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="采集时间" prop="collectTime">
-              <el-date-picker v-model="form.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择采集时间" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="生效窗口">
-              <div class="info-inline-time-row">
-                <el-date-picker v-model="form.effectiveStartTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                  style="width: 100%" placeholder="生效时间（可空）" />
-                <span>至</span>
-                <el-date-picker v-model="form.effectiveEndTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                  style="width: 100%" placeholder="失效时间（可空）" />
-              </div>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="是否公开" prop="allowPublic">
-              <el-radio-group v-model="form.allowPublic">
-                <el-radio label="0">不可公开</el-radio>
-                <el-radio label="1">可公开</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="备注" prop="pointRemark">
-              <el-input v-model="form.pointRemark" type="textarea" :rows="2" maxlength="1023" show-word-limit
-                placeholder="请输入备注（可空）" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer">
-        <el-button @click="editorVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">保 存</el-button>
-      </div>
-    </el-dialog>
+    <dortmund-info-point-form-dialog :visible.sync="editorVisible" :value="form" :mode="editorMode"
+      :info-point-type="anchorType === 'team' ? 'T' : 'M'" :show-season="anchorType === 'team'"
+      :show-teams="anchorType === 'team'" show-advanced :selected-teams="selectedTeams" :loading="editLoading"
+      :submitting="submitting" dialog-width="860px" @select-teams="teamSelectorVisible = true" @save="handleSubmit" />
 
     <dortmund-team-selector-modal :visible.sync="teamSelectorVisible" multiple :selected-items="selectedTeams"
       @confirm="handleTeamSelectorConfirm" />
@@ -121,14 +44,13 @@
 
 <script>
 import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, delInfoPoint } from "@/api/fx67ll/dortmund/infoPoint";
-import { listSeason } from "@/api/fx67ll/dortmund/season";
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 
 export default {
   name: "DortmundInfoPointInlineEditor",
   dicts: ["sys_normal_disable"],
-  components: { CommonEnhancedSelect, DortmundTeamSelectorModal },
+  components: { DortmundInfoPointFormDialog, DortmundTeamSelectorModal },
   props: {
     anchorType: {
       type: String,
@@ -145,16 +67,7 @@ export default {
     },
   },
   data() {
-    const checkTimeWindow = (rule, value, callback) => {
-      if (this.form.effectiveStartTime && this.form.effectiveEndTime
-        && this.form.effectiveStartTime > this.form.effectiveEndTime) {
-        callback(new Error("生效时间不能晚于失效时间"));
-        return;
-      }
-      callback();
-    };
     return {
-      listSeason,
       loading: false,
       submitting: false,
       editLoading: false,
@@ -164,16 +77,6 @@ export default {
       selectedTeams: [],
       teamSelectorVisible: false,
       form: this.buildEmptyForm(),
-      rules: {
-        seasonId: [{ required: true, message: "所属赛季不能为空", trigger: "change" }],
-        teamIds: [{ required: true, type: "array", min: 1, message: "至少选择一支球队", trigger: "change" }],
-        pointTitle: [{ required: true, message: "信息标题不能为空", trigger: "blur" }],
-        pointContent: [{ required: true, message: "信息内容不能为空", trigger: "blur" }],
-        sourceName: [{ required: true, message: "来源名称不能为空", trigger: "blur" }],
-        collectTime: [{ required: true, message: "采集时间不能为空", trigger: "change" }],
-        effectiveStartTime: [{ validator: checkTimeWindow, trigger: "change" }],
-        effectiveEndTime: [{ validator: checkTimeWindow, trigger: "change" }],
-      },
     };
   },
   watch: {
@@ -238,9 +141,6 @@ export default {
         ? [{ teamId: this.teamId, teamName: `球队 ${this.teamId}` }]
         : [];
       this.editorVisible = true;
-      this.$nextTick(() => {
-        this.$refs.editorForm && this.$refs.editorForm.clearValidate();
-      });
     },
     openEdit(row) {
       this.editorMode = "update";
@@ -265,42 +165,38 @@ export default {
         this.editLoading = false;
       });
     },
-    handleSubmit() {
-      this.$refs.editorForm.validate((valid) => {
-        if (!valid) {
-          return;
-        }
-        this.submitting = true;
-        const data = {
-          pointTitle: this.form.pointTitle,
-          pointContent: this.form.pointContent,
-          sourceName: this.form.sourceName,
-          sourceUrl: this.form.sourceUrl,
-          sourcePublishTime: this.form.sourcePublishTime,
-          collectTime: this.form.collectTime,
-          effectiveStartTime: this.form.effectiveStartTime,
-          effectiveEndTime: this.form.effectiveEndTime,
-          allowPublic: this.form.allowPublic,
-          pointRemark: this.form.pointRemark,
-        };
-        const request = this.editorMode === "add"
-          ? addInfoPoint({
-            ...data,
-            infoPointType: this.form.infoPointType,
-            seasonId: this.form.seasonId,
-            matchId: this.form.matchId,
-            teamIds: this.form.teamIds,
-          })
-          : updateInfoPoint({ ...data, infoPointId: this.form.infoPointId, teamIds: this.form.teamIds });
-        request.then(() => {
-          this.$modal.msgSuccess(this.editorMode === "add" ? "新增成功" : "修改成功");
-          this.editorVisible = false;
-          this.load();
-          this.$emit("refresh");
-        }).catch(() => {
-        }).finally(() => {
-          this.submitting = false;
-        });
+    handleSubmit(form) {
+      this.form = { ...this.form, ...form };
+      this.submitting = true;
+      const data = {
+        pointTitle: form.pointTitle,
+        pointContent: form.pointContent,
+        sourceName: form.sourceName,
+        sourceUrl: form.sourceUrl,
+        sourcePublishTime: form.sourcePublishTime,
+        collectTime: form.collectTime,
+        effectiveStartTime: form.effectiveStartTime,
+        effectiveEndTime: form.effectiveEndTime,
+        allowPublic: form.allowPublic,
+        pointRemark: form.pointRemark,
+      };
+      const request = this.editorMode === "add"
+        ? addInfoPoint({
+          ...data,
+          infoPointType: form.infoPointType,
+          seasonId: form.seasonId,
+          matchId: form.matchId,
+          teamIds: form.teamIds,
+        })
+        : updateInfoPoint({ ...data, infoPointId: form.infoPointId, teamIds: form.teamIds });
+      request.then(() => {
+        this.$modal.msgSuccess(this.editorMode === "add" ? "新增成功" : "修改成功");
+        this.editorVisible = false;
+        this.load();
+        this.$emit("refresh");
+      }).catch(() => {
+      }).finally(() => {
+        this.submitting = false;
       });
     },
     handleRemove(row) {

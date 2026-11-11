@@ -21,7 +21,7 @@
             </el-form-item>
             <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M' && isMoreQuery">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择所属比赛"
-                @focus="matchSelectorVisible = true" />
+                @click="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="信息点标题" prop="pointTitle">
               <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
@@ -113,6 +113,7 @@
 <script>
 import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, changeInfoPointStatus } from "@/api/fx67ll/dortmund/infoPoint";
 import { listSeason } from "@/api/fx67ll/dortmund/season";
+import { addMatch } from "@/api/fx67ll/dortmund/match";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import InfoCardPane from "./components/InfoCardPane/index.vue";
@@ -339,7 +340,12 @@ export default {
     handleSceneSave(data) {
       const isAdd = this.editMode === "add";
       this.submitting = true;
-      const request = isAdd ? addInfoPoint(data) : updateInfoPoint(data);
+      const request = isAdd && data.newMatch
+        ? addMatch({
+          ...data.newMatch,
+          newInfoPoints: [{ ...data, infoPointType: "M", allowPublic: "0" }],
+        })
+        : isAdd ? addInfoPoint(data) : updateInfoPoint(data);
       request.then(() => {
         this.$modal.msgSuccess(isAdd ? "新增成功" : "修改成功");
         this.handleSceneBack();

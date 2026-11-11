@@ -53,14 +53,8 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
-              <div class="odds-match-picker">
-                <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                  prefix-icon="el-icon-football" @focus="matchSelectorVisible = true" />
-                <el-button type="primary" plain icon="el-icon-s-operation"
-                  @click="matchSelectorVisible = true">选择比赛</el-button>
-                <el-button type="text" class="odds-create-match-btn" icon="el-icon-circle-plus-outline"
-                  @click="toggleNewMatch">当场新建比赛</el-button>
-              </div>
+              <dortmund-match-binding-control :display-text="formatSelectedMatch(selectedMatch)" show-create
+                @select="matchSelectorVisible = true" @create="toggleNewMatch" />
               <div class="odds-association-hint">可选择已有比赛，或在当前倍率记录中同步新建一场比赛</div>
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId" v-else-if="editMode === 'add' && newMatchVisible">
@@ -164,11 +158,12 @@
 import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import DortmundMatchBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundMatchBindingControl/index";
 
 export default {
   name: "OddsEditScene",
   dicts: ["fx67ll_dortmund_odds_type"],
-  components: { DortmundMatchSelectorModal },
+  components: { DortmundMatchSelectorModal, DortmundMatchBindingControl },
   props: {
     editMode: {
       type: String,
@@ -558,28 +553,6 @@ export default {
   flex-shrink: 0;
 }
 
-.odds-match-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-
-  .el-input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .el-button {
-    flex-shrink: 0;
-    margin-left: 0;
-  }
-}
-
-.odds-create-match-btn {
-  padding-right: 4px;
-  padding-left: 4px;
-}
-
 .odds-association-hint {
   margin-top: 6px;
   font-size: 12px;
@@ -682,15 +655,6 @@ export default {
 
   .odds-inline-control .el-button {
     align-self: flex-start;
-  }
-
-  .odds-match-picker {
-    align-items: stretch;
-    flex-wrap: wrap;
-
-    .el-input {
-      flex-basis: 100%;
-    }
   }
 
   .odds-new-match-title small {

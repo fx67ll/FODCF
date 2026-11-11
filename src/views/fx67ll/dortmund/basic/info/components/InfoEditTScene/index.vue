@@ -44,7 +44,7 @@
               <!-- 可选球队只限启用且在数据范围内的球队，不按赛季过滤；修改时保持已有关系不变可不改 -->
               <div v-if="editMode === 'add'" class="info-team-control">
                 <el-input :value="formatSelectedTeams(selectedTeams)" readonly placeholder="请选择关联球队（可多选）"
-                  @focus="teamSelectorVisible = true" />
+                  @click="teamSelectorVisible = true" />
                 <el-button type="primary" plain icon="el-icon-s-operation"
                   @click="teamSelectorVisible = true">选择球队</el-button>
               </div>
@@ -98,8 +98,8 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="来源地址" prop="sourceUrl">
-              <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入来源地址" />
+            <el-form-item label="信息来源地址" prop="sourceUrl">
+              <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入信息来源地址" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">

@@ -11,7 +11,7 @@
             </el-form-item>
             <el-form-item label="关联比赛" prop="matchId">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                @focus="matchSelectorVisible = true" />
+                @click="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="比赛编码" prop="matchCode">
               <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable

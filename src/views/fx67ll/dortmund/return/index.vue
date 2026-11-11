@@ -9,9 +9,10 @@
         </div>
       </div>
       <div class="return-hero-actions">
-        <el-button type="primary" plain icon="el-icon-time" size="mini" @click="historyVisible = true">历史批次</el-button>
+        <el-button type="primary" plain icon="el-icon-time" size="mini"
+          @click="historyVisible = true">查看回报组合历史批次</el-button>
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:return:export']">导出组合</el-button>
+          v-hasPermi="['dortmund:return:export']">导出当前回报组合</el-button>
       </div>
     </div>
 
@@ -46,7 +47,7 @@
             </el-row>
             <el-form-item label="参与比赛">
               <el-input :value="formatSelectedMatches(selectedMatches)" readonly placeholder="仅展示存在有效 odds 的比赛"
-                @focus="matchSelectorVisible = true" />
+                @click="matchSelectorVisible = true" />
             </el-form-item>
           </el-form>
           <div class="generate-summary">
@@ -153,11 +154,22 @@
       </div>
     </el-drawer>
 
-    <el-drawer :visible.sync="historyVisible" title="生成历史批次" size="900px" append-to-body destroy-on-close
+    <el-drawer :visible.sync="historyVisible" title="回报组合历史批次" size="900px" append-to-body destroy-on-close
       custom-class="return-drawer return-history-drawer" @opened="handleBatchQuery">
       <div class="return-drawer-body">
-        <div class="return-detail-card">
-          <div class="return-detail-title">历史批次</div>
+        <div class="history-drawer-hero">
+          <div class="history-drawer-hero-icon"><i class="el-icon-time"></i></div>
+          <div class="history-drawer-hero-copy">
+            <strong>历史批次</strong>
+            <span>查看生成记录、处理状态与组合数量</span>
+          </div>
+          <span class="history-drawer-count">共 {{ batchTotal }} 批</span>
+        </div>
+        <div class="history-filter-card">
+          <div class="history-filter-heading">
+            <span><i class="el-icon-search"></i>筛选条件</span>
+            <el-button type="text" icon="el-icon-refresh-left" @click="resetBatchQuery">重置</el-button>
+          </div>
           <div class="batch-filter">
             <el-select v-model="batchQuery.generationStatus" placeholder="状态" size="mini" clearable
               style="width: 112px">
@@ -170,36 +182,51 @@
             </el-select>
             <el-date-picker v-model="batchDateRange" size="mini" type="daterange" value-format="yyyy-MM-dd"
               range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 220px" clearable />
-            <el-button size="mini" icon="el-icon-search" @click="handleBatchQuery">查询</el-button>
+            <el-button type="primary" size="mini" icon="el-icon-search" @click="handleBatchQuery">查询批次</el-button>
           </div>
         </div>
-        <div class="return-detail-card">
-          <el-table v-loading="batchLoading" :data="batchList" row-key="generationId" size="small">
-            <el-table-column label="批次编码" prop="generationCode" min-width="170" show-overflow-tooltip fixed="left" />
-            <el-table-column label="模式" align="center" width="96">
-              <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
-            </el-table-column>
-            <el-table-column label="状态" align="center" prop="generationStatus" width="84">
-              <template slot-scope="scope">
-                <dict-tag :options="dict.type.fx67ll_ai_analysis_status" :value="scope.row.generationStatus" />
-              </template>
-            </el-table-column>
-            <el-table-column label="基础金额" align="center" prop="inputAmount" width="100" />
-            <el-table-column label="目标金额" align="center" prop="targetAmount" width="100" />
-            <el-table-column label="组合数" align="center" prop="generatedCount" width="76" />
-            <el-table-column label="完成时间" align="center" width="150">
-              <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-"
-              }}</template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" width="90" fixed="right">
-              <template slot-scope="scope">
-                <el-button size="mini" type="text" icon="el-icon-view" v-hasPermi="['dortmund:return:query']"
-                  @click="handleGenerationDetail(scope.row)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+        <div class="history-table-card">
+          <div class="history-table-heading">
+            <div>
+              <strong>生成记录</strong>
+              <span v-if="batchList.length">当前页 {{ batchList.length }} 条</span>
+            </div>
+            <i class="el-icon-sort"></i>
+          </div>
+          <div class="history-table-wrap">
+            <el-table v-loading="batchLoading" :data="batchList" row-key="generationId" size="small"
+              class="history-table">
+              <el-table-column label="批次编码" prop="generationCode" min-width="170" show-overflow-tooltip fixed="left" />
+              <el-table-column label="模式" align="center" width="96">
+                <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" align="center" prop="generationStatus" width="84">
+                <template slot-scope="scope">
+                  <dict-tag :options="dict.type.fx67ll_ai_analysis_status" :value="scope.row.generationStatus" />
+                </template>
+              </el-table-column>
+              <el-table-column label="基础金额" align="center" prop="inputAmount" width="100" />
+              <el-table-column label="目标金额" align="center" prop="targetAmount" width="100" />
+              <el-table-column label="组合数" align="center" prop="generatedCount" width="76" />
+              <el-table-column label="完成时间" align="center" width="150">
+                <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-"
+                  }}</template>
+              </el-table-column>
+              <el-table-column label="操作" align="center" width="90" fixed="right">
+                <template slot-scope="scope">
+                  <el-button size="mini" type="text" icon="el-icon-view" v-hasPermi="['dortmund:return:query']"
+                    @click="handleGenerationDetail(scope.row)">详情</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
           <pagination v-show="batchTotal > 0" :total="batchTotal" :page.sync="batchQuery.pageNum"
             :limit.sync="batchQuery.pageSize" @pagination="getBatchList" />
+          <div v-if="!batchLoading && !batchList.length" class="history-empty">
+            <i class="el-icon-time"></i>
+            <span>暂无符合条件的历史批次</span>
+            <el-button type="text" @click="resetBatchQuery">清除筛选</el-button>
+          </div>
         </div>
       </div>
     </el-drawer>
@@ -432,6 +459,12 @@ export default {
     handleBatchQuery() {
       this.batchQuery.pageNum = 1;
       this.getBatchList();
+    },
+    resetBatchQuery() {
+      this.batchQuery.generationStatus = null;
+      this.batchQuery.generationMode = null;
+      this.batchDateRange = [];
+      this.handleBatchQuery();
     },
     handleGenerationDetail(row) {
       this.generationVisible = true;
@@ -785,6 +818,158 @@ export default {
   margin-left: auto;
 }
 
+.history-drawer-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #f2fbf6 0%, #ffffff 100%);
+  border: 1px solid #dcebe3;
+  border-radius: 14px;
+  animation: returnRise 0.28s ease both;
+}
+
+.history-drawer-hero-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  background: var(--current-color, #2ecc71);
+  border-radius: 11px;
+  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.22);
+}
+
+.history-drawer-hero-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    font-size: 14px;
+    color: #2b3a36;
+  }
+
+  span {
+    overflow: hidden;
+    font-size: 12px;
+    color: #7c8b84;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.history-drawer-count {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  margin-left: auto;
+  font-size: 12px;
+  color: #27ad60;
+  background: #e7f8ee;
+  border-radius: 999px;
+}
+
+.history-filter-card,
+.history-table-card {
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+  border: 1px solid #e3eee8;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(46, 204, 113, 0.05);
+  animation: returnRise 0.3s ease 0.04s both;
+}
+
+.history-filter-heading,
+.history-table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+  color: #2b3a36;
+
+  >span,
+  >div {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  i {
+    color: var(--current-color, #2ecc71);
+  }
+
+  .el-button {
+    padding: 0;
+  }
+}
+
+.history-table-heading {
+  margin-bottom: 10px;
+
+  span {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #8b9992;
+  }
+
+  >i {
+    color: #9aa8a1;
+  }
+}
+
+.history-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #edf3ef;
+  border-radius: 10px;
+}
+
+.history-table {
+  min-width: 790px;
+
+  ::v-deep th.el-table__cell {
+    color: #53635b;
+    background: #f4f8f5;
+  }
+
+  ::v-deep .el-table__row {
+    transition: background-color 0.2s ease;
+  }
+
+  ::v-deep .el-table__row:hover>td.el-table__cell {
+    background: #f3fbf6;
+  }
+}
+
+.history-empty {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 190px;
+  color: #9aa8a1;
+  background: #fbfdfc;
+  border: 1px dashed #dfece5;
+  border-radius: 10px;
+
+  i {
+    font-size: 30px;
+    color: #b9c8bf;
+  }
+
+  span {
+    font-size: 13px;
+  }
+
+  .el-button {
+    padding: 0;
+  }
+}
+
 .return-drawer-body {
   padding: 0 6px;
 }
@@ -920,6 +1105,33 @@ export default {
   .return-hero-actions {
     justify-content: flex-end;
     width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+
+  .history-drawer-hero,
+  .history-filter-card,
+  .history-table-card {
+    padding: 12px;
+  }
+
+  .history-drawer-hero {
+    align-items: flex-start;
+  }
+
+  .history-drawer-count {
+    display: none;
+  }
+
+  .batch-filter {
+    align-items: stretch;
+
+    .el-select,
+    .el-date-editor,
+    .el-button {
+      width: 100% !important;
+    }
   }
 }
 </style>

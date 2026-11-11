@@ -43,7 +43,7 @@ export default {
       searchFields: [
         {
           key: "keyword",
-          label: "组合关键字",
+          label: "回报组合",
           placeholder: "请输入标题或编码",
         },
         {

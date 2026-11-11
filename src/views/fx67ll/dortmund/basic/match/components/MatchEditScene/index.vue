@@ -59,7 +59,7 @@
             <el-form-item label="主队名称" prop="homeTeamId">
               <div class="match-edit-item">
                 <el-input :value="selectedHomeTeam ? selectedHomeTeam.teamName : ''" readonly placeholder="请选择主队名称"
-                  :disabled="newHomeTeamVisible || editMode !== 'add'" @focus="openTeamSelector('home')" />
+                  :disabled="newHomeTeamVisible || editMode !== 'add'" @click="openTeamSelector('home')" />
                 <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
                   v-if="editMode === 'add'" @click="toggleNewTeamPanel('home')">
                   {{ newHomeTeamVisible ? "收起当场新增" : "当场新增主队" }}
@@ -72,7 +72,7 @@
             <el-form-item label="客队名称" prop="awayTeamId">
               <div class="match-edit-item">
                 <el-input :value="selectedAwayTeam ? selectedAwayTeam.teamName : ''" readonly placeholder="请选择客队名称"
-                  :disabled="newAwayTeamVisible || editMode !== 'add'" @focus="openTeamSelector('away')" />
+                  :disabled="newAwayTeamVisible || editMode !== 'add'" @click="openTeamSelector('away')" />
                 <el-button type="text" icon="el-icon-circle-plus-outline" class="match-edit-inline-btn"
                   v-if="editMode === 'add'" @click="toggleNewTeamPanel('away')">
                   {{ newAwayTeamVisible ? "收起当场新增" : "当场新增客队" }}
@@ -247,44 +247,8 @@
       :selected-items="teamSelectorSide === 'home' ? [selectedHomeTeam] : [selectedAwayTeam]"
       @confirm="handleTeamSelectorConfirm" />
 
-    <el-dialog :visible.sync="draftInfoVisible" :title="draftInfoIndex >= 0 ? '编辑关联信息点' : '新增关联信息点'" width="760px"
-      append-to-body custom-class="match-draft-info-dialog" :close-on-click-modal="false">
-      <el-form ref="draftInfoForm" :model="draftInfoForm" :rules="draftInfoRules" label-width="104px">
-        <el-row :gutter="16">
-          <el-col :xs="24" :md="12">
-            <el-form-item label="信息标题" prop="pointTitle">
-              <el-input v-model="draftInfoForm.pointTitle" maxlength="255" show-word-limit placeholder="请输入信息标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="采集时间" prop="collectTime">
-              <el-date-picker v-model="draftInfoForm.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择采集时间" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="信息内容" prop="pointContent">
-              <el-input v-model="draftInfoForm.pointContent" type="textarea" :rows="4" maxlength="1023" show-word-limit
-                placeholder="请输入客观信息内容" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="来源名称" prop="sourceName">
-              <el-input v-model="draftInfoForm.sourceName" maxlength="255" placeholder="请输入来源名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="12">
-            <el-form-item label="来源地址" prop="sourceUrl">
-              <el-input v-model="draftInfoForm.sourceUrl" maxlength="512" placeholder="请输入来源地址" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer">
-        <el-button @click="draftInfoVisible = false">取 消</el-button>
-        <el-button type="primary" @click="saveDraftInfo">确 定</el-button>
-      </div>
-    </el-dialog>
+    <dortmund-info-point-form-dialog :visible.sync="draftInfoVisible" :value="draftInfoForm"
+      :mode="draftInfoIndex >= 0 ? 'update' : 'add'" info-point-type="M" @save="saveDraftInfo" />
   </div>
 </template>
 
@@ -297,7 +261,7 @@ import { teamVenueOptions } from "@/utils/constant/football";
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import MatchNewSeasonPanel from "../MatchNewSeasonPanel/index";
 import MatchNewTeamPanel from "../MatchNewTeamPanel/index";
-import DortmundInfoPointInlineEditor from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointInlineEditor/index.vue";
+import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import DortmundOddsInlineEditor from "@/views/fx67ll/dortmund/other/component/DortmundOddsInlineEditor/index.vue";
 
 export default {
@@ -305,7 +269,7 @@ export default {
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     CommonEnhancedSelect, MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal,
-    DortmundInfoPointInlineEditor, DortmundOddsInlineEditor
+    DortmundInfoPointFormDialog, DortmundOddsInlineEditor
   },
   props: {
     // 编排场景模式（add新增 update修改）
@@ -330,14 +294,6 @@ export default {
     },
   },
   computed: {
-    draftInfoRules() {
-      return {
-        pointTitle: [{ required: true, message: "信息标题不能为空", trigger: "blur" }],
-        pointContent: [{ required: true, message: "信息内容不能为空", trigger: "blur" }],
-        sourceName: [{ required: true, message: "来源名称不能为空", trigger: "blur" }],
-        collectTime: [{ required: true, message: "采集时间不能为空", trigger: "change" }],
-      };
-    },
   },
   data() {
     // 归属字段的校验：已选已有记录或已展开当场新增面板均视为已填写
@@ -511,23 +467,15 @@ export default {
         this.draftInfoForm = this.buildEmptyInfoPoint();
       }
       this.draftInfoVisible = true;
-      this.$nextTick(() => {
-        this.$refs.draftInfoForm && this.$refs.draftInfoForm.clearValidate();
-      });
     },
-    saveDraftInfo() {
-      this.$refs.draftInfoForm.validate((valid) => {
-        if (!valid) {
-          return;
-        }
-        const data = { ...this.draftInfoForm, infoPointType: "M" };
-        if (this.draftInfoIndex >= 0) {
-          this.newInfoPoints.splice(this.draftInfoIndex, 1, data);
-        } else {
-          this.newInfoPoints.push(data);
-        }
-        this.draftInfoVisible = false;
-      });
+    saveDraftInfo(form) {
+      const data = { ...form, infoPointType: "M" };
+      if (this.draftInfoIndex >= 0) {
+        this.newInfoPoints.splice(this.draftInfoIndex, 1, data);
+      } else {
+        this.newInfoPoints.push(data);
+      }
+      this.draftInfoVisible = false;
     },
     removeDraftInfo(index) {
       this.newInfoPoints.splice(index, 1);

@@ -71,7 +71,7 @@
             <el-form-item label="回报组合" prop="combinationIds">
               <div class="plan-combination-selector">
                 <el-input :value="selectedCombinationSummary" readonly placeholder="请选择已采用的回报组合"
-                  prefix-icon="el-icon-trophy" @focus="combinationSelectorVisible = true" />
+                  prefix-icon="el-icon-trophy" @click="combinationSelectorVisible = true" />
                 <el-button type="primary" plain icon="el-icon-s-operation"
                   @click="combinationSelectorVisible = true">选择组合</el-button>
               </div>
