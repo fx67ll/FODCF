@@ -145,7 +145,7 @@
         <el-row :gutter="20">
           <el-col :xs="24" :md="12">
             <el-form-item label="是否可公开" prop="allowPublic">
-              <el-radio-group v-model="editForm.allowPublic" class="dortmund-theme-radio">
+              <el-radio-group v-model="editForm.allowPublic">
                 <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
                   :label="dict.value">{{
                     dict.label }}</el-radio>

@@ -13,7 +13,7 @@
           @click="historyVisible = true">查看回报组合历史批次</el-button>
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['dortmund:return:export']">导出当前回报组合</el-button>
-      </div>
+      </div>K
     </div>
 
     <el-row :gutter="18" class="return-main">
@@ -1136,8 +1136,4 @@ export default {
     }
   }
 }
-</style>
-
-<style lang="scss">
-@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

@@ -29,18 +29,12 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="球队主场" prop="teamVenue">
-            <el-select v-model="newTeamForm.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
-              allow-create default-first-option>
-              <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="newTeamForm.teamVenue" option-type="venue" placeholder="请选择或输入球队主场" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="地区/联赛" prop="teamCountry">
-            <el-select v-model="newTeamForm.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable
-              filterable allow-create default-first-option>
-              <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="newTeamForm.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -50,10 +44,7 @@
         </el-col>
         <el-col :span="24">
           <el-form-item label="球队标签" prop="teamTag">
-            <el-select v-model="newTeamForm.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
-              multiple allow-create default-first-option>
-              <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="newTeamForm.teamTag" option-type="tag" placeholder="请选择或输入球队标签" multiple />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -67,10 +58,11 @@
 </template>
 
 <script>
-import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
+import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 
 export default {
   name: "MatchNewTeamPanel",
+  components: { DortmundOptionSelect },
   props: {
     // 面板所属方（home主队 away客队），控制标题文案
     side: {
@@ -119,12 +111,6 @@ export default {
           { required: true, message: "球队状态不能为空", trigger: "blur" }
         ],
       },
-      // 球队地区预选选项数组
-      teamCountryOptions,
-      // 球队标签预设选项数组
-      teamTagOptions,
-      // 球场预设选项数组
-      teamVenueOptions,
     };
   },
   methods: {

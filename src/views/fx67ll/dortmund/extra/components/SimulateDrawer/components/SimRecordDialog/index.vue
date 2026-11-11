@@ -64,7 +64,8 @@
       <plan-link-selector ref="planLinkSelector" />
     </div>
     <div slot="footer" class="dialog-footer">
-      <el-button type="primary" :loading="submitting" @click="submitSimRound">确 定</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitSimRound">确
+        定</el-button>
       <el-button @click="cancelSimRecord">取 消</el-button>
     </div>
   </el-dialog>

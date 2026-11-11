@@ -42,7 +42,7 @@
       <div class="sim-version-manage-empty" v-if="simVersionList.length === 0">暂无版本记录</div>
     </div>
     <div slot="footer" class="dialog-footer">
-      <el-button type="primary" @click="dialogVisible = false">关 闭</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" @click="dialogVisible = false">关 闭</el-button>
     </div>
   </el-dialog>
 </template>

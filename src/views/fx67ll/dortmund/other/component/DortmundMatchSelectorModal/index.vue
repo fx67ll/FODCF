@@ -41,8 +41,7 @@ export default {
         { label: "场地", prop: "matchVenue", minWidth: 140 },
       ],
       searchFields: [
-        { key: "matchCode", label: "比赛编码", placeholder: "请输入比赛编码" },
-        { key: "matchVenue", label: "比赛场地", placeholder: "请输入比赛场地" },
+        { key: "teamName", label: "对阵球队", placeholder: "请输入主队或客队名称" },
       ],
     };
   },

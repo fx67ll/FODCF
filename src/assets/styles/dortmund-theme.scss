@@ -1,6 +1,36 @@
 /**
- * 多特蒙德模块主题按钮样式：统一文字按钮使用布局层注入的主题绿。
+ * 多特蒙德模块主题控件样式：统一文字/确认按钮、输入框焦点、选择控件和弹窗内
+ * Element 默认主题蓝；颜色取布局层注入的主题绿，未注入时回退为同色绿。
  */
+
+$dortmund-theme-green: var(--current-color, #2ecc71);
+
+/* 页面根作用域：列表页和二级表单页中的输入/选择控件统一焦点与选中色 */
+$dortmund-theme-page-scopes: ".dl-page", ".return-page";
+
+/* 弹窗/抽屉作用域：append-to-body 后脱离页面根，需要按 custom-class 回接主题 */
+$dortmund-theme-overlay-scopes: ".list-selector-drawer", ".season-edit-dialog",
+  ".odds-detail-drawer", ".info-detail-dialog",
+  ".dortmund-info-point-form-dialog", ".odds-inline-dialog",
+  ".extra-edit-dialog", ".extra-merge-dialog", ".extra-history-chart-dialog",
+  ".plan-summary-dialog", ".sim-drawer", ".sim-record-dialog",
+  ".sim-version-create-dialog", ".sim-invalidate-confirm-dialog",
+  ".sim-invalidate-danger-dialog", ".sim-invalid-notice-dialog",
+  ".sim-version-manage-dialog", ".return-drawer", ".return-image-preview-dialog",
+  ".plan-image-preview-dialog";
+
+@mixin dortmund-theme-tint($percent, $fallback) {
+  background-color: $fallback;
+
+  @supports (background-color: color-mix(in srgb, red 10%, transparent)) {
+    background-color: color-mix(
+      in srgb,
+      #{$dortmund-theme-green} #{$percent},
+      transparent
+    );
+  }
+}
+
 .dortmund-theme-text.el-button--text {
   color: var(--current-color, #2ecc71) !important;
 
@@ -11,7 +41,6 @@
   }
 }
 
-/* 确认/保存按钮：用主题绿作为基色，叠加轻渐变与阴影强化主操作层级 */
 .dortmund-theme-confirm.el-button--success {
   --dortmund-theme-green: var(--current-color, #2ecc71);
 
@@ -58,15 +87,184 @@
   }
 }
 
-@supports (background: color-mix(in srgb, red 10%, transparent)) {
-  .dortmund-theme-confirm.el-button--success {
-    box-shadow: 0 5px 12px
-      color-mix(in srgb, var(--dortmund-theme-green) 30%, transparent);
+.dortmund-theme-cancel.el-button--default:hover,
+.dortmund-theme-cancel.el-button--default:focus {
+  color: var(--current-color, #2ecc71);
+  border-color: rgba(46, 204, 113, 0.35);
+  background-color: rgba(46, 204, 113, 0.08);
+}
+
+/* ---------- 输入框焦点：统一替换 Element 默认蓝色 ---------- */
+#{$dortmund-theme-page-scopes},
+#{$dortmund-theme-overlay-scopes} {
+  .el-input__inner:hover,
+  .el-textarea__inner:hover,
+  .el-range-editor.el-input__inner:hover {
+    border-color: $dortmund-theme-green;
+  }
+
+  .el-input__inner:focus,
+  .el-textarea__inner:focus,
+  .el-range-editor.is-active,
+  .el-range-editor.is-active:hover,
+  .el-select .el-input.is-focus .el-input__inner {
+    border-color: $dortmund-theme-green;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.14);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+}
+
+/* ---------- 选择控件：开关/单选/复选全部走主题绿 ---------- */
+#{$dortmund-theme-page-scopes},
+#{$dortmund-theme-overlay-scopes} {
+  .el-switch.is-checked .el-switch__core {
+    border-color: $dortmund-theme-green;
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-radio__input.is-checked .el-radio__inner,
+  .el-checkbox__input.is-checked .el-checkbox__inner,
+  .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+    border-color: $dortmund-theme-green;
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-radio__input.is-checked + .el-radio__label,
+  .el-checkbox__input.is-checked + .el-checkbox__label {
+    color: $dortmund-theme-green;
+  }
+
+  .el-radio.is-bordered.is-checked,
+  .el-checkbox.is-bordered.is-checked {
+    border-color: $dortmund-theme-green;
+  }
+
+  .el-radio-button__orig-radio:checked + .el-radio-button__inner,
+  .el-checkbox-button__original-radio:checked + .el-checkbox-button__inner {
+    color: #fff;
+    border-color: $dortmund-theme-green;
+    background-color: $dortmund-theme-green;
+    box-shadow: -1px 0 0 0 $dortmund-theme-green;
+  }
+}
+
+/* ---------- 弹窗内 Element 默认蓝：按钮、分页、时间、加载等统一主题化 ---------- */
+#{$dortmund-theme-overlay-scopes} {
+  .el-button--text {
+    color: $dortmund-theme-green;
 
     &:hover,
     &:focus {
-      box-shadow: 0 7px 16px
-        color-mix(in srgb, var(--dortmund-theme-green) 38%, transparent);
+      color: $dortmund-theme-green;
+      @include dortmund-theme-tint(8%, rgba(46, 204, 113, 0.08));
     }
+  }
+
+  .el-button--primary {
+    color: #fff;
+    border-color: $dortmund-theme-green;
+    background-color: $dortmund-theme-green;
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      border-color: $dortmund-theme-green;
+      background-color: $dortmund-theme-green;
+      filter: brightness(0.94);
+    }
+
+    &:active {
+      filter: brightness(0.9);
+    }
+  }
+
+  .el-button--primary.is-plain {
+    color: $dortmund-theme-green;
+    border-color: rgba(46, 204, 113, 0.45);
+    @include dortmund-theme-tint(10%, rgba(46, 204, 113, 0.1));
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      border-color: $dortmund-theme-green;
+      background-color: $dortmund-theme-green;
+    }
+  }
+
+  .el-link--primary {
+    color: $dortmund-theme-green;
+
+    &:hover {
+      color: $dortmund-theme-green;
+    }
+  }
+
+  .el-pagination.is-background .el-pager li.active {
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-pagination .el-pager li.active {
+    color: $dortmund-theme-green;
+  }
+
+  .el-select-dropdown__item.selected {
+    color: $dortmund-theme-green;
+  }
+
+  .el-select-dropdown__item.hover,
+  .el-select-dropdown__item:hover {
+    @include dortmund-theme-tint(7%, rgba(46, 204, 113, 0.07));
+  }
+
+  .el-date-table td.today span {
+    color: $dortmund-theme-green;
+  }
+
+  .el-date-table td.current:not(.disabled) span {
+    border-color: $dortmund-theme-green;
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-month-table td.current:not(.disabled) .cell,
+  .el-year-table td.current:not(.disabled) .cell {
+    color: $dortmund-theme-green;
+  }
+
+  .el-picker-panel__footer .el-button--text,
+  .el-time-panel__btn.confirm {
+    color: $dortmund-theme-green;
+  }
+
+  .el-tabs__item.is-active {
+    color: $dortmund-theme-green;
+  }
+
+  .el-tabs__active-bar {
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-slider__bar {
+    background-color: $dortmund-theme-green;
+  }
+
+  .el-slider__button {
+    border-color: $dortmund-theme-green;
+  }
+
+  .el-tree-node.is-current > .el-tree-node__content {
+    color: $dortmund-theme-green;
+    @include dortmund-theme-tint(8%, rgba(46, 204, 113, 0.08));
+  }
+
+  .el-loading-spinner .el-loading-text {
+    color: $dortmund-theme-green;
+  }
+
+  .el-loading-spinner .path {
+    stroke: $dortmund-theme-green;
+  }
+
+  .el-table__body tr.current-row > td.el-table__cell {
+    @include dortmund-theme-tint(10%, #e7f8ee);
   }
 }

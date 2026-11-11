@@ -425,7 +425,3 @@ export default {
   transform: translateY(10px);
 }
 </style>
-
-<style lang="scss">
-@import "@/views/fx67ll/dortmund/styles/theme-controls";
-</style>

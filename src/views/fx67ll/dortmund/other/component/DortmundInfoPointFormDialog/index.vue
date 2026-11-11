@@ -75,7 +75,7 @@
         </el-col>
         <el-col v-if="showAdvanced" :xs="24" :md="12">
           <el-form-item label="是否公开" prop="allowPublic">
-            <el-radio-group v-model="localForm.allowPublic" class="dortmund-theme-radio">
+            <el-radio-group v-model="localForm.allowPublic">
               <el-radio label="0">不可公开</el-radio>
               <el-radio label="1">可公开</el-radio>
             </el-radio-group>
@@ -92,7 +92,7 @@
     <div slot="footer" class="dialog-footer">
       <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="handleSubmit">{{
         submitLabel
-        }}</el-button>
+      }}</el-button>
       <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
     </div>
   </el-dialog>

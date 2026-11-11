@@ -111,7 +111,7 @@
     </el-form>
     <div slot="footer" class="dialog-footer">
       <el-button type="warning" plain icon="el-icon-refresh-left" @click="handleResetHistoricalData">重置历史数据</el-button>
-      <el-button type="primary" @click="submitForm">确 定</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" @click="submitForm">确 定</el-button>
       <el-button @click="cancel">取 消</el-button>
     </div>
   </el-dialog>

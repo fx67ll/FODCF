@@ -8,6 +8,7 @@
 <script>
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
+import { teamCountryOptions } from "@/utils/constant/football";
 
 export default {
   name: "DortmundTeamSelectorModal",
@@ -42,9 +43,14 @@ export default {
         { label: "标签", prop: "teamTag", minWidth: 160 },
       ],
       searchFields: [
-        { key: "teamName", label: "球队名称", placeholder: "全称/昵称/简称/英文" },
-        { key: "teamVenue", label: "主场", placeholder: "请输入主场" },
-        { key: "teamCountry", label: "地区/联赛", placeholder: "请输入地区/联赛" },
+        { key: "teamName", label: "球队名称", placeholder: "请输入球队全称/昵称/简称/英文" },
+        {
+          key: "teamCountry",
+          label: "地区/联赛",
+          type: "select",
+          placeholder: "请选择地区/联赛",
+          options: teamCountryOptions,
+        },
       ],
     };
   },

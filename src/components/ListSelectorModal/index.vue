@@ -82,8 +82,9 @@
           {{ selectedRows.length ? `已选择 ${selectedRows.length} 项` : "尚未选择" }}
         </span>
         <div>
-          <el-button @click="handleCancel">取 消</el-button>
-          <el-button type="primary" :disabled="!selectedRows.length" @click="handleConfirm">确认选择</el-button>
+          <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
+          <el-button type="success" class="dortmund-theme-confirm" :disabled="!selectedRows.length"
+            @click="handleConfirm">确认选择</el-button>
         </div>
       </div>
     </div>

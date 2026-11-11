@@ -108,10 +108,7 @@
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="比赛场地" prop="matchVenue">
-              <el-select v-model="editForm.matchVenue" style="width: 100%" placeholder="请选择或输入比赛场地" clearable filterable
-                allow-create default-first-option>
-                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+              <dortmund-option-select v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入比赛场地" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -264,9 +261,8 @@ import { listSeason } from "@/api/fx67ll/dortmund/season";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
-import { teamVenueOptions } from "@/utils/constant/football";
-
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 import MatchNewSeasonPanel from "../MatchNewSeasonPanel/index";
 import MatchNewTeamPanel from "../MatchNewTeamPanel/index";
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
@@ -277,7 +273,7 @@ export default {
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     CommonEnhancedSelect, MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
-    DortmundInfoPointFormDialog, DortmundOddsInlineEditor
+    DortmundInfoPointFormDialog, DortmundOddsInlineEditor, DortmundOptionSelect
   },
   props: {
     // 编排场景模式（add新增 update修改）
@@ -411,8 +407,6 @@ export default {
       draftInfoVisible: false,
       draftInfoIndex: -1,
       draftInfoForm: this.buildEmptyInfoPoint(),
-      // 球场预设选项数组（比赛场地可选项）
-      teamVenueOptions,
     };
   },
   created() {

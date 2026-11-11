@@ -49,7 +49,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -408,8 +408,4 @@ export default {
   opacity: 0;
   transform: translateY(12px);
 }
-</style>
-
-<style lang="scss">
-@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>

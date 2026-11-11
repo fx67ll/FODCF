@@ -13,7 +13,8 @@
           <p>球队编码创建后不可修改；被比赛引用时建议停用而非删除</p>
         </div>
       </div>
-      <el-button type="text" class="dortmund-theme-text team-edit-back" icon="el-icon-back" @click="$emit('back')">返回总览</el-button>
+      <el-button type="text" class="dortmund-theme-text team-edit-back" icon="el-icon-back"
+        @click="$emit('back')">返回总览</el-button>
     </div>
 
     <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="92px" class="team-edit-form">
@@ -55,19 +56,12 @@
         <el-row :gutter="20">
           <el-col :xs="24" :md="12">
             <el-form-item label="球队主场" prop="teamVenue">
-              <el-select v-model="editForm.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
-                allow-create default-first-option>
-                <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+              <dortmund-option-select v-model="editForm.teamVenue" option-type="venue" placeholder="请选择或输入球队主场" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="地区/联赛" prop="teamCountry">
-              <el-select v-model="editForm.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable
-                filterable allow-create default-first-option>
-                <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label"
-                  :value="item.value" />
-              </el-select>
+              <dortmund-option-select v-model="editForm.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -77,10 +71,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="球队标签" prop="teamTag">
-              <el-select v-model="editForm.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
-                multiple allow-create default-first-option>
-                <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+              <dortmund-option-select v-model="editForm.teamTag" option-type="tag" placeholder="请选择或输入球队标签" multiple />
             </el-form-item>
           </el-col>
         </el-row>
@@ -94,7 +85,7 @@
         <el-row :gutter="20">
           <el-col :xs="24" :md="8">
             <el-form-item label="球队状态" prop="teamStatus">
-              <el-switch v-model="editForm.teamStatus" active-value="0" inactive-value="1" class="dortmund-theme-switch" />
+              <el-switch v-model="editForm.teamStatus" active-value="0" inactive-value="1" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="8">
@@ -132,7 +123,8 @@
             <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
             <el-table-column label="操作" align="center" width="110">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit" @click="openDraftInfo(scope.row)">编辑</el-button>
+                <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
+                  @click="openDraftInfo(scope.row)">编辑</el-button>
                 <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
                   @click="removeDraftInfo(scope.$index)">删除</el-button>
               </template>
@@ -143,8 +135,9 @@
     </el-form>
 
     <div class="team-edit-footer">
-        <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保 存</el-button>
-        <el-button class="dortmund-theme-cancel" @click="$emit('back')">返回总览</el-button>
+      <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitEditForm">保
+        存</el-button>
+      <el-button class="dortmund-theme-cancel" @click="$emit('back')">返回总览</el-button>
     </div>
 
     <dortmund-info-point-form-dialog :visible.sync="draftVisible" :value="draftForm"
@@ -154,12 +147,12 @@
 
 <script>
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
-import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
+import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 
 export default {
   name: "TeamEditScene",
   dicts: ["sys_normal_disable"],
-  components: { DortmundInfoPointFormDialog },
+  components: { DortmundInfoPointFormDialog, DortmundOptionSelect },
   props: {
     editMode: {
       type: String,
@@ -177,9 +170,6 @@ export default {
   },
   data() {
     return {
-      teamCountryOptions,
-      teamTagOptions,
-      teamVenueOptions,
       editForm: this.buildEditForm(),
       draftVisible: false,
       draftIndex: -1,

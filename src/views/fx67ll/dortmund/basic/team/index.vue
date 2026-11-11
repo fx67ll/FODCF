@@ -26,22 +26,13 @@
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
-            <el-select v-model="queryParams.teamVenue" style="width: 100%" placeholder="请选择或输入球队主场" clearable filterable
-              allow-create default-first-option>
-              <el-option v-for="item in teamVenueOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="queryParams.teamVenue" option-type="venue" placeholder="请选择或输入球队主场" />
           </el-form-item>
           <el-form-item label="地区/联赛" prop="teamCountry">
-            <el-select v-model="queryParams.teamCountry" style="width: 100%" placeholder="请选择或输入地区/联赛" clearable
-              filterable allow-create default-first-option>
-              <el-option v-for="item in teamCountryOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="queryParams.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
           </el-form-item>
           <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
-            <el-select v-model="queryParams.teamTag" style="width: 100%" placeholder="请选择或输入球队标签" clearable filterable
-              allow-create default-first-option>
-              <el-option v-for="item in teamTagOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <dortmund-option-select v-model="queryParams.teamTag" option-type="tag" placeholder="请选择或输入球队标签" />
           </el-form-item>
           <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
             <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
@@ -170,15 +161,16 @@
 <script>
 import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/dortmund/team";
 
-import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
+import { teamTagOptions } from "@/utils/constant/football";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import TeamEditScene from "./components/TeamEditScene/index.vue";
+import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
-  components: { TeamEditScene },
+  components: { TeamEditScene, DortmundOptionSelect },
   data() {
     return {
       // 遮罩层
@@ -254,12 +246,8 @@ export default {
           { required: true, message: "球队状态不能为空", trigger: "blur" }
         ],
       },
-      // 球队地区预选选项数组
-      teamCountryOptions,
       // 球队标签预设选项数组
       teamTagOptions,
-      // 球场预设选项数组
-      teamVenueOptions,
     };
   },
   created() {
@@ -510,8 +498,4 @@ export default {
     transform: translateY(0);
   }
 }
-</style>
-
-<style lang="scss">
-@import "@/views/fx67ll/dortmund/styles/theme-controls";
 </style>
