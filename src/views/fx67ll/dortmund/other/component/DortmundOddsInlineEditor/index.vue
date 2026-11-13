@@ -19,13 +19,13 @@
 
     <el-descriptions v-if="activeOdds" :column="3" size="small" border class="odds-inline-detail">
       <el-descriptions-item label="来源时间">{{ parseTime(activeOdds.sourceTime, "{y}-{m}-{d} {h}:{i}") || "-"
-      }}</el-descriptions-item>
+        }}</el-descriptions-item>
       <el-descriptions-item label="让分值">{{ activeOdds.handicapValue || "-" }}</el-descriptions-item>
       <el-descriptions-item label="创建时间">{{ parseTime(activeOdds.createTime, "{y}-{m}-{d} {h}:{i}") || "-"
-      }}</el-descriptions-item>
-      <el-descriptions-item label="主胜赔率">{{ activeOdds.homeWinOdds || "-" }}</el-descriptions-item>
-      <el-descriptions-item label="平局赔率">{{ activeOdds.drawOdds || "-" }}</el-descriptions-item>
-      <el-descriptions-item label="客胜赔率">{{ activeOdds.awayWinOdds || "-" }}</el-descriptions-item>
+        }}</el-descriptions-item>
+      <el-descriptions-item label="主胜倍率">{{ activeOdds.homeWinOdds || "-" }}</el-descriptions-item>
+      <el-descriptions-item label="平局倍率">{{ activeOdds.drawOdds || "-" }}</el-descriptions-item>
+      <el-descriptions-item label="客胜倍率">{{ activeOdds.awayWinOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="让分主胜">{{ activeOdds.handicapHomeWinOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="让分平局">{{ activeOdds.handicapDrawOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="让分客胜">{{ activeOdds.handicapAwayWinOdds || "-" }}</el-descriptions-item>
@@ -56,33 +56,33 @@
         </el-row>
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-form-item label="主胜赔率" prop="homeWinOdds">
-              <el-input v-model="form.homeWinOdds" placeholder="请输入主胜赔率" />
+            <el-form-item label="主胜倍率" prop="homeWinOdds">
+              <el-input v-model="form.homeWinOdds" placeholder="请输入主胜倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="平局赔率" prop="drawOdds">
-              <el-input v-model="form.drawOdds" placeholder="请输入平局赔率" />
+            <el-form-item label="平局倍率" prop="drawOdds">
+              <el-input v-model="form.drawOdds" placeholder="请输入平局倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="客胜赔率" prop="awayWinOdds">
-              <el-input v-model="form.awayWinOdds" placeholder="请输入客胜赔率" />
+            <el-form-item label="客胜倍率" prop="awayWinOdds">
+              <el-input v-model="form.awayWinOdds" placeholder="请输入客胜倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="让分主胜" prop="handicapHomeWinOdds">
-              <el-input v-model="form.handicapHomeWinOdds" placeholder="请输入让分主胜赔率" />
+              <el-input v-model="form.handicapHomeWinOdds" placeholder="请输入让分主胜倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="让分平局" prop="handicapDrawOdds">
-              <el-input v-model="form.handicapDrawOdds" placeholder="请输入让分平局赔率" />
+              <el-input v-model="form.handicapDrawOdds" placeholder="请输入让分平局倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="让分客胜" prop="handicapAwayWinOdds">
-              <el-input v-model="form.handicapAwayWinOdds" placeholder="请输入让分客胜赔率" />
+              <el-input v-model="form.handicapAwayWinOdds" placeholder="请输入让分客胜倍率" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -169,12 +169,12 @@ export default {
         oddsCode: [{ required: true, message: "记录编码不能为空", trigger: "blur" }],
         sourceTime: [{ required: true, message: "来源时间不能为空", trigger: "change" }],
         handicapValue: [{ required: true, message: "让分值不能为空", trigger: "blur" }],
-        homeWinOdds: [positive("主胜赔率必须大于0")],
-        drawOdds: [positive("平局赔率必须大于0")],
-        awayWinOdds: [positive("客胜赔率必须大于0")],
-        handicapHomeWinOdds: [positive("让分主胜赔率必须大于0")],
-        handicapDrawOdds: [positive("让分平局赔率必须大于0")],
-        handicapAwayWinOdds: [positive("让分客胜赔率必须大于0")],
+        homeWinOdds: [positive("主胜倍率必须大于0")],
+        drawOdds: [positive("平局倍率必须大于0")],
+        awayWinOdds: [positive("客胜倍率必须大于0")],
+        handicapHomeWinOdds: [positive("让分主胜倍率必须大于0")],
+        handicapDrawOdds: [positive("让分平局倍率必须大于0")],
+        handicapAwayWinOdds: [positive("让分客胜倍率必须大于0")],
       };
     },
   },

@@ -18,8 +18,7 @@
       <el-row :gutter="20">
         <el-col v-if="showSeason" :xs="24" :md="12">
           <el-form-item label="所属赛季" prop="seasonId">
-            <common-enhanced-select v-model="localForm.seasonId" valueKey="seasonId" labelKey="seasonName"
-              :api-func="listSeason" placeholder="请选择所属赛季" />
+            <dortmund-season-select v-model="localForm.seasonId" />
           </el-form-item>
         </el-col>
         <el-col v-if="showTeams" :xs="24" :md="12">
@@ -92,23 +91,21 @@
     <div slot="footer" class="dialog-footer">
       <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="handleSubmit">{{
         submitLabel
-      }}</el-button>
+        }}</el-button>
       <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
-
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
+import DortmundSeasonSelect from "../DortmundSeasonSelect/index";
 
 export default {
   name: "DortmundInfoPointFormDialog",
-  components: { CommonEnhancedSelect, DortmundBindingControl },
+  components: { DortmundBindingControl, DortmundSeasonSelect },
   props: {
     visible: { type: Boolean, default: false },
     value: { type: Object, default: () => ({}) },
@@ -124,7 +121,6 @@ export default {
   },
   data() {
     return {
-      listSeason,
       localForm: { ...this.value },
     };
   },

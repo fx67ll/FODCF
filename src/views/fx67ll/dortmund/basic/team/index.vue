@@ -9,7 +9,7 @@
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
-          <el-form-item label="搜索球队" prop="teamName">
+          <el-form-item label="搜索球队" prop="teamName" v-if="!isMoreQuery">
             <el-input v-model="queryParams.teamName" placeholder="请输入球队全称/昵称/简称/英文" clearable
               @keyup.enter.native="handleQuery" />
           </el-form-item>
@@ -333,6 +333,8 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.handleQuery();
     },
     // 多选框选中数据

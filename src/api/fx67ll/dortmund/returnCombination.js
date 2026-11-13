@@ -6,7 +6,6 @@ export function generateReturnCombination(data) {
     url: "/dortmund/return/generate",
     method: "post",
     data: data,
-    timeout: 60000,
   });
 }
 
@@ -19,11 +18,12 @@ export function listGeneration(query) {
   });
 }
 
-// 查询生成批次详细
-export function getGeneration(generationId) {
+// 查询生成批次详细，可指定候选组合排序
+export function getGeneration(generationId, params) {
   return request({
     url: "/dortmund/return/generation/" + generationId,
     method: "get",
+    params: params,
   });
 }
 
@@ -60,20 +60,37 @@ export function rejectCombination(combinationId) {
   });
 }
 
-// 上传回报组合图片
-export function uploadReturnImage(data) {
+// 批量采用回报组合
+export function batchAdoptCombinations(combinationIds) {
   return request({
-    url: "/dortmund/return/image/upload",
+    url: "/dortmund/return/batch/adopt",
     method: "post",
-    data: data,
+    data: { combinationIds },
   });
 }
 
-// 删除尚未固化的回报组合图片
-export function removeReturnImage(objectKey) {
+// 删除已采用回报组合的图片
+export function removeReturnImage(combinationId, imageId) {
   return request({
-    url: "/dortmund/return/image",
+    url: "/dortmund/return/" + combinationId + "/image/" + imageId,
     method: "delete",
-    params: { objectKey },
+  });
+}
+
+// 查询指定日期范围内的孤儿图片
+export function listOrphanReturnImages(params) {
+  return request({
+    url: "/dortmund/return/image/orphans",
+    method: "get",
+    params,
+  });
+}
+
+// 批量删除孤儿图片
+export function deleteOrphanReturnImages(imageIds) {
+  return request({
+    url: "/dortmund/return/image/orphans",
+    method: "delete",
+    data: imageIds,
   });
 }

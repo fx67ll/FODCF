@@ -9,7 +9,7 @@
             <h2>{{ editMode === "add" ? "新增比赛" : "修改比赛" }}</h2>
             <span class="match-edit-hero-type">Match · 比赛编排</span>
           </div>
-          <p>按基础信息、同步赔率和关联信息点分区维护比赛资料</p>
+          <p>按基础信息、同步倍率和关联信息点分区维护比赛资料</p>
         </div>
       </div>
       <el-button type="text" class="dortmund-theme-text match-edit-hero-back" icon="el-icon-back"
@@ -29,8 +29,7 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="所属赛季" prop="seasonId">
               <div class="match-edit-item">
-                <common-enhanced-select ref="editSeasonSelect" v-model="editForm.seasonId" valueKey="seasonId"
-                  labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季"
+                <dortmund-season-select ref="editSeasonSelect" v-model="editForm.seasonId"
                   :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
                 <el-button type="text" class="dortmund-theme-text match-edit-inline-btn"
                   icon="el-icon-circle-plus-outline" v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
@@ -138,7 +137,7 @@
       <div class="match-edit-card">
         <div class="match-edit-card-header">
           <span class="match-edit-card-chip"><i class="el-icon-odometer"></i></span>
-          <span class="match-edit-card-title">同步赔率</span>
+          <span class="match-edit-card-title">同步倍率</span>
           <span class="match-edit-card-tip">{{ editMode === "add" ? "可随比赛同步创建首条有效 odds" : "维护当前有效 odds 版本" }}</span>
         </div>
         <el-row :gutter="20">
@@ -191,7 +190,7 @@
                   </div>
                 </el-col>
                 <el-col :xs="24" :md="10">
-                  <el-form-item label="赔率" :prop="'newOdds.' + row.oddsField" label-width="58px">
+                  <el-form-item label="倍率" :prop="'newOdds.' + row.oddsField" label-width="58px">
                     <el-input v-model="editForm.newOdds[row.oddsField]" placeholder="大于 0" />
                   </el-form-item>
                 </el-col>
@@ -257,12 +256,11 @@
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 import MatchNewSeasonPanel from "../MatchNewSeasonPanel/index";
 import MatchNewTeamPanel from "../MatchNewTeamPanel/index";
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
@@ -272,8 +270,8 @@ export default {
   name: "MatchEditScene",
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
-    CommonEnhancedSelect, MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
-    DortmundInfoPointFormDialog, DortmundOddsInlineEditor, DortmundOptionSelect
+    MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
+    DortmundInfoPointFormDialog, DortmundOddsInlineEditor, DortmundOptionSelect, DortmundSeasonSelect
   },
   props: {
     // 编排场景模式（add新增 update修改）
@@ -409,10 +407,6 @@ export default {
       draftInfoForm: this.buildEmptyInfoPoint(),
     };
   },
-  created() {
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listSeason = listSeason;
-  },
   methods: {
     // 从父页面传入的初始表单复制出本场景可编辑副本（避免直接改动父页面数据）
     buildEditForm() {
@@ -492,14 +486,14 @@ export default {
         this.$refs.editForm && this.$refs.editForm.clearValidate();
       });
     },
-    // 校验首条 odds 的赔率值
+    // 校验首条 odds 的倍率值
     checkNewOddsPositive(rule, value, callback) {
       if (value == null || value === "") {
-        callback(new Error("赔率不能为空"));
+        callback(new Error("倍率不能为空"));
         return;
       }
       if (!/^\d+(\.\d+)?$/.test(String(value)) || parseFloat(value) <= 0) {
-        callback(new Error("赔率必须为大于 0 的数字"));
+        callback(new Error("倍率必须为大于 0 的数字"));
         return;
       }
       callback();

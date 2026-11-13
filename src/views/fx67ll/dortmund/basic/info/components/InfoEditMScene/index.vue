@@ -69,8 +69,7 @@
                 <el-row :gutter="20">
                   <el-col :xs="24" :md="12">
                     <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
-                      <common-enhanced-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId"
-                        valueKey="seasonId" labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
+                      <dortmund-season-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId" />
                     </el-form-item>
                   </el-col>
                   <el-col :xs="24" :md="12">
@@ -218,16 +217,16 @@
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 
 export default {
   name: "InfoEditMScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { DortmundMatchSelectorModal, DortmundBindingControl, CommonEnhancedSelect },
+  components: { DortmundMatchSelectorModal, DortmundBindingControl, CommonEnhancedSelect, DortmundSeasonSelect },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {
@@ -261,7 +260,6 @@ export default {
       callback();
     };
     return {
-      listSeason,
       listTeam,
       // 录入场景表单参数（创建与修改共用，从父页面初始表单复制）
       editForm: this.buildEditForm(),

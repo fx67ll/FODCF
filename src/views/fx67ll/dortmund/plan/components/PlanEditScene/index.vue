@@ -55,6 +55,19 @@
                     placeholder="请输入其他说明" />
                 </el-form-item>
               </el-col>
+              <el-col :span="24" v-if="editMode === 'update'">
+                <el-form-item label="摘要状态">
+                  <div class="plan-summary-flag">
+                    <el-radio-group v-model="editForm.summaryUpdateFlag" size="mini">
+                      <el-radio-button label="Y">标记待刷新</el-radio-button>
+                      <el-radio-button label="N" :disabled="!editForm.summaryContent">标记为已同步</el-radio-button>
+                    </el-radio-group>
+                    <span class="plan-summary-flag-tip">
+                      仅当摘要已存在且正文、金额、说明、组合关系均未变化时可提交 N；后端检测到变化或摘要为空时会强制改为 Y。
+                    </span>
+                  </div>
+                </el-form-item>
+              </el-col>
             </el-row>
           </div>
 
@@ -71,17 +84,17 @@
             </div>
             <el-form-item label="回报组合" prop="combinationIds">
               <div class="plan-combination-selector">
-                <el-input :value="selectedCombinationSummary" readonly placeholder="请选择已采用的回报组合"
+                <el-input :value="selectedCombinationSummary" readonly placeholder="可选择 0 至多条已采用的回报组合"
                   prefix-icon="el-icon-trophy" @click="combinationSelectorVisible = true" />
                 <el-button type="success" plain icon="el-icon-s-operation"
                   @click="combinationSelectorVisible = true">选择组合</el-button>
               </div>
             </el-form-item>
             <div class="plan-edit-tip">
-              比赛清单由组合明细自动派生并去重，不能直接增删比赛
+              比赛清单由组合明细自动派生并去重，不能直接增删比赛；回报组合可暂不关联，后续再补充
             </div>
-            <div class="plan-combination-empty" v-if="!selectedCombinationCount && readonlyMatches.length">
-              历史记录，尚未关联回报组合
+            <div class="plan-combination-empty" v-if="!selectedCombinationCount">
+              暂未关联回报组合，可直接保存为 0 条
             </div>
             <div class="plan-combination-load-error" v-if="combinationDetailErrorIds.length" role="alert">
               <i class="el-icon-warning-outline"></i>
@@ -142,10 +155,10 @@
             <span class="plan-preview-label">手工金额</span>
             <span class="plan-preview-value">{{ editForm.planAmount || "使用自动值" }}</span>
           </div>
-          <div class="plan-preview-hint" :class="selectedCombinationCount > 0 ? 'ok' : 'warn'">
-            <i :class="selectedCombinationCount > 0 ? 'el-icon-success' : 'el-icon-warning-outline'"></i>
+          <div class="plan-preview-hint" :class="{ ok: selectedCombinationCount > 0 }">
+            <i :class="selectedCombinationCount > 0 ? 'el-icon-success' : 'el-icon-info'"></i>
             <span v-if="selectedCombinationCount > 0">已按组合明细派生 {{ derivedMatchCount }} 场去重比赛</span>
-            <span v-else>请至少选择一条已采用的回报组合</span>
+            <span v-else>尚未关联回报组合，可直接保存，后续在编辑中补充</span>
           </div>
         </div>
 
@@ -254,9 +267,7 @@ export default {
         planAmount: [
           { validator: checkPlanAmount, trigger: "blur" }
         ],
-        combinationIds: [
-          { required: true, message: "请至少选择一条已采用的回报组合", trigger: "change" }
-        ],
+        combinationIds: [],
       },
       // 选中组合的明细缓存
       combinationDetails: [],
@@ -339,6 +350,8 @@ export default {
         planAmount: initial.planAmount || null,
         planRemark: initial.planRemark || null,
         combinationIds: [...(initial.combinationIds || [])],
+        summaryUpdateFlag: initial.summaryUpdateFlag || "Y",
+        summaryContent: initial.summaryContent || null,
       };
     },
     // 组合多选变化：拉取最新明细并生成前端预览
@@ -483,6 +496,7 @@ export default {
         };
         if (!isAdd) {
           data.planId = this.editForm.planId;
+          data.summaryUpdateFlag = this.editForm.summaryUpdateFlag || "Y";
         }
         this.$emit("save", data);
       });
@@ -633,6 +647,21 @@ export default {
 
 .plan-edit-new-toggle {
   margin-left: auto;
+}
+
+.plan-summary-flag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-summary-flag-tip {
+  flex: 1;
+  min-width: 260px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #7c8b84;
 }
 
 .plan-combination-selector {

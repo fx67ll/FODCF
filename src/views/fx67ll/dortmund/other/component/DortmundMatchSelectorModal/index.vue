@@ -1,6 +1,6 @@
 <template>
   <list-selector-modal :visible.sync="dialogVisible" :title="multiple ? '选择比赛' : '选择单场比赛'" :api-func="listMatch"
-    :query-params="{ matchStatus: '0', ...queryParams }" :columns="columns" :search-fields="searchFields"
+    :query-params="selectorQueryParams" :columns="columns" :search-fields="searchFields" :max-count="maxCount"
     :selected-items="selectedItems" value-key="matchId" label-key="matchCode" :label-formatter="formatMatchLabel"
     :multiple="multiple" @confirm="$emit('confirm', $event)" />
 </template>
@@ -29,6 +29,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    requireActiveOdds: {
+      type: Boolean,
+      default: false,
+    },
+    maxCount: {
+      type: Number,
+      default: 0,
+    },
   },
   data() {
     return {
@@ -46,6 +54,13 @@ export default {
     };
   },
   computed: {
+    selectorQueryParams() {
+      return {
+        matchStatus: "0",
+        ...(this.requireActiveOdds ? { hasActiveOdds: "Y" } : {}),
+        ...this.queryParams,
+      };
+    },
     dialogVisible: {
       get() {
         return this.visible;

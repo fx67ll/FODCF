@@ -12,9 +12,13 @@
               <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
+            <el-form-item label="回报组合" prop="combinationId">
+              <el-input :value="formatSelectedCombination(selectedCombination)" readonly placeholder="请选择关联回报组合"
+                @click.native="combinationSelectorVisible = true" />
+            </el-form-item>
             <el-form-item label="关联比赛" prop="matchId">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                @click="matchSelectorVisible = true" />
+                @click.native="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
@@ -49,7 +53,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -84,6 +88,8 @@
         @copy-summary="handleCopySummary" @back="handleSceneBack" />
     </transition>
 
+    <dortmund-combination-selector-modal :visible.sync="combinationSelectorVisible"
+      :selected-items="[selectedCombination]" @confirm="handleCombinationSelectorConfirm" />
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" :selected-items="[selectedMatch]"
       @confirm="handleMatchSelectorConfirm" />
   </div>
@@ -94,6 +100,7 @@ import { listPlan, getPlan, addPlan, updatePlan, delPlan } from "@/api/fx67ll/do
 import { refreshPlanSummary } from "@/api/fx67ll/dortmund/plan";
 import { checkPermi } from "@/utils/common/permission";
 
+import DortmundCombinationSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundCombinationSelectorModal/index";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
@@ -106,7 +113,10 @@ const VIEW_MODE_KEY = "dortmund-plan-view-mode";
 
 export default {
   name: "Plan",
-  components: { ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene, DortmundMatchSelectorModal },
+  components: {
+    ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene, DortmundCombinationSelectorModal,
+    DortmundMatchSelectorModal
+  },
   data() {
     return {
       // 页面场景（list总览列表 edit编写 review回顾）
@@ -139,6 +149,8 @@ export default {
       daterangeCreateTime: [],
       // 更新时间范围
       daterangeUpdateTime: [],
+      selectedCombination: null,
+      combinationSelectorVisible: false,
       selectedMatch: null,
       matchSelectorVisible: false,
       // 是否使用高级搜索
@@ -148,6 +160,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         planContent: null,
+        combinationId: null,
         matchId: null,
         beginCreateTime: null,
         endCreateTime: null,
@@ -172,17 +185,6 @@ export default {
   created() {
     // 读取本地缓存的展示视图偏好（非法值兜底为卡片视图）
     this.viewMode = localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "card";
-    // 比赛下拉包装接口：为每个选项拼装 matchName 展示文案（后台比赛数据无 matchName 冗余字段）
-    this.listMatch = (query) => {
-      return listMatch(query).then((response) => {
-        const rows = (response.rows || []).map((match) => ({
-          ...match,
-          matchName: this.formatMatchLabel(match),
-        }));
-        return { ...response, rows };
-      });
-    };
-
     this.getList();
   },
   activated() {
@@ -235,8 +237,20 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
+      this.selectedCombination = null;
       this.selectedMatch = null;
       this.handleQuery();
+    },
+    formatSelectedCombination(combination) {
+      if (!combination) return "";
+      return combination.combinationTitle || combination.combinationCode || `组合 ${combination.combinationId}`;
+    },
+    handleCombinationSelectorConfirm(combinationList) {
+      const combination = Array.isArray(combinationList) ? combinationList[0] || null : null;
+      this.selectedCombination = combination;
+      this.queryParams.combinationId = combination ? combination.combinationId : null;
     },
     formatSelectedMatch(match) {
       const matchTime = this.parseTime(match?.matchTime, "{y}-{m}-{d} {h}:{i}");
@@ -276,6 +290,8 @@ export default {
           planAmount: detail.planAmount,
           planRemark: detail.planRemark,
           combinationIds: detail.combinationIds || [],
+          summaryUpdateFlag: detail.summaryUpdateFlag || "Y",
+          summaryContent: detail.summaryContent || null,
         };
         this.pageScene = "edit";
       }).finally(() => {
@@ -348,6 +364,8 @@ export default {
         planAmount: null,
         planRemark: null,
         combinationIds: [],
+        summaryUpdateFlag: "Y",
+        summaryContent: null,
       };
       this.readonlyMatchList = [];
     },
@@ -369,12 +387,6 @@ export default {
       }).finally(() => {
         this.submitting = false;
       });
-    },
-    // 比赛下拉展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
-    formatMatchLabel(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
-      return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },
     /** 删除按钮操作 */
     handleDelete(row) {

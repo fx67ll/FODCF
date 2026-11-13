@@ -7,8 +7,8 @@
           @click="handleBackToList">返回总览</el-button>
         <span class="plan-edit-title">方案计划回顾</span>
       </div>
-      <el-button v-if="hasSummaryPermission && (detailModel.combinationIds || []).length" type="success" plain
-        icon="el-icon-document-copy" size="mini" :loading="summaryLoading" @click="$emit('copy-summary')">复制摘要
+      <el-button v-if="hasSummaryPermission" type="success" plain icon="el-icon-document-copy" size="mini"
+        :loading="summaryLoading" @click="$emit('copy-summary')">复制摘要
       </el-button>
     </div>
 
@@ -27,7 +27,7 @@
           <div class="plan-review-info-item">
             <span class="plan-review-info-label">更新时间</span>
             <span class="plan-review-info-value">{{ parseTime(detailModel.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
-              }}</span>
+            }}</span>
           </div>
         </div>
         <div class="plan-review-content">{{ detailModel.planContent }}</div>
@@ -178,16 +178,6 @@ export default {
   margin-top: 10px;
   font-size: 13px;
   line-height: 1.5;
-  color: #909399;
-}
-
-.plan-review-image-list {
-  display: flex;
-  align-items: center;
-}
-
-.plan-review-image-empty {
-  font-size: 13px;
   color: #909399;
 }
 </style>

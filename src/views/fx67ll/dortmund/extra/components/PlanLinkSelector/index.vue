@@ -22,11 +22,17 @@
           另有 {{ hiddenPlanCount }} 条无权查看的关联，保存不会影响它们
         </div>
 
-        <!-- 已有方案计划多选：选项展示正文摘要与所达场数 -->
-        <el-form-item label="已有方案计划" label-width="110px">
-          <common-enhanced-select ref="planSelect" v-model="selectedPlanIds" valueKey="planId" labelKey="planContent"
-            :api-func="listPlan" multiple placeholder="请选择已有方案计划（可多选）" @change="handlePlanIdsChange" />
-        </el-form-item>
+        <!-- 已有方案计划：共享侧边抽屉跨页多选，避免长列表挤占对话框 -->
+        <div class="plan-link-picker">
+          <div class="plan-link-picker-copy">
+            <span class="plan-link-picker-label">已有方案计划</span>
+            <p>从侧边抽屉筛选并跨页勾选，已选结果会保留。</p>
+          </div>
+          <el-button type="success" plain size="small" icon="el-icon-finished" class="plan-link-picker-button"
+            @click="openPlanSelector">
+            {{ selectedPlanIds.length ? `已选 ${selectedPlanIds.length} 条 · 继续选择` : "选择方案计划" }}
+          </el-button>
+        </div>
 
         <!-- 已选方案计划标签：可逐条移除 -->
         <div class="plan-link-tags" v-if="selectedPlanList.length > 0">
@@ -38,7 +44,8 @@
 
         <!-- 当场新建方案计划入口（没有新增权限时不显示） -->
         <div class="plan-link-new-entry" v-if="hasPlanAddPermission">
-          <el-button type="text" icon="el-icon-circle-plus-outline" @click="toggleNewPlanPanel">
+          <el-button type="text" class="dortmund-theme-text plan-link-new-entry-button"
+            icon="el-icon-circle-plus-outline" @click="toggleNewPlanPanel">
             {{ newPlanVisible ? "收起当场新建" : "当场新建方案计划" }}
           </el-button>
         </div>
@@ -89,7 +96,7 @@
           </div>
         </transition>
 
-        <!-- 选中方案计划的只读摘要：所达比赛去重 + 最多5场折叠 + 图片（有权限时） -->
+        <!-- 选中方案计划的只读摘要：所达比赛去重 + 最多5场折叠 -->
         <div class="plan-link-summary" v-if="selectedPlanList.length > 0">
           <div class="plan-link-summary-plan" v-for="plan in selectedPlanList" :key="plan.planId">
             <div class="plan-link-summary-plan-header">
@@ -109,34 +116,30 @@
                 {{ isPlanMatchesExpanded(plan.planId) ? "收起" : "展开全部" }}
               </el-button>
             </div>
-            <!-- 图片（有查询权限时只读显示，本页不能上传） -->
-            <div class="plan-link-summary-images" v-if="hasImageQueryPermission">
-              <el-image v-for="(objectKey, imgIndex) in plan.planImageObjectKeys || []" :key="imgIndex"
-                :src="baseUrl + objectKey" fit="cover"
-                style="width: 72px; height: 72px; border-radius: 4px; margin-right: 8px;"
-                :preview-src-list="imagePreviewListOfPlan(plan)" />
-            </div>
           </div>
         </div>
       </div>
     </transition>
+
+    <dortmund-plan-selector-modal :visible.sync="planSelectorVisible" :selected-items="selectedPlanList"
+      @confirm="handlePlanSelected" />
   </div>
 </template>
 
 <script>
-import { listPlan } from "@/api/fx67ll/dortmund/plan";
 import { listMatch } from "@/api/fx67ll/dortmund/match";
 
 import { checkPermi } from "@/utils/common/permission";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
+import DortmundPlanSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundPlanSelectorModal/index";
 
 // 所达比赛默认折叠条数
 const MATCH_COLLAPSE_COUNT = 5;
 
 export default {
   name: "PlanLinkSelector",
-  components: { CommonEnhancedSelect },
+  components: { CommonEnhancedSelect, DortmundPlanSelectorModal },
   props: {
     // 编辑回显的已有关联方案计划主键集合（数组，新增场景为空）
     planIds: {
@@ -221,11 +224,11 @@ export default {
       expandedPlanMatchIds: [],
       // 是否操作过关联区域（提交规则：没动过不带 planIds、newPlans）
       touched: false,
-      // 下拉选项缓存（判断是否有可选比赛、按主键补全摘要）
-      planOptions: [],
-      matchOptions: [],
-      // 图片预览基础地址
-      baseUrl: process.env.VUE_APP_BASE_API,
+      // 已选方案计划抽屉开关
+      planSelectorVisible: false,
+      // 是否已检查正常比赛可用性（只在展开当场新建时检查一次）
+      matchAvailabilityChecked: false,
+      matchCount: 0,
     };
   },
   computed: {
@@ -240,17 +243,13 @@ export default {
     hasPlanAddPermission() {
       return checkPermi(["dortmund:plan:add"]);
     },
-    // 是否拥有方案计划图片查询权限（决定摘要图片是否显示）
-    hasImageQueryPermission() {
-      return checkPermi(["dortmund:plan:image:query"]);
-    },
     // 已选条数（已有 + 当场新建）
     selectedTotal() {
       return this.selectedPlanIds.length + this.newPlanList.length;
     },
     // 是否有可选的正常比赛
     hasSelectableMatch() {
-      return this.matchOptions.length > 0;
+      return !this.matchAvailabilityChecked || this.matchCount > 0;
     },
   },
   watch: {
@@ -260,8 +259,6 @@ export default {
     },
   },
   created() {
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listPlan = listPlan;
     // 比赛下拉包装接口：为每个选项拼装 matchName 展示文案（后台比赛数据无 matchName 冗余字段）
     this.listMatch = (query) => {
       return listMatch(query).then((response) => {
@@ -275,21 +272,31 @@ export default {
 
     // 编辑回显：按回显集合初始化已选状态
     this.resetSelection();
-    this.loadPlanOptions();
-    this.loadMatchOptions();
   },
   methods: {
-    // 加载方案计划下拉选项（只读快照，用于按主键补全摘要）
-    loadPlanOptions() {
-      listPlan({ pageNum: 1, pageSize: 1023 }).then(response => {
-        this.planOptions = response.rows || [];
-        this.syncSelectedPlanList();
-      });
+    // 打开方案计划侧边抽屉
+    openPlanSelector() {
+      this.expanded = true;
+      this.planSelectorVisible = true;
     },
-    // 加载正常比赛下拉选项（用于判断是否有可选比赛）
-    loadMatchOptions() {
-      listMatch({ pageNum: 1, pageSize: 1023, matchStatus: "0" }).then(response => {
-        this.matchOptions = response.rows || [];
+    // 抽屉确认：同步已选主键与详情快照
+    handlePlanSelected(plans) {
+      const rows = plans || [];
+      this.selectedPlanIds = rows.map(plan => plan.planId);
+      this.selectedPlanList = [...rows];
+      this.touched = true;
+      this.planSelectorVisible = false;
+    },
+    // 延迟检查是否存在正常比赛，避免弹窗初始化时的空闲请求
+    ensureMatchAvailability() {
+      if (this.matchAvailabilityChecked) {
+        return;
+      }
+      this.matchAvailabilityChecked = true;
+      listMatch({ pageNum: 1, pageSize: 1, matchStatus: "0" }).then(response => {
+        this.matchCount = Number(response.total) || (response.rows || []).length;
+      }).catch(() => {
+        this.matchAvailabilityChecked = false;
       });
     },
     // 重置关联区域的已选与新建状态（回显集合变化或弹窗重新打开时调用）
@@ -301,6 +308,9 @@ export default {
       this.touched = false;
       this.expanded = false;
       this.expandedPlanMatchIds = [];
+      this.planSelectorVisible = false;
+      this.matchAvailabilityChecked = false;
+      this.matchCount = 0;
       this.syncSelectedPlanList();
     },
     // 按已选主键集合同步详情快照（优先使用传入的回显详情）
@@ -309,11 +319,6 @@ export default {
       (this.plans || []).forEach(plan => {
         plansById[plan.planId] = plan;
       });
-      (this.planOptions || []).forEach(plan => {
-        if (!plansById[plan.planId]) {
-          plansById[plan.planId] = plan;
-        }
-      });
       this.selectedPlanList = this.selectedPlanIds
         .map(planId => plansById[planId])
         .filter(Boolean);
@@ -321,12 +326,6 @@ export default {
     // 展开/折叠关联区域
     handleToggleExpand() {
       this.expanded = !this.expanded;
-    },
-    // 已有方案计划多选变化：同步摘要并标记已操作
-    handlePlanIdsChange(val) {
-      this.selectedPlanIds = val || [];
-      this.syncSelectedPlanList();
-      this.touched = true;
     },
     // 标签移除一条已有方案计划
     handleRemovePlan(planId) {
@@ -339,6 +338,8 @@ export default {
       this.newPlanVisible = !this.newPlanVisible;
       if (!this.newPlanVisible) {
         this.resetNewPlanForm();
+      } else {
+        this.ensureMatchAvailability();
       }
       this.$nextTick(() => {
         this.$refs["newPlanForm"] && this.$refs["newPlanForm"].clearValidate();
@@ -408,7 +409,8 @@ export default {
     formatPlanTagText(plan) {
       const content = plan.planContent || "";
       const summary = content.length > 23 ? content.slice(0, 23) + "…" : content;
-      return `${summary}（${(plan.matches || []).length}场）`;
+      const matchCount = (plan.matches || []).length || plan.matchCount || 0;
+      return `${summary}（${matchCount}场）`;
     },
     // 当场新建标签文案
     formatNewPlanTagText(plan) {
@@ -430,10 +432,6 @@ export default {
     formatMatchTagText(match) {
       const resultText = match.matchResult ? `（赛果：${match.matchResult}）` : "";
       return `${this.formatMatchOptionLabel(match)}${resultText}`;
-    },
-    // 摘要图片预览集合（完整地址）
-    imagePreviewListOfPlan(plan) {
-      return (plan.planImageObjectKeys || []).map(objectKey => this.baseUrl + objectKey);
     },
     // 对外暴露提交数据：没动过返回 null（不带字段，关联保持不变），动过返回完整集合
     getSubmitData() {
@@ -468,34 +466,49 @@ export default {
 /* 区域头部（可点击折叠） */
 .plan-link-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
   user-select: none;
+  margin-bottom: 12px;
 }
 
 .plan-link-header-left {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .plan-link-header-left>i {
-  margin-right: 8px;
   font-size: 16px;
   color: #2ecc71;
 }
 
 .plan-link-title {
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-count-tag {
-  margin-left: 10px;
+  max-width: 100%;
+  height: auto;
+  margin-left: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-header .el-icon-arrow-down {
+  flex-shrink: 0;
+  margin-top: 2px;
   font-size: 14px;
   color: #909399;
   transition: transform 0.28s ease;
@@ -518,14 +531,70 @@ export default {
   border-radius: 6px;
 }
 
+/* 已有方案计划抽屉入口 */
+.plan-link-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  background: #fff;
+  border: 1px solid #dcebe3;
+  border-left: 3px solid #2ecc71;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.06);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.plan-link-picker:hover {
+  border-color: #b9decf;
+  box-shadow: 0 9px 24px rgba(46, 204, 113, 0.1);
+}
+
+.plan-link-picker-copy {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.plan-link-picker-label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2b3a36;
+}
+
+.plan-link-picker-copy p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8a9791;
+  overflow-wrap: anywhere;
+}
+
+.plan-link-picker-button {
+  flex-shrink: 0;
+  margin-left: auto;
+  border-radius: 8px;
+}
+
 /* 已选标签 */
 .plan-link-tags {
   margin: 4px 0 12px 0;
 }
 
 .plan-link-tag {
+  max-width: 100%;
+  height: auto;
   margin-right: 4px;
   margin-bottom: 4px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* 当场新建入口 */
@@ -544,17 +613,26 @@ export default {
 
 .plan-link-new-panel-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 14px;
   padding-left: 14px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.5;
   color: #303133;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-new-panel-title i {
+  flex-shrink: 0;
+  margin-top: 3px;
   margin-right: 6px;
   color: #2ecc71;
+}
+
+.plan-link-new-panel-title span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-new-actions {
@@ -583,23 +661,28 @@ export default {
 
 .plan-link-summary-plan-header {
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 4px 12px;
   margin-bottom: 6px;
 }
 
 .plan-link-summary-plan-content {
-  flex: 1;
+  flex: 1 1 260px;
+  min-width: 0;
   font-size: 13px;
   color: #303133;
-  word-break: break-all;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-summary-plan-extra {
   flex-shrink: 0;
-  margin-left: 12px;
   font-size: 12px;
   color: #909399;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .plan-link-summary-matches {
@@ -609,14 +692,36 @@ export default {
 }
 
 .plan-link-match-tag {
+  max-width: 100%;
+  height: auto;
   margin-right: 4px;
   margin-bottom: 4px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.plan-link-summary-images {
-  display: flex;
-  align-items: center;
-  margin-top: 6px;
+@media screen and (max-width: 767px) {
+  .plan-link-header {
+    gap: 8px;
+  }
+
+  .plan-link-picker-button {
+    margin-left: 0;
+  }
+
+  .plan-link-new-actions {
+    padding-left: 0;
+  }
+
+  .plan-link-new-tip {
+    padding-left: 0;
+  }
+
+  .plan-link-summary-plan-content,
+  .plan-link-summary-plan-extra {
+    flex-basis: 100%;
+  }
 }
 
 /* 折叠展开过渡（高度加透明度，约0.28s） */

@@ -10,7 +10,7 @@
             <h2>{{ editMode === "add" ? "新增倍率记录" : "修改倍率记录" }}</h2>
             <span class="odds-edit-hero-type">Odds · 倍率版本</span>
           </div>
-          <p>维护比赛六类赔率与手工权重，保存后可单独设为有效版本</p>
+          <p>维护比赛六类倍率与手工权重，保存后可单独设为有效版本</p>
         </div>
       </div>
       <el-button type="text" class="dortmund-theme-text odds-edit-hero-back" icon="el-icon-back"
@@ -81,8 +81,7 @@
             <el-row :gutter="20">
               <el-col :xs="24" :md="12">
                 <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
-                  <common-enhanced-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId" valueKey="seasonId"
-                    labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
+                  <dortmund-season-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :md="12">
@@ -116,7 +115,7 @@
       <div class="odds-edit-card">
         <div class="odds-edit-card-header">
           <span class="odds-edit-card-chip"><i class="el-icon-set-up"></i></span>
-          <span class="odds-edit-card-title">六类赔率权重</span>
+          <span class="odds-edit-card-title">六类倍率权重</span>
           <span class="odds-edit-card-tip">手工权重为空时按 100 参与计算</span>
         </div>
         <div class="odds-matrix-grid">
@@ -124,7 +123,7 @@
             <div class="odds-matrix-head">
               <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="row.type" />
             </div>
-            <el-form-item label="赔率" :prop="row.oddsField" label-width="56px">
+            <el-form-item label="倍率" :prop="row.oddsField" label-width="56px">
               <el-input v-model="editForm[row.oddsField]" placeholder="大于 0" />
             </el-form-item>
             <el-form-item label="权重" :prop="row.weightField" label-width="56px">
@@ -157,15 +156,15 @@
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 
 export default {
   name: "OddsEditScene",
   dicts: ["fx67ll_dortmund_odds_type"],
-  components: { DortmundMatchSelectorModal, DortmundBindingControl },
+  components: { DortmundMatchSelectorModal, DortmundBindingControl, DortmundSeasonSelect },
   props: {
     editMode: {
       type: String,
@@ -212,7 +211,6 @@ export default {
       callback();
     };
     return {
-      listSeason,
       listTeam,
       selectedMatch: null,
       matchSelectorVisible: false,
@@ -258,12 +256,12 @@ export default {
           },
           trigger: "blur",
         }],
-        homeWinOdds: [{ validator: checkPositiveNumber("主胜赔率"), trigger: "blur" }],
-        drawOdds: [{ validator: checkPositiveNumber("平局赔率"), trigger: "blur" }],
-        awayWinOdds: [{ validator: checkPositiveNumber("客胜赔率"), trigger: "blur" }],
-        handicapHomeWinOdds: [{ validator: checkPositiveNumber("让分主胜赔率"), trigger: "blur" }],
-        handicapDrawOdds: [{ validator: checkPositiveNumber("让分平局赔率"), trigger: "blur" }],
-        handicapAwayWinOdds: [{ validator: checkPositiveNumber("让分客胜赔率"), trigger: "blur" }],
+        homeWinOdds: [{ validator: checkPositiveNumber("主胜倍率"), trigger: "blur" }],
+        drawOdds: [{ validator: checkPositiveNumber("平局倍率"), trigger: "blur" }],
+        awayWinOdds: [{ validator: checkPositiveNumber("客胜倍率"), trigger: "blur" }],
+        handicapHomeWinOdds: [{ validator: checkPositiveNumber("让分主胜倍率"), trigger: "blur" }],
+        handicapDrawOdds: [{ validator: checkPositiveNumber("让分平局倍率"), trigger: "blur" }],
+        handicapAwayWinOdds: [{ validator: checkPositiveNumber("让分客胜倍率"), trigger: "blur" }],
         homeWinWeight: [{ validator: checkWeight, trigger: "blur" }],
         drawWeight: [{ validator: checkWeight, trigger: "blur" }],
         awayWinWeight: [{ validator: checkWeight, trigger: "blur" }],

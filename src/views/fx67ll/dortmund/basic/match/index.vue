@@ -16,17 +16,12 @@
               <el-input v-model="queryParams.awayTeamName" placeholder="请输入客队名称" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="比赛编码" prop="matchCode">
+            <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
               <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="比赛编号" prop="matchId" v-if="isMoreQuery">
-              <el-input v-model="queryParams.matchId" type="number" min="1" step="1" placeholder="请输入比赛编号" clearable
-                @keyup.enter.native="handleQuery" />
-            </el-form-item>
             <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
-              <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
-                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
+              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery" />
             </el-form-item>
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker v-model="daterangeMatchTime" style="width: 240px" value-format="yyyy-MM-dd"
@@ -40,13 +35,6 @@
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
                 @keyup.enter.native="handleQuery">
                 <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item label="比赛结果" prop="matchResult" v-if="isMoreQuery">
-              <el-select v-model="queryParams.matchResult" style="width: 100%" placeholder="请选择比赛结果" clearable
-                @keyup.enter.native="handleQuery">
-                <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
@@ -83,7 +71,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -124,6 +112,15 @@
             <el-table-column label="比赛结果" align="center" prop="matchResult" width="80">
               <template slot-scope="scope">
                 <dict-tag :options="dict.type.fx67ll_match_result" :value="scope.row.matchResult" />
+              </template>
+            </el-table-column>
+            <el-table-column label="已采用组合" align="center" prop="adoptedCombinationCount" width="100">
+              <template slot-scope="scope">
+                <el-button v-if="scope.row.adoptedCombinationCount > 0" type="text" class="dortmund-theme-text"
+                  @click="handleAdoptedCombinations(scope.row)">
+                  {{ scope.row.adoptedCombinationCount }}
+                </el-button>
+                <span v-else class="match-adopted-zero">0</span>
               </template>
             </el-table-column>
             <el-table-column label="比赛备注" align="center" prop="matchRemark" width="230" :show-overflow-tooltip="true" />
@@ -167,16 +164,15 @@
 
 <script>
 import { listMatch, getMatch, delMatch, addMatch, updateMatch } from "@/api/fx67ll/dortmund/match";
-import { listSeason } from "@/api/fx67ll/dortmund/season";
 
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 import MatchEditScene from "./components/MatchEditScene/index";
 
 export default {
   name: "Match",
   dicts: ["sys_notice_status", "fx67ll_match_result"],
-  components: { CommonEnhancedSelect, MatchEditScene, DortmundOptionSelect },
+  components: { MatchEditScene, DortmundOptionSelect, DortmundSeasonSelect },
   data() {
     return {
       // 页面场景（list总览列表 edit比赛编排）
@@ -234,9 +230,6 @@ export default {
     };
   },
   created() {
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listSeason = listSeason;
-
     this.getList();
   },
   methods: {
@@ -284,6 +277,8 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.handleQuery();
     },
     // 多选框选中数据
@@ -346,6 +341,12 @@ export default {
     handleOdds(row) {
       this.$router.push({ path: "/dortmund/odds", query: { matchId: row.matchId } });
     },
+    handleAdoptedCombinations(row) {
+      if (!row.adoptedCombinationCount) {
+        return;
+      }
+      this.$router.push({ path: "/ai/solution/return", query: { matchId: row.matchId } });
+    },
     // 场景保存：编排场景校验并构建请求体后回传，父页面负责提交
     handleSceneSave(data) {
       const isAdd = this.editMode === "add";
@@ -402,6 +403,11 @@ export default {
     color: #5a7d9a;
     background: #ecf3f8;
   }
+}
+
+.match-adopted-zero {
+  font-size: 12px;
+  color: #9aa8a1;
 }
 
 /* 场景切换过渡动画 */

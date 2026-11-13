@@ -36,13 +36,13 @@
       <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
         <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间">
+      <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
-      <el-form-item label="更新时间">
+      <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
@@ -87,10 +87,6 @@
       <!-- 扩展功能：数值模拟（右侧抽屉滑入）与组合回报（预留，开发中） -->
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-cpu" size="mini" @click="handleOpenSimulate">数值模拟</el-button>
-      </el-col>
-      <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="warning" plain icon="el-icon-pie-chart" size="mini"
-          @click="handlePortfolioReturn">组合回报</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -164,9 +160,6 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       :page-sizes="[5, 10, 23, 50, 100]" @pagination="getList" />
 
-    <!-- 添加或修改外快盈亏记录对话框 -->
-    <extra-edit-dialog :visible.sync="open" :extra-id="editExtraId" @success="getList" />
-
     <!-- 数值模拟抽屉（外快盈亏记录页的扩展功能） -->
     <simulate-drawer :visible.sync="simulateOpen" />
 
@@ -186,17 +179,22 @@
 import { listExtra, getExtra, delExtra } from "@/api/fx67ll/dortmund/extra";
 import { listPlan } from "@/api/fx67ll/dortmund/plan";
 
-import { getDialogVerticalOffset, formatMoneyDisplay } from "@/utils/fx67ll/utils";
+import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 
 import { checkPermi } from "@/utils/common/permission";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
-import ExtraEditDialog from "./components/ExtraEditDialog/index.vue";
 import ExtraHistoryChartDialog from "./components/ExtraHistoryChartDialog/index.vue";
 import ExtraMergeDialog from "./components/ExtraMergeDialog/index.vue";
 import PlanSummaryDialog from "./components/PlanSummaryDialog/index.vue";
 import SimulateDrawer from "./components/SimulateDrawer/index.vue";
+
+// 二级录入页固定路由
+const EXTRA_EDIT_ROUTE_PATH = "/dortmund/extra-edit/index";
+
+// 二级录入页保存成功后通知列表页刷新（仅当前浏览器会话有效）
+const EXTRA_EDIT_REFRESH_KEY = "dortmund-extra-edit-refresh-required";
 
 // 入口预置标记的本地缓存key（总览页/流程图页写入，与 overview/workflow 页保持一致）
 const PAGE_MODE_KEY = "dortmund-extra-page-mode";
@@ -204,7 +202,7 @@ const PAGE_MODE_KEY = "dortmund-extra-page-mode";
 export default {
   name: "DortmundExtra",
   dicts: ["sys_yes_no"],
-  components: { CommonEnhancedSelect, ExtraEditDialog, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer },
+  components: { CommonEnhancedSelect, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer },
   data() {
     return {
       // 数值模拟抽屉开关
@@ -223,10 +221,6 @@ export default {
       total: 0,
       // 外快盈亏记录表格数据
       extraList: [],
-      // 是否显示弹出层
-      open: false,
-      // 修改的记录ID（新增时为空）
-      editExtraId: null,
       // 创建时间范围
       daterangeCreateTime: [],
       // 更新时间范围
@@ -271,6 +265,8 @@ export default {
     // 将导入的函数挂载到实例，以便模板中使用
     this.listPlan = listPlan;
 
+    // 若从二级录入页返回，created 已会重新查询，这里只清理刷新标记避免重复请求
+    this.consumeEditRefreshFlag();
     this.getList();
   },
   mounted() {
@@ -279,8 +275,19 @@ export default {
   // 路由缓存复用时同样消费入口预置标记
   activated() {
     this.consumePresetMode();
+    if (this.consumeEditRefreshFlag()) {
+      this.getList();
+    }
   },
   methods: {
+    // 消费二级录入页保存后的刷新标记（会话级，避免跨标签页误刷新）
+    consumeEditRefreshFlag() {
+      if (sessionStorage.getItem(EXTRA_EDIT_REFRESH_KEY) !== "1") {
+        return false;
+      }
+      sessionStorage.removeItem(EXTRA_EDIT_REFRESH_KEY);
+      return true;
+    },
     // 读取并复位入口预置标记（总览页/流程图页的"数值模拟"入口写入simulate），命中则打开数值模拟抽屉
     consumePresetMode() {
       if (localStorage.getItem(PAGE_MODE_KEY) !== "simulate") {
@@ -294,10 +301,6 @@ export default {
     // 打开数值模拟抽屉（也供父页面按预置入口调用）
     handleOpenSimulate() {
       this.simulateOpen = true;
-    },
-    // 组合回报功能预留入口，当前仅提示开发中
-    handlePortfolioReturn() {
-      this.$modal.msgWarning("组合回报功能正在开发中，敬请期待");
     },
     // 重置时间段查询
     clearDateQueryParams() {
@@ -349,10 +352,6 @@ export default {
       this.queryParams.pageNum = 1;
       this.getList();
     },
-    // 代理工具函数
-    getDialogVerticalOffset(offset) {
-      return getDialogVerticalOffset(offset);
-    },
     // 金额展示代理（空值/非法值返回占位符，数值原样展示）
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
@@ -384,13 +383,26 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
-      this.editExtraId = null;
-      this.open = true;
+      this.openExtraEditPage("add");
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
-      this.editExtraId = row.extraId || this.ids;
-      this.open = true;
+      const extraId = (row && row.extraId) || this.ids[0];
+      if (!extraId) {
+        return;
+      }
+      this.openExtraEditPage("edit", extraId);
+    },
+    // 进入独立二级录入页，携带来源路径用于保存或取消后回到原筛选状态
+    openExtraEditPage(mode, extraId) {
+      const query = {
+        mode,
+        from: this.$route.fullPath,
+      };
+      if (extraId != null) {
+        query.id = extraId;
+      }
+      this.$router.push({ path: EXTRA_EDIT_ROUTE_PATH, query });
     },
     /** 删除按钮操作 */
     handleDelete(row) {

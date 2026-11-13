@@ -12,12 +12,11 @@ $dortmund-theme-page-scopes: ".dl-page", ".return-page";
 $dortmund-theme-overlay-scopes: ".list-selector-drawer", ".season-edit-dialog",
   ".odds-detail-drawer", ".info-detail-dialog",
   ".dortmund-info-point-form-dialog", ".odds-inline-dialog",
-  ".extra-edit-dialog", ".extra-merge-dialog", ".extra-history-chart-dialog",
-  ".plan-summary-dialog", ".sim-drawer", ".sim-record-dialog",
-  ".sim-version-create-dialog", ".sim-invalidate-confirm-dialog",
-  ".sim-invalidate-danger-dialog", ".sim-invalid-notice-dialog",
-  ".sim-version-manage-dialog", ".return-drawer", ".return-image-preview-dialog",
-  ".plan-image-preview-dialog";
+  ".extra-merge-dialog", ".extra-history-chart-dialog", ".plan-summary-dialog",
+  ".sim-drawer", ".sim-record-dialog", ".sim-version-create-dialog",
+  ".sim-invalidate-confirm-dialog", ".sim-invalidate-danger-dialog",
+  ".sim-invalid-notice-dialog", ".sim-version-manage-dialog", ".return-drawer",
+  ".return-image-preview-dialog", ".plan-image-preview-dialog";
 
 @mixin dortmund-theme-tint($percent, $fallback) {
   background-color: $fallback;

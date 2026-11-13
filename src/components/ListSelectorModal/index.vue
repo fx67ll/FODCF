@@ -79,7 +79,7 @@
 
       <div class="list-selector-footer">
         <span class="list-selector-footer-summary">
-          {{ selectedRows.length ? `已选择 ${selectedRows.length} 项` : "尚未选择" }}
+          {{ selectedRows.length ? `已选择 ${selectedRows.length}${maxCount > 0 ? ` / ${maxCount}` : ""} 项` : "尚未选择" }}
         </span>
         <div>
           <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
@@ -138,6 +138,10 @@ export default {
     multiple: {
       type: Boolean,
       default: false,
+    },
+    maxCount: {
+      type: Number,
+      default: 0,
     },
     pageSize: {
       type: Number,
@@ -220,6 +224,10 @@ export default {
         }
       });
       this.selectedRows = [...selectedMap.values()];
+      if (this.maxCount > 0 && this.selectedRows.length > this.maxCount) {
+        this.selectedRows = this.selectedRows.slice(0, this.maxCount);
+        this.$modal.msgWarning(`最多只能选择 ${this.maxCount} 项，已保留前 ${this.maxCount} 项`);
+      }
       this.loadError = false;
       this.loadRows();
     },
@@ -308,7 +316,13 @@ export default {
       const currentPageIds = new Set(this.rows.map((row) => row[this.valueKey]));
       const retainedRows = this.selectedRows.filter((row) => !currentPageIds.has(row[this.valueKey]));
       const selectedMap = new Map([...retainedRows, ...rows].map((row) => [row[this.valueKey], row]));
-      this.selectedRows = [...selectedMap.values()];
+      let selectedRows = [...selectedMap.values()];
+      if (this.maxCount > 0 && selectedRows.length > this.maxCount) {
+        selectedRows = selectedRows.slice(0, this.maxCount);
+        this.$modal.msgWarning(`最多只能选择 ${this.maxCount} 项`);
+        this.$nextTick(() => this.syncTableSelection());
+      }
+      this.selectedRows = selectedRows;
     },
     syncTableSelection() {
       if (!this.$refs.selectorTable) {
@@ -354,6 +368,10 @@ export default {
       }
     },
     handleConfirm() {
+      if (this.maxCount > 0 && this.selectedRows.length > this.maxCount) {
+        this.$modal.msgWarning(`最多只能选择 ${this.maxCount} 项`);
+        return;
+      }
       const value = this.multiple ? this.selectedRows.map((row) => row[this.valueKey]) : this.selectedValue;
       this.$emit("input", value);
       this.$emit("confirm", this.multiple ? [...this.selectedRows] : this.selectedRows[0]);

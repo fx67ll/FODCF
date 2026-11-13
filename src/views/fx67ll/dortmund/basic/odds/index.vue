@@ -4,32 +4,39 @@
       <div key="list" v-if="pageScene === 'list'">
         <transition name="dl-filter">
           <el-form class="dl-filter odds-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
-            v-show="showSearch" label-width="78px">
+            v-show="showSearch" label-width="68px">
             <el-form-item label="记录编码" prop="oddsCode" v-if="isMoreQuery">
               <el-input v-model="queryParams.oddsCode" placeholder="请输入记录编码" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="关联比赛" prop="matchId">
-              <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
-                @click="matchSelectorVisible = true" />
+            <el-form-item label="所属比赛" prop="matchCode">
+              <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择所属比赛"
+                @click.native="matchSelectorVisible = true" />
             </el-form-item>
-            <el-form-item label="比赛编码" prop="matchCode">
-              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable
-                @keyup.enter.native="handleQuery" />
-            </el-form-item>
-            <el-form-item label="来源时间" prop="sourceTime">
+            <el-form-item label="来源时间" prop="sourceTime" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeSourceTime" style="width: 220px" type="daterange"
                 value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
                 clearable />
             </el-form-item>
-            <el-form-item label="有效状态" prop="activeFlag">
+            <el-form-item label="有效状态" prop="activeFlag" v-if="isMoreQuery">
               <el-select v-model="queryParams.activeFlag" placeholder="请选择有效状态" clearable
                 @keyup.enter.native="handleQuery">
                 <el-option v-for="item in dict.type.sys_yes_no || []" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
             </el-form-item>
+            <el-form-item label="创建时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeCreateTime" style="width: 220px" type="daterange"
+                value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable />
+            </el-form-item>
+            <el-form-item label="更新时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 220px" type="daterange"
+                value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable />
+            </el-form-item>
             <el-form-item>
+              <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
               <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
               <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
                 size="mini" @click="isMoreQuery = !isMoreQuery">
@@ -120,10 +127,10 @@
           <div class="odds-detail-remark" v-if="detail.oddsRemark">{{ detail.oddsRemark }}</div>
         </div>
         <div class="odds-detail-card">
-          <div class="odds-detail-title">赔率权重矩阵</div>
-          <el-table :data="detailMatrix" empty-text="暂无赔率数据">
+          <div class="odds-detail-title">倍率权重矩阵</div>
+          <el-table :data="detailMatrix" empty-text="暂无倍率数据">
             <el-table-column label="选择类型" align="center" prop="typeName" width="100" />
-            <el-table-column label="赔率" align="center" prop="odds" width="90" />
+            <el-table-column label="倍率" align="center" prop="odds" width="90" />
             <el-table-column label="手工权重" align="center" prop="manualWeight" width="100">
               <template slot-scope="scope">
                 <span>{{ scope.row.manualWeight || "默认 100" }}</span>
@@ -145,6 +152,7 @@
 import { addOdds, activateOdds, delOdds, getOdds, listOdds, updateOdds } from "@/api/fx67ll/dortmund/odds";
 import OddsEditScene from "./components/OddsEditScene/index";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import { getMatch } from "@/api/fx67ll/dortmund/match";
 
 export default {
   name: "DortmundOdds",
@@ -157,6 +165,8 @@ export default {
       total: 0,
       oddsList: [],
       daterangeSourceTime: [],
+      daterangeCreateTime: [],
+      daterangeUpdateTime: [],
       isMoreQuery: false,
       selectedMatch: null,
       matchSelectorVisible: false,
@@ -165,10 +175,13 @@ export default {
         pageSize: 10,
         oddsCode: null,
         matchCode: null,
-        matchId: null,
         activeFlag: null,
         beginSourceTime: null,
         endSourceTime: null,
+        beginCreateTime: null,
+        endCreateTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
       },
       detailVisible: false,
       detailLoading: false,
@@ -197,26 +210,50 @@ export default {
           typeName: this.selectDictLabel(this.dict.type.fx67ll_dortmund_odds_type || [], item.type),
           odds: this.detail[item.oddsField] || "-",
           manualWeight,
-          appliedWeight: manualWeight || 100,
+          // 此处 appliedWeight 仅为倍率详情页的有效手工权重展示值（空值默认100），
+          // 不是回报组合明细表的 AI applied_weight 字段，也不参与任何金额计算。
+          appliedWeight: manualWeight === null || manualWeight === undefined ? 100 : manualWeight,
         };
       });
     },
   },
   created() {
-    this.queryParams.matchId = this.$route.query.matchId || null;
-    if (this.$route.query.matchId) {
-      this.selectedMatch = { matchId: this.$route.query.matchId, matchCode: `比赛 ${this.$route.query.matchId}` };
+    const routeMatchId = this.$route.query.matchId || null;
+    if (routeMatchId) {
+      getMatch(routeMatchId).then((response) => {
+        const match = response.data || null;
+        if (match && match.matchCode) {
+          this.selectedMatch = match;
+          this.queryParams.matchCode = match.matchCode;
+        }
+        this.getList();
+      }).catch(() => {
+        this.getList();
+      });
+    } else {
+      this.getList();
     }
-    this.getList();
   },
   methods: {
     getList() {
       this.loading = true;
       this.queryParams.beginSourceTime = null;
       this.queryParams.endSourceTime = null;
+      this.queryParams.beginCreateTime = null;
+      this.queryParams.endCreateTime = null;
+      this.queryParams.beginUpdateTime = null;
+      this.queryParams.endUpdateTime = null;
       if (this.daterangeSourceTime && this.daterangeSourceTime.length === 2) {
         this.queryParams.beginSourceTime = this.daterangeSourceTime[0];
         this.queryParams.endSourceTime = this.daterangeSourceTime[1];
+      }
+      if (this.daterangeCreateTime && this.daterangeCreateTime.length === 2) {
+        this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
+        this.queryParams.endCreateTime = this.daterangeCreateTime[1];
+      }
+      if (this.daterangeUpdateTime && this.daterangeUpdateTime.length === 2) {
+        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
+        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
       listOdds(this.queryParams).then((response) => {
         this.oddsList = this.formatObjectArrayNullProperty(response.rows || []);
@@ -235,6 +272,8 @@ export default {
     resetQuery() {
       this.resetForm("queryForm");
       this.daterangeSourceTime = [];
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.selectedMatch = null;
       this.handleQuery();
     },
@@ -243,7 +282,7 @@ export default {
     },
     handleMatchSelectorConfirm(match) {
       this.selectedMatch = match || null;
-      this.queryParams.matchId = match ? match.matchId : null;
+      this.queryParams.matchCode = match ? match.matchCode : null;
     },
     handleAdd() {
       this.editMode = "add";

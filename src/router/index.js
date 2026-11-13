@@ -184,6 +184,44 @@ export const dynamicRoutes = [
       },
     ],
   },
+  {
+    path: "/dortmund/return-analysis",
+    component: Layout,
+    hidden: true,
+    permissions: ["dortmund:return:generate"],
+    children: [
+      {
+        path: "index",
+        component: () =>
+          import(
+            "@/views/fx67ll/dortmund/return/components/ReturnAnalysisScene/index"
+          ),
+        name: "DortmundReturnAnalysis",
+        meta: { title: "回报组合分析", activeMenu: "/ai/solution/return" },
+      },
+    ],
+  },
+  {
+    path: "/dortmund/extra-edit",
+    component: Layout,
+    hidden: true,
+    permissions: ["dortmund:extra:add", "dortmund:extra:edit"],
+    children: [
+      {
+        path: "index",
+        component: () =>
+          import(
+            "@/views/fx67ll/dortmund/extra/components/ExtraEditScene/index"
+          ),
+        name: "DortmundExtraEdit",
+        meta: {
+          title: "外快盈亏录入",
+          activeMenu: "/ai/solution/extra",
+          noCache: true,
+        },
+      },
+    ],
+  },
 ];
 
 // 防止连续点击多次路由报错

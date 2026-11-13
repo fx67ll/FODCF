@@ -7,7 +7,7 @@
       <div key="list" v-if="pageScene === 'list'">
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
-            v-show="showSearch" label-width="90px">
+            v-show="showSearch" label-width="82px">
             <el-form-item label="信息点类型" prop="infoPointType">
               <el-select v-model="queryParams.infoPointType" placeholder="请选择信息点类型" clearable
                 @change="handleQueryTypeChange">
@@ -15,13 +15,12 @@
                   :label="dict.label" :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType !== 'M' && isMoreQuery">
-              <common-enhanced-select ref="seasonSelect" v-model="queryParams.seasonId" valueKey="seasonId"
-                labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" :enter-callback="handleQuery" />
+            <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType === 'T'">
+              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery" />
             </el-form-item>
-            <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M' && isMoreQuery">
+            <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M'">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择所属比赛"
-                @click="matchSelectorVisible = true" />
+                @click.native="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="信息点标题" prop="pointTitle">
               <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
@@ -41,6 +40,11 @@
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
+                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                clearable></el-date-picker>
+            </el-form-item>
+            <el-form-item label="更新时间" v-if="isMoreQuery">
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
                 type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
                 clearable></el-date-picker>
             </el-form-item>
@@ -112,10 +116,10 @@
 
 <script>
 import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, changeInfoPointStatus } from "@/api/fx67ll/dortmund/infoPoint";
-import { listSeason } from "@/api/fx67ll/dortmund/season";
 import { addMatch } from "@/api/fx67ll/dortmund/match";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 import InfoCardPane from "./components/InfoCardPane/index.vue";
 import InfoListPane from "./components/InfoListPane/index.vue";
 import InfoDetailDialog from "./components/InfoDetailDialog/index.vue";
@@ -129,7 +133,7 @@ const VIEW_MODE_KEY = "dortmund-info-view-mode";
 export default {
   name: "Info",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
-  components: { ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene, DortmundMatchSelectorModal },
+  components: { ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene, DortmundMatchSelectorModal, DortmundSeasonSelect },
   data() {
     return {
       // 页面场景（list总览列表 editT赛季球队录入 editM比赛临时录入 valid有效性查询）
@@ -162,6 +166,8 @@ export default {
       infoPointList: [],
       // 创建时间范围
       daterangeCreateTime: [],
+      // 更新时间范围
+      daterangeUpdateTime: [],
       selectedMatch: null,
       matchSelectorVisible: false,
       // 是否使用高级搜索
@@ -178,6 +184,8 @@ export default {
         allowPublic: null,
         beginCreateTime: null,
         endCreateTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
       },
       // 完整只读详情（详情对话框展示）
       detailModel: {},
@@ -188,9 +196,6 @@ export default {
   created() {
     // 读取本地缓存的展示视图偏好（非法值兜底为卡片视图）
     this.viewMode = localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "card";
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listSeason = listSeason;
-
     this.getList();
   },
   activated() {
@@ -209,6 +214,8 @@ export default {
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
       this.queryParams.endCreateTime = null;
+      this.queryParams.beginUpdateTime = null;
+      this.queryParams.endUpdateTime = null;
     },
     /** 查询信息点列表 */
     getList() {
@@ -218,11 +225,20 @@ export default {
         this.queryParams.beginCreateTime = this.daterangeCreateTime[0];
         this.queryParams.endCreateTime = this.daterangeCreateTime[1];
       }
+      if (null != this.daterangeUpdateTime && "" != this.daterangeUpdateTime) {
+        this.queryParams.beginUpdateTime = this.daterangeUpdateTime[0];
+        this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
+      }
       // 类型切换时清理不适用字段，隐藏字段不被提交
       if (this.queryParams.infoPointType === "T") {
         this.queryParams.matchId = null;
+        this.selectedMatch = null;
       } else if (this.queryParams.infoPointType === "M") {
         this.queryParams.seasonId = null;
+      } else {
+        this.queryParams.seasonId = null;
+        this.queryParams.matchId = null;
+        this.selectedMatch = null;
       }
       listInfoPoint(this.queryParams).then(response => {
         this.infoPointList = this.formatObjectArrayNullProperty(response.rows || []);
@@ -247,6 +263,8 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
       this.selectedMatch = null;
       this.handleQuery();
     },

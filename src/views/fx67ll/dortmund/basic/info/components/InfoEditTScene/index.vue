@@ -35,8 +35,7 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="所属赛季" prop="seasonId">
               <!-- 新增时下拉选择；修改时归属只读展示（已关联赛季可能已被停用，不在正常赛季选项内） -->
-              <common-enhanced-select v-if="editMode === 'add'" ref="seasonSelect" v-model="editForm.seasonId"
-                valueKey="seasonId" labelKey="seasonName" :api-func="listSeason" placeholder="请选择所属赛季" />
+              <dortmund-season-select v-if="editMode === 'add'" ref="seasonSelect" v-model="editForm.seasonId" />
               <el-input v-else :value="editForm.seasonName || ('赛季' + editForm.seasonId)" disabled />
             </el-form-item>
           </el-col>
@@ -176,14 +175,13 @@
 </template>
 
 <script>
-import { listSeason } from "@/api/fx67ll/dortmund/season";
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 
 export default {
   name: "InfoEditTScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { CommonEnhancedSelect, DortmundTeamSelectorModal },
+  components: { DortmundTeamSelectorModal, DortmundSeasonSelect },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {
@@ -250,10 +248,6 @@ export default {
       selectedTeams: this.buildSelectedTeams(),
       teamSelectorVisible: false,
     };
-  },
-  created() {
-    // 将导入的函数挂载到实例，以便模板中使用
-    this.listSeason = listSeason;
   },
   methods: {
     // 从父页面传入的初始表单复制出本场景可编辑副本（避免直接改动父页面数据）

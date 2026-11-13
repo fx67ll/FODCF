@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import { listPlanReturnOptions } from "@/api/fx67ll/dortmund/plan";
+import { listCombination } from "@/api/fx67ll/dortmund/returnCombination";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
 
 export default {
@@ -52,8 +52,8 @@ export default {
           type: "select",
           placeholder: "请选择生成模式",
           options: [
-            { label: "人工权重", value: "S" },
-            { label: "AI 权重", value: "A" },
+            { label: "主观模式", value: "S" },
+            { label: "AI 模式", value: "A" },
           ],
         },
       ],
@@ -71,26 +71,16 @@ export default {
   },
   methods: {
     loadCombinations(query = {}) {
-      return listPlanReturnOptions().then((response) => {
-        const keyword = String(query.keyword || "").trim().toLowerCase();
-        const generationMode = query.generationMode;
-        const sourceRows = Array.isArray(response && response.data) ? response.data : [];
-        const filteredRows = sourceRows.filter((item) => {
-          if (generationMode && item.generationMode !== generationMode) {
-            return false;
-          }
-          if (!keyword) {
-            return true;
-          }
-          return [item.combinationTitle, item.combinationCode]
-            .some((value) => String(value || "").toLowerCase().includes(keyword));
-        });
-        const pageNum = Math.max(Number(query.pageNum) || 1, 1);
-        const pageSize = Math.max(Number(query.pageSize) || 10, 1);
-        const startIndex = (pageNum - 1) * pageSize;
+      return listCombination({
+        pageNum: query.pageNum,
+        pageSize: query.pageSize,
+        keyword: query.keyword,
+        generationMode: query.generationMode,
+        adoptedFlag: "Y",
+      }).then((response) => {
         return {
-          rows: filteredRows.slice(startIndex, startIndex + pageSize),
-          total: filteredRows.length,
+          rows: (response && response.rows) || [],
+          total: Number(response && response.total) || 0,
         };
       });
     },

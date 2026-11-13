@@ -75,7 +75,7 @@ export default {
         {
           title: "阶段 1.5 · 版本与生成",
           nodes: [
-            { key: "odds", title: "倍率版本", desc: "六类赔率版本、有效切换与当场创建", icon: "el-icon-odometer", done: true, componentPath: PAGE_COMPONENTS.odds },
+            { key: "odds", title: "倍率版本", desc: "六类倍率版本、有效切换与当场创建", icon: "el-icon-odometer", done: true, componentPath: PAGE_COMPONENTS.odds },
             { key: "returnCombination", title: "回报组合", desc: "AI生成、批次复核与采用审核", icon: "el-icon-magic-stick", done: true, componentPath: PAGE_COMPONENTS.returnCombination },
           ],
         },

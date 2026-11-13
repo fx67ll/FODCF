@@ -43,14 +43,6 @@ export function delPlan(planId) {
   });
 }
 
-// 查询可关联的已采用回报组合
-export function listPlanReturnOptions() {
-  return request({
-    url: "/dortmund/plan/return/options",
-    method: "get",
-  });
-}
-
 // 查询方案计划已保存摘要
 export function getPlanSummary(planId) {
   return request({
@@ -64,14 +56,5 @@ export function refreshPlanSummary(planId) {
   return request({
     url: "/dortmund/plan/" + planId + "/summary/refresh",
     method: "post",
-  });
-}
-
-// 上传方案计划图片（仅指定用户调用，返回相对对象键）
-export function uploadPlanImage(data) {
-  return request({
-    url: "/dortmund/plan/image/upload",
-    method: "post",
-    data: data,
   });
 }
