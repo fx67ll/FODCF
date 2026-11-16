@@ -1,5 +1,5 @@
 <template>
-  <el-select :value="value" v-bind="$attrs" v-on="$listeners" style="width: 100%">
+  <el-select :value="value" v-bind="$attrs" v-on="$listeners" style="width: 100%" popper-class="dortmund-theme-popper">
     <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
       <el-tag v-if="optionType === 'tag' && item.type" :type="item.type" size="mini">{{ item.label }}</el-tag>
       <template v-else>{{ item.label }}</template>

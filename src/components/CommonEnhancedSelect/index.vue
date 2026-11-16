@@ -1,8 +1,8 @@
 <template>
   <!-- 增强下拉框组件：支持接口获取数据、本地过滤、回车回调、多选，并支持自定义宽度 -->
   <el-select v-model="innerValue" :placeholder="placeholder" clearable filterable :filter-method="handleFilter"
-    @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef" :style="selectStyle" :disabled="disabled"
-    :multiple="multiple" :collapse-tags="multiple">
+    popper-class="dortmund-theme-popper" @change="handleChange" @keyup.enter.native="handleEnter" ref="selectRef"
+    :style="selectStyle" :disabled="disabled" :multiple="multiple" :collapse-tags="multiple">
     <el-option v-for="item in options" :key="item[valueKey]" :label="item[labelKey]" :value="item[valueKey]" />
   </el-select>
 </template>

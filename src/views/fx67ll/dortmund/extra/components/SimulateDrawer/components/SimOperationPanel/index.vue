@@ -12,12 +12,13 @@
       <div class="sim-version-row">
         <span class="sim-version-label">模拟版本</span>
         <el-select :value="currentVersionId" size="small" class="sim-version-select" placeholder="暂无版本，记录本轮或重新模拟将自动开启"
-          @change="$emit('version-change', $event)">
+          popper-class="dortmund-theme-popper" @change="$emit('version-change', $event)">
           <el-option v-for="version in simEnabledVersionList" :key="version.versionId"
             :label="`${version.versionName || `版本${version.versionNo}`}（${parseTime(version.createTime, '{m}-{d} {h}:{i}')}）`"
             :value="version.versionId" />
         </el-select>
-        <el-tag size="small" effect="plain" type="info">启用 {{ simEnabledVersionList.length }} / 共 {{ simVersionList.length }} 个版本</el-tag>
+        <el-tag size="small" effect="plain" type="info">启用 {{ simEnabledVersionList.length }} / 共 {{
+          simVersionList.length }} 个版本</el-tag>
         <el-button size="small" type="success" plain icon="el-icon-setting" class="sim-version-manage-btn"
           @click="$emit('manage-version')">版本管理</el-button>
       </div>
@@ -320,7 +321,7 @@ export default {
     }
   }
 
-  > i:first-child {
+  >i:first-child {
     font-size: 16px;
     color: #2ecc71;
   }

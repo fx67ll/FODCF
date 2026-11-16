@@ -1,6 +1,6 @@
 <template>
   <!-- 信息点有效性场景：按一场比赛只读分出「将进入分析」和「被排除」（自包含查询场景） -->
-  <div class="info-valid-scene">
+  <div class="dortmund-secondary-page info-valid-scene">
     <div class="info-edit-header">
       <div class="info-edit-header-left">
         <el-button type="text" class="dortmund-theme-text" icon="el-icon-back"

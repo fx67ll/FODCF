@@ -34,26 +34,30 @@
             @clear="clearCombinationMatch" />
         </el-form-item>
         <el-form-item label="采用状态" prop="adoptedFlag">
-          <el-select v-model="combinationQuery.adoptedFlag" placeholder="请选择采用状态" clearable style="width: 140px">
+          <el-select v-model="combinationQuery.adoptedFlag" placeholder="请选择采用状态" clearable style="width: 140px"
+            popper-class="dortmund-theme-popper">
             <el-option label="未采用" value="N" />
             <el-option label="已采用" value="Y" />
           </el-select>
         </el-form-item>
         <el-form-item label="生成模式" prop="generationMode" v-if="isMoreCombinationQuery">
-          <el-select v-model="combinationQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px">
+          <el-select v-model="combinationQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px"
+            popper-class="dortmund-theme-popper">
             <el-option label="主观模式" value="S" />
             <el-option label="AI 模式" value="A" />
           </el-select>
         </el-form-item>
         <el-form-item label="批次状态" prop="generationStatus" v-if="isMoreCombinationQuery">
-          <el-select v-model="combinationQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px">
+          <el-select v-model="combinationQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
+            popper-class="dortmund-theme-popper">
             <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="创建时间" v-if="isMoreCombinationQuery">
           <el-date-picker v-model="combinationDateRange" type="daterange" value-format="yyyy-MM-dd" range-separator="-"
-            start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px" clearable />
+            popper-class="dortmund-theme-popper" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px"
+            clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleCombinationQuery">搜索</el-button>
@@ -79,7 +83,8 @@
         <div class="combination-head-actions">
           <div class="combination-sort-controls">
             <span class="combination-sort-label">排序</span>
-            <el-select v-model="combinationQuery.sortField" size="mini" style="width: 122px">
+            <el-select v-model="combinationQuery.sortField" size="mini" style="width: 122px"
+              popper-class="dortmund-theme-popper">
               <el-option label="创建时间" value="createTime" />
               <el-option label="预计回报" value="estimatedReturn" />
               <el-option label="偏差金额" value="deviationAmount" />
@@ -87,7 +92,8 @@
               <el-option label="场次" value="matchCount" />
               <el-option label="审核时间" value="reviewTime" />
             </el-select>
-            <el-select v-model="combinationQuery.sortOrder" size="mini" style="width: 82px">
+            <el-select v-model="combinationQuery.sortOrder" size="mini" style="width: 82px"
+              popper-class="dortmund-theme-popper">
               <el-option label="降序" value="desc" />
               <el-option label="升序" value="asc" />
             </el-select>
@@ -215,20 +221,23 @@
         <el-form ref="batchQueryForm" :model="batchQuery" class="dl-filter" size="small" :inline="true"
           label-width="82px">
           <el-form-item label="批次状态" prop="generationStatus">
-            <el-select v-model="batchQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px">
+            <el-select v-model="batchQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
+              popper-class="dortmund-theme-popper">
               <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="生成模式" prop="generationMode">
-            <el-select v-model="batchQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px">
+            <el-select v-model="batchQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px"
+              popper-class="dortmund-theme-popper">
               <el-option label="主观模式" value="S" />
               <el-option label="AI 模式" value="A" />
             </el-select>
           </el-form-item>
           <el-form-item label="创建时间">
             <el-date-picker v-model="batchDateRange" type="daterange" value-format="yyyy-MM-dd" range-separator="-"
-              start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px" clearable />
+              popper-class="dortmund-theme-popper" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px"
+              clearable />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleBatchQuery">搜索</el-button>
@@ -306,7 +315,8 @@
         </div>
         <div class="orphan-filter-card">
           <el-date-picker v-model="orphanDateRange" size="small" type="daterange" value-format="yyyy-MM-dd"
-            range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 260px" clearable />
+            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+            style="width: 260px" clearable />
           <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
             @click="handleOrphanImageSearch">搜索孤儿图片</el-button>
           <el-button type="danger" plain size="mini" icon="el-icon-delete" :loading="orphanDeleteLoading"

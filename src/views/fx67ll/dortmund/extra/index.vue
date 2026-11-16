@@ -6,7 +6,7 @@
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="是否盈利" prop="isWin">
-        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable>
+        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable popper-class="dortmund-theme-popper">
           <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
@@ -24,7 +24,8 @@
         <el-input v-model="queryParams.targetMoney" placeholder="请输入目标金额" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="是否关联" prop="hasPlan" v-if="isMoreQuery">
-        <el-select v-model="queryParams.hasPlan" placeholder="请选择是否关联方案计划" clearable style="width: 160px">
+        <el-select v-model="queryParams.hasPlan" placeholder="请选择是否关联方案计划" clearable style="width: 160px"
+          popper-class="dortmund-theme-popper">
           <el-option label="已关联" value="1" />
           <el-option label="未关联" value="0" />
         </el-select>
@@ -38,11 +39,13 @@
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+          popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+          clearable></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" clearable></el-date-picker>
+          popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+          clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">

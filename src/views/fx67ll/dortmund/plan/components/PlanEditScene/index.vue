@@ -1,6 +1,6 @@
 <template>
   <!-- 方案计划编写场景（创建/修改共用整页，进入场景时从父页面初始表单复制出可编辑副本） -->
-  <div class="plan-edit-scene">
+  <div class="dortmund-secondary-page plan-edit-scene">
     <!-- 头部横幅：渐变图标 + 标题 + 副标题 -->
     <div class="plan-edit-hero">
       <div class="plan-edit-hero-left">

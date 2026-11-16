@@ -1,7 +1,7 @@
 <template>
-  <div class="plan-link-selector" v-if="hasPlanListPermission && hasPlanQueryPermission">
+  <div class="plan-link-selector" :class="selectorLayoutClass" v-if="hasPlanListPermission && hasPlanQueryPermission">
     <!-- 区域头部：默认折叠，折叠时显示已选条数 -->
-    <div class="plan-link-header" @click="handleToggleExpand">
+    <div class="plan-link-header" v-if="layout !== 'secondary'" @click="handleToggleExpand">
       <div class="plan-link-header-left">
         <i class="el-icon-collection-tag"></i>
         <span class="plan-link-title">关联方案计划（可选）</span>
@@ -16,7 +16,7 @@
     </div>
     <!-- 折叠展开过渡（高度加透明度，约0.28s） -->
     <transition name="plan-link-expand">
-      <div class="plan-link-body" v-if="expanded">
+      <div class="plan-link-body" v-if="layout === 'secondary' || expanded">
         <!-- 隐藏关联提示（编辑已有记录时） -->
         <div class="plan-link-hidden-tip" v-if="hiddenPlanCount > 0">
           另有 {{ hiddenPlanCount }} 条无权查看的关联，保存不会影响它们
@@ -55,35 +55,41 @@
           <div class="plan-link-new-panel" v-if="newPlanVisible">
             <div class="plan-link-new-panel-title">
               <i class="el-icon-collection-tag"></i>
-              <span>当场新建方案计划（比赛只能选已有正常比赛，与保存同一事务）</span>
+              <div class="plan-link-new-panel-copy">
+                <strong>当场新建方案计划</strong>
+                <p>比赛从已有正常比赛中选择，保存时一并创建</p>
+              </div>
             </div>
-            <el-form ref="newPlanForm" :model="newPlanForm" :rules="newPlanRules" label-width="110px">
-              <el-form-item label="方案计划" prop="planContent">
-                <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="1023" show-word-limit
-                  placeholder="请输入方案计划" />
-              </el-form-item>
-              <el-form-item label="录入倍率" prop="planRate">
-                <el-input v-model="newPlanForm.planRate" placeholder="请输入录入倍率（可空，有值时必须大于0）" />
-              </el-form-item>
-              <el-form-item label="录入金额" prop="planAmount">
-                <el-input v-model="newPlanForm.planAmount" placeholder="请输入录入金额（可空，有值时必须大于等于0）" />
-              </el-form-item>
-              <el-form-item label="其他说明" prop="planRemark">
-                <el-input v-model="newPlanForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
-                  placeholder="请输入其他说明" />
-              </el-form-item>
-              <el-form-item label="关联比赛" prop="matchIds">
-                <common-enhanced-select ref="newPlanMatchSelect" v-model="newPlanForm.matchIds" valueKey="matchId"
-                  labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" multiple
-                  placeholder="请选择已有正常比赛（可多选）" />
-              </el-form-item>
+            <el-form ref="newPlanForm" :model="newPlanForm" :rules="newPlanRules" label-position="top"
+              class="plan-link-new-form" :class="{ 'is-wide': layout === 'secondary' }">
+              <div class="plan-link-new-grid">
+                <el-form-item label="方案计划" prop="planContent" class="plan-link-new-field is-full">
+                  <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="1023"
+                    show-word-limit placeholder="请输入方案计划" />
+                </el-form-item>
+                <el-form-item label="录入倍率" prop="planRate" class="plan-link-new-field">
+                  <el-input v-model="newPlanForm.planRate" placeholder="可空；有值时必须大于0" />
+                </el-form-item>
+                <el-form-item label="录入金额" prop="planAmount" class="plan-link-new-field">
+                  <el-input v-model="newPlanForm.planAmount" placeholder="可空；有值时必须大于等于0" />
+                </el-form-item>
+                <el-form-item label="关联比赛" prop="matchIds" class="plan-link-new-field is-full">
+                  <common-enhanced-select ref="newPlanMatchSelect" v-model="newPlanForm.matchIds" valueKey="matchId"
+                    labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" multiple
+                    popper-class="dortmund-theme-popper" placeholder="请选择已有正常比赛（可多选）" />
+                </el-form-item>
+                <el-form-item label="其他说明" prop="planRemark" class="plan-link-new-field is-full">
+                  <el-input v-model="newPlanForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
+                    placeholder="请输入其他说明" />
+                </el-form-item>
+              </div>
               <div class="plan-link-new-actions">
+                <div class="plan-link-new-tip" v-if="!hasSelectableMatch">
+                  没有可选的正常比赛，请前往比赛页或方案计划页先创建
+                </div>
                 <el-button type="success" plain icon="el-icon-plus" size="mini" @click="handleAddNewPlan">
                   加入新建列表
                 </el-button>
-              </div>
-              <div class="plan-link-new-tip" v-if="!hasSelectableMatch">
-                没有可选的正常比赛，请前往比赛页或方案计划页先创建
               </div>
             </el-form>
             <!-- 已加入的当场新建方案计划 -->
@@ -155,6 +161,12 @@ export default {
     plans: {
       type: Array,
       default: () => [],
+    },
+    // 使用场景：dialog保留折叠头，secondary由宿主卡片承载标题并直接展开
+    layout: {
+      type: String,
+      default: "dialog",
+      validator: (value) => ["dialog", "secondary"].includes(value),
     },
   },
   data() {
@@ -242,6 +254,9 @@ export default {
     // 是否拥有方案计划新增权限（决定当场新建入口是否显示）
     hasPlanAddPermission() {
       return checkPermi(["dortmund:plan:add"]);
+    },
+    selectorLayoutClass() {
+      return `is-${this.layout}`;
     },
     // 已选条数（已有 + 当场新建）
     selectedTotal() {
@@ -463,6 +478,14 @@ export default {
   border-radius: 4px;
 }
 
+.plan-link-selector.is-secondary {
+  padding: 0;
+  margin-bottom: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
 /* 区域头部（可点击折叠） */
 .plan-link-header {
   display: flex;
@@ -604,11 +627,12 @@ export default {
 
 /* 当场新建方案计划滑出面板 */
 .plan-link-new-panel {
-  padding: 14px 14px 14px 4px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
+  padding: 16px;
+  background: #f8fbf9;
+  border: 1px solid #dcebe3;
   border-left: 4px solid #2ecc71;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.06);
 }
 
 .plan-link-new-panel-title {
@@ -630,20 +654,63 @@ export default {
   color: #2ecc71;
 }
 
-.plan-link-new-panel-title span {
+.plan-link-new-panel-copy {
   min-width: 0;
+}
+
+.plan-link-new-panel-copy strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b3a36;
+}
+
+.plan-link-new-panel-copy p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8a9892;
   overflow-wrap: anywhere;
 }
 
+.plan-link-new-form {
+  margin-top: 14px;
+
+  ::v-deep .el-form-item {
+    margin-bottom: 0;
+  }
+}
+
+.plan-link-new-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.plan-link-new-form.is-wide .plan-link-new-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.plan-link-new-field.is-full {
+  grid-column: 1 / -1;
+}
+
 .plan-link-new-actions {
-  padding-left: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .plan-link-new-tip {
-  padding: 6px 0 0 110px;
+  flex: 1;
+  min-width: 0;
   font-size: 12px;
   line-height: 1.5;
   color: #909399;
+  overflow-wrap: anywhere;
 }
 
 /* 选中方案计划只读摘要 */
@@ -710,12 +777,17 @@ export default {
     margin-left: 0;
   }
 
-  .plan-link-new-actions {
-    padding-left: 0;
+  .plan-link-new-form.is-wide .plan-link-new-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .plan-link-new-tip {
-    padding-left: 0;
+  .plan-link-new-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .plan-link-new-actions .el-button {
+    width: 100%;
   }
 
   .plan-link-summary-plan-content,

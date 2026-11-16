@@ -1,5 +1,5 @@
 <template>
-  <div class="odds-edit-scene">
+  <div class="dortmund-secondary-page odds-edit-scene">
     <div class="odds-edit-hero">
       <div class="odds-edit-hero-left">
         <div class="odds-edit-hero-icon">
@@ -27,14 +27,14 @@
         </div>
         <el-row :gutter="20">
           <el-col :xs="24" :md="8">
-            <el-form-item label="记录编码" prop="oddsCode">
-              <el-input v-model="editForm.oddsCode" maxlength="23" show-word-limit placeholder="请输入倍率记录编码" />
+            <el-form-item label="倍率编码" prop="oddsCode">
+              <el-input v-model="editForm.oddsCode" maxlength="23" show-word-limit placeholder="推荐格式：体彩比赛日期+期号" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="8">
             <el-form-item label="来源时间" prop="sourceTime">
               <el-date-picker v-model="editForm.sourceTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择来源时间" />
+                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择来源时间" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="8">
@@ -87,7 +87,8 @@
               <el-col :xs="24" :md="12">
                 <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="96px">
                   <el-date-picker v-model="editForm.newMatch.matchTime" type="datetime"
-                    value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择比赛时间" />
+                    popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                    placeholder="请选择比赛时间" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :md="12">
@@ -225,7 +226,7 @@ export default {
         { key: "handicapAwayWin", type: "HA", oddsField: "handicapAwayWinOdds", weightField: "handicapAwayWinWeight" },
       ],
       editRules: {
-        oddsCode: [{ required: true, message: "记录编码不能为空", trigger: "blur" }],
+        oddsCode: [{ required: true, message: "倍率编码不能为空", trigger: "blur" }],
         sourceTime: [{ required: true, message: "来源时间不能为空", trigger: "change" }],
         matchId: [{
           validator: (rule, value, callback) => {

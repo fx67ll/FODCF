@@ -1,5 +1,5 @@
 <template>
-  <div class="team-edit-scene">
+  <div class="dortmund-secondary-page team-edit-scene">
     <div class="team-edit-hero">
       <div class="team-edit-hero-left">
         <div class="team-edit-hero-icon">

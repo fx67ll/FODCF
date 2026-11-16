@@ -1,6 +1,6 @@
 <template>
   <!-- 比赛编排场景：新增/修改共用整页，按填写顺序铺开（进入场景时从父页面初始表单复制出可编辑副本） -->
-  <div class="match-edit-scene">
+  <div class="dortmund-secondary-page match-edit-scene">
     <div class="match-edit-hero">
       <div class="match-edit-hero-left">
         <div class="match-edit-hero-icon"><i class="el-icon-football"></i></div>
@@ -42,7 +42,7 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker clearable v-model="editForm.matchTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择比赛时间">
+                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择比赛时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
@@ -112,7 +112,8 @@
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="比赛状态" prop="matchStatus">
-              <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态">
+              <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态"
+                popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -120,7 +121,8 @@
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="比赛结果" prop="matchResult">
-              <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable>
+              <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable
+                popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -167,14 +169,16 @@
               </div>
               <el-row :gutter="12">
                 <el-col :xs="24" :md="8">
-                  <el-form-item label="记录编码" prop="newOdds.oddsCode" label-width="80px">
-                    <el-input v-model="editForm.newOdds.oddsCode" maxlength="23" show-word-limit placeholder="必填" />
+                  <el-form-item label="倍率编码" prop="newOdds.oddsCode" label-width="80px">
+                    <el-input v-model="editForm.newOdds.oddsCode" maxlength="23" show-word-limit
+                      placeholder="推荐格式：体彩比赛日期+期号" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :md="8">
                   <el-form-item label="来源时间" prop="newOdds.sourceTime" label-width="80px">
                     <el-date-picker v-model="editForm.newOdds.sourceTime" type="datetime"
-                      value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="必选" />
+                      popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                      placeholder="必选" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :md="8">
@@ -344,7 +348,7 @@ export default {
           { required: true, message: "比赛编码不能为空", trigger: "blur" }
         ],
         "newOdds.oddsCode": [
-          { required: true, message: "记录编码不能为空", trigger: "blur" }
+          { required: true, message: "倍率编码不能为空", trigger: "blur" }
         ],
         "newOdds.sourceTime": [
           { required: true, message: "来源时间不能为空", trigger: "change" }

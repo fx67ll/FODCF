@@ -1,6 +1,6 @@
 <template>
   <!-- M类型录入场景：先定比赛，再写内容和来源（蓝色比赛风格，进入场景时从父页面初始表单复制出可编辑副本） -->
-  <div class="info-edit-scene info-edit-scene-m">
+  <div class="dortmund-secondary-page info-edit-scene info-edit-scene-m">
     <!-- 头部横幅：渐变图标 + 类型徽标 + 标题 -->
     <div class="info-edit-hero">
       <div class="info-edit-hero-left">
@@ -75,7 +75,8 @@
                   <el-col :xs="24" :md="12">
                     <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="96px">
                       <el-date-picker v-model="editForm.newMatch.matchTime" type="datetime"
-                        value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择比赛时间" />
+                        popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                        placeholder="请选择比赛时间" />
                     </el-form-item>
                   </el-col>
                   <el-col :xs="24" :md="12">
@@ -147,14 +148,16 @@
           <el-col :xs="24" :md="12">
             <el-form-item label="来源发布时间" prop="sourcePublishTime">
               <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择来源发布时间">
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                placeholder="请选择来源发布时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item label="信息采集时间" prop="collectTime">
               <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
-                value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择信息采集时间">
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                placeholder="请选择信息采集时间">
               </el-date-picker>
               <div class="info-edit-field-hint">信息被采集或录入系统的时间点</div>
             </el-form-item>
@@ -164,10 +167,12 @@
             <el-form-item label="生效时间窗口" class="info-edit-time-window">
               <div class="info-edit-time-row">
                 <el-date-picker clearable v-model="editForm.effectiveStartTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择生效时间（空表示不限制）" />
+                  popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                  placeholder="请选择生效时间（空表示不限制）" />
                 <span class="info-edit-time-connector">至</span>
                 <el-date-picker clearable v-model="editForm.effectiveEndTime" type="datetime"
-                  value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" placeholder="请选择失效时间（空表示不限制）" />
+                  popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
+                  placeholder="请选择失效时间（空表示不限制）" />
               </div>
               <div class="info-edit-field-hint">留空表示不限制；两者都填时，生效时间不得晚于失效时间</div>
             </el-form-item>

@@ -389,6 +389,13 @@ $dl-theme: var(--current-color, #2ecc71);
   }
 }
 
+/* ---------- 二级页统一宽度与入场节奏 ---------- */
+.dortmund-secondary-page {
+  max-width: 1500px;
+  margin: 0 auto;
+  animation: dlRise 0.36s ease both;
+}
+
 @media (max-width: 768px) {
   .dl-page {
     .dl-filter {

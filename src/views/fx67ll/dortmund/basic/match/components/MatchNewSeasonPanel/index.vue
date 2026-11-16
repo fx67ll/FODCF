@@ -20,18 +20,19 @@
         <el-col :span="12">
           <el-form-item label="开始日期" prop="seasonStartDate">
             <el-date-picker clearable v-model="newSeasonForm.seasonStartDate" type="date" value-format="yyyy-MM-dd"
-              style="width: 100%" placeholder="请选择赛季开始日期" />
+              popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季开始日期" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="结束日期" prop="seasonEndDate">
             <el-date-picker clearable v-model="newSeasonForm.seasonEndDate" type="date" value-format="yyyy-MM-dd"
-              style="width: 100%" placeholder="请选择赛季结束日期" />
+              popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季结束日期" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="赛季状态" prop="seasonStatus">
-            <el-select v-model="newSeasonForm.seasonStatus" style="width: 100%" placeholder="请选择赛季状态">
+            <el-select v-model="newSeasonForm.seasonStatus" style="width: 100%" placeholder="请选择赛季状态"
+              popper-class="dortmund-theme-popper">
               <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
                 :value="dict.value"></el-option>
             </el-select>

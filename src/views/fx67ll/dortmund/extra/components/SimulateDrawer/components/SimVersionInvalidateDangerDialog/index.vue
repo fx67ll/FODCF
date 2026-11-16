@@ -51,7 +51,7 @@
 
       <!-- 安全提示 -->
       <div class="audit-tip">
-        <i class="el-icon-info" style="color: #409eff; margin-right: 5px;"></i>
+        <i class="el-icon-info" style="color: var(--current-color, #2ecc71); margin-right: 5px;"></i>
         作废采用软删除，记录仍保留在数据库中，但不在任何列表中展示
       </div>
     </div>
@@ -273,10 +273,10 @@ export default {
 .audit-tip {
   margin-top: 15px;
   padding: 10px 12px;
-  background-color: #ecf5ff;
+  background-color: rgba(46, 204, 113, 0.08);
   border-radius: 4px;
   font-size: 12px;
-  color: #409eff;
+  color: var(--current-color, #2ecc71);
   line-height: 1.6;
   animation: invalidateDangerFadeUp 0.3s ease 0.1s both;
 }

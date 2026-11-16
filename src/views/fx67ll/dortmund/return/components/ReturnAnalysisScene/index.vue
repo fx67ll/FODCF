@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container return-analysis-page">
+  <div class="app-container dortmund-secondary-page return-analysis-page">
     <div class="analysis-hero">
       <div class="analysis-hero-left">
         <div class="analysis-hero-icon"><i class="el-icon-magic-stick"></i></div>
@@ -68,13 +68,15 @@
           <div class="analysis-card-title candidates-heading">
             <span><i class="el-icon-trophy"></i>候选列表 <b>{{ candidateList.length }}</b></span>
             <div class="candidate-tools" v-if="candidateList.length">
-              <el-select v-model="candidateSortField" size="mini" style="width: 112px" @change="refreshCandidateSort">
+              <el-select v-model="candidateSortField" size="mini" style="width: 112px"
+                popper-class="dortmund-theme-popper" @change="refreshCandidateSort">
                 <el-option label="预计回报" value="estimatedReturn" />
                 <el-option label="偏差金额" value="deviationAmount" />
                 <el-option label="组合倍率" value="combinedOdds" />
                 <el-option label="场次" value="matchCount" />
               </el-select>
-              <el-select v-model="candidateSortOrder" size="mini" style="width: 76px" @change="refreshCandidateSort">
+              <el-select v-model="candidateSortOrder" size="mini" style="width: 76px"
+                popper-class="dortmund-theme-popper" @change="refreshCandidateSort">
                 <el-option label="降序" value="desc" />
                 <el-option label="升序" value="asc" />
               </el-select>
@@ -576,7 +578,6 @@ export default {
 
 <style lang="scss" scoped>
 .return-analysis-page {
-  max-width: 1500px;
   margin: 0 auto;
 }
 

@@ -10,7 +10,7 @@
             v-show="showSearch" label-width="82px">
             <el-form-item label="信息点类型" prop="infoPointType">
               <el-select v-model="queryParams.infoPointType" placeholder="请选择信息点类型" clearable
-                @change="handleQueryTypeChange">
+                popper-class="dortmund-theme-popper" @change="handleQueryTypeChange">
                 <el-option v-for="dict in dict.type.fx67ll_dortmund_info_point_type" :key="dict.value"
                   :label="dict.label" :value="dict.value"></el-option>
               </el-select>
@@ -27,26 +27,28 @@
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="信息点状态" prop="pointStatus" v-if="isMoreQuery">
-              <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable>
+              <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable
+                popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="是否可公开" prop="allowPublic" v-if="isMoreQuery">
-              <el-select v-model="queryParams.allowPublic" placeholder="请选择是否可公开" clearable>
+              <el-select v-model="queryParams.allowPublic" placeholder="请选择是否可公开" clearable
+                popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -61,10 +63,18 @@
 
         <div class="dl-toolbar">
           <div class="dl-toolbar-actions">
-            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAddT"
-              v-hasPermi="['dortmund:info:point:add']">新增赛季球队信息点</el-button>
-            <el-button type="primary" icon="el-icon-football" size="mini" class="info-add-match-btn" @click="handleAddM"
-              v-hasPermi="['dortmund:info:point:add']">新增比赛临时信息点</el-button>
+            <el-button class="info-add-entry info-add-season-btn" size="mini" @click="handleAddT"
+              v-hasPermi="['dortmund:info:point:add']">
+              <span class="info-add-icon" aria-hidden="true"><i class="el-icon-date"></i></span>
+              <span class="info-add-label">新增赛季球队信息点</span>
+              <i class="el-icon-right info-add-arrow" aria-hidden="true"></i>
+            </el-button>
+            <el-button class="info-add-entry info-add-match-btn" size="mini" @click="handleAddM"
+              v-hasPermi="['dortmund:info:point:add']">
+              <span class="info-add-icon" aria-hidden="true"><i class="el-icon-football"></i></span>
+              <span class="info-add-label">新增比赛临时信息点</span>
+              <i class="el-icon-right info-add-arrow" aria-hidden="true"></i>
+            </el-button>
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
             <!-- 信息点没有删除动作，不渲染删除按钮 -->
@@ -406,21 +416,203 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.info-add-match-btn {
-  color: #fff;
-  background: var(--current-color, #2ecc71);
-  border-color: var(--current-color, #2ecc71);
-  box-shadow: 0 5px 12px rgba(31, 61, 46, 0.18);
-  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+.info-add-entry {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 178px;
+  height: 30px;
+  padding: 0 10px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition: background-color 0.24s ease, box-shadow 0.24s ease,
+    filter 0.24s ease;
 
-  &:hover,
-  &:focus {
+  &::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.3;
+    animation: infoAddBreathing 6.2s ease-in-out infinite;
+  }
+}
+
+.info-add-season-btn {
+  color: #fff;
+  background: #a10e22;
+  box-shadow: 0 2px 5px rgba(67, 4, 15, 0.18),
+    0 1px 2px rgba(67, 4, 15, 0.12);
+
+  &::after {
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.16),
+        transparent 64%);
+  }
+
+  .info-add-icon {
     color: #fff;
-    background: var(--current-color, #2ecc71);
-    border-color: var(--current-color, #2ecc71);
-    box-shadow: 0 7px 16px rgba(31, 61, 46, 0.22);
-    filter: brightness(0.94);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.info-add-match-btn {
+  color: #161616;
+  background: #ffe45c;
+  box-shadow: 0 2px 5px rgba(44, 38, 5, 0.12),
+    0 1px 2px rgba(44, 38, 5, 0.08);
+
+  &::after {
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.2),
+        transparent 66%);
+    animation-delay: -1.9s;
+  }
+
+  .info-add-icon {
+    color: #111;
+    background: rgba(255, 255, 255, 0.32);
+  }
+}
+
+.info-add-icon {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 7px;
+  font-size: 12px;
+  line-height: 1;
+  border: 0;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.info-add-label {
+  position: relative;
+  z-index: 3;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.info-add-arrow {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  height: 12px;
+  margin-left: auto;
+  padding-left: 7px;
+  font-size: 11px;
+  opacity: 0.6;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:hover,
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:focus-visible {
+  color: #fff;
+  background: #a81126;
+  transform: none;
+  box-shadow: inset 0 0 9px rgba(255, 104, 120, 0.14),
+    0 4px 9px rgba(67, 4, 15, 0.24), 0 2px 4px rgba(67, 4, 15, 0.14);
+}
+
+.info-add-season-btn:hover .info-add-icon,
+.info-add-season-btn:focus-visible .info-add-icon {
+  background: rgba(255, 255, 255, 0.17);
+}
+
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:hover,
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:focus-visible {
+  color: #111;
+  background: #ffe45c;
+  filter: saturate(1.06) brightness(1.01);
+  transform: none;
+  box-shadow: inset 0 0 0 1px rgba(46, 42, 20, 0.15),
+    inset 0 1px 3px rgba(68, 58, 15, 0.08),
+    0 4px 8px rgba(44, 38, 5, 0.16), 0 2px 4px rgba(44, 38, 5, 0.09);
+}
+
+.info-add-match-btn:hover .info-add-icon,
+.info-add-match-btn:focus-visible .info-add-icon {
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.info-add-entry:hover .info-add-arrow,
+.info-add-entry:focus-visible .info-add-arrow {
+  opacity: 0.9;
+  transform: translateX(1px);
+}
+
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-entry:active {
+  transform: none;
+  box-shadow: inset 0 2px 4px rgba(28, 18, 20, 0.12),
+    0 1px 2px rgba(46, 30, 20, 0.08);
+}
+
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 9px rgba(255, 104, 120, 0.14),
+    0 4px 9px rgba(67, 4, 15, 0.24), 0 2px 4px rgba(67, 4, 15, 0.14),
+    0 0 0 2px rgba(200, 16, 46, 0.16);
+}
+
+.dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(46, 42, 20, 0.15),
+    inset 0 1px 3px rgba(68, 58, 15, 0.08),
+    0 4px 8px rgba(44, 38, 5, 0.16), 0 2px 4px rgba(44, 38, 5, 0.09),
+    0 0 0 2px rgba(17, 17, 17, 0.12);
+}
+
+.info-add-entry.is-disabled,
+.info-add-entry.is-disabled:hover,
+.info-add-entry.is-disabled:focus-visible {
+  opacity: 0.55;
+  filter: none;
+  transform: none;
+}
+
+.info-add-entry.is-disabled::after {
+  animation: none;
+  opacity: 0.2;
+}
+
+@keyframes infoAddBreathing {
+
+  0%,
+  100% {
+    opacity: 0.24;
+  }
+
+  50% {
+    opacity: 0.42;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .info-add-entry,
+  .info-add-icon,
+  .info-add-arrow {
+    transition: none;
+  }
+
+  .info-add-entry::after {
+    animation: none;
+    opacity: 0.34;
   }
 }
 

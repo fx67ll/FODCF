@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container dl-page extra-entry-page">
+  <div class="app-container dl-page dortmund-secondary-page extra-entry-page">
     <div class="extra-entry-backdrop" aria-hidden="true">
       <span class="extra-entry-orb extra-entry-orb--mint"></span>
       <span class="extra-entry-orb extra-entry-orb--sky"></span>
@@ -153,7 +153,7 @@
                   <p>可选关联，支持侧边抽屉跨页多选与当场新建</p>
                 </div>
               </div>
-              <plan-link-selector ref="planLinkSelector" :plan-ids="planLink.planIds"
+              <plan-link-selector ref="planLinkSelector" layout="secondary" :plan-ids="planLink.planIds"
                 :hidden-plan-count="planLink.hiddenPlanCount" :plans="planLink.plans" />
             </section>
 
@@ -862,7 +862,6 @@ export default {
   --extra-line: #e2eee7;
   --extra-soft: #f4fbf7;
   position: relative;
-  max-width: 1420px;
   margin: 0 auto;
   padding-bottom: 8px;
   color: var(--extra-ink);
@@ -968,7 +967,6 @@ export default {
   background: linear-gradient(135deg, #4bd98a 0%, #27ad60 100%);
   border-radius: 14px;
   box-shadow: 0 10px 22px rgba(46, 204, 113, 0.27);
-  animation: extraIconFloat 3.2s ease-in-out infinite;
 }
 
 .extra-entry-hero-copy {
@@ -1294,13 +1292,6 @@ export default {
 
 ::v-deep .win-switch .el-radio-button__inner i {
   margin-right: 4px;
-}
-
-.plan-card ::v-deep .plan-link-selector {
-  padding: 0;
-  margin-bottom: 0;
-  background: transparent;
-  border: 0;
 }
 
 .remark-form-item {
@@ -1685,18 +1676,6 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes extraIconFloat {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-3px) rotate(-3deg);
   }
 }
 

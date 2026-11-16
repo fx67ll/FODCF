@@ -52,23 +52,23 @@
         <el-col v-if="showAdvanced" :xs="24" :md="12">
           <el-form-item label="发布时间" prop="sourcePublishTime">
             <el-date-picker v-model="localForm.sourcePublishTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 100%" placeholder="请选择发布时间" />
+              popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择发布时间" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :md="showAdvanced ? 12 : 24">
           <el-form-item label="采集时间" prop="collectTime">
             <el-date-picker v-model="localForm.collectTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 100%" placeholder="请选择采集时间" />
+              popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择采集时间" />
           </el-form-item>
         </el-col>
         <el-col v-if="showAdvanced" :span="24">
           <el-form-item label="生效窗口">
             <div class="info-point-time-row">
               <el-date-picker v-model="localForm.effectiveStartTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="生效时间（可空）" />
+                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="生效时间（可空）" />
               <span>至</span>
               <el-date-picker v-model="localForm.effectiveEndTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="失效时间（可空）" />
+                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="失效时间（可空）" />
             </div>
           </el-form-item>
         </el-col>
@@ -91,7 +91,7 @@
     <div slot="footer" class="dialog-footer">
       <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="handleSubmit">{{
         submitLabel
-        }}</el-button>
+      }}</el-button>
       <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
     </div>
   </el-dialog>

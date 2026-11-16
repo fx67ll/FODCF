@@ -22,13 +22,13 @@
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -53,7 +53,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">

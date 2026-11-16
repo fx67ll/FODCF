@@ -25,28 +25,28 @@
             </el-form-item>
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker v-model="daterangeMatchTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="比赛场地" prop="matchVenue" v-if="isMoreQuery">
               <dortmund-option-select v-model="queryParams.matchVenue" option-type="venue" placeholder="请选择或输入比赛场地" />
             </el-form-item>
             <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
-                @keyup.enter.native="handleQuery">
+                popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
                 <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable></el-date-picker>
+                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
+                end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -71,7 +71,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">

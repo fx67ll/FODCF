@@ -18,7 +18,7 @@
           label-width="76px">
           <el-form-item v-for="field in searchFields" :key="field.key" :label="field.label">
             <el-select v-if="field.type === 'select'" v-model="searchForm[field.key]" :placeholder="field.placeholder"
-              clearable filterable class="list-selector-search-control">
+              popper-class="dortmund-theme-popper" clearable filterable class="list-selector-search-control">
               <el-option v-for="item in field.options || []" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>

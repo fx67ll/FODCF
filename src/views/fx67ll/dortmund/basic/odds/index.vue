@@ -5,8 +5,8 @@
         <transition name="dl-filter">
           <el-form class="dl-filter odds-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
-            <el-form-item label="记录编码" prop="oddsCode" v-if="isMoreQuery">
-              <el-input v-model="queryParams.oddsCode" placeholder="请输入记录编码" clearable
+            <el-form-item label="倍率编码" prop="oddsCode" v-if="isMoreQuery">
+              <el-input v-model="queryParams.oddsCode" placeholder="推荐格式：体彩比赛日期+期号" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="所属比赛" prop="matchCode">
@@ -15,25 +15,25 @@
             </el-form-item>
             <el-form-item label="来源时间" prop="sourceTime" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeSourceTime" style="width: 220px" type="daterange"
-                value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable />
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
+                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
             </el-form-item>
             <el-form-item label="有效状态" prop="activeFlag" v-if="isMoreQuery">
               <el-select v-model="queryParams.activeFlag" placeholder="请选择有效状态" clearable
-                @keyup.enter.native="handleQuery">
+                popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
                 <el-option v-for="item in dict.type.sys_yes_no || []" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 220px" type="daterange"
-                value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable />
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
+                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 220px" type="daterange"
-                value-format="yyyy-MM-dd" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-                clearable />
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
+                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -60,7 +60,7 @@
 
         <div class="dl-list-card odds-list-card">
           <el-table v-loading="loading" :data="oddsList" row-key="oddsId">
-            <el-table-column label="记录编码" align="center" prop="oddsCode" min-width="150" fixed="left"
+            <el-table-column label="倍率编码" align="center" prop="oddsCode" min-width="150" fixed="left"
               show-overflow-tooltip />
             <el-table-column label="比赛编码" align="center" prop="matchCode" width="130" show-overflow-tooltip />
             <el-table-column label="比赛摘要" align="center" prop="matchSummary" min-width="200" show-overflow-tooltip />

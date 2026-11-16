@@ -19,10 +19,10 @@
 
     <el-descriptions v-if="activeOdds" :column="3" size="small" border class="odds-inline-detail">
       <el-descriptions-item label="来源时间">{{ parseTime(activeOdds.sourceTime, "{y}-{m}-{d} {h}:{i}") || "-"
-        }}</el-descriptions-item>
+      }}</el-descriptions-item>
       <el-descriptions-item label="让分值">{{ activeOdds.handicapValue || "-" }}</el-descriptions-item>
       <el-descriptions-item label="创建时间">{{ parseTime(activeOdds.createTime, "{y}-{m}-{d} {h}:{i}") || "-"
-        }}</el-descriptions-item>
+      }}</el-descriptions-item>
       <el-descriptions-item label="主胜倍率">{{ activeOdds.homeWinOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="平局倍率">{{ activeOdds.drawOdds || "-" }}</el-descriptions-item>
       <el-descriptions-item label="客胜倍率">{{ activeOdds.awayWinOdds || "-" }}</el-descriptions-item>
@@ -38,14 +38,14 @@
       <el-form ref="oddsForm" :model="form" :rules="rules" label-width="104px" v-loading="submitting">
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-form-item label="记录编码" prop="oddsCode">
-              <el-input v-model="form.oddsCode" maxlength="23" show-word-limit placeholder="请输入记录编码" />
+            <el-form-item label="倍率编码" prop="oddsCode">
+              <el-input v-model="form.oddsCode" maxlength="23" show-word-limit placeholder="推荐格式：体彩比赛日期+期号" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="来源时间" prop="sourceTime">
               <el-date-picker v-model="form.sourceTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%" placeholder="请选择来源时间" />
+                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择来源时间" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -166,7 +166,7 @@ export default {
         trigger: "blur",
       });
       return {
-        oddsCode: [{ required: true, message: "记录编码不能为空", trigger: "blur" }],
+        oddsCode: [{ required: true, message: "倍率编码不能为空", trigger: "blur" }],
         sourceTime: [{ required: true, message: "来源时间不能为空", trigger: "change" }],
         handicapValue: [{ required: true, message: "让分值不能为空", trigger: "blur" }],
         homeWinOdds: [positive("主胜倍率必须大于0")],
