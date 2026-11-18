@@ -63,22 +63,37 @@
             <el-form ref="newPlanForm" :model="newPlanForm" :rules="newPlanRules" label-position="top"
               class="plan-link-new-form" :class="{ 'is-wide': layout === 'secondary' }">
               <div class="plan-link-new-grid">
-                <el-form-item label="方案计划" prop="planContent" class="plan-link-new-field is-full">
+                <el-form-item prop="planContent" class="plan-link-new-field is-full">
+                  <span slot="label">
+                    <dortmund-form-label label="方案计划" tip="必填；最多1023个字符" />
+                  </span>
                   <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="1023"
                     show-word-limit placeholder="请输入方案计划" />
                 </el-form-item>
-                <el-form-item label="录入倍率" prop="planRate" class="plan-link-new-field">
+                <el-form-item prop="planRate" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="录入倍率" tip="选填；有值时必须大于0，普通十进制数字，最多18位整数和6位小数" />
+                  </span>
                   <el-input v-model="newPlanForm.planRate" placeholder="可空；有值时必须大于0" />
                 </el-form-item>
-                <el-form-item label="录入金额" prop="planAmount" class="plan-link-new-field">
+                <el-form-item prop="planAmount" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="录入金额" tip="选填；有值时必须大于等于0，普通十进制数字，最多22位整数和2位小数" />
+                  </span>
                   <el-input v-model="newPlanForm.planAmount" placeholder="可空；有值时必须大于等于0" />
                 </el-form-item>
-                <el-form-item label="关联比赛" prop="matchIds" class="plan-link-new-field is-full">
+                <el-form-item prop="matchIds" class="plan-link-new-field is-full">
+                  <span slot="label">
+                    <dortmund-form-label label="关联比赛" tip="必填；至少选择一场状态正常的已有比赛" />
+                  </span>
                   <common-enhanced-select ref="newPlanMatchSelect" v-model="newPlanForm.matchIds" valueKey="matchId"
                     labelKey="matchName" :api-func="listMatch" :query-params="{ matchStatus: '0' }" multiple
                     popper-class="dortmund-theme-popper" placeholder="请选择已有正常比赛（可多选）" />
                 </el-form-item>
-                <el-form-item label="其他说明" prop="planRemark" class="plan-link-new-field is-full">
+                <el-form-item prop="planRemark" class="plan-link-new-field is-full">
+                  <span slot="label">
+                    <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
+                  </span>
                   <el-input v-model="newPlanForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
                     placeholder="请输入其他说明" />
                 </el-form-item>
@@ -139,13 +154,21 @@ import { checkPermi } from "@/utils/common/permission";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 import DortmundPlanSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundPlanSelectorModal/index";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import {
+  DORTMUND_LIMITS,
+  decimalRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimText,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 // 所达比赛默认折叠条数
 const MATCH_COLLAPSE_COUNT = 5;
 
 export default {
   name: "PlanLinkSelector",
-  components: { CommonEnhancedSelect, DortmundPlanSelectorModal },
+  components: { CommonEnhancedSelect, DortmundPlanSelectorModal, DortmundFormLabel },
   props: {
     // 编辑回显的已有关联方案计划主键集合（数组，新增场景为空）
     planIds: {
@@ -170,34 +193,6 @@ export default {
     },
   },
   data() {
-    // 倍率有值时必须大于0，十进制字符串校验
-    const checkPlanRate = (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value))) {
-        callback(new Error("录入倍率只能为非负十进制数字"));
-        return;
-      }
-      if (parseFloat(value) <= 0) {
-        callback(new Error("录入倍率有值时必须大于0"));
-        return;
-      }
-      callback();
-    };
-    // 金额有值时必须大于等于0，十进制字符串校验
-    const checkPlanAmount = (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value))) {
-        callback(new Error("录入金额只能为非负十进制数字"));
-        return;
-      }
-      callback();
-    };
     return {
       // 区域是否展开（默认折叠）
       expanded: false,
@@ -220,16 +215,27 @@ export default {
       // 当场新建方案计划表单校验
       newPlanRules: {
         planContent: [
-          { required: true, message: "方案计划不能为空", trigger: "blur" }
+          requiredTextRule("方案计划", DORTMUND_LIMITS.planContent)
         ],
         planRate: [
-          { validator: checkPlanRate, trigger: "blur" }
+          decimalRule("录入倍率", {
+            minExclusive: 0,
+            maxIntegerDigits: 18,
+            maxFractionDigits: 6,
+          })
         ],
         planAmount: [
-          { validator: checkPlanAmount, trigger: "blur" }
+          decimalRule("录入金额", {
+            min: 0,
+            maxIntegerDigits: 22,
+            maxFractionDigits: 2,
+          })
         ],
         matchIds: [
           { required: true, type: "array", min: 1, message: "至少要关联一场比赛", trigger: "change" }
+        ],
+        planRemark: [
+          optionalTextRule("其他说明", DORTMUND_LIMITS.planRemark)
         ],
       },
       // 展开全部所达比赛的方案计划主键集合
@@ -377,10 +383,10 @@ export default {
           return;
         }
         this.newPlanList.push({
-          planContent: this.newPlanForm.planContent,
-          planRate: this.newPlanForm.planRate,
-          planAmount: this.newPlanForm.planAmount,
-          planRemark: this.newPlanForm.planRemark,
+          planContent: trimText(this.newPlanForm.planContent),
+          planRate: trimText(this.newPlanForm.planRate),
+          planAmount: trimText(this.newPlanForm.planAmount),
+          planRemark: trimText(this.newPlanForm.planRemark),
           // 当场新建的方案计划比赛只能是已有正常比赛，不能带 newMatches
           matchIds: [...this.newPlanForm.matchIds],
         });

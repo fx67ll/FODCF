@@ -20,7 +20,7 @@
       </el-button>
     </div>
 
-    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="110px" class="info-edit-form"
+    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="130px" class="info-edit-form"
       v-loading="editLoading">
       <!-- 分区一：归属设置（比赛VS横幅 + 比赛选择） -->
       <div class="info-edit-card">
@@ -60,44 +60,7 @@
               <el-input :value="formatMatchColumnText(editForm)" disabled />
             </el-form-item>
             <transition name="info-panel">
-              <div class="info-new-match" v-if="editMode === 'add' && newMatchVisible">
-                <div class="info-new-match-title">
-                  <i class="el-icon-football"></i>
-                  <span>当场新建比赛资料</span>
-                  <small>赛季、主队、客队和比赛时间均为必填</small>
-                </div>
-                <el-row :gutter="20">
-                  <el-col :xs="24" :md="12">
-                    <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
-                      <dortmund-season-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :xs="24" :md="12">
-                    <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="96px">
-                      <el-date-picker v-model="editForm.newMatch.matchTime" type="datetime"
-                        popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
-                        placeholder="请选择比赛时间" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :xs="24" :md="12">
-                    <el-form-item label="主队" prop="newMatch.homeTeamId" label-width="96px">
-                      <common-enhanced-select ref="newHomeTeamSelect" v-model="editForm.newMatch.homeTeamId"
-                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择主队" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :xs="24" :md="12">
-                    <el-form-item label="客队" prop="newMatch.awayTeamId" label-width="96px">
-                      <common-enhanced-select ref="newAwayTeamSelect" v-model="editForm.newMatch.awayTeamId"
-                        valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择客队" />
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="24">
-                    <el-form-item label="比赛备注" label-width="96px">
-                      <el-input v-model="editForm.newMatch.matchRemark" placeholder="请输入比赛备注" />
-                    </el-form-item>
-                  </el-col>
-                </el-row>
-              </div>
+              <dortmund-inline-match-create v-if="editMode === 'add' && newMatchVisible" :form="editForm.newMatch" />
             </transition>
           </el-col>
         </el-row>
@@ -113,12 +76,18 @@
         </div>
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="信息点标题" prop="pointTitle">
-              <el-input v-model="editForm.pointTitle" :maxlength="1023" placeholder="请输入信息点标题" />
+            <el-form-item prop="pointTitle">
+              <template slot="label">
+                <dortmund-form-label label="信息点标题" tip="必填；1-233个字符" />
+              </template>
+              <el-input v-model="editForm.pointTitle" maxlength="233" show-word-limit placeholder="请输入信息点标题" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="信息点内容" prop="pointContent">
+            <el-form-item prop="pointContent">
+              <template slot="label">
+                <dortmund-form-label label="信息点内容" tip="必填；当前界面与后端业务限制为最多1023个字符" />
+              </template>
               <el-input v-model="editForm.pointContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
                 placeholder="请输入客观信息内容" />
             </el-form-item>
@@ -136,17 +105,26 @@
         </div>
         <el-row :gutter="20">
           <el-col :xs="24" :md="12">
-            <el-form-item label="信息来源名称" prop="sourceName">
-              <el-input v-model="editForm.sourceName" :maxlength="1023" placeholder="请输入信息来源名称" />
+            <el-form-item prop="sourceName">
+              <template slot="label">
+                <dortmund-form-label label="信息来源名称" tip="必填；1-233个字符" />
+              </template>
+              <el-input v-model="editForm.sourceName" maxlength="233" show-word-limit placeholder="请输入信息来源名称" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="信息来源地址" prop="sourceUrl">
-              <el-input v-model="editForm.sourceUrl" :maxlength="1023" placeholder="请输入信息来源地址" />
+            <el-form-item prop="sourceUrl">
+              <template slot="label">
+                <dortmund-form-label label="信息来源地址" tip="选填；最多1023个字符，建议填写完整URL" />
+              </template>
+              <el-input v-model="editForm.sourceUrl" maxlength="1023" show-word-limit placeholder="请输入信息来源地址" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="来源发布时间" prop="sourcePublishTime">
+            <el-form-item prop="sourcePublishTime">
+              <template slot="label">
+                <dortmund-form-label label="来源发布时间" tip="选填；格式yyyy-MM-dd HH:mm:ss" />
+              </template>
               <el-date-picker clearable v-model="editForm.sourcePublishTime" type="datetime"
                 popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
                 placeholder="请选择来源发布时间">
@@ -154,7 +132,10 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="信息采集时间" prop="collectTime">
+            <el-form-item prop="collectTime">
+              <template slot="label">
+                <dortmund-form-label label="信息采集时间" tip="必填；格式yyyy-MM-dd HH:mm:ss" />
+              </template>
               <el-date-picker clearable v-model="editForm.collectTime" type="datetime"
                 popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
                 placeholder="请选择信息采集时间">
@@ -164,7 +145,10 @@
           </el-col>
           <!-- 生效/失效时间并排展示，中间“至”连接 -->
           <el-col :span="24">
-            <el-form-item label="生效时间窗口" class="info-edit-time-window">
+            <el-form-item class="info-edit-time-window">
+              <template slot="label">
+                <dortmund-form-label label="生效时间窗口" tip="两端均可为空；填写时开始时间不得晚于结束时间" />
+              </template>
               <div class="info-edit-time-row">
                 <el-date-picker clearable v-model="editForm.effectiveStartTime" type="datetime"
                   popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
@@ -190,7 +174,10 @@
         </div>
         <el-row :gutter="20">
           <el-col :xs="24" :md="12">
-            <el-form-item label="是否可公开" prop="allowPublic">
+            <el-form-item prop="allowPublic">
+              <template slot="label">
+                <dortmund-form-label label="是否可公开" tip="必填；0=不可公开，1=可公开" />
+              </template>
               <el-radio-group v-model="editForm.allowPublic">
                 <el-radio v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value"
                   :label="dict.value">{{
@@ -200,7 +187,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="备注" prop="pointRemark">
+            <el-form-item prop="pointRemark">
+              <template slot="label">
+                <dortmund-form-label label="备注" tip="选填；最多1023个字符" />
+              </template>
               <el-input v-model="editForm.pointRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
                 placeholder="请输入备注" />
             </el-form-item>
@@ -222,16 +212,27 @@
 </template>
 
 <script>
-import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
-import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
-import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
+import DortmundInlineMatchCreate from "@/views/fx67ll/dortmund/other/component/DortmundInlineMatchCreate/index";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_STATUS_OPTIONS,
+  dateRangeRule,
+  enumRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimText,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "InfoEditMScene",
   dicts: ["fx67ll_dortmund_allow_public"],
-  components: { DortmundMatchSelectorModal, DortmundBindingControl, CommonEnhancedSelect, DortmundSeasonSelect },
+  components: {
+    DortmundFormLabel, DortmundMatchSelectorModal, DortmundBindingControl, DortmundInlineMatchCreate
+  },
   props: {
     // 录入场景模式（add新增 update修改）
     editMode: {
@@ -255,17 +256,7 @@ export default {
     },
   },
   data() {
-    // 生效时间窗两端都有值时，开始不得晚于结束
-    const checkEffectiveTimeWindow = (rule, value, callback) => {
-      if (this.editForm.effectiveStartTime && this.editForm.effectiveEndTime
-        && this.editForm.effectiveStartTime > this.editForm.effectiveEndTime) {
-        callback(new Error("生效时间不得晚于失效时间"));
-        return;
-      }
-      callback();
-    };
     return {
-      listTeam,
       // 录入场景表单参数（创建与修改共用，从父页面初始表单复制）
       editForm: this.buildEditForm(),
       newMatchVisible: false,
@@ -283,28 +274,28 @@ export default {
             trigger: "change",
           }
         ],
-        pointTitle: [
-          { required: true, message: "信息点标题不能为空", trigger: "blur" }
-        ],
-        pointContent: [
-          { required: true, message: "信息点内容不能为空", trigger: "blur" }
-        ],
-        sourceName: [
-          { required: true, message: "信息来源名称不能为空", trigger: "blur" }
-        ],
+        pointTitle: [requiredTextRule("信息点标题", DORTMUND_LIMITS.infoTitle)],
+        pointContent: [requiredTextRule("信息点内容", DORTMUND_LIMITS.infoContent)],
+        sourceName: [requiredTextRule("信息来源名称", DORTMUND_LIMITS.infoSourceName)],
+        sourceUrl: [optionalTextRule("信息来源地址", DORTMUND_LIMITS.infoSourceUrl)],
+        pointRemark: [optionalTextRule("备注", DORTMUND_LIMITS.infoRemark)],
+        allowPublic: [enumRule("是否可公开", DORTMUND_STATUS_OPTIONS, true)],
         collectTime: [
-          { required: true, message: "信息采集时间不能为空", trigger: "blur" }
+          { required: true, message: "信息采集时间不能为空", trigger: "change" }
         ],
-        effectiveStartTime: [
-          { validator: checkEffectiveTimeWindow, trigger: "blur" }
-        ],
-        effectiveEndTime: [
-          { validator: checkEffectiveTimeWindow, trigger: "blur" }
-        ],
+        effectiveStartTime: [dateRangeRule("生效时间", () => this.editForm.effectiveStartTime,
+          () => this.editForm.effectiveEndTime)],
+        effectiveEndTime: [dateRangeRule("生效时间", () => this.editForm.effectiveStartTime,
+          () => this.editForm.effectiveEndTime)],
+        "newMatch.matchCode": [requiredTextRule("新比赛编码", DORTMUND_LIMITS.matchCode)],
         "newMatch.seasonId": [{ required: true, message: "新比赛所属赛季不能为空", trigger: "change" }],
         "newMatch.homeTeamId": [{ required: true, message: "新比赛主队不能为空", trigger: "change" }],
         "newMatch.awayTeamId": [{ required: true, message: "新比赛客队不能为空", trigger: "change" }],
         "newMatch.matchTime": [{ required: true, message: "新比赛比赛时间不能为空", trigger: "change" }],
+        "newMatch.matchStatus": [enumRule("新比赛状态", DORTMUND_STATUS_OPTIONS, true)],
+        "newMatch.matchVenue": [optionalTextRule("新比赛场地", DORTMUND_LIMITS.matchVenue)],
+        "newMatch.matchResult": [enumRule("新比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
+        "newMatch.matchRemark": [optionalTextRule("新比赛备注", DORTMUND_LIMITS.matchRemark)],
       },
       // M类型新增时所选比赛的完整行（VS横幅展示用，仅编辑场景展示不进入提交数据）
       selectedMatchRow: this.buildSelectedMatch(),
@@ -371,10 +362,14 @@ export default {
         allowPublic: initial.allowPublic || "0",
         pointRemark: initial.pointRemark || null,
         newMatch: {
+          matchCode: null,
           seasonId: null,
           homeTeamId: null,
           awayTeamId: null,
           matchTime: null,
+          matchVenue: null,
+          matchStatus: "0",
+          matchResult: null,
           matchRemark: null,
         },
       };
@@ -420,26 +415,30 @@ export default {
     // 类型字段按场景清理：M不提交seasonId和teamIds
     buildSubmitData() {
       const data = {
-        pointTitle: this.editForm.pointTitle,
-        pointContent: this.editForm.pointContent,
-        sourceName: this.editForm.sourceName,
-        sourceUrl: this.editForm.sourceUrl,
+        pointTitle: trimText(this.editForm.pointTitle),
+        pointContent: trimText(this.editForm.pointContent),
+        sourceName: trimText(this.editForm.sourceName),
+        sourceUrl: trimText(this.editForm.sourceUrl),
         sourcePublishTime: this.editForm.sourcePublishTime,
         collectTime: this.editForm.collectTime,
         effectiveStartTime: this.editForm.effectiveStartTime,
         effectiveEndTime: this.editForm.effectiveEndTime,
         allowPublic: this.editForm.allowPublic,
-        pointRemark: this.editForm.pointRemark,
+        pointRemark: trimText(this.editForm.pointRemark),
       };
       if (this.editMode === "add") {
         data.infoPointType = "M";
         if (this.newMatchVisible) {
           data.newMatch = {
+            matchCode: trimText(this.editForm.newMatch.matchCode),
             seasonId: this.editForm.newMatch.seasonId,
             homeTeamId: this.editForm.newMatch.homeTeamId,
             awayTeamId: this.editForm.newMatch.awayTeamId,
             matchTime: this.editForm.newMatch.matchTime,
-            matchRemark: this.editForm.newMatch.matchRemark,
+            matchVenue: trimText(this.editForm.newMatch.matchVenue),
+            matchStatus: this.editForm.newMatch.matchStatus,
+            matchResult: trimText(this.editForm.newMatch.matchResult),
+            matchRemark: trimText(this.editForm.newMatch.matchRemark),
           };
         } else {
           data.matchId = this.editForm.matchId;
@@ -455,7 +454,8 @@ export default {
         if (!valid) {
           return;
         }
-        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId === this.editForm.newMatch.awayTeamId) {
+        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId != null && this.editForm.newMatch.awayTeamId != null
+          && String(this.editForm.newMatch.homeTeamId) === String(this.editForm.newMatch.awayTeamId)) {
           this.$modal.msgError("新比赛的主队和客队不能相同");
           return;
         }

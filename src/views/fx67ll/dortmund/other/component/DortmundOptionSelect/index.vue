@@ -1,5 +1,6 @@
 <template>
-  <el-select :value="value" v-bind="$attrs" v-on="$listeners" style="width: 100%" popper-class="dortmund-theme-popper">
+  <el-select :value="value" v-bind="$attrs" v-on="$listeners" style="width: 100%" popper-class="dortmund-theme-popper"
+    filterable :allow-create="allowCreate" :default-first-option="allowCreate">
     <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
       <el-tag v-if="optionType === 'tag' && item.type" :type="item.type" size="mini">{{ item.label }}</el-tag>
       <template v-else>{{ item.label }}</template>
@@ -32,6 +33,10 @@ export default {
   computed: {
     options() {
       return dortmundOptionMap[this.optionType] || [];
+    },
+    // 主场和标签允许录入预设之外的新值；地区/联赛保持预设数据，避免自由文本扩大统计口径
+    allowCreate() {
+      return ["venue", "tag"].includes(this.optionType);
     },
   },
 };

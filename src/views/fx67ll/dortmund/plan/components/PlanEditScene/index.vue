@@ -20,7 +20,7 @@
     <div class="plan-edit-body">
       <!-- 左侧：表单主区 -->
       <div class="plan-edit-main">
-        <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="90px" class="plan-edit-form"
+        <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="110px" class="plan-edit-form"
           v-loading="editLoading">
           <!-- 分区一：方案内容 -->
           <div class="plan-edit-card">
@@ -29,28 +29,43 @@
                 <i class="el-icon-edit-outline"></i>
               </span>
               <span class="plan-edit-card-title">方案内容</span>
-              <el-button type="text" class="dortmund-theme-text plan-edit-new-toggle" icon="el-icon-refresh-left"
-                @click="resetManualAdjustment">恢复自动值</el-button>
+              <el-button type="success" plain size="mini" class="plan-combination-recalculate" icon="el-icon-refresh"
+                :loading="detailLoading" :disabled="!selectedCombinationCount"
+                @click="handleRecalculate">重新计算</el-button>
             </div>
             <el-row :gutter="20">
               <el-col :span="24">
-                <el-form-item label="方案计划" prop="planContent">
+                <el-form-item prop="planContent">
+                  <template slot="label">
+                    <dortmund-form-label label="方案计划" tip="必填；1-1023个字符" />
+                  </template>
                   <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
                     placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :md="12">
-                <el-form-item label="录入倍率" prop="planRate">
-                  <el-input v-model="editForm.planRate" placeholder="请输入录入倍率（可空，有值时必须大于0）" />
+                <el-form-item prop="planRate">
+                  <template slot="label">
+                    <dortmund-form-label label="录入倍率" tip="选填；普通十进制数，不允许科学计数法；填写时须大于0，最多18位整数和6位小数；留空使用后端自动计算值" />
+                  </template>
+                  <el-input v-model="editForm.planRate" clearable :disabled="selectedCombinationCount === 0"
+                    placeholder="默认根据关联回报组合自动计算，可手动调整" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :md="12">
-                <el-form-item label="录入金额" prop="planAmount">
-                  <el-input v-model="editForm.planAmount" placeholder="请输入录入金额（可空，有值时必须大于等于0）" />
+                <el-form-item prop="planAmount">
+                  <template slot="label">
+                    <dortmund-form-label label="录入金额" tip="选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多22位整数和2位小数；留空使用后端自动计算值" />
+                  </template>
+                  <el-input v-model="editForm.planAmount" clearable :disabled="selectedCombinationCount === 0"
+                    placeholder="默认根据关联回报组合自动计算，可手动调整" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="其他说明" prop="planRemark">
+                <el-form-item prop="planRemark">
+                  <template slot="label">
+                    <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
+                  </template>
                   <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
                     placeholder="请输入其他说明" />
                 </el-form-item>
@@ -193,10 +208,18 @@
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 import { getCombination, getGeneration } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundCombinationSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundCombinationSelectorModal/index";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import {
+  DORTMUND_LIMITS,
+  decimalRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimText,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "PlanEditScene",
-  components: { DortmundCombinationSelectorModal },
+  components: { DortmundCombinationSelectorModal, DortmundFormLabel },
   props: {
     // 编写场景模式（add新增 update修改）
     editMode: {
@@ -225,48 +248,19 @@ export default {
     },
   },
   data() {
-    // 倍率有值时必须大于0，十进制字符串校验
-    const checkPlanRate = (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value))) {
-        callback(new Error("录入倍率只能为非负十进制数字"));
-        return;
-      }
-      if (parseFloat(value) <= 0) {
-        callback(new Error("录入倍率有值时必须大于0"));
-        return;
-      }
-      callback();
-    };
-    // 金额有值时必须大于等于0，十进制字符串校验
-    const checkPlanAmount = (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value))) {
-        callback(new Error("录入金额只能为非负十进制数字"));
-        return;
-      }
-      callback();
-    };
     return {
       // 编写场景表单参数（创建与修改共用，从父页面初始表单复制，修改时另带 planId）
       editForm: this.buildEditForm(),
       // 编写场景表单校验
       editRules: {
-        planContent: [
-          { required: true, message: "方案计划不能为空", trigger: "blur" }
-        ],
-        planRate: [
-          { validator: checkPlanRate, trigger: "blur" }
-        ],
-        planAmount: [
-          { validator: checkPlanAmount, trigger: "blur" }
-        ],
+        planContent: [requiredTextRule("方案计划", DORTMUND_LIMITS.planContent)],
+        planRate: [decimalRule("录入倍率", {
+          minExclusive: 0, maxIntegerDigits: 18, maxFractionDigits: 6,
+        })],
+        planAmount: [decimalRule("录入金额", {
+          min: 0, maxIntegerDigits: 22, maxFractionDigits: 2,
+        })],
+        planRemark: [optionalTextRule("其他说明", DORTMUND_LIMITS.planRemark)],
         combinationIds: [],
       },
       // 选中组合的明细缓存
@@ -318,7 +312,7 @@ export default {
     derivedMatchCount() {
       return this.derivedMatches.length;
     },
-    // 自动值前端预览：自动金额取预计回报合计，自动倍率用总回报 / 总基础金额
+    // 自动值前端预览：仅用于展示；保存时由后端重新汇总并写入最终值
     autoPreview() {
       if (!this.combinationDetails.length) {
         return { planRate: null, planAmount: null };
@@ -334,6 +328,14 @@ export default {
       return { planRate, planAmount };
     },
   },
+  watch: {
+    // 最后一条组合移除后，同步清空手工倍率与金额，避免留下无归属的覆盖值
+    selectedCombinationCount(value) {
+      if (!value) {
+        this.resetManualAdjustment();
+      }
+    },
+  },
   created() {
     if (this.editForm.combinationIds.length) {
       this.handleCombinationChange(this.editForm.combinationIds);
@@ -343,34 +345,35 @@ export default {
     // 从父页面传入的初始表单复制出本场景可编辑副本
     buildEditForm() {
       const initial = this.initialForm || {};
+      const combinationIds = [...(initial.combinationIds || [])];
       return {
         planId: initial.planId || null,
         planContent: initial.planContent || null,
-        planRate: initial.planRate || null,
-        planAmount: initial.planAmount || null,
+        planRate: combinationIds.length ? initial.planRate || null : null,
+        planAmount: combinationIds.length ? initial.planAmount || null : null,
         planRemark: initial.planRemark || null,
-        combinationIds: [...(initial.combinationIds || [])],
+        combinationIds,
         summaryUpdateFlag: initial.summaryUpdateFlag || "Y",
         summaryContent: initial.summaryContent || null,
       };
     },
     // 组合多选变化：拉取最新明细并生成前端预览
-    handleCombinationChange(combinationIds) {
+    handleCombinationChange(combinationIds, forceRefresh = false) {
       const selectedIds = [...new Set((combinationIds || []).filter((id) => id !== null && id !== undefined))];
       const loadSerial = ++this.combinationLoadSerial;
       const loadedMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
       this.combinationDetails = selectedIds.map((id) => loadedMap.get(id) || this.createCombinationPlaceholder(id));
-      const missingIds = selectedIds.filter((id) => {
+      const missingIds = forceRefresh ? selectedIds : selectedIds.filter((id) => {
         const detail = loadedMap.get(id);
         return !detail || detail._detailLoaded !== true || detail._partialLoadError;
       });
       if (!missingIds.length) {
         this.combinationDetailErrorIds = this.combinationDetailErrorIds.filter((id) => selectedIds.includes(id));
         this.detailLoading = false;
-        return;
+        return Promise.resolve();
       }
       this.detailLoading = true;
-      Promise.all(missingIds.map((combinationId) => this.loadCombinationDetail(combinationId)
+      return Promise.all(missingIds.map((combinationId) => this.loadCombinationDetail(combinationId)
         .then((detail) => ({ combinationId, detail }))
         .catch(() => ({ combinationId, detail: null }))))
         .then((results) => {
@@ -415,10 +418,11 @@ export default {
       this.combinationDetails = this.editForm.combinationIds.map((id) => (
         detailMap.get(id) || this.createCombinationPlaceholder(id)
       ));
-      this.handleCombinationChange(this.editForm.combinationIds);
+      const detailRequest = this.handleCombinationChange(this.editForm.combinationIds);
       this.$nextTick(() => {
         this.$refs.editForm && this.$refs.editForm.clearValidate("combinationIds");
       });
+      return detailRequest;
     },
     // 拉取单条组合与所属生成批次，组合内容只读
     loadCombinationDetail(combinationId) {
@@ -459,7 +463,23 @@ export default {
         this.handleCombinationChange([...(this.editForm.combinationIds || [])]);
       }
     },
-    // 清空手工调整字段，最终值以后端保存响应为准
+    // 重新拉取关联组合快照、清空手工覆盖并刷新自动预览；最终值仍以后端保存结果为准
+    handleRecalculate() {
+      if (!this.selectedCombinationCount || this.detailLoading) {
+        return;
+      }
+      this.resetManualAdjustment();
+      this.handleCombinationChange([...(this.editForm.combinationIds || [])], true).then(() => {
+        if (this.combinationDetailErrorIds.length) {
+          this.$modal.msgWarning("部分回报组合明细刷新失败，请稍后重试；当前保留已有选择");
+          return;
+        }
+        this.$modal.msgSuccess("已刷新关联回报组合并重新计算；保存后以后端结果为准");
+      }).catch(() => {
+        this.$modal.msgWarning("重新计算未完成，请检查网络后重试；当前保留已有选择");
+      });
+    },
+    // 清空手工调整字段，恢复后端自动计算口径
     resetManualAdjustment() {
       this.editForm.planRate = null;
       this.editForm.planAmount = null;
@@ -487,11 +507,12 @@ export default {
           return;
         }
         const isAdd = this.editMode === "add";
+        const hasCombination = this.selectedCombinationCount > 0;
         const data = {
-          planContent: this.editForm.planContent,
-          planRate: this.editForm.planRate,
-          planAmount: this.editForm.planAmount,
-          planRemark: this.editForm.planRemark,
+          planContent: trimText(this.editForm.planContent),
+          planRate: hasCombination ? trimText(this.editForm.planRate) : null,
+          planAmount: hasCombination ? trimText(this.editForm.planAmount) : null,
+          planRemark: trimText(this.editForm.planRemark),
           combinationIds: this.editForm.combinationIds || [],
         };
         if (!isAdd) {
@@ -645,7 +666,7 @@ export default {
   }
 }
 
-.plan-edit-new-toggle {
+.plan-combination-recalculate {
   margin-left: auto;
 }
 

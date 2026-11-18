@@ -82,11 +82,11 @@
         :readonly-matches="readonlyMatchList" :edit-loading="editLoading" :submitting="submitting"
         @back="handleSceneBack" @save="handleSceneSave" />
 
-      <!-- 回顾场景：整页只读 -->
-      <plan-review-scene key="review" v-else :detail-model="detailModel" :review-loading="reviewLoading"
-        :has-summary-permission="hasSummaryPermission" :summary-loading="summaryLoading"
-        @copy-summary="handleCopySummary" @back="handleSceneBack" />
     </transition>
+
+    <plan-detail-drawer :visible.sync="detailVisible" :detail-model="detailModel" :review-loading="reviewLoading"
+      :has-summary-permission="hasSummaryPermission" :summary-loading="summaryLoading"
+      @copy-summary="handleCopySummary" />
 
     <dortmund-combination-selector-modal :visible.sync="combinationSelectorVisible"
       :selected-items="[selectedCombination]" @confirm="handleCombinationSelectorConfirm" />
@@ -106,7 +106,7 @@ import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
 import PlanEditScene from "./components/PlanEditScene/index.vue";
-import PlanReviewScene from "./components/PlanReviewScene/index.vue";
+import PlanDetailDrawer from "./components/PlanDetailDrawer/index.vue";
 
 // 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
 const VIEW_MODE_KEY = "dortmund-plan-view-mode";
@@ -114,12 +114,12 @@ const VIEW_MODE_KEY = "dortmund-plan-view-mode";
 export default {
   name: "Plan",
   components: {
-    ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanReviewScene, DortmundCombinationSelectorModal,
+    ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanDetailDrawer, DortmundCombinationSelectorModal,
     DortmundMatchSelectorModal
   },
   data() {
     return {
-      // 页面场景（list总览列表 edit编写 review回顾）
+      // 页面场景（list总览列表 edit编写；详情改为侧边抽屉）
       pageScene: "list",
       // 总览列表展示视图（card卡片视图默认 list列表视图），偏好持久化到本地缓存
       viewMode: "card",
@@ -131,8 +131,10 @@ export default {
       editLoading: false,
       // 编写场景提交中状态
       submitting: false,
-      // 回顾场景加载状态
+      // 详情抽屉加载状态
       reviewLoading: false,
+      // 详情抽屉开关
+      detailVisible: false,
       // 选中数组
       ids: [],
       // 非单个禁用
@@ -167,7 +169,7 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
       },
-      // 完整只读详情（回顾场景展示）
+      // 完整只读详情（侧边抽屉展示）
       detailModel: {},
       // 编写场景初始表单（进入编写场景前由父页面构建，场景组件复制出可编辑副本）
       editForm: {},
@@ -220,7 +222,11 @@ export default {
       }
       listPlan(this.queryParams).then(response => {
         this.planList = this.formatObjectArrayNullProperty(response.rows || []);
-        this.total = response.total;
+        this.total = response.total || 0;
+      }).catch(() => {
+        // 列表加载失败时清空旧数据，避免筛选条件与残留结果不一致
+        this.planList = [];
+        this.total = 0;
       }).finally(() => {
         this.loading = false;
       });
@@ -298,13 +304,16 @@ export default {
         this.editLoading = false;
       });
     },
-    /** 回顾按钮操作：进入只读回顾场景 */
+    /** 详情按钮操作：打开只读侧边抽屉并拉取完整详情 */
     handleReview(row) {
+      const snapshot = { ...(row || {}) };
       this.reviewLoading = true;
-      this.detailModel = {};
-      this.pageScene = "review";
+      this.detailModel = snapshot;
+      this.detailVisible = true;
       getPlan(row.planId).then(response => {
-        this.detailModel = response.data || {};
+        this.detailModel = { ...snapshot, ...((response && response.data) || {}) };
+      }).catch(() => {
+        // 接口异常由请求拦截器统一提示，保留列表快照避免详情抽屉空白
       }).finally(() => {
         this.reviewLoading = false;
       });

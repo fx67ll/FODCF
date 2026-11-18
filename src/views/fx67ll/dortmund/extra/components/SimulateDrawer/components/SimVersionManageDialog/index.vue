@@ -101,6 +101,9 @@ export default {
           );
           self.$emit("success");
         })
+        .catch(() => {
+          // 接口失败提示由请求拦截器统一处理，保留当前列表状态以便重试
+        })
         .finally(() => {
           self.switching = false;
         });

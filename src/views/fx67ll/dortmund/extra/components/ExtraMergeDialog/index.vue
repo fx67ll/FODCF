@@ -73,8 +73,11 @@
       </div>
 
       <!-- 合并后备注录入（可不填写） -->
-      <el-form class="merge-remark-form" label-width="90px">
-        <el-form-item label="合并后备注">
+      <el-form class="merge-remark-form" label-width="110px">
+        <el-form-item>
+          <span slot="label">
+            <dortmund-form-label label="合并后备注" tip="选填；最多1023个字符，首尾空格会自动去除" />
+          </span>
           <el-input v-model="mergeRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
             placeholder="请输入合并后新记录的备注，不填写则不保留备注" />
         </el-form-item>
@@ -92,9 +95,12 @@
 import { mergeExtra } from "@/api/fx67ll/dortmund/extra";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import { trimText } from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "ExtraMergeDialog",
+  components: { DortmundFormLabel },
   dicts: ["sys_yes_no"],
   props: {
     // 弹窗开关
@@ -190,12 +196,15 @@ export default {
       // 后台一个事务完成：合并字段 → 新建记录 → 删除旧记录，避免前端多次异步调用产生脏数据
       mergeExtra({
         extraIds: extraIds,
-        extraRemark: this.mergeRemark,
+        extraRemark: trimText(this.mergeRemark),
       })
         .then(() => {
           this.$modal.msgSuccess("合并成功");
           this.dialogVisible = false;
           this.$emit("success");
+        })
+        .catch(() => {
+          // 接口错误由请求拦截器统一提示，保留弹窗供用户调整后重试
         })
         .finally(() => {
           this.mergeLoading = false;

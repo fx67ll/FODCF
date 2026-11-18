@@ -61,6 +61,7 @@ import SimVersionCreateDialog from "../SimVersionCreateDialog/index.vue";
 import SimVersionInvalidateConfirmDialog from "../SimVersionInvalidateConfirmDialog/index.vue";
 import SimVersionInvalidateDangerDialog from "../SimVersionInvalidateDangerDialog/index.vue";
 import SimVersionInvalidNoticeDialog from "../SimVersionInvalidNoticeDialog/index.vue";
+import { DORTMUND_LIMITS, formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
 
 // 数值模拟参数本地缓存键
 const SIM_CONFIG_CACHE_KEY = "dortmund-extra-sim-config";
@@ -137,9 +138,10 @@ export default {
   computed: {
     // 数值模拟当前模式每轮达成后的数值乘数
     simWinFactor() {
+      const coefficient = this.toFiniteNumber(this.simForm.coefficient);
       return this.simForm.simMode === "half"
-        ? (1 + parseFloat(this.simForm.coefficient || 0)) / 2
-        : parseFloat(this.simForm.coefficient || 0);
+        ? (1 + coefficient) / 2
+        : coefficient;
     },
     // 数值模拟最近一条轮次记录
     simLastRound() {
@@ -147,19 +149,19 @@ export default {
     },
     // 数值模拟下一轮是否从初始数值重新开始（当前版本无记录或上轮归零）
     simRestartFromInitial() {
-      return !this.simLastRound || this.simLastRound.endValue <= 0;
+      return !this.simLastRound || this.toFiniteNumber(this.simLastRound.endValue) <= 0;
     },
     // 数值模拟当前数值（最近一条记录的结束数值，无记录时为初始数值）
     simNowValue() {
       return this.simLastRound
-        ? this.simLastRound.endValue
-        : parseFloat(this.simForm.initialValue || 0);
+        ? this.toFiniteNumber(this.simLastRound.endValue)
+        : this.toFiniteNumber(this.simForm.initialValue);
     },
     // 数值模拟下一轮开始数值
     simNextStartValue() {
       return this.simRestartFromInitial
-        ? parseFloat(this.simForm.initialValue || 0)
-        : this.simLastRound.endValue;
+        ? this.toFiniteNumber(this.simForm.initialValue)
+        : this.toFiniteNumber(this.simLastRound.endValue);
     },
     // 数值模拟下一轮轮次序号
     simNextRoundNo() {
@@ -167,27 +169,28 @@ export default {
     },
     // 数值模拟目标进度
     simProgress() {
-      const targetValue = parseFloat(this.simForm.targetValue || 0);
+      const targetValue = this.toFiniteNumber(this.simForm.targetValue);
       if (targetValue <= 0) {
         return "0.00%";
       }
-      return ((this.simNowValue / targetValue) * 100).toFixed(2) + "%";
+      const progress = (this.simNowValue / targetValue) * 100;
+      return Number.isFinite(progress) ? progress.toFixed(2) + "%" : "0.00%";
     },
     // 数值模拟从下一轮开始数值连续达成达目标所需轮次
     simRequiredRounds() {
       return this.countSimRequiredRounds(
         this.simNextStartValue,
-        parseFloat(this.simForm.targetValue || 0),
+        this.toFiniteNumber(this.simForm.targetValue),
         this.simWinFactor
       );
     },
     // 数值模拟是否已归零终止
     simFinished() {
-      return this.simLastRound != null && this.simLastRound.endValue <= 0;
+      return this.simLastRound != null && this.toFiniteNumber(this.simLastRound.endValue) <= 0;
     },
     // 数值模拟是否已达成目标数值
     simTargetHit() {
-      const targetValue = parseFloat(this.simForm.targetValue || 0);
+      const targetValue = this.toFiniteNumber(this.simForm.targetValue);
       return (
         this.simLastRound != null &&
         targetValue > 0 &&
@@ -196,9 +199,9 @@ export default {
     },
     // 数值模拟两种模式对比数据
     simCompareList() {
-      const initialValue = parseFloat(this.simForm.initialValue || 0);
-      const targetValue = parseFloat(this.simForm.targetValue || 0);
-      const coefficient = parseFloat(this.simForm.coefficient || 0);
+      const initialValue = this.toFiniteNumber(this.simForm.initialValue);
+      const targetValue = this.toFiniteNumber(this.simForm.targetValue);
+      const coefficient = this.toFiniteNumber(this.simForm.coefficient);
       const halfWinFactor = (1 + coefficient) / 2;
       return [
         {
@@ -232,9 +235,15 @@ export default {
   created() {
     const self = this;
     this.loadSimConfigCache();
-    this.getSimVersionList().then(() => {
-      self.getSimList();
-    });
+    this.getSimVersionList()
+      .catch(() => {
+        // 版本列表加载失败时保留空态，避免使用上一次进入页面时的旧版本继续提交
+        self.simVersionList = [];
+        self.currentVersionId = null;
+      })
+      .then(() => {
+        self.getSimList();
+      });
   },
   watch: {
     // 数值模拟参数变动时写入本地缓存，下次进入页面自动恢复
@@ -246,6 +255,11 @@ export default {
     },
   },
   methods: {
+    // 将外部数值安全转换为有限数字，异常值按指定兜底值展示，避免污染后续计算
+    toFiniteNumber(value, fallback = 0) {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : fallback;
+    },
     // 载入本地缓存的参数配置，无版本选中时作为默认配置
     loadSimConfigCache() {
       const cached = localStorage.getItem(SIM_CONFIG_CACHE_KEY);
@@ -256,9 +270,9 @@ export default {
         const config = JSON.parse(cached);
         this.simForm = {
           simMode: config.simMode === "half" ? "half" : "full",
-          initialValue: parseFloat(config.initialValue || 0) || 100,
-          coefficient: parseFloat(config.coefficient || 0) || 2,
-          targetValue: parseFloat(config.targetValue || 0) || 500000,
+          initialValue: this.toFiniteNumber(config.initialValue, 100) || 100,
+          coefficient: this.toFiniteNumber(config.coefficient, 2) || 2,
+          targetValue: this.toFiniteNumber(config.targetValue, 500000) || 500000,
         };
       } catch (err) {
         // 缓存解析失败时保持默认配置
@@ -267,23 +281,30 @@ export default {
     // 查询数值模拟版本记录列表，无选中版本时默认选中最新启用版本，开启新版本后强制切换到最新版本
     getSimVersionList(isSelectLatest) {
       const self = this;
-      return listExtraSimulateVersion().then((response) => {
-        const rows = response?.rows || [];
-        const enabledRows = rows.filter((item) => item.delFlag !== "2");
-        self.simVersionList = rows;
-        if (
-          isSelectLatest ||
-          !enabledRows.some((item) => item.versionId === self.currentVersionId)
-        ) {
-          const latestVersion = enabledRows.length > 0 ? enabledRows[0] : null;
-          self.currentVersionId = latestVersion
-            ? latestVersion.versionId
-            : null;
-          if (latestVersion) {
-            self.loadSimVersionParams(latestVersion);
+      return listExtraSimulateVersion()
+        .then((response) => {
+          const rows = response?.rows || [];
+          const enabledRows = rows.filter((item) => item.delFlag !== "2");
+          self.simVersionList = rows;
+          if (
+            isSelectLatest ||
+            !enabledRows.some((item) => item.versionId === self.currentVersionId)
+          ) {
+            const latestVersion = enabledRows.length > 0 ? enabledRows[0] : null;
+            self.currentVersionId = latestVersion
+              ? latestVersion.versionId
+              : null;
+            if (latestVersion) {
+              self.loadSimVersionParams(latestVersion);
+            }
           }
-        }
-      });
+        })
+        .catch((error) => {
+          // 查询失败时清空内存中的版本，避免继续基于过期版本创建轮次
+          self.simVersionList = [];
+          self.currentVersionId = null;
+          throw error;
+        });
     },
     // 切换数值模拟版本，载入该版本的参数配置并刷新轮次记录
     handleSimVersionChange(versionId) {
@@ -298,16 +319,25 @@ export default {
     },
     // 载入数值模拟版本保存的参数配置
     loadSimVersionParams(version) {
-      this.simForm.simMode = version.simMode || "full";
-      this.simForm.initialValue = parseFloat(version.initialValue || 0);
-      this.simForm.coefficient = parseFloat(version.coefficient || 0);
-      this.simForm.targetValue = parseFloat(version.targetValue || 0);
+      const initialValue = this.toFiniteNumber(version.initialValue);
+      const coefficient = this.toFiniteNumber(version.coefficient);
+      const targetValue = this.toFiniteNumber(version.targetValue);
+      this.simForm.simMode = version.simMode === "half" ? "half" : "full";
+      this.simForm.initialValue = initialValue > 0 ? initialValue : 100;
+      this.simForm.coefficient = coefficient > 1 ? coefficient : 2;
+      this.simForm.targetValue = targetValue > 0 ? targetValue : 500000;
     },
     // 版本管理弹窗保存成功后刷新版本列表，停用当前选中版本时自动切换到最新启用版本
     handleSimVersionManaged() {
-      this.getSimVersionList().then(() => {
-        this.getSimList();
-      });
+      this.getSimVersionList()
+        .then(() => {
+          this.getSimList();
+        })
+        .catch(() => {
+          this.simRounds = [];
+          this.simTotal = 0;
+          this.simLatestRound = null;
+        });
     },
     // 查询数值模拟轮次记录分页列表（接口按记录倒序返回）
     getSimList() {
@@ -329,6 +359,11 @@ export default {
           );
           self.simTotal = response?.total || 0;
         })
+        .catch(() => {
+          // 列表失败时清空旧轮次，避免与当前版本、分页条件不一致
+          self.simRounds = [];
+          self.simTotal = 0;
+        })
         .finally(() => {
           self.simLoading = false;
         });
@@ -349,6 +384,9 @@ export default {
         const rows = response?.rows || [];
         self.simLatestRound =
           rows.length > 0 ? self.formatSimRound(rows[0]) : null;
+      }).catch(() => {
+        // 最近一轮失败时按无记录处理，禁止继续沿用旧轮次累加
+        self.simLatestRound = null;
       });
     },
     // 数值模拟轮次记录数值字段格式化
@@ -365,6 +403,9 @@ export default {
     },
     // 打开记录本轮结果弹窗
     handleSimRound(hit) {
+      if (!this.validateSimConfig()) {
+        return;
+      }
       this.simRecordIsHit = hit ? "Y" : "N";
       this.simRecordOpen = true;
     },
@@ -381,23 +422,30 @@ export default {
     // 保存本轮结果记录，保存后下一轮从保存的结束数值继续；可选携带关联方案计划数据
     doSubmitSimRound(record) {
       const self = this;
+      if (!this.validateSimConfig() || !this.validateSimRound(record)) {
+        return;
+      }
+      const roundNo = Number(record.roundNo);
+      const startValue = this.toFiniteNumber(this.simNextStartValue);
+      const endValue = this.toFiniteNumber(record.endValue);
+      const roundChange = self.formatSimRoundChange(endValue / startValue);
+      if (!roundChange) {
+        this.$modal.msgWarning("本轮数值变动倍数超出可保存范围，请检查开始数值和结束数值");
+        return;
+      }
       this.simSubmitting = true;
-      const roundNo =
-        record.roundNo != null ? parseInt(record.roundNo) : this.simNextRoundNo;
       // 关联方案计划提交规则：没动过关联区域不带 planIds、newPlans（该轮不关联）
       const planLinkData = record.planLink || null;
       addExtraSimulate({
         versionId: self.currentVersionId,
         simMode: self.simForm.simMode,
         roundNo: roundNo,
-        startValue: self.formatSimNumber(self.simNextStartValue),
+        startValue: self.formatSimNumber(startValue),
         joinValue: self.formatSimNumber(record.joinValue),
         isHit: record.isHit,
         returnValue: self.formatSimNumber(record.returnValue),
-        endValue: self.formatSimNumber(record.endValue),
-        roundChange: String(
-          self.formatSimFactor(record.endValue / self.simNextStartValue)
-        ),
+        endValue: self.formatSimNumber(endValue),
+        roundChange: roundChange,
         coefficient: self.formatSimNumber(self.simForm.coefficient),
         ...planLinkData,
       })
@@ -411,13 +459,22 @@ export default {
               ) || { versionId: self.currentVersionId };
             self.simInvalidNoticeRoundNo = roundNo;
             self.simInvalidNoticeOpen = true;
-            self.getSimVersionList().then(() => {
-              self.getSimList();
-            });
+            self.getSimVersionList()
+              .then(() => {
+                self.getSimList();
+              })
+              .catch(() => {
+                self.simRounds = [];
+                self.simTotal = 0;
+                self.simLatestRound = null;
+              });
           } else {
             self.$modal.msgSuccess("本轮记录保存成功");
             self.getSimList();
           }
+        })
+        .catch(() => {
+          // 接口错误由请求拦截器统一提示，保留弹窗与已填内容供用户重试
         })
         .finally(() => {
           self.simSubmitting = false;
@@ -442,6 +499,9 @@ export default {
     // 开启新版本确认弹窗确认后创建版本，有暂存的本轮结果时继续保存
     handleSimVersionCreateConfirm(versionName) {
       const self = this;
+      if (!this.validateSimConfig()) {
+        return;
+      }
       this.simVersionCreateSubmitting = true;
       this.createSimVersion(versionName)
         .then(() => {
@@ -456,6 +516,9 @@ export default {
             );
             self.getSimList();
           }
+        })
+        .catch(() => {
+          // 创建失败时保留确认弹窗，用户可修改版本名后重试
         })
         .finally(() => {
           self.simVersionCreateSubmitting = false;
@@ -482,9 +545,18 @@ export default {
           self.$modal.msgSuccess(
             `版本「${version.versionName || version.versionNo}」已作废`
           );
-          self.getSimVersionList().then(() => {
-            self.getSimList();
-          });
+          self.getSimVersionList()
+            .then(() => {
+              self.getSimList();
+            })
+            .catch(() => {
+              self.simRounds = [];
+              self.simTotal = 0;
+              self.simLatestRound = null;
+            });
+        })
+        .catch(() => {
+          // 作废失败时保留当前版本与确认弹窗，便于用户重试或取消
         })
         .finally(() => {
           self.simInvalidateSubmitting = false;
@@ -515,7 +587,9 @@ export default {
     },
     // 计算从初始数值连续达成达目标所需的最少轮次
     countSimRequiredRounds(initialValue, targetValue, winFactor) {
-      if (initialValue <= 0 || targetValue <= 0 || winFactor <= 1) {
+      if (!Number.isFinite(initialValue) || !Number.isFinite(targetValue)
+        || !Number.isFinite(winFactor) || initialValue <= 0
+        || targetValue <= 0 || winFactor <= 1) {
         return "-";
       }
       if (initialValue >= targetValue) {
@@ -525,13 +599,78 @@ export default {
         Math.log(targetValue / initialValue) / Math.log(winFactor)
       );
     },
+    // 提交前校验模拟参数：数值必须为有限正式数字，并符合数据库文本长度与精度约束
+    validateSimConfig() {
+      if (!["full", "half"].includes(this.simForm.simMode)) {
+        this.$modal.msgWarning("模拟模式不正确，请重新选择全量或半量滚动");
+        return false;
+      }
+      const fields = [
+        { label: "初始数值", value: this.simForm.initialValue, minExclusive: 0 },
+        { label: "每轮系数", value: this.simForm.coefficient, minExclusive: 1 },
+        { label: "目标数值", value: this.simForm.targetValue, minExclusive: 0 },
+      ];
+      for (const field of fields) {
+        const text = String(field.value == null ? "" : field.value);
+        const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
+        const numeric = Number(text);
+        if (!/^\d+(?:\.\d{1,2})?$/.test(text) || !Number.isFinite(numeric)
+          || numeric <= field.minExclusive || integerDigits > 20
+          || text.length > DORTMUND_LIMITS.simulateValueText) {
+          this.$modal.msgWarning(`${field.label}格式不正确，请填写大于${field.minExclusive}、最多20位整数和2位小数的数字`);
+          return false;
+        }
+      }
+      return true;
+    },
+    // 提交前校验轮次与四类数值，防止零轮次、溢出轮次、负数和非有限数值进入接口
+    validateSimRound(record) {
+      const roundNo = Number(record && record.roundNo);
+      if (!Number.isInteger(roundNo) || roundNo === 0
+        || roundNo < -2147483648 || roundNo > 2147483647) {
+        this.$modal.msgWarning("本轮轮次必须为非零的32位整数");
+        return false;
+      }
+      const valueFields = [
+        { label: "本轮开始数值", value: this.simNextStartValue, allowZero: false },
+        { label: "本轮参与数值", value: record && record.joinValue, allowZero: true },
+        { label: "实际回收数值", value: record && record.returnValue, allowZero: true },
+        { label: "本轮结束数值", value: record && record.endValue, allowZero: true },
+      ];
+      for (const field of valueFields) {
+        const numeric = Number(field.value);
+        if (!Number.isFinite(numeric) || numeric < 0 || (!field.allowZero && numeric === 0)) {
+          this.$modal.msgWarning(`${field.label}格式不正确，请返回后重新录入`);
+          return false;
+        }
+        const text = formatPlainDecimal(numeric, 2);
+        const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
+        if (!text || integerDigits > 20 || text.length > DORTMUND_LIMITS.simulateValueText) {
+          this.$modal.msgWarning(`${field.label}超出范围，请填写最多20位整数和2位小数的数字`);
+          return false;
+        }
+      }
+      return true;
+    },
+    // 数值模拟变动倍数格式化为数据库可接受的两位小数普通十进制文本
+    formatSimRoundChange(value) {
+      const text = formatPlainDecimal(value, 2);
+      if (!text) {
+        return "";
+      }
+      const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
+      return integerDigits <= 20 && text.length <= DORTMUND_LIMITS.simulateValueText
+        ? text
+        : "";
+    },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return parseFloat(value || 0).toFixed(2);
+      return formatPlainDecimal(value, 2, "0.00");
     },
     // 数值模拟乘数格式化，去除多余的零
     formatSimFactor(value) {
-      return parseFloat(parseFloat(value || 0).toFixed(4));
+      const text = formatPlainDecimal(value, 4);
+      return text ? Number(text) : 0;
     },
   },
 };

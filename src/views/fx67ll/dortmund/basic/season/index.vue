@@ -71,45 +71,53 @@
 
     <div class="dl-list-card">
       <el-table v-loading="loading" :data="seasonList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="赛季编码" align="center" prop="seasonCode" width="120" fixed="left" />
-        <el-table-column label="赛季名称" align="center" prop="seasonName" width="120" fixed="left" />
-        <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="120">
+        <el-table-column type="selection" width="46" align="center" />
+        <el-table-column label="赛季编码" align="center" prop="seasonCode" min-width="130" fixed="left"
+          show-overflow-tooltip />
+        <el-table-column label="赛季名称" align="center" prop="seasonName" min-width="160" fixed="left"
+          show-overflow-tooltip />
+        <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="118"
+          class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.seasonStartDate, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="120">
+        <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="118"
+          class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.seasonEndDate, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="80">
+        <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="96">
           <template slot-scope="scope">
             <dict-tag :options="dict.type.fx67ll_dortmund_status" :value="scope.row.seasonStatus" />
           </template>
         </el-table-column>
-        <el-table-column label="赛季排序" align="center" prop="seasonSort" width="100" sortable="seasonSort"
+        <el-table-column label="赛季排序" align="center" prop="seasonSort" width="96" sortable="seasonSort"
           :sort-orders="['descending', 'ascending']" />
-        <el-table-column label="赛季备注" align="center" prop="seasonRemark" width="230" :show-overflow-tooltip="true" />
-        <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
-        <el-table-column label="记录创建时间" align="center" prop="createTime" width="160">
+        <el-table-column label="赛季备注" align="center" prop="seasonRemark" min-width="200"
+          :show-overflow-tooltip="true" />
+        <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+        <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
-        <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
+        <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+        <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
+        <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
+          fixed="right" width="122">
           <template slot-scope="scope">
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
-              @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:season:edit']">修改</el-button>
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
-              @click="handleDelete(scope.row)" v-hasPermi="['dortmund:season:remove']">删除</el-button>
+            <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="handleDetail(scope.row)"
+              v-hasPermi="['dortmund:season:query']" />
+            <dortmund-action-button label="修改" icon="el-icon-edit" action="edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['dortmund:season:edit']" />
+            <dortmund-action-button label="删除" icon="el-icon-delete" action="delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['dortmund:season:remove']" />
           </template>
         </el-table-column>
       </el-table>
@@ -118,9 +126,61 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
+    <dortmund-detail-drawer :visible.sync="detailVisible" title="赛季详情"
+      :subtitle="detailData.seasonCode ? `赛季编码 · ${detailData.seasonCode}` : '查看赛季完整资料与审计信息'" icon="el-icon-trophy"
+      tone="green" size="640px" feature="season" :loading="detailLoading">
+      <section class='season-detail-banner'>
+        <div class='season-detail-banner-main'>
+          <span class='season-detail-kicker'>SEASON DOSSIER</span>
+          <div class='season-detail-title-row'>
+            <h3>{{ detailData.seasonName || '-' }}</h3>
+            <dict-tag
+              v-if='detailData.seasonStatus !== null && detailData.seasonStatus !== undefined && detailData.seasonStatus !== ""'
+              :options='dict.type.fx67ll_dortmund_status' :value='detailData.seasonStatus' />
+            <span v-else class='season-detail-status-empty'>状态未设置</span>
+          </div>
+          <span class='season-detail-code'>
+            <i class='el-icon-collection-tag'></i>{{ detailData.seasonCode || '-' }}
+          </span>
+        </div>
+        <div class='season-detail-period'>
+          <div class='season-detail-date'>
+            <span>开幕</span>
+            <strong>{{ detailData.seasonStartDate || '-' }}</strong>
+          </div>
+          <div class='season-detail-range'><i></i><em></em><i></i></div>
+          <div class='season-detail-date is-end'>
+            <span>收官</span>
+            <strong>{{ detailData.seasonEndDate || '-' }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <div class='season-detail-stat-grid'>
+        <article v-for='item in seasonMetrics' :key='item.label' class='season-detail-stat'>
+          <span class='season-detail-stat-icon'><i :class='item.icon'></i></span>
+          <span class='season-detail-stat-label'>{{ item.label }}</span>
+          <strong class='season-detail-stat-value'>{{ item.value === null || item.value === undefined || item.value ===
+            '' ?
+            '-' : item.value }}</strong>
+        </article>
+      </div>
+
+      <dortmund-detail-card title="赛季备注" icon="el-icon-document" tone="green">
+        <div class="dortmund-detail-text-block">{{ detailData.seasonRemark || '暂无备注' }}</div>
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="记录轨迹" subtitle="创建与最近更新审计" icon="el-icon-time" tone="green">
+        <dortmund-record-trail :items="seasonRecordTrail" empty-text="暂无赛季记录轨迹" />
+      </dortmund-detail-card>
+      <template slot="footer">
+        <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="detailVisible = false">关闭</el-button>
+      </template>
+    </dortmund-detail-drawer>
+
     <!-- 添加或修改赛季管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" :close-on-click-modal="false" width="640px"
-      :style="`top: ${getDialogVerticalOffset(400)}`" append-to-body custom-class="season-edit-dialog">
+      :style="`top: ${getDialogVerticalOffset(520)}`" append-to-body custom-class="season-edit-dialog">
       <template slot="title">
         <div class="dialog-header">
           <div class="dialog-header-icon">
@@ -132,35 +192,51 @@
           </div>
         </div>
       </template>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="赛季编码" prop="seasonCode">
+          <el-col :span="24">
+            <el-form-item prop="seasonCode">
+              <template slot="label">
+                <dortmund-form-label label="赛季编码" tip="必填；1-23个字符，全局唯一；可自动生成 SEA-YYYYMMDD-XXXXXX；创建后不可修改" />
+              </template>
               <!-- 编码创建后不可修改，需要更换编码时新建资源、迁移引用并停用旧资源 -->
-              <el-input v-model="form.seasonCode" placeholder="请输入赛季编码" :disabled="form.seasonId != null" />
+              <dortmund-code-input v-model="form.seasonCode" code-kind="season" :date-value="form.seasonStartDate"
+                maxlength="23" placeholder="请输入或自动生成赛季编码" :disabled="form.seasonId != null" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item prop="seasonName">
+              <template slot="label">
+                <dortmund-form-label label="赛季名称" tip="必填；1-233个字符，例如：2025-2026赛季德甲联赛" />
+              </template>
+              <el-input v-model="form.seasonName" maxlength="233" show-word-limit placeholder="请输入赛季名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="赛季名称" prop="seasonName">
-              <el-input v-model="form.seasonName" placeholder="请输入赛季名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="开始日期" prop="seasonStartDate">
+            <el-form-item prop="seasonStartDate">
+              <template slot="label">
+                <dortmund-form-label label="开始日期" tip="必填；格式yyyy-MM-dd，且不得晚于结束日期" />
+              </template>
               <el-date-picker clearable v-model="form.seasonStartDate" type="date" value-format="yyyy-MM-dd"
                 popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季开始日期">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="结束日期" prop="seasonEndDate">
+            <el-form-item prop="seasonEndDate">
+              <template slot="label">
+                <dortmund-form-label label="结束日期" tip="必填；格式yyyy-MM-dd，且不得早于开始日期" />
+              </template>
               <el-date-picker clearable v-model="form.seasonEndDate" type="date" value-format="yyyy-MM-dd"
                 popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季结束日期">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="赛季状态" prop="seasonStatus">
+            <el-form-item prop="seasonStatus">
+              <template slot="label">
+                <dortmund-form-label label="赛季状态" tip="必填；0=进行中，1=已结束，2=未开始" />
+              </template>
               <el-select v-model="form.seasonStatus" style="width: 100%" placeholder="请选择赛季状态"
                 popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
@@ -169,19 +245,28 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="赛季排序" prop="seasonSort">
-              <el-input v-model="form.seasonSort" type="number" min="0" max="1023" step="1" placeholder="请输入赛季排序" />
+            <el-form-item prop="seasonSort">
+              <template slot="label">
+                <dortmund-form-label label="赛季排序" tip="选填；0-1023的整数；数值越小越靠前，默认0" />
+              </template>
+              <el-input-number v-model="form.seasonSort" :min="0" :max="1023" :step="1" style="width: 100%"
+                placeholder="请输入赛季排序" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="赛季备注" prop="seasonRemark">
-              <el-input v-model="form.seasonRemark" type="textarea" placeholder="请输入赛季备注内容" />
+            <el-form-item prop="seasonRemark">
+              <template slot="label">
+                <dortmund-form-label label="赛季备注" tip="选填；最多1023个字符，可说明赛事级别、规则等" />
+              </template>
+              <el-input v-model="form.seasonRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
+                placeholder="请输入赛季备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="success" class="dortmund-theme-confirm" @click="submitForm">确 定</el-button>
+        <el-button type="success" class="dortmund-theme-confirm" :loading="submitting" @click="submitForm">确
+          定</el-button>
         <el-button class="dortmund-theme-cancel" @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -192,10 +277,46 @@
 import { listSeason, getSeason, delSeason, addSeason, updateSeason } from "@/api/fx67ll/dortmund/season";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
+import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
+import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_SEASON_STATUS_OPTIONS,
+  dateRangeRule,
+  enumRule,
+  integerRangeRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimTextFields,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "Season",
   dicts: ["fx67ll_dortmund_status"],
+  components: { DortmundFormLabel, DortmundCodeInput, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  computed: {
+    seasonMetrics() {
+      return [
+        { label: '赛季编码', value: this.detailData.seasonCode, icon: 'el-icon-collection-tag' },
+        { label: '赛季ID', value: this.detailData.seasonId, icon: 'el-icon-postcard' },
+        { label: '赛季状态', value: this.displayDict(this.dict.type.fx67ll_dortmund_status, this.detailData.seasonStatus, '未设置'), icon: 'el-icon-data-analysis' },
+        { label: '赛季排序', value: this.detailData.seasonSort == null ? '-' : this.detailData.seasonSort, icon: 'el-icon-sort' },
+      ];
+    },
+    seasonRecordTrail() {
+      const createTime = this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}');
+      const updateTime = this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
+      return [
+        { key: 'owner', label: '归属用户ID', value: this.detailData.userId, icon: 'el-icon-user' },
+        { key: 'create', label: '创建记录', value: this.detailData.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: this.detailData.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+      ];
+    },
+  },
   data() {
     return {
       // 遮罩层
@@ -216,6 +337,10 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 只读详情抽屉与当前详情快照
+      detailVisible: false,
+      detailLoading: false,
+      detailData: {},
       // 创建时间范围
       daterangeCreateTime: [],
       // 更新时间范围
@@ -238,23 +363,23 @@ export default {
       },
       // 表单参数
       form: {},
+      // 提交中状态，防止重复提交
+      submitting: false,
       // 表单校验
       rules: {
-        seasonCode: [
-          { required: true, message: "赛季编码不能为空", trigger: "blur" }
-        ],
-        seasonName: [
-          { required: true, message: "赛季名称不能为空", trigger: "blur" }
-        ],
+        seasonCode: [requiredTextRule("赛季编码", DORTMUND_LIMITS.seasonCode)],
+        seasonName: [requiredTextRule("赛季名称", DORTMUND_LIMITS.seasonName)],
         seasonStartDate: [
-          { required: true, message: "赛季开始日期不能为空", trigger: "blur" }
+          { required: true, message: "赛季开始日期不能为空", trigger: "change" },
+          dateRangeRule("赛季日期", () => this.form.seasonStartDate, () => this.form.seasonEndDate)
         ],
         seasonEndDate: [
-          { required: true, message: "赛季结束日期不能为空", trigger: "blur" }
+          { required: true, message: "赛季结束日期不能为空", trigger: "change" },
+          dateRangeRule("赛季日期", () => this.form.seasonStartDate, () => this.form.seasonEndDate)
         ],
-        seasonStatus: [
-          { required: true, message: "赛季状态不能为空", trigger: "blur" }
-        ],
+        seasonStatus: [enumRule("赛季状态", DORTMUND_SEASON_STATUS_OPTIONS, true)],
+        seasonSort: [integerRangeRule("赛季排序", 0, 1023, false)],
+        seasonRemark: [optionalTextRule("赛季备注", DORTMUND_LIMITS.seasonRemark)],
       },
     };
   },
@@ -262,6 +387,13 @@ export default {
     this.getList();
   },
   methods: {
+    // 字典值转标签；字典尚未加载时回退到原始值，避免误显示为未设置
+    displayDict(options, value, fallback = '-') {
+      if (value === null || value === undefined || value === '') {
+        return fallback;
+      }
+      return this.selectDictLabel(options || [], value) || String(value);
+    },
     // 代理工具函数
     getDialogVerticalOffset(offset) {
       return getDialogVerticalOffset(offset);
@@ -288,6 +420,10 @@ export default {
       listSeason(this.queryParams).then(response => {
         this.seasonList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
+      }).catch(() => {
+        this.seasonList = [];
+        this.total = 0;
+      }).finally(() => {
         this.loading = false;
       });
     },
@@ -342,6 +478,25 @@ export default {
       this.open = true;
       this.title = "添加赛季管理";
     },
+    // 详情按钮操作：先展示列表快照，再拉取详情补齐关联字段与原始零值
+    handleDetail(row) {
+      const snapshot = { ...(row || {}) };
+      this.detailData = snapshot;
+      this.detailLoading = true;
+      this.detailVisible = true;
+      getSeason(snapshot.seasonId).then(response => {
+        const detail = response.data || {};
+        if (detail.seasonId == null) {
+          this.$modal.msgWarning("赛季不存在或已删除，请刷新后重试");
+          return;
+        }
+        this.detailData = { ...snapshot, ...detail };
+      }).catch(() => {
+        // 接口异常时保留列表快照，避免详情抽屉空白
+      }).finally(() => {
+        this.detailLoading = false;
+      });
+    },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
@@ -350,23 +505,32 @@ export default {
         this.form = response.data;
         this.open = true;
         this.title = "修改赛季管理";
+      }).catch(() => {
       });
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.seasonId != null) {
-            updateSeason(this.form).then(response => {
+          const data = trimTextFields(this.form, ["seasonCode", "seasonName", "seasonRemark"]);
+          this.submitting = true;
+          if (data.seasonId != null) {
+            updateSeason(data).then(() => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
+            }).catch(() => {
+            }).finally(() => {
+              this.submitting = false;
             });
           } else {
-            addSeason(this.form).then(response => {
+            addSeason(data).then(() => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
+            }).catch(() => {
+            }).finally(() => {
+              this.submitting = false;
             });
           }
         }
@@ -457,6 +621,213 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.season-detail-banner {
+  display: flex;
+  gap: 22px;
+  align-items: stretch;
+  justify-content: space-between;
+  padding: 20px 0 20px;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #edf1ef;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.season-detail-banner-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.season-detail-kicker {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #3f8f77;
+  letter-spacing: .16em;
+}
+
+.season-detail-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 750;
+    line-height: 1.25;
+    color: #1f2d28;
+    overflow-wrap: anywhere;
+  }
+}
+
+.season-detail-status-empty {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #8b9791;
+  background: #f4f8f6;
+  border-radius: 999px;
+}
+
+.season-detail-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #52786a;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.season-detail-period {
+  display: flex;
+  flex: 0 0 248px;
+  gap: 14px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2px 0 2px 22px;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid #e7ede9;
+  border-radius: 0;
+}
+
+.season-detail-date {
+  min-width: 82px;
+  text-align: center;
+
+  span {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 10px;
+    color: #8b9791;
+    letter-spacing: .08em;
+  }
+
+  strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #26362e;
+    white-space: nowrap;
+  }
+}
+
+.season-detail-range {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 32px;
+
+  i {
+    width: 6px;
+    height: 6px;
+    background: #3f8f77;
+    border-radius: 50%;
+    box-shadow: none;
+  }
+
+  em {
+    flex: 1;
+    height: 1px;
+    background: #cfddd6;
+  }
+}
+
+.season-detail-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 8px 0 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.season-detail-stat {
+  position: relative;
+  min-width: 0;
+  padding: 12px 16px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid #edf1ef;
+  border-radius: 0;
+  box-shadow: none;
+
+  &:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+.season-detail-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 10px;
+  color: #367b5d;
+  background: #e9f6ee;
+  border-radius: 9px;
+}
+
+.season-detail-stat-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #83918a;
+  letter-spacing: .06em;
+}
+
+.season-detail-stat-value {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: 15px;
+  font-weight: 720;
+  color: #25362e;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .season-detail-banner {
+    flex-direction: column;
+  }
+
+  .season-detail-period {
+    flex-basis: auto;
+    justify-content: flex-start;
+  }
+
+  .season-detail-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .season-detail-stat:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .season-detail-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .season-detail-stat {
+    padding-left: 0;
+    border-left: 0;
   }
 }
 </style>

@@ -28,7 +28,7 @@
           <span>{{ formatSimNumber(scope.row.returnValue) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="本轮结果" align="center" prop="isHit" width="90">
+      <el-table-column label="本轮结果" align="center" prop="isHit" width="100">
         <template slot-scope="scope">
           <span style="color: #2ecc71" v-if="scope.row.isHit === 'Y'">达成</span>
           <span style="color: #ff5a5f" v-else>未达成</span>
@@ -40,12 +40,12 @@
             formatSimNumber(scope.row.endValue) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="数值变动" align="center" prop="roundChange" width="80">
+      <el-table-column label="数值变动" align="center" prop="roundChange" width="92">
         <template slot-scope="scope">
           <span>×{{ scope.row.roundChange }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="关联方案计划" align="center" prop="planCount" width="110">
+      <el-table-column label="关联方案计划" align="center" prop="planCount" width="120">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.planCount > 0" size="small" effect="plain" type="success" class="round-plan-count-tag"
             @click.native="handleViewRoundPlans(scope.row)">{{ scope.row.planCount
@@ -53,7 +53,7 @@
           <span v-else>未关联</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录时间" align="center" prop="createTime" width="160">
+      <el-table-column label="记录时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
@@ -71,6 +71,7 @@
 
 <script>
 import { getSimRoundPlans } from "@/api/fx67ll/dortmund/extraSimulate";
+import { formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
 
 import PlanSummaryDialog from "../../../PlanSummaryDialog/index.vue";
 
@@ -150,7 +151,7 @@ export default {
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return parseFloat(value || 0).toFixed(2);
+      return formatPlainDecimal(value, 2, "0.00");
     },
   },
 };

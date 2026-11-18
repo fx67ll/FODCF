@@ -1,7 +1,7 @@
 <template>
   <el-drawer :visible.sync="drawerVisible" :title="title" direction="rtl" :size="drawerSize" append-to-body
     custom-class="list-selector-drawer" destroy-on-close :wrapper-closable="false" @open="handleOpen"
-    @closed="handleClosed">
+    @opened="handleOpened" @closed="handleClosed">
     <div class="list-selector-shell">
       <div class="list-selector-content">
         <div class="list-selector-guide">
@@ -51,37 +51,40 @@
           </div>
         </transition>
 
-        <el-table ref="selectorTable" v-loading="loading" :data="rows" :row-key="valueKey" size="small"
-          :height="tableHeight" class="list-selector-table" highlight-current-row @row-click="handleRowClick"
-          @row-dblclick="handleRowDoubleClick" @selection-change="handleSelectionChange">
-          <el-table-column v-if="multiple" type="selection" width="46" align="center" reserve-selection />
-          <el-table-column v-else width="46" align="center">
-            <template slot-scope="scope">
-              <el-radio :value="selectedValue" :label="scope.row[valueKey]" class="list-selector-radio">
-                <span></span>
-              </el-radio>
+        <div ref="tableRegion" class="list-selector-table-region">
+          <el-table ref="selectorTable" v-loading="loading" :data="rows" :row-key="valueKey" size="small"
+            :height="tableHeight" class="list-selector-table" highlight-current-row @row-click="handleRowClick"
+            @row-dblclick="handleRowDoubleClick" @selection-change="handleSelectionChange">
+            <el-table-column v-if="multiple" type="selection" width="46" align="center" reserve-selection />
+            <el-table-column v-else width="46" align="center">
+              <template slot-scope="scope">
+                <el-radio :value="selectedValue" :label="scope.row[valueKey]" class="list-selector-radio">
+                  <span></span>
+                </el-radio>
+              </template>
+            </el-table-column>
+            <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop"
+              :min-width="column.minWidth || 120" align="center" show-overflow-tooltip>
+              <template slot-scope="scope">{{ formatColumn(column, scope.row) }}</template>
+            </el-table-column>
+            <template slot="empty">
+              <div class="list-selector-empty">
+                <i :class="loadError ? 'el-icon-warning-outline' : 'el-icon-search'"></i>
+                <p>{{ loadError ? "候选数据暂不可用" : "未找到可选择的记录" }}</p>
+              </div>
             </template>
-          </el-table-column>
-          <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop"
-            :min-width="column.minWidth || 120" align="center" show-overflow-tooltip>
-            <template slot-scope="scope">{{ formatColumn(column, scope.row) }}</template>
-          </el-table-column>
-          <template slot="empty">
-            <div class="list-selector-empty">
-              <i :class="loadError ? 'el-icon-warning-outline' : 'el-icon-search'"></i>
-              <p>{{ loadError ? "候选数据暂不可用" : "未找到可选择的记录" }}</p>
-            </div>
-          </template>
-        </el-table>
+          </el-table>
+        </div>
         <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="internalPageSize"
-          :layout="paginationLayout" @pagination="loadRows" />
+          :layout="paginationLayout" :pager-count="paginationPagerCount" :auto-scroll="false"
+          class="list-selector-pagination" @pagination="loadRows" />
       </div>
 
       <div class="list-selector-footer">
         <span class="list-selector-footer-summary">
           {{ selectedRows.length ? `已选择 ${selectedRows.length}${maxCount > 0 ? ` / ${maxCount}` : ""} 项` : "尚未选择" }}
         </span>
-        <div>
+        <div class="list-selector-footer-actions">
           <el-button class="dortmund-theme-cancel" @click="handleCancel">取 消</el-button>
           <el-button type="success" class="dortmund-theme-confirm" :disabled="!selectedRows.length"
             @click="handleConfirm">确认选择</el-button>
@@ -161,7 +164,8 @@ export default {
       syncingSelection: false,
       loadError: false,
       viewportWidth: typeof window !== "undefined" ? window.innerWidth : 1440,
-      viewportHeight: typeof window !== "undefined" ? window.innerHeight : 900,
+      tableHeight: 320,
+      tableResizeObserver: null,
     };
   },
   computed: {
@@ -182,16 +186,23 @@ export default {
       }
       return "960px";
     },
-    tableHeight() {
-      const reservedHeight = this.searchFields.length ? 410 : 330;
-      return Math.max(this.viewportWidth < 768 ? 240 : 280, this.viewportHeight - reservedHeight);
-    },
     paginationLayout() {
       return this.viewportWidth < 768 ? "prev, pager, next" : "total, prev, pager, next, jumper";
+    },
+    paginationPagerCount() {
+      return this.viewportWidth < 768 ? 5 : 7;
     },
     selectedValue() {
       const row = this.selectedRows[0];
       return row ? row[this.valueKey] : null;
+    },
+  },
+  watch: {
+    "selectedRows.length"() {
+      this.scheduleTableMeasure();
+    },
+    loadError() {
+      this.scheduleTableMeasure();
     },
   },
   mounted() {
@@ -200,6 +211,7 @@ export default {
     }
   },
   beforeDestroy() {
+    this.disconnectTableResizeObserver();
     if (typeof window !== "undefined") {
       window.removeEventListener("resize", this.handleViewportResize);
     }
@@ -230,17 +242,67 @@ export default {
       }
       this.loadError = false;
       this.loadRows();
+      this.scheduleTableMeasure();
     },
     handleClosed() {
       this.requestSerial += 1;
       this.loading = false;
+      this.disconnectTableResizeObserver();
+    },
+    handleOpened() {
+      this.connectTableResizeObserver();
+      this.scheduleTableMeasure();
+    },
+    connectTableResizeObserver() {
+      this.disconnectTableResizeObserver();
+      const ResizeObserverCtor = typeof window !== "undefined" ? window.ResizeObserver : null;
+      if (!ResizeObserverCtor || !this.$refs.tableRegion) {
+        return;
+      }
+      this.tableResizeObserver = new ResizeObserverCtor(() => this.scheduleTableMeasure());
+      this.tableResizeObserver.observe(this.$refs.tableRegion);
+    },
+    disconnectTableResizeObserver() {
+      if (this.tableResizeObserver) {
+        this.tableResizeObserver.disconnect();
+        this.tableResizeObserver = null;
+      }
+    },
+    scheduleTableMeasure() {
+      this.$nextTick(() => {
+        if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+          window.requestAnimationFrame(() => this.measureTableHeight());
+          return;
+        }
+        this.measureTableHeight();
+      });
+    },
+    measureTableHeight() {
+      const region = this.$refs.tableRegion;
+      if (!region) {
+        return;
+      }
+      const height = Math.floor(region.getBoundingClientRect().height);
+      if (height <= 0) {
+        return;
+      }
+      const nextHeight = Math.max(120, height);
+      if (Math.abs(nextHeight - this.tableHeight) <= 1) {
+        return;
+      }
+      this.tableHeight = nextHeight;
+      this.$nextTick(() => {
+        if (this.$refs.selectorTable) {
+          this.$refs.selectorTable.doLayout();
+        }
+      });
     },
     handleViewportResize() {
       if (typeof window === "undefined") {
         return;
       }
       this.viewportWidth = window.innerWidth;
-      this.viewportHeight = window.innerHeight;
+      this.scheduleTableMeasure();
     },
     loadRows() {
       const requestSerial = ++this.requestSerial;
@@ -271,6 +333,7 @@ export default {
           ? payload.length
           : (payload && Number(payload.total)) || this.rows.length;
         this.syncTableSelection();
+        this.scheduleTableMeasure();
       }).catch(() => {
         if (requestSerial !== this.requestSerial) {
           return;
@@ -419,10 +482,19 @@ export default {
 }
 
 .list-selector-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
   padding: 16px 20px 0;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.list-selector-content>.list-selector-guide,
+.list-selector-content>.list-selector-search,
+.list-selector-content>.list-selector-error,
+.list-selector-content>.list-selector-preview {
+  flex-shrink: 0;
 }
 
 .list-selector-guide {
@@ -503,10 +575,12 @@ export default {
 
 .list-selector-preview {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
+  max-height: 120px;
   padding: 9px 12px;
   margin-bottom: 12px;
+  overflow: hidden;
   background: #fff;
   border: 1px solid #dcebe3;
   border-left: 3px solid var(--selector-theme);
@@ -515,6 +589,8 @@ export default {
 
 .list-selector-preview-title {
   flex-shrink: 0;
+  padding-top: 2px;
+  line-height: 20px;
   font-size: 13px;
   font-weight: 600;
   color: var(--selector-theme);
@@ -525,12 +601,48 @@ export default {
   flex: 1;
   flex-wrap: wrap;
   gap: 6px;
+  max-height: 72px;
   min-width: 0;
+  padding-right: 4px;
+  overflow-y: auto;
+
+  ::v-deep .el-tag {
+    max-width: 100%;
+    height: auto;
+    min-height: 24px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: var(--selector-theme);
+    background: #e7f8ee;
+    border-color: #bfe8d1;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  ::v-deep .el-tag .el-tag__close {
+    color: var(--selector-theme);
+
+    &:hover {
+      color: #fff;
+      background-color: var(--selector-theme);
+    }
+  }
 }
 
 .list-selector-clear {
+  align-self: flex-start;
   flex-shrink: 0;
   padding: 4px;
+}
+
+.list-selector-table-region {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 .list-selector-table {
@@ -550,6 +662,88 @@ export default {
 
   ::v-deep .el-table__row.current-row>td.el-table__cell {
     background: #edf8f2;
+  }
+}
+
+.list-selector-pagination {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  height: auto !important;
+  min-width: 0;
+  margin: 8px 0 12px !important;
+  padding: 0 !important;
+  overflow: visible;
+  background: transparent;
+
+  ::v-deep .el-pagination {
+    position: static;
+    right: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+  }
+
+  ::v-deep .el-pagination>* {
+    margin-left: 0;
+  }
+
+  ::v-deep .el-pagination .el-pager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  ::v-deep .el-pagination .el-pager li,
+  ::v-deep .el-pagination button {
+    margin: 0;
+  }
+
+  ::v-deep .el-pagination__total,
+  ::v-deep .el-pagination__jump {
+    margin: 0;
+  }
+
+  ::v-deep .el-pagination.is-background .el-pager li:not(.disabled) {
+    color: #52615a;
+    background-color: #f7faf8;
+    border: 1px solid #e2ebe6;
+  }
+
+  ::v-deep .el-pagination.is-background .el-pager li:not(.disabled):not(.active):hover {
+    color: var(--selector-theme);
+    background-color: #e7f8ee;
+    border-color: #bfe8d1;
+  }
+
+  ::v-deep .el-pagination.is-background .el-pager li:not(.disabled).active {
+    color: #fff;
+    background-color: var(--selector-theme);
+    border-color: var(--selector-theme);
+  }
+
+  ::v-deep .el-pagination.is-background .btn-prev,
+  ::v-deep .el-pagination.is-background .btn-next {
+    color: #52615a;
+    background-color: #f7faf8;
+    border: 1px solid #e2ebe6;
+  }
+
+  ::v-deep .el-pagination.is-background .btn-prev:not(:disabled):hover,
+  ::v-deep .el-pagination.is-background .btn-next:not(:disabled):hover {
+    color: var(--selector-theme);
+    background-color: #e7f8ee;
+    border-color: #bfe8d1;
+  }
+
+  ::v-deep .el-pagination__jump .el-input__inner:focus {
+    border-color: var(--selector-theme);
   }
 }
 
@@ -589,6 +783,12 @@ export default {
 .list-selector-footer-summary {
   font-size: 12px;
   color: #89958f;
+}
+
+.list-selector-footer-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .selector-preview-enter-active,
@@ -645,6 +845,61 @@ export default {
   .list-selector-footer {
     justify-content: flex-end;
     padding: 12px;
+  }
+
+  .list-selector-footer-actions {
+    width: 100%;
+  }
+
+  .list-selector-footer-actions .el-button {
+    flex: 1;
+  }
+
+  .list-selector-footer-actions .el-button+.el-button {
+    margin-left: 8px;
+  }
+
+  .list-selector-pagination {
+    justify-content: center;
+    margin: 6px 0 10px !important;
+
+    ::v-deep .el-pagination {
+      width: 100%;
+      justify-content: center;
+      row-gap: 6px;
+    }
+  }
+}
+
+@media (max-height: 720px) {
+  .list-selector-content {
+    padding-top: 10px;
+  }
+
+  .list-selector-guide {
+    display: none;
+  }
+
+  .list-selector-search {
+    padding-top: 10px;
+    margin-bottom: 8px;
+  }
+
+  .list-selector-error {
+    margin-bottom: 8px;
+  }
+
+  .list-selector-preview {
+    max-height: 96px;
+    margin-bottom: 8px;
+  }
+
+  .list-selector-preview-items {
+    max-height: 58px;
+  }
+
+  .list-selector-pagination {
+    margin: 6px 0 8px !important;
   }
 }
 </style>

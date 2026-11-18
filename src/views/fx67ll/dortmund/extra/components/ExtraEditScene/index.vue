@@ -98,14 +98,21 @@
               <el-row :gutter="18">
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="extraMoney" class="money-form-item">
-                    <span slot="label" class="entry-field-label">当前总金额 <small>联动推算</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="当前总金额"
+                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <small>联动推算</small>
+                    </span>
                     <el-input v-model="form.extraMoney" class="money-input money-input--primary" maxlength="23"
                       prefix-icon="el-icon-coin" placeholder="请输入当前外快总金额" @input="handleExtraMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="isWin" class="money-form-item">
-                    <span slot="label" class="entry-field-label">盈亏状态 <small>随金额自动更新</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="盈亏状态" tip="必填；仅可为Y（盈利）或N（非盈利）" />
+                      <small>随金额自动更新</small>
+                    </span>
                     <el-radio-group v-model="form.isWin" class="win-switch" @change="handleIsWinChange">
                       <el-radio-button v-for="dict in dict.type.sys_yes_no || []" :key="dict.value" :label="dict.value">
                         <i :class="dict.value === 'Y' ? 'el-icon-top-right' : 'el-icon-bottom-right'"></i>
@@ -116,28 +123,44 @@
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="seedMoney" class="money-form-item">
-                    <span slot="label" class="entry-field-label">当前本金 <small>独立录入</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="当前本金"
+                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <small>独立录入</small>
+                    </span>
                     <el-input v-model="form.seedMoney" class="money-input" maxlength="23"
                       prefix-icon="el-icon-bank-card" placeholder="请输入当前投入本金" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="winMoney" class="money-form-item">
-                    <span slot="label" class="entry-field-label">盈亏金额 <small>联动推算</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="盈亏金额"
+                        tip="必填；可填负数；最多19位整数和2位小数（含负号总长度不超过23个字符）" />
+                      <small>联动推算</small>
+                    </span>
                     <el-input v-model="form.winMoney" class="money-input" maxlength="23" prefix-icon="el-icon-data-line"
                       placeholder="请输入外快盈亏金额" @input="handleWinMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="saveMoney" class="money-form-item">
-                    <span slot="label" class="entry-field-label">落袋金额 <small>不联动其他金额</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="落袋金额"
+                        tip="必填；不得为负；最多20位整数和2位小数，总长度不超过23个字符" />
+                      <small>不联动其他金额</small>
+                    </span>
                     <el-input v-model="form.saveMoney" class="money-input" maxlength="23" prefix-icon="el-icon-box"
                       placeholder="请输入已经落袋为安的盈利金额" @input="handleSaveMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="targetMoney" class="money-form-item">
-                    <span slot="label" class="entry-field-label">目标金额 <small>用于进度预览</small></span>
+                    <span slot="label" class="entry-field-label">
+                      <dortmund-form-label label="目标金额"
+                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <small>用于进度预览</small>
+                    </span>
                     <el-input v-model="form.targetMoney" class="money-input" maxlength="23" prefix-icon="el-icon-flag"
                       placeholder="请输入目标金额" />
                   </el-form-item>
@@ -166,6 +189,9 @@
                 </div>
               </div>
               <el-form-item prop="extraRemark" class="remark-form-item">
+                <span slot="label" class="entry-field-label">
+                  <dortmund-form-label label="记录说明" tip="选填；最多1023个字符" />
+                </span>
                 <el-input v-model="form.extraRemark" type="textarea" :rows="4" :maxlength="1023" show-word-limit
                   placeholder="请输入外快备注内容" />
               </el-form-item>
@@ -272,6 +298,15 @@ import {
 } from "@/utils/fx67ll/utils";
 import PlanLinkSelector from "../PlanLinkSelector/index.vue";
 import _ from "underscore";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_YES_NO_OPTIONS,
+  decimalRule,
+  enumRule,
+  optionalTextRule,
+  trimText,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 // 二级录入页保存成功后通知列表页刷新（仅当前浏览器会话有效）
 const EXTRA_EDIT_REFRESH_KEY = "dortmund-extra-edit-refresh-required";
@@ -294,7 +329,7 @@ const EMPTY_PLAN_LINK = () => ({
 export default {
   name: "DortmundExtraEdit",
   dicts: ["sys_yes_no"],
-  components: { PlanLinkSelector },
+  components: { DortmundFormLabel, PlanLinkSelector },
   data() {
     return {
       extraId: null,
@@ -311,28 +346,28 @@ export default {
         extraRemark: "",
       },
       rules: {
-        extraMoney: [
-          { required: true, message: "当前外快总金额不能为空", trigger: "blur" },
-        ],
-        isWin: [
-          { required: true, message: "是否盈利不能为空", trigger: "change" },
-        ],
-        winMoney: [
-          { required: true, message: "外快盈亏金额不能为空", trigger: "blur" },
-        ],
-        seedMoney: [
-          { required: true, message: "当前投入本金不能为空", trigger: "blur" },
-        ],
-        saveMoney: [
-          {
-            required: true,
-            message: "已经落袋为安的盈利金额不能为空",
-            trigger: "change",
-          },
-        ],
-        targetMoney: [
-          { required: true, message: "目标金额不能为空", trigger: "blur" },
-        ],
+        extraMoney: [decimalRule("当前外快总金额", {
+          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          maxTextLength: DORTMUND_LIMITS.extraMoney,
+        })],
+        isWin: [enumRule("是否盈利", DORTMUND_YES_NO_OPTIONS, true)],
+        winMoney: [decimalRule("外快盈亏金额", {
+          required: true, allowNegative: true, maxIntegerDigits: 19, maxFractionDigits: 2,
+          maxTextLength: DORTMUND_LIMITS.extraMoney,
+        })],
+        seedMoney: [decimalRule("当前投入本金", {
+          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          maxTextLength: DORTMUND_LIMITS.extraMoney,
+        })],
+        saveMoney: [decimalRule("落袋金额", {
+          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          maxTextLength: DORTMUND_LIMITS.extraMoney,
+        })],
+        targetMoney: [decimalRule("目标金额", {
+          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          maxTextLength: DORTMUND_LIMITS.extraMoney,
+        })],
+        extraRemark: [optionalTextRule("记录说明", DORTMUND_LIMITS.extraRemark)],
       },
       preExtraData: EMPTY_PRE_EXTRA(),
       origForm: null,
@@ -639,8 +674,16 @@ export default {
       }
     },
     padMoneyToTwoDecimal(val) {
-      const money = parseFloat(val);
-      return isNaN(money) ? val : money.toFixed(2);
+      const raw = String(val == null ? "" : val).trim();
+      if (!/^-?\d+(?:\.\d+)?$/.test(raw)) {
+        return val;
+      }
+      const negative = raw.startsWith("-");
+      const unsigned = negative ? raw.slice(1) : raw;
+      const parts = unsigned.split(".");
+      const integerPart = parts[0].replace(/^0+(?=\d)/, "");
+      const fractionPart = (parts[1] || "").padEnd(2, "0").slice(0, 2);
+      return `${negative ? "-" : ""}${integerPart}.${fractionPart}`;
     },
     handleWinMoneyChangeDubounce: _.debounce(function () {
       this.handleWinMoneyChange();
@@ -812,6 +855,12 @@ export default {
           ? selector.getSubmitData()
           : null;
       const payload = { ...this.form, ...(planLinkData || {}) };
+      payload.extraMoney = trimText(payload.extraMoney);
+      payload.winMoney = trimText(payload.winMoney);
+      payload.seedMoney = trimText(payload.seedMoney);
+      payload.saveMoney = trimText(payload.saveMoney);
+      payload.targetMoney = trimText(payload.targetMoney);
+      payload.extraRemark = trimText(payload.extraRemark);
       const isUpdate = this.form.extraId != null;
       this.submitting = true;
       const request = isUpdate ? updateExtra(payload) : addExtra(payload);
@@ -821,6 +870,8 @@ export default {
           sessionStorage.setItem(EXTRA_EDIT_REFRESH_KEY, "1");
           this.$modal.msgSuccess(isUpdate ? "修改成功" : "新增成功");
           this.goBackToList();
+        })
+        .catch(() => {
         })
         .finally(() => {
           this.submitting = false;

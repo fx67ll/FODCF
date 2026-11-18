@@ -9,7 +9,7 @@
         </div>
         <div class="overview-hero-text">
           <h2>{{ greetingText }}，这里是自由发电机计划功能总览</h2>
-          <p>{{ heroDateText }} · 聚合行动全部页面入口，从基础资料到盈亏模拟，一页直达</p>
+          <p>{{ heroDateText }} · 聚合行动全部页面入口，从基础资料、回报组合AI到盈亏模拟，一页直达</p>
         </div>
       </div>
       <el-button type="success" plain icon="el-icon-share" @click="handleJump(pageComponents.workflow)">
@@ -91,10 +91,12 @@ const PAGE_COMPONENTS = {
   season: "fx67ll/dortmund/basic/season/index",
   team: "fx67ll/dortmund/basic/team/index",
   match: "fx67ll/dortmund/basic/match/index",
+  odds: "fx67ll/dortmund/basic/odds/index",
+  returnCombination: "fx67ll/dortmund/return/index",
   plan: "fx67ll/dortmund/plan/index",
-  info: "fx67ll/dortmund/info/index",
+  info: "fx67ll/dortmund/basic/info/index",
   extra: "fx67ll/dortmund/extra/index",
-  workflow: "fx67ll/dortmund/workflow/index",
+  workflow: "fx67ll/dortmund/other/view/workflow/index",
 };
 
 // 外快盈亏页模式本地持久缓存的key（与 extra/index.vue 保持一致）
@@ -148,6 +150,35 @@ export default {
           ],
         },
         {
+          title: "版本与回报",
+          icon: "el-icon-magic-stick",
+          desc: "有效倍率冻结本次输入，可走自动AI异步分析或人工AI任务处理",
+          layout: "three",
+          cards: [
+            {
+              title: "倍率版本",
+              icon: "el-icon-odometer",
+              desc: "维护主胜、平局、客胜及让分六类倍率，按比赛切换唯一有效版本",
+              features: ["版本留痕", "有效切换", "权重维护"],
+              action: { type: "jump", componentPath: PAGE_COMPONENTS.odds },
+            },
+            {
+              title: "回报组合",
+              icon: "el-icon-magic-stick",
+              desc: "提交基础与目标金额后异步生成候选，后端统一校验、复算、去重并留痕",
+              features: ["异步生成", "候选复核", "采用审核"],
+              action: { type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
+            },
+            {
+              title: "人工AI任务",
+              icon: "el-icon-upload2",
+              desc: "创建独立人工任务并导出固定快照，交由第三方AI后按标准化契约回填",
+              features: ["独立任务", "标准化导入", "结果来源"],
+              action: { type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
+            },
+          ],
+        },
+        {
           title: "方案与信息",
           icon: "el-icon-notebook-2",
           desc: "围绕比赛沉淀方案计划与信息点，为后续分析供数",
@@ -197,6 +228,9 @@ export default {
         { text: "维护赛季", tip: "录入赛季编码与起止日期", type: "jump", componentPath: PAGE_COMPONENTS.season },
         { text: "维护球队", tip: "录入球队资料与标签", type: "jump", componentPath: PAGE_COMPONENTS.team },
         { text: "编排比赛", tip: "建立对阵与开赛时间", type: "jump", componentPath: PAGE_COMPONENTS.match },
+        { text: "维护有效倍率", tip: "按比赛冻结六类赔率与权重", type: "jump", componentPath: PAGE_COMPONENTS.odds },
+        { text: "生成回报组合", tip: "可选择自动AI异步分析，或创建人工AI任务导出并回填", type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
+        { text: "采用回报组合", tip: "采用后方可进入方案计划与图片管理", type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
         { text: "编写方案计划", tip: "围绕比赛沉淀方案并关联", type: "jump", componentPath: PAGE_COMPONENTS.plan },
         { text: "录入信息点", tip: "沉淀客观信息供后续分析", type: "jump", componentPath: PAGE_COMPONENTS.info },
         { text: "记录外快盈亏", tip: "真实盈亏入账并关联方案", type: "extra", extraMode: "extra" },

@@ -16,7 +16,7 @@
         @click="handleBackToList">返回总览</el-button>
     </div>
 
-    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="85px" class="match-edit-form"
+    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="105px" class="match-edit-form"
       v-loading="editLoading">
       <div class="match-edit-card">
         <div class="match-edit-card-header">
@@ -27,7 +27,10 @@
         <el-row :gutter="20">
           <!-- 所属赛季：可选已有，也可当场新增（仅新增比赛时，修改时不支持当场新建） -->
           <el-col :xs="24" :md="12">
-            <el-form-item label="所属赛季" prop="seasonId">
+            <el-form-item prop="seasonId">
+              <template slot="label">
+                <dortmund-form-label label="所属赛季" tip="必填；选择已有赛季，或在下方当场新增赛季" />
+              </template>
               <div class="match-edit-item">
                 <dortmund-season-select ref="editSeasonSelect" v-model="editForm.seasonId"
                   :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
@@ -40,7 +43,10 @@
           </el-col>
           <!-- 比赛时间：带时分秒，与后台 datetime 列和唯一索引一致 -->
           <el-col :xs="24" :md="12">
-            <el-form-item label="比赛时间" prop="matchTime">
+            <el-form-item prop="matchTime">
+              <template slot="label">
+                <dortmund-form-label label="比赛时间" tip="必填；格式yyyy-MM-dd HH:mm:ss，需填写开赛时间" />
+              </template>
               <el-date-picker clearable v-model="editForm.matchTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择比赛时间">
               </el-date-picker>
@@ -56,7 +62,10 @@
 
           <!-- 主队 -->
           <el-col :xs="24" :md="12">
-            <el-form-item label="主队名称" prop="homeTeamId">
+            <el-form-item prop="homeTeamId">
+              <template slot="label">
+                <dortmund-form-label label="主队名称" tip="必填；选择已有球队或当场新建；主队与客队不能相同" />
+              </template>
               <div class="match-edit-item">
                 <dortmund-binding-control entity-type="team" select-label="选择主队" create-label="当场新建主队"
                   :display-text="selectedHomeTeam ? selectedHomeTeam.teamName : ''"
@@ -71,7 +80,10 @@
           </el-col>
           <!-- 客队 -->
           <el-col :xs="24" :md="12">
-            <el-form-item label="客队名称" prop="awayTeamId">
+            <el-form-item prop="awayTeamId">
+              <template slot="label">
+                <dortmund-form-label label="客队名称" tip="必填；选择已有球队或当场新建；主队与客队不能相同" />
+              </template>
               <div class="match-edit-item">
                 <dortmund-binding-control entity-type="team" select-label="选择客队" create-label="当场新建客队"
                   :display-text="selectedAwayTeam ? selectedAwayTeam.teamName : ''"
@@ -100,18 +112,27 @@
           </el-col>
 
           <el-col :xs="24" :md="12">
-            <el-form-item label="比赛编码" prop="matchCode">
-              <el-input v-model="editForm.matchCode" maxlength="23" show-word-limit placeholder="必填，不超过23个字符"
-                :disabled="editMode !== 'add'" />
+            <el-form-item prop="matchCode">
+              <template slot="label">
+                <dortmund-form-label label="比赛编码" tip="必填；1-23个字符，全局唯一；可自动生成 MATCH-YYYYMMDD-XXXXXX；创建后不可修改" />
+              </template>
+              <dortmund-code-input v-model="editForm.matchCode" code-kind="match" :date-value="editForm.matchTime"
+                maxlength="23" placeholder="必填，可自动生成比赛编码" :disabled="editMode !== 'add'" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="比赛场地" prop="matchVenue">
+            <el-form-item prop="matchVenue">
+              <template slot="label">
+                <dortmund-form-label label="比赛场地" tip="选填；最多233个字符，可从已有场地中选择或直接输入" />
+              </template>
               <dortmund-option-select v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入比赛场地" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="比赛状态" prop="matchStatus">
+            <el-form-item prop="matchStatus">
+              <template slot="label">
+                <dortmund-form-label label="比赛状态" tip="必填；0=正常启用，1=关闭；关闭的比赛不能继续维护倍率" />
+              </template>
               <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态"
                 popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
@@ -120,7 +141,10 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
-            <el-form-item label="比赛结果" prop="matchResult">
+            <el-form-item prop="matchResult">
+              <template slot="label">
+                <dortmund-form-label label="比赛结果" tip="选填；仅可为空或0/1/2，含义以比赛结果字典为准" />
+              </template>
               <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable
                 popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
@@ -129,8 +153,12 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="比赛备注" prop="matchRemark">
-              <el-input v-model="editForm.matchRemark" type="textarea" placeholder="请输入比赛备注内容" />
+            <el-form-item prop="matchRemark">
+              <template slot="label">
+                <dortmund-form-label label="比赛备注" tip="选填；最多1023个字符" />
+              </template>
+              <el-input v-model="editForm.matchRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
+                placeholder="请输入比赛备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -162,49 +190,7 @@
           </el-col>
 
           <el-col :span="24" v-if="editMode === 'add' && newOddsVisible">
-            <div class="match-odds-panel">
-              <div class="match-odds-panel-title">
-                <i class="el-icon-odometer"></i>
-                <span>首条有效 odds</span>
-              </div>
-              <el-row :gutter="12">
-                <el-col :xs="24" :md="8">
-                  <el-form-item label="倍率编码" prop="newOdds.oddsCode" label-width="80px">
-                    <el-input v-model="editForm.newOdds.oddsCode" maxlength="23" show-word-limit
-                      placeholder="推荐格式：体彩比赛日期+期号" />
-                  </el-form-item>
-                </el-col>
-                <el-col :xs="24" :md="8">
-                  <el-form-item label="来源时间" prop="newOdds.sourceTime" label-width="80px">
-                    <el-date-picker v-model="editForm.newOdds.sourceTime" type="datetime"
-                      popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
-                      placeholder="必选" />
-                  </el-form-item>
-                </el-col>
-                <el-col :xs="24" :md="8">
-                  <el-form-item label="让分值" prop="newOdds.handicapValue" label-width="80px">
-                    <el-input v-model="editForm.newOdds.handicapValue" placeholder="必填" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              <el-row :gutter="12" v-for="row in oddsRows" :key="row.key">
-                <el-col :xs="24" :md="4">
-                  <div class="match-odds-type">
-                    <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="row.type" />
-                  </div>
-                </el-col>
-                <el-col :xs="24" :md="10">
-                  <el-form-item label="倍率" :prop="'newOdds.' + row.oddsField" label-width="58px">
-                    <el-input v-model="editForm.newOdds[row.oddsField]" placeholder="大于 0" />
-                  </el-form-item>
-                </el-col>
-                <el-col :xs="24" :md="10">
-                  <el-form-item label="权重" :prop="'newOdds.' + row.weightField" label-width="58px">
-                    <el-input v-model="editForm.newOdds[row.weightField]" placeholder="空默认 100" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </div>
+            <dortmund-odds-form :form="editForm.newOdds" prefix="newOdds." />
           </el-col>
         </el-row>
       </div>
@@ -230,12 +216,12 @@
                 <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
                 <el-table-column label="内容" prop="pointContent" min-width="200" show-overflow-tooltip />
                 <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
-                <el-table-column label="操作" align="center" width="110">
+                <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="90" fixed="right">
                   <template slot-scope="scope">
-                    <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
-                      @click="openDraftInfo(scope.row)">编辑</el-button>
-                    <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
-                      @click="removeDraftInfo(scope.$index)">删除</el-button>
+                    <dortmund-action-button label="编辑" icon="el-icon-edit" action="edit"
+                      @click="openDraftInfo(scope.row)" />
+                    <dortmund-action-button label="删除" icon="el-icon-delete" action="delete"
+                      @click="removeDraftInfo(scope.$index)" />
                   </template>
                 </el-table-column>
               </el-table>
@@ -269,13 +255,29 @@ import MatchNewSeasonPanel from "../MatchNewSeasonPanel/index";
 import MatchNewTeamPanel from "../MatchNewTeamPanel/index";
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import DortmundOddsInlineEditor from "@/views/fx67ll/dortmund/other/component/DortmundOddsInlineEditor/index.vue";
+import DortmundOddsForm from "@/views/fx67ll/dortmund/other/component/DortmundOddsForm/index";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import { buildEmptyOdds, buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/utils/odds";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_STATUS_OPTIONS,
+  enumRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimText,
+  trimTextFields,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "MatchEditScene",
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
-    DortmundInfoPointFormDialog, DortmundOddsInlineEditor, DortmundOptionSelect, DortmundSeasonSelect
+    DortmundFormLabel, DortmundInfoPointFormDialog, DortmundOddsForm, DortmundOddsInlineEditor, DortmundCodeInput,
+    DortmundOptionSelect, DortmundSeasonSelect, DortmundActionButton
   },
   props: {
     // 编排场景模式（add新增 update修改）
@@ -339,49 +341,14 @@ export default {
           { required: true, validator: checkAwayTeamFilled, trigger: "change" }
         ],
         matchTime: [
-          { required: true, message: "比赛时间不能为空", trigger: "blur" }
+          { required: true, message: "比赛时间不能为空", trigger: "change" }
         ],
-        matchStatus: [
-          { required: true, message: "比赛状态不能为空", trigger: "blur" }
-        ],
-        matchCode: [
-          { required: true, message: "比赛编码不能为空", trigger: "blur" }
-        ],
-        "newOdds.oddsCode": [
-          { required: true, message: "倍率编码不能为空", trigger: "blur" }
-        ],
-        "newOdds.sourceTime": [
-          { required: true, message: "来源时间不能为空", trigger: "change" }
-        ],
-        "newOdds.handicapValue": [
-          {
-            required: true,
-            validator: (rule, value, callback) => {
-              if (value == null || value === "") {
-                callback(new Error("让分值不能为空"));
-                return;
-              }
-              if (!/^[+-]?\d+(\.\d+)?$/.test(String(value))) {
-                callback(new Error("让分值必须为数字"));
-                return;
-              }
-              callback();
-            },
-            trigger: "blur",
-          }
-        ],
-        "newOdds.homeWinOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.drawOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.awayWinOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.handicapHomeWinOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.handicapDrawOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.handicapAwayWinOdds": [{ validator: this.checkNewOddsPositive, trigger: "blur" }],
-        "newOdds.homeWinWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
-        "newOdds.drawWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
-        "newOdds.awayWinWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
-        "newOdds.handicapHomeWinWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
-        "newOdds.handicapDrawWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
-        "newOdds.handicapAwayWinWeight": [{ validator: this.checkNewOddsWeight, trigger: "blur" }],
+        matchStatus: [enumRule("比赛状态", DORTMUND_STATUS_OPTIONS, true)],
+        matchCode: [requiredTextRule("比赛编码", DORTMUND_LIMITS.matchCode)],
+        matchVenue: [optionalTextRule("比赛场地", DORTMUND_LIMITS.matchVenue)],
+        matchResult: [enumRule("比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
+        matchRemark: [optionalTextRule("比赛备注", DORTMUND_LIMITS.matchRemark)],
+        ...buildOddsRules("newOdds."),
       },
       // 当场新增赛季面板开关
       newSeasonVisible: false,
@@ -395,15 +362,6 @@ export default {
       selectedAwayTeam: this.buildSelectedTeam(this.initialForm, "away"),
       teamSelectorVisible: false,
       teamSelectorSide: "home",
-      // 六类 odds 输入行
-      oddsRows: [
-        { key: "homeWin", type: "HW", oddsField: "homeWinOdds", weightField: "homeWinWeight" },
-        { key: "draw", type: "DR", oddsField: "drawOdds", weightField: "drawWeight" },
-        { key: "awayWin", type: "AW", oddsField: "awayWinOdds", weightField: "awayWinWeight" },
-        { key: "handicapHomeWin", type: "HH", oddsField: "handicapHomeWinOdds", weightField: "handicapHomeWinWeight" },
-        { key: "handicapDraw", type: "HD", oddsField: "handicapDrawOdds", weightField: "handicapDrawWeight" },
-        { key: "handicapAwayWin", type: "HA", oddsField: "handicapAwayWinOdds", weightField: "handicapAwayWinWeight" },
-      ],
       // 随比赛一起创建的关联信息点
       newInfoPoints: [],
       draftInfoVisible: false,
@@ -426,27 +384,7 @@ export default {
         matchStatus: initial.matchStatus || null,
         matchResult: initial.matchResult || null,
         matchRemark: initial.matchRemark || null,
-        newOdds: this.buildEmptyOdds(),
-      };
-    },
-    // 构建首条同步 odds 的空表单
-    buildEmptyOdds() {
-      return {
-        oddsCode: null,
-        sourceTime: null,
-        handicapValue: null,
-        homeWinOdds: null,
-        drawOdds: null,
-        awayWinOdds: null,
-        handicapHomeWinOdds: null,
-        handicapDrawOdds: null,
-        handicapAwayWinOdds: null,
-        homeWinWeight: null,
-        drawWeight: null,
-        awayWinWeight: null,
-        handicapHomeWinWeight: null,
-        handicapDrawWeight: null,
-        handicapAwayWinWeight: null,
+        newOdds: buildEmptyOdds(),
       };
     },
     buildEmptyInfoPoint() {
@@ -484,35 +422,11 @@ export default {
     toggleNewOdds() {
       this.newOddsVisible = !this.newOddsVisible;
       if (!this.newOddsVisible) {
-        this.editForm.newOdds = this.buildEmptyOdds();
+        this.editForm.newOdds = buildEmptyOdds();
       }
       this.$nextTick(() => {
         this.$refs.editForm && this.$refs.editForm.clearValidate();
       });
-    },
-    // 校验首条 odds 的倍率值
-    checkNewOddsPositive(rule, value, callback) {
-      if (value == null || value === "") {
-        callback(new Error("倍率不能为空"));
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value)) || parseFloat(value) <= 0) {
-        callback(new Error("倍率必须为大于 0 的数字"));
-        return;
-      }
-      callback();
-    },
-    // 校验首条 odds 的手工权重
-    checkNewOddsWeight(rule, value, callback) {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value)) || parseFloat(value) < 0 || parseFloat(value) > 100) {
-        callback(new Error("权重必须在 0 到 100 之间"));
-        return;
-      }
-      callback();
     },
     // 展开/收起当场新增赛季面板（展开时清空已选赛季，收起时还原可选；面板v-if重新挂载自带表单重置）
     toggleNewSeasonPanel() {
@@ -591,12 +505,12 @@ export default {
     buildSubmitData() {
       const isAdd = this.editMode === "add";
       const data = {
-        matchCode: this.editForm.matchCode,
+        matchCode: trimText(this.editForm.matchCode),
         matchTime: this.editForm.matchTime,
-        matchVenue: this.editForm.matchVenue,
+        matchVenue: trimText(this.editForm.matchVenue),
         matchStatus: this.editForm.matchStatus,
-        matchResult: this.editForm.matchResult,
-        matchRemark: this.editForm.matchRemark,
+        matchResult: trimText(this.editForm.matchResult),
+        matchRemark: trimText(this.editForm.matchRemark),
       };
       if (isAdd) {
         // 当场新增面板展开时提交新建体，否则提交已选记录ID
@@ -616,10 +530,13 @@ export default {
           data.awayTeamId = this.editForm.awayTeamId;
         }
         if (this.newOddsVisible) {
-          data.newOdds = { ...this.editForm.newOdds };
+          data.newOdds = trimOddsFields(this.editForm.newOdds);
         }
         data.newInfoPoints = this.newInfoPoints.map((item) => ({
-          ...item,
+          ...trimTextFields(item, [
+            "pointTitle", "pointContent", "sourceName", "sourceUrl", "collectTime", "sourcePublishTime",
+            "effectiveStartTime", "effectiveEndTime", "pointRemark",
+          ]),
           allowPublic: "0",
         }));
       } else {

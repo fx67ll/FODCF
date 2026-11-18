@@ -30,8 +30,10 @@
       <el-form ref="simVersionForm" :model="simVersionForm" :rules="simVersionRules" label-width="0"
         class="sim-version-create-form" @submit.native.prevent>
         <el-form-item prop="versionName">
-          <div class="sim-version-create-label">版本名称</div>
-          <el-input v-model="simVersionForm.versionName" maxlength="20" show-word-limit placeholder="请输入新版本名称"
+          <div class="sim-version-create-label">
+            <dortmund-form-label label="版本名称" tip="必填，最多64个字符；仅用于辨识版本，不能全部为空格" />
+          </div>
+          <el-input v-model="simVersionForm.versionName" maxlength="64" show-word-limit placeholder="请输入新版本名称"
             clearable />
           <div class="sim-version-create-tip">名称仅用于辨识版本，创建后随版本保存</div>
         </el-form-item>
@@ -73,9 +75,12 @@
 
 <script>
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import { DORTMUND_LIMITS, formatPlainDecimal, requiredTextRule } from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "SimVersionCreateDialog",
+  components: { DortmundFormLabel },
   props: {
     // 弹窗开关
     visible: {
@@ -102,16 +107,7 @@ export default {
       // 新版本表单校验
       simVersionRules: {
         versionName: [
-          {
-            required: true,
-            message: "版本名称不能为空",
-            trigger: "blur",
-          },
-          {
-            pattern: /^\S+.*\S+$|^\S+$/,
-            message: "版本名称不能为纯空格",
-            trigger: "blur",
-          },
+          requiredTextRule("版本名称", DORTMUND_LIMITS.simulateVersionName),
         ],
       },
     };
@@ -163,7 +159,7 @@ export default {
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return parseFloat(value || 0).toFixed(2);
+      return formatPlainDecimal(value, 2, "0.00");
     },
   },
 };

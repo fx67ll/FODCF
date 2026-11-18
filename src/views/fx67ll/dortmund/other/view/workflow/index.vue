@@ -9,7 +9,7 @@
         </div>
         <div class="workflow-hero-text">
           <h2>自由发电机计划 · 需求全流程</h2>
-          <p>从数据基石到运行观测共六个阶段，点击已上线节点直达页面，未上线节点开发中敬请期待</p>
+          <p>从数据基石到运行观测共七个阶段，点击已上线节点直达页面，未上线节点开发中敬请期待</p>
           <p class="workflow-hero-hint">{{ progressHintText }}</p>
         </div>
       </div>
@@ -47,10 +47,10 @@ const PAGE_COMPONENTS = {
   season: "fx67ll/dortmund/basic/season/index",
   team: "fx67ll/dortmund/basic/team/index",
   match: "fx67ll/dortmund/basic/match/index",
-  odds: "fx67ll/dortmund/odds/index",
+  odds: "fx67ll/dortmund/basic/odds/index",
   returnCombination: "fx67ll/dortmund/return/index",
   plan: "fx67ll/dortmund/plan/index",
-  info: "fx67ll/dortmund/info/index",
+  info: "fx67ll/dortmund/basic/info/index",
   extra: "fx67ll/dortmund/extra/index",
 };
 
@@ -62,7 +62,7 @@ export default {
   components: { WorkflowTimeline },
   data() {
     return {
-      // 全流程六个阶段，done 为节点上线状态
+      // 全流程七个阶段，done 为节点上线状态
       stages: [
         {
           title: "阶段一 · 数据基石",
@@ -76,7 +76,8 @@ export default {
           title: "阶段 1.5 · 版本与生成",
           nodes: [
             { key: "odds", title: "倍率版本", desc: "六类倍率版本、有效切换与当场创建", icon: "el-icon-odometer", done: true, componentPath: PAGE_COMPONENTS.odds },
-            { key: "returnCombination", title: "回报组合", desc: "AI生成、批次复核与采用审核", icon: "el-icon-magic-stick", done: true, componentPath: PAGE_COMPONENTS.returnCombination },
+            { key: "returnCombination", title: "回报组合", desc: "异步AI生成、批次复核与采用审核", icon: "el-icon-magic-stick", done: true, componentPath: PAGE_COMPONENTS.returnCombination },
+            { key: "manualAiTask", title: "人工AI任务", desc: "创建独立任务并导出，第三方结果按契约回填", icon: "el-icon-upload2", done: true, componentPath: PAGE_COMPONENTS.returnCombination },
           ],
         },
         {
@@ -96,6 +97,7 @@ export default {
         {
           title: "阶段四 · AI能力底座",
           nodes: [
+            { key: "generalAi", title: "通用AI模块", desc: "模型、Prompt、流控、日志与费用统一编排", icon: "el-icon-connection", done: false },
             { key: "promptGroup", title: "Prompt分组", desc: "提示词分组管理", icon: "el-icon-collection", done: false },
             { key: "promptScene", title: "Prompt场景", desc: "提示词场景编排", icon: "el-icon-chat-dot-square", done: false },
             { key: "promptTemplate", title: "Prompt模板", desc: "提示词模板维护", icon: "el-icon-tickets", done: false },

@@ -95,42 +95,42 @@
     </el-row>
 
     <el-table v-loading="loading" :data="extraList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="外快总金额" align="center" prop="extraMoney" fixed="left" width="90" />
-      <el-table-column label="是否盈利" align="center" prop="isWin" fixed="left" width="80">
+      <el-table-column type="selection" width="46" align="center" />
+      <el-table-column label="外快总金额" align="center" prop="extraMoney" fixed="left" width="120" />
+      <el-table-column label="是否盈利" align="center" prop="isWin" fixed="left" width="96">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isWin" />
         </template>
       </el-table-column>
-      <el-table-column label="本次外快盈亏金额" align="center" prop="winMoney" fixed="left" width="130">
+      <el-table-column label="本次盈亏" align="center" prop="winMoney" fixed="left" width="130">
         <template slot-scope="scope">
           <span :class="['money-text', getMoneyClass(scope.row.isWin === 'Y' ? 1 : parseFloat(scope.row.winMoney))]">{{
             formatMoneyDisplay(scope.row.winMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="历史总盈亏金额" align="center" prop="currentMoney" width="120">
+      <el-table-column label="历史总盈亏" align="center" prop="currentMoney" width="130">
         <template slot-scope="scope">
           <span :class="['money-text', getMoneyClass(parseFloat(scope.row.currentMoney))]">{{
             formatMoneyDisplay(scope.row.currentMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="当前投入本金" align="center" prop="seedMoney" width="100">
+      <el-table-column label="当前本金" align="center" prop="seedMoney" width="112">
         <template slot-scope="scope">
           <span>{{ formatMoneyDisplay(scope.row.seedMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="已经落袋为安的盈利金额" align="center" prop="saveMoney" width="170">
+      <el-table-column label="已落袋盈利" align="center" prop="saveMoney" width="132">
         <template slot-scope="scope">
           <span>{{ formatMoneyDisplay(scope.row.saveMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="目标金额" align="center" prop="targetMoney" width="80">
+      <el-table-column label="目标金额" align="center" prop="targetMoney" width="112">
         <template slot-scope="scope">
           <span>{{ formatMoneyDisplay(scope.row.targetMoney) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="外快备注" align="center" prop="extraRemark" width="230" :show-overflow-tooltip="true" />
-      <el-table-column label="关联方案计划" align="center" prop="planCount" width="110">
+      <el-table-column label="外快备注" align="center" prop="extraRemark" min-width="200" :show-overflow-tooltip="true" />
+      <el-table-column label="关联方案计划" align="center" prop="planCount" width="120">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.planCount > 0" size="small" effect="plain" type="success" class="plan-link-column-tag"
             @click.native="handleViewRowPlans(scope.row)">{{ scope.row.planCount
@@ -138,30 +138,66 @@
           <span v-else>未关联</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" width="90" />
-      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="160">
+      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" width="90" />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="160">
+      <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="140">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
+        fixed="right" width="122">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['dortmund:extra:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['dortmund:extra:remove']">删除</el-button>
+        <dortmund-action-button label="详情" icon="el-icon-document" action="detail"
+          @click="handleDetail(scope.row)" v-hasPermi="['dortmund:extra:query']" />
+        <dortmund-action-button label="修改" icon="el-icon-edit" action="edit"
+          @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:extra:edit']" />
+        <dortmund-action-button label="删除" icon="el-icon-delete" action="delete"
+          @click="handleDelete(scope.row)" v-hasPermi="['dortmund:extra:remove']" />
         </template>
       </el-table-column>
     </el-table>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
       :page-sizes="[5, 10, 23, 50, 100]" @pagination="getList" />
+
+    <!-- 外快盈亏只读详情抽屉：金额构成、关联方案与审计信息统一在侧边展示 -->
+    <dortmund-detail-drawer :visible.sync="detailVisible" title="外快盈亏详情"
+      :subtitle="detailData.extraId ? `记录编号 · ${detailData.extraId}` : '查看金额构成、关联方案与审计信息'"
+      icon="el-icon-wallet" tone="amber" size="680px" :loading="detailLoading" feature="extra">
+      <dortmund-detail-card title="金额与状态" icon="el-icon-money" tone="amber">
+        <dortmund-detail-block variant='ledger' tone='amber' :items='extraLedgerItems' />
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="外快备注" icon="el-icon-document" tone="green">
+        <div class="dortmund-detail-text-block">{{ detailData.extraRemark || '暂无外快备注' }}</div>
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="关联方案计划" icon="el-icon-collection-tag" tone="green"
+        :subtitle="`当前用户可见 ${(detailData.plans || []).length} 条`">
+        <el-table :data="detailData.plans || []" size="small" empty-text="暂无有权查看的关联方案计划">
+          <el-table-column label="方案计划" prop="planContent" min-width="220" show-overflow-tooltip />
+          <el-table-column label="录入倍率" align="center" prop="planRate" width="100" />
+          <el-table-column label="录入金额" align="center" prop="planAmount" width="120">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planAmount) }}</template>
+          </el-table-column>
+        </el-table>
+        <el-alert v-if="detailData.hiddenPlanCount > 0" class="extra-detail-hidden-tip" type="warning" :closable="false"
+          show-icon :title="`另有 ${detailData.hiddenPlanCount} 条无权查看的关联，方案计划本身不会删除`" />
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="审计信息" icon="el-icon-time" tone="green">
+      <dortmund-detail-block variant='timeline' tone='green' :items='extraAuditTimeline' />
+      </dortmund-detail-card>
+      <template slot="footer">
+        <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="detailVisible = false">关闭</el-button>
+      </template>
+    </dortmund-detail-drawer>
 
     <!-- 数值模拟抽屉（外快盈亏记录页的扩展功能） -->
     <simulate-drawer :visible.sync="simulateOpen" />
@@ -188,6 +224,11 @@ import { checkPermi } from "@/utils/common/permission";
 
 import CommonEnhancedSelect from "@/components/CommonEnhancedSelect/index";
 
+import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
+import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
+
 import ExtraHistoryChartDialog from "./components/ExtraHistoryChartDialog/index.vue";
 import ExtraMergeDialog from "./components/ExtraMergeDialog/index.vue";
 import PlanSummaryDialog from "./components/PlanSummaryDialog/index.vue";
@@ -205,11 +246,44 @@ const PAGE_MODE_KEY = "dortmund-extra-page-mode";
 export default {
   name: "DortmundExtra",
   dicts: ["sys_yes_no"],
-  components: { CommonEnhancedSelect, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer },
+  components: {
+    CommonEnhancedSelect, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer,
+    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
+  },
+  computed: {
+    extraLedgerItems() {
+      const target = parseFloat(this.detailData.targetMoney) || 0;
+      const saved = parseFloat(this.detailData.saveMoney) || 0;
+      return [
+        { label: '记录编号', value: this.detailData.extraId, icon: 'el-icon-postcard' },
+        { label: '本次是否盈利', value: this.detailData.isWin === 'Y' ? '盈利' : '亏损', icon: 'el-icon-top', state: this.detailData.isWin === 'Y' ? 'success' : 'danger' },
+        { label: '外快总金额', value: this.formatMoneyDisplay(this.detailData.extraMoney), icon: 'el-icon-wallet' },
+        { label: '本次盈亏金额', value: this.formatMoneyDisplay(this.detailData.winMoney), icon: 'el-icon-trend-charts', state: this.detailData.isWin === 'Y' ? 'success' : 'danger' },
+        { label: '历史总盈亏金额', value: this.formatMoneyDisplay(this.detailData.currentMoney), icon: 'el-icon-data-line', state: parseFloat(this.detailData.currentMoney) >= 0 ? 'success' : 'danger' },
+        { label: '当前投入本金', value: this.formatMoneyDisplay(this.detailData.seedMoney), icon: 'el-icon-money' },
+        { label: '已落袋为安', value: this.formatMoneyDisplay(this.detailData.saveMoney), icon: 'el-icon-coin', percent: target ? (saved / target) * 100 : null, hint: target ? `目标进度 ${Math.round((saved / target) * 100)}%` : '未设置目标金额' },
+        { label: '目标金额', value: this.formatMoneyDisplay(this.detailData.targetMoney), icon: 'el-icon-aim' },
+        { label: '关联方案计划', value: `${this.detailData.planCount || 0} 条`, icon: 'el-icon-collection-tag' },
+      ];
+    },
+    extraAuditTimeline() {
+      return [
+        { label: '归属用户ID', value: this.detailData.userId || '-', icon: 'el-icon-user' },
+        { label: '记录创建者', value: this.detailData.createBy || '-', icon: 'el-icon-user' },
+        { label: '记录创建时间', value: this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-time' },
+        { label: '记录更新者', value: this.detailData.updateBy || '-', icon: 'el-icon-user' },
+        { label: '记录更新时间', value: this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-refresh' },
+      ];
+    },
+  },
   data() {
     return {
       // 数值模拟抽屉开关
       simulateOpen: false,
+      // 只读详情抽屉开关、加载状态与详情快照
+      detailVisible: false,
+      detailLoading: false,
+      detailData: {},
       // 遮罩层
       loading: true,
       // 选中数组
@@ -305,6 +379,19 @@ export default {
     handleOpenSimulate() {
       this.simulateOpen = true;
     },
+    // 详情按钮操作：先展示列表快照，再异步补全金额、关联方案与审计信息
+    handleDetail(row) {
+      this.detailData = { ...(row || {}) };
+      this.detailVisible = true;
+      this.detailLoading = true;
+      getExtra(row.extraId).then((response) => {
+        this.detailData = { ...(row || {}), ...((response && response.data) || {}) };
+      }).catch(() => {
+        // 接口异常由请求拦截器统一提示，保留列表快照避免详情抽屉空白
+      }).finally(() => {
+        this.detailLoading = false;
+      });
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
@@ -326,9 +413,13 @@ export default {
       }
       listExtra(this.queryParams).then((response) => {
         this.extraList = this.countCurrentMoney(
-          this.formatObjectArrayNullProperty(response.rows)
+          this.formatObjectArrayNullProperty(response.rows || [])
         );
-        this.total = response.total;
+        this.total = response.total || 0;
+      }).catch(() => {
+        // 列表加载失败时清空旧数据，避免筛选条件与残留结果不一致
+        this.extraList = [];
+        this.total = 0;
       }).finally(() => {
         this.loading = false;
       });
@@ -440,6 +531,10 @@ export default {
       getExtra(row.extraId).then((response) => {
         this.rowPlansList = response?.data?.plans || [];
         this.rowPlansHiddenCount = response?.data?.hiddenPlanCount || 0;
+      }).catch(() => {
+        // 接口异常由请求拦截器统一提示，这里保留空摘要并关闭加载态
+        this.rowPlansList = [];
+        this.rowPlansHiddenCount = 0;
       }).finally(() => {
         this.rowPlansLoading = false;
       });
@@ -515,5 +610,9 @@ export default {
 
 .plan-link-column-tag {
   cursor: pointer;
+}
+
+.extra-detail-hidden-tip {
+  margin-top: 10px;
 }
 </style>

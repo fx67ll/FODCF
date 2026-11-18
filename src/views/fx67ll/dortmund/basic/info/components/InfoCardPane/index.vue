@@ -13,13 +13,14 @@
         </div>
         <div class="info-card-content">{{ point.pointContent || '-' }}</div>
         <div class="info-card-tags">
-          <el-tag v-if="point.infoPointType === 'T' && point.seasonName" size="mini" effect="plain"
+          <el-tag v-if="point.infoPointType === 'T' && point.seasonName" size="mini" effect="plain" type="success"
             class="info-card-season-tag">{{ point.seasonName }}</el-tag>
-          <el-tag v-for="team in visibleTeamRels(point).slice(0, 3)" :key="team.teamId" size="mini" effect="plain"
-            class="info-card-team-tag">{{ team.teamName || ('球队' + team.teamId) }}</el-tag>
+          <el-tag v-for="team in visibleTeamRels(point).slice(0, 3)" :key="team.teamId || team.teamName" size="mini"
+            effect="plain" type="success" class="info-card-team-tag">{{ team.teamName || (team.teamId ? '球队 #' +
+              team.teamId : '球队信息缺失') }}</el-tag>
           <span class="info-card-team-more" v-if="visibleTeamRels(point).length > 3">+{{ visibleTeamRels(point).length -
             3
-            }}支</span>
+          }}支</span>
         </div>
         <div class="info-card-meta">
           <span v-if="point.infoPointType === 'M' && formatMatchText(point)">比赛：{{ formatMatchText(point) }}</span>
@@ -30,15 +31,14 @@
         </div>
         <div class="info-card-footer">
           <span class="info-card-actions">
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
-              @click="$emit('detail', point)" v-hasPermi="['dortmund:info:point:query']">详情</el-button>
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
-              @click="$emit('update', point)" v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
-            <el-button size="mini" type="text" class="dortmund-theme-text"
-              :icon="point.pointStatus === '0' ? 'el-icon-close' : 'el-icon-open'" @click="$emit('changeStatus', point)"
-              v-hasPermi="['dortmund:info:point:changeStatus']">{{
-                point.pointStatus === '0' ? '停用' : '启用'
-              }}</el-button>
+            <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="$emit('detail', point)"
+              v-hasPermi="['dortmund:info:point:query']" />
+            <dortmund-action-button label="修改" icon="el-icon-edit" action="edit" @click="$emit('update', point)"
+              v-hasPermi="['dortmund:info:point:edit']" />
+            <dortmund-action-button :label="point.pointStatus === '0' ? '停用' : '启用'"
+              :icon="point.pointStatus === '0' ? 'el-icon-turn-off' : 'el-icon-video-play'"
+              :action="point.pointStatus === '0' ? 'disable' : 'enable'" @click="$emit('changeStatus', point)"
+              v-hasPermi="['dortmund:info:point:changeStatus']" />
           </span>
         </div>
       </div>
@@ -52,9 +52,12 @@
 </template>
 
 <script>
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+
 export default {
   name: "InfoCardPane",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_allow_public"],
+  components: { DortmundActionButton },
   props: {
     // 信息点列表数据（与列表视图同一份，父页面持有）
     rows: {
@@ -132,8 +135,8 @@ export default {
   }
 
   &.type-m {
-    color: #5a7d9a;
-    background: #ecf3f8;
+    color: #8a6b3d;
+    background: #faf3e6;
   }
 }
 

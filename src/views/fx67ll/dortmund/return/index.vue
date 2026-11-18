@@ -112,42 +112,42 @@
           <el-table-column type="selection" width="46" fixed="left" :selectable="isCombinationSelectable" />
           <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip fixed="left" />
           <el-table-column label="组合标题" prop="combinationTitle" min-width="190" show-overflow-tooltip />
-          <el-table-column label="模式" align="center" width="118">
+          <el-table-column label="模式" align="center" width="108">
             <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
           </el-table-column>
-          <el-table-column label="批次状态" align="center" width="92">
+          <el-table-column label="批次状态" align="center" width="100">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.fx67ll_ai_analysis_status || []" :value="scope.row.generationStatus" />
             </template>
           </el-table-column>
           <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="100" />
-          <el-table-column label="预计回报" align="center" width="110">
+          <el-table-column label="预计回报" align="center" width="112">
             <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
           </el-table-column>
-          <el-table-column label="偏差金额" align="center" width="110">
+          <el-table-column label="偏差金额" align="center" width="112">
             <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
           </el-table-column>
-          <el-table-column label="场次" align="center" prop="matchCount" width="70" />
-          <el-table-column label="采用状态" align="center" width="90">
+          <el-table-column label="场次" align="center" prop="matchCount" width="80" />
+          <el-table-column label="采用状态" align="center" width="100">
             <template slot-scope="scope">
               <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
                 {{ scope.row.adoptedFlag === "Y" ? "已采用" : "未采用" }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="审核时间" align="center" width="150">
+          <el-table-column label="审核时间" align="center" width="150" class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}") || "-" }}</template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="150" fixed="right">
+          <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="90" fixed="right">
             <template slot-scope="scope">
-              <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
-                @click="handleCombinationDetail(scope.row)" v-hasPermi="['dortmund:return:query']">详情</el-button>
-              <el-button v-if="scope.row.adoptedFlag !== 'Y'" size="mini" type="text" class="dortmund-theme-text"
-                icon="el-icon-check" :loading="reviewingId === scope.row.combinationId"
-                @click="handleReview(scope.row, 'Y')" v-hasPermi="['dortmund:return:review']">采用</el-button>
-              <el-button v-else size="mini" type="text" class="dortmund-theme-text" icon="el-icon-close"
+              <dortmund-action-button label="详情" icon="el-icon-document" action="detail"
+                @click="handleCombinationDetail(scope.row)" v-hasPermi="['dortmund:return:query']" />
+              <dortmund-action-button v-if="scope.row.adoptedFlag !== 'Y'" label="采用" icon="el-icon-check"
+                action="adopt" :loading="reviewingId === scope.row.combinationId" @click="handleReview(scope.row, 'Y')"
+                v-hasPermi="['dortmund:return:review']" />
+              <dortmund-action-button v-else label="不采用" icon="el-icon-close" action="reject"
                 :loading="reviewingId === scope.row.combinationId" @click="handleReview(scope.row, 'N')"
-                v-hasPermi="['dortmund:return:review']">不采用</el-button>
+                v-hasPermi="['dortmund:return:review']" />
             </template>
           </el-table-column>
         </el-table>
@@ -161,49 +161,60 @@
       </div>
     </div>
 
-    <el-drawer :visible.sync="generationVisible" title="生成批次详情" size="760px" append-to-body destroy-on-close
-      custom-class="return-drawer">
-      <div v-loading="generationLoading" class="return-drawer-body">
-        <div class="return-detail-card">
-          <div class="return-detail-title">{{ generationDetail.generationCode || "-" }}</div>
-          <div class="return-detail-grid">
-            <span><label>模式</label>{{ formatGenerationMode(generationDetail.generationMode) }}</span>
-            <span><label>状态</label>{{ formatGenerationStatus(generationDetail.generationStatus) }}</span>
-            <span><label>基础金额</label>{{ generationDetail.inputAmount || "-" }}</span>
-            <span><label>目标金额</label>{{ generationDetail.targetAmount || "-" }}</span>
-            <span><label>组合数</label>{{ generationDetail.generatedCount || 0 }}</span>
-            <span><label>完成时间</label>{{ parseTime(generationDetail.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-" }}</span>
-          </div>
-          <div class="return-detail-alert" v-if="generationDetail.generationStatus === '2'">
-            <i class="el-icon-warning-outline"></i>
-            <span>{{ generationDetail.generationRemark || "生成失败，没有产生可用的半截数据。" }}</span>
-          </div>
-        </div>
-        <div class="return-detail-card" v-if="generationInputSummary">
-          <div class="return-detail-title">业务输入摘要</div>
-          <pre class="return-input-summary">{{ generationInputSummary }}</pre>
-        </div>
-        <div class="return-detail-card">
-          <div class="return-detail-title">批次组合</div>
-          <el-table :data="generationDetail.combinations || []" size="small" empty-text="暂无组合">
-            <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip />
-            <el-table-column label="预计回报" align="center" prop="estimatedReturn" width="100" />
-            <el-table-column label="偏差" align="center" prop="deviationAmount" width="90" />
-            <el-table-column label="采用" align="center" prop="adoptedFlag" width="80">
-              <template slot-scope="scope">{{ scope.row.adoptedFlag === "Y" ? "是" : "否" }}</template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" width="80">
-              <template slot-scope="scope">
-                <el-button size="mini" type="text" class="dortmund-theme-text"
-                  @click="handleCombinationDetail(scope.row)">查看</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </div>
-    </el-drawer>
+    <dortmund-detail-drawer :visible.sync="generationVisible" title="生成批次详情"
+      :subtitle="generationDetail.generationCode ? `批次编码 · ${generationDetail.generationCode}` : '查看批次状态、业务输入与生成组合'"
+      icon="el-icon-time" tone="cyan" size="820px" :loading="generationLoading" feature="return">
+      <dortmund-detail-card title="批次概览" icon="el-icon-data-analysis" tone="cyan">
+        <dortmund-detail-block variant='metric' tone='cyan' :items='generationMetricItems' />
+        <div class='dortmund-detail-subheading'>批次生命周期</div>
+        <dortmund-detail-block variant='timeline' tone='cyan' :items='generationLifecycle' />
+        <el-alert v-if="generationDetail.generationStatus === '2'" class="return-detail-alert-block" type="error"
+          :closable="false" show-icon :title="generationDetail.generationRemark || '生成失败，没有产生可用的半截数据。'" />
+        <el-alert v-if="generationDetail.generationStatus === '3'" class="return-detail-alert-block" type="warning"
+          :closable="false" show-icon title="人工AI任务已创建。可在下方导出任务交给第三方AI，再导入标准化结果完成批次。" />
+        <el-alert v-if="generationDetail.aiEvidenceError" class="return-detail-alert-block" type="error"
+          :closable="false" show-icon :title="`证据流程：${generationDetail.aiEvidenceError}`" />
+      </dortmund-detail-card>
 
-    <el-drawer :visible.sync="historyVisible" title="回报组合历史批次" size="900px" append-to-body destroy-on-close
+      <dortmund-detail-card title="AI分析工作流" icon="el-icon-share" tone="green" subtitle="追溯规划、检索、分析、校验与落库；异常和偏置会给出诊断提示">
+        <return-ai-workflow :generation="generationDetail" :can-view-raw="hasRemarkQueryPermission" />
+      </dortmund-detail-card>
+
+      <manual-ai-task-panel ref="manualAiTaskPanel" :generation-id="generationDetail.generationId || null"
+        :generation-code="generationDetail.generationCode || ''"
+        :generation-status="generationDetail.generationStatus || null" @imported="handleManualImported" />
+
+      <dortmund-detail-card v-if="generationInputSummary" title="业务输入摘要" icon="el-icon-document" tone="green">
+        <pre class="return-input-summary">{{ generationInputSummary }}</pre>
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="批次组合" icon="el-icon-collection-tag" tone="green"
+        :subtitle="`共 ${(generationDetail.combinations || []).length} 条`">
+        <el-table :data="generationDetail.combinations || []" size="small" empty-text="暂无组合">
+          <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip />
+          <el-table-column label="预计回报" align="center" prop="estimatedReturn" width="108" />
+          <el-table-column label="偏差" align="center" prop="deviationAmount" width="96" />
+          <el-table-column label="AI置信度" align="center" width="100">
+            <template slot-scope="scope">{{ formatConfidence(scope.row.aiConfidence) }}</template>
+          </el-table-column>
+          <el-table-column label="AI风险提示" prop="riskNotes" min-width="160" show-overflow-tooltip />
+          <el-table-column label="采用" align="center" prop="adoptedFlag" width="84">
+            <template slot-scope="scope">{{ scope.row.adoptedFlag === "Y" ? "是" : "否" }}</template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="68" fixed="right">
+            <template slot-scope="scope">
+              <dortmund-action-button label="查看" icon="el-icon-document" action="detail"
+                @click="handleCombinationDetail(scope.row)" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </dortmund-detail-card>
+      <template slot="footer">
+        <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="generationVisible = false">关闭</el-button>
+      </template>
+    </dortmund-detail-drawer>
+
+    <el-drawer :visible.sync="historyVisible" title="回报组合历史批次" size="1044px" append-to-body destroy-on-close
       custom-class="return-drawer return-history-drawer" @opened="handleBatchQuery">
       <div class="return-drawer-body dl-page">
         <div class="history-drawer-hero">
@@ -218,8 +229,8 @@
               @click="handleBatchExport" v-hasPermi="['dortmund:return:export']">导出批次</el-button>
           </div>
         </div>
-        <el-form ref="batchQueryForm" :model="batchQuery" class="dl-filter" size="small" :inline="true"
-          label-width="82px">
+        <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter" size="small" :inline="true"
+          label-width="76px">
           <el-form-item label="批次状态" prop="generationStatus">
             <el-select v-model="batchQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
               popper-class="dortmund-theme-popper">
@@ -234,14 +245,23 @@
               <el-option label="AI 模式" value="A" />
             </el-select>
           </el-form-item>
+          <el-form-item label="任务来源" prop="resultSource">
+            <el-select v-model="batchQuery.resultSource" placeholder="请选择任务来源" clearable style="width: 150px"
+              popper-class="dortmund-theme-popper">
+              <el-option label="自动AI批次" value="A" />
+              <el-option label="人工AI批次" value="M" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="创建时间">
             <el-date-picker v-model="batchDateRange" type="daterange" value-format="yyyy-MM-dd" range-separator="-"
               popper-class="dortmund-theme-popper" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px"
               clearable />
           </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleBatchQuery">搜索</el-button>
-            <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetBatchQuery">重置</el-button>
+          <el-form-item class="history-batch-actions">
+            <el-button type="primary" icon="el-icon-search" size="mini" :loading="batchLoading"
+              @click="handleBatchQuery">搜索</el-button>
+            <el-button icon="el-icon-refresh" size="mini" :disabled="batchLoading"
+              @click="resetBatchQuery">重置</el-button>
           </el-form-item>
         </el-form>
         <div class="history-table-card">
@@ -256,25 +276,38 @@
             <el-table v-loading="batchLoading" :data="batchList" row-key="generationId" size="small"
               class="history-table">
               <el-table-column label="批次编码" prop="generationCode" min-width="170" show-overflow-tooltip fixed="left" />
-              <el-table-column label="模式" align="center" width="96">
+              <el-table-column label="模式" align="center" width="108">
                 <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
               </el-table-column>
-              <el-table-column label="状态" align="center" prop="generationStatus" width="84">
+              <el-table-column label="状态" align="center" prop="generationStatus" width="100">
                 <template slot-scope="scope">
                   <dict-tag :options="dict.type.fx67ll_ai_analysis_status" :value="scope.row.generationStatus" />
                 </template>
               </el-table-column>
-              <el-table-column label="基础金额" align="center" prop="inputAmount" width="100" />
-              <el-table-column label="目标金额" align="center" prop="targetAmount" width="100" />
-              <el-table-column label="组合数" align="center" prop="generatedCount" width="76" />
-              <el-table-column label="完成时间" align="center" width="150">
+              <el-table-column label="批次类型" align="center" width="150">
+                <template slot-scope="scope">
+                  <el-tag :type="generationTaskType(scope.row).type" size="mini">
+                    {{ generationTaskType(scope.row).label }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="基础金额" align="center" prop="inputAmount" width="110" />
+              <el-table-column label="目标金额" align="center" prop="targetAmount" width="110" />
+              <el-table-column label="组合数" align="center" prop="generatedCount" width="84" />
+              <el-table-column label="完成时间" align="center" width="150" class-name="dortmund-nowrap-cell">
                 <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-"
                 }}</template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="90" fixed="right">
+              <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="122" fixed="right">
                 <template slot-scope="scope">
-                  <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
-                    v-hasPermi="['dortmund:return:query']" @click="handleGenerationDetail(scope.row)">详情</el-button>
+                  <dortmund-action-button label="详情" icon="el-icon-document" action="detail"
+                    v-hasPermi="['dortmund:return:query']" @click="handleGenerationDetail(scope.row)" />
+                  <dortmund-action-button v-if="isManualTaskRow(scope.row)" label="导出任务" icon="el-icon-download"
+                    action="download" v-hasPermi="['dortmund:return:generate']"
+                    @click="handleManualTaskExport(scope.row)" />
+                  <dortmund-action-button v-if="isManualTaskRow(scope.row)" label="导入结果" icon="el-icon-upload2"
+                    action="upload" v-hasPermi="['dortmund:return:generate']"
+                    @click="handleManualTaskImport(scope.row)" />
                 </template>
               </el-table-column>
             </el-table>
@@ -335,14 +368,14 @@
           <el-table ref="orphanTable" v-loading="orphanSearchLoading" :data="orphanImageList" row-key="imageId"
             size="small" class="history-table orphan-table" @selection-change="handleOrphanSelectionChange">
             <el-table-column type="selection" width="46" fixed="left" />
-            <el-table-column label="预览" align="center" width="72">
+            <el-table-column label="预览" align="center" width="80">
               <template slot-scope="scope">
                 <el-image class="orphan-thumb" :src="baseUrl + scope.row.objectKey" fit="cover"
                   :preview-src-list="orphanImagePreviewList" />
               </template>
             </el-table-column>
             <el-table-column label="原文件名" prop="originalName" min-width="150" show-overflow-tooltip />
-            <el-table-column label="状态" align="center" width="104">
+            <el-table-column label="状态" align="center" width="112">
               <template slot-scope="scope">
                 <el-tag :type="orphanStateTagType(scope.row.imageState)" size="mini">
                   {{ formatOrphanImageState(scope.row.imageState) }}
@@ -350,19 +383,19 @@
               </template>
             </el-table-column>
             <el-table-column label="对象键" prop="objectKey" min-width="210" show-overflow-tooltip />
-            <el-table-column label="大小" align="center" width="86">
+            <el-table-column label="大小" align="center" width="92">
               <template slot-scope="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
             </el-table-column>
-            <el-table-column label="上传时间" align="center" width="150">
+            <el-table-column label="上传时间" align="center" width="150" class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}") || "-"
               }}</template>
             </el-table-column>
-            <el-table-column label="过期/重试" align="center" width="150">
+            <el-table-column label="过期/重试" align="center" width="150" class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
                 {{ parseTime(scope.row.nextRetryTime || scope.row.expireTime, "{y}-{m}-{d} {h}:{i}") || "-" }}
               </template>
             </el-table-column>
-            <el-table-column label="删除尝试" align="center" prop="deleteAttempts" width="84" />
+            <el-table-column label="删除尝试" align="center" prop="deleteAttempts" width="92" />
             <el-table-column label="最近错误" prop="lastError" min-width="160" show-overflow-tooltip />
           </el-table>
           <div v-if="!orphanSearchLoading && !orphanImageList.length" class="history-empty orphan-empty">
@@ -373,50 +406,23 @@
       </div>
     </el-drawer>
 
-    <el-drawer :visible.sync="combinationVisible" title="组合详情" size="720px" append-to-body destroy-on-close
-      custom-class="return-drawer">
-      <div v-loading="combinationLoading" class="return-drawer-body">
-        <div class="return-detail-card">
-          <div class="return-detail-title">{{ combinationDetail.combinationTitle || combinationDetail.combinationCode ||
-            "-"
-          }}</div>
-          <div class="return-detail-grid">
-            <span><label>组合倍率</label>{{ combinationDetail.combinedOdds || "-" }}</span>
-            <span><label>预计回报</label>{{ formatMoneyDisplay(combinationDetail.estimatedReturn) }}</span>
-            <span><label>偏差金额</label>{{ formatMoneyDisplay(combinationDetail.deviationAmount) }}</span>
-            <span><label>审核状态</label>{{ combinationDetail.adoptedFlag === "Y" ? "已采用" : "未采用" }}</span>
-          </div>
-          <div class="combination-reason" v-if="combinationDetail.combinationReason">{{
-            combinationDetail.combinationReason
-          }}</div>
-        </div>
-        <div class="return-detail-card" v-if="hasImageQueryPermission">
-          <div class="return-detail-title">组合图片</div>
-          <return-image-upload :combination-id="combinationDetail.combinationId || null"
-            :images="combinationDetail.images || []" :adopted-flag="combinationDetail.adoptedFlag || ''"
-            :plan-linked="Boolean(combinationDetail.planLinked)" :can-upload="hasImageUploadPermission"
-            @changed="refreshCombinationDetail(false)" />
-        </div>
-        <div class="return-detail-card">
-          <div class="return-detail-title">逐场明细</div>
-          <el-table :data="combinationDetail.matches || []" size="small" empty-text="暂无明细">
-            <el-table-column label="比赛" prop="matchSummary" min-width="180" show-overflow-tooltip />
-            <el-table-column label="类型" align="center" width="92">
-              <template slot-scope="scope">
-                <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="scope.row.selectionType" />
-              </template>
-            </el-table-column>
-            <el-table-column label="倍率快照" align="center" prop="oddsValueSnapshot" width="96" />
-            <el-table-column label="AI评估权重" align="center" width="108">
-              <!-- appliedWeight仅为AI评估权重，不参与金额计算。 -->
-              <template slot-scope="scope">{{ formatAppliedWeight(scope.row.appliedWeight) }}</template>
-            </el-table-column>
-            <el-table-column v-if="hasRemarkQueryPermission" label="选择理由" prop="selectionReason" min-width="170"
-              show-overflow-tooltip />
-          </el-table>
-        </div>
-      </div>
-    </el-drawer>
+    <dortmund-detail-drawer :visible.sync="combinationVisible" title="回报组合详情"
+      :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : '查看组合指标、证据链、图片与逐场明细'"
+      icon="el-icon-connection" tone="green" size="780px" :loading="combinationLoading" feature="return">
+      <return-analysis-result :combination="combinationDetail" :batch="combinationBatchContext"
+        :can-view-reason="hasRemarkQueryPermission" />
+
+      <dortmund-detail-card v-if="hasImageQueryPermission" title="组合图片" icon="el-icon-picture-outline" tone="amber">
+        <return-image-upload :combination-id="combinationDetail.combinationId || null"
+          :images="combinationDetail.images || []" :adopted-flag="combinationDetail.adoptedFlag || ''"
+          :plan-linked="Boolean(combinationDetail.planLinked)" :can-upload="hasImageUploadPermission"
+          @changed="refreshCombinationDetail(false)" />
+      </dortmund-detail-card>
+
+      <template slot="footer">
+        <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="combinationVisible = false">关闭</el-button>
+      </template>
+    </dortmund-detail-drawer>
 
     <dortmund-match-selector-modal :visible.sync="combinationMatchSelectorVisible"
       :selected-items="combinationMatch ? [combinationMatch] : []" @confirm="handleCombinationMatchConfirm" />
@@ -433,18 +439,30 @@ import {
   deleteOrphanReturnImages,
   getCombination,
   getGeneration,
+  getManualTask,
   listCombination,
   listGeneration,
   listOrphanReturnImages,
   rejectCombination,
 } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
+import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
+import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import ReturnImageUpload from "./components/ReturnImageUpload/index";
+import ManualAiTaskPanel from "./components/ManualAiTaskPanel/index";
+import ReturnAiWorkflow from "./components/ReturnAiWorkflow/index";
+import ReturnAnalysisResult from "./components/ReturnAnalysisResult/index";
 
 export default {
   name: "DortmundReturnCombination",
   dicts: ["fx67ll_dortmund_odds_type", "fx67ll_ai_analysis_status"],
-  components: { DortmundMatchSelectorModal, ReturnImageUpload },
+  components: {
+    DortmundMatchSelectorModal, ReturnImageUpload, ManualAiTaskPanel,
+    ReturnAiWorkflow, ReturnAnalysisResult,
+    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
+  },
   data() {
     return {
       batchList: [],
@@ -458,6 +476,7 @@ export default {
         pageSize: 10,
         generationStatus: null,
         generationMode: null,
+        resultSource: null,
         beginCreateTime: null,
         endCreateTime: null,
       },
@@ -503,11 +522,35 @@ export default {
     hasImageQueryPermission() {
       return checkPermi(["dortmund:return:image:query"]);
     },
+    generationMetricItems() {
+      return [
+        { label: '生成模式', value: this.formatGenerationMode(this.generationDetail.generationMode), icon: 'el-icon-magic-stick' },
+        { label: '批次状态', value: this.formatGenerationStatus(this.generationDetail.generationStatus), icon: 'el-icon-data-analysis', state: this.generationDetail.generationStatus === '1' ? 'success' : (this.generationDetail.generationStatus === '2' ? 'danger' : 'warning') },
+        { label: '结果来源', value: this.formatResultSource(this.generationDetail.resultSource), icon: 'el-icon-connection' },
+        { label: '基础金额', value: this.generationDetail.inputAmount || '-', icon: 'el-icon-money' },
+        { label: '目标金额', value: this.generationDetail.targetAmount || '-', icon: 'el-icon-aim' },
+        { label: '组合数', value: this.generationDetail.generatedCount || 0, icon: 'el-icon-collection-tag' },
+        { label: '完成时间', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-time' },
+      ];
+    },
+    generationLifecycle() {
+      return [
+        { label: '任务创建', value: this.parseTime(this.generationDetail.createTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-time' },
+        { label: '证据流程', value: this.generationDetail.generationMode === 'A' ? this.formatEvidenceStatus(this.generationDetail.aiEvidenceStatus) : '非AI模式', icon: 'el-icon-share', state: this.generationDetail.aiEvidenceError ? 'danger' : 'success' },
+        { label: '批次完成', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-circle-check', state: this.generationDetail.generationStatus === '1' ? 'success' : 'warning' },
+      ];
+    },
     hasImageUploadPermission() {
       return checkPermi(["dortmund:return:image:upload"]);
     },
     hasRemarkQueryPermission() {
       return checkPermi(["dortmund:return:remark:query"]);
+    },
+    combinationBatchContext() {
+      if (!this.generationDetail || !this.combinationDetail) return null;
+      if (!this.generationDetail.generationId || !this.combinationDetail.generationId) return null;
+      return String(this.generationDetail.generationId) === String(this.combinationDetail.generationId)
+        ? this.generationDetail : null;
     },
     generationInputSummary() {
       const snapshot = this.generationDetail.requestSnapshot;
@@ -542,9 +585,9 @@ export default {
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
     },
-    formatAppliedWeight(value) {
-      // appliedWeight是AI评估权重，仅供解释与复核，不参与任何金额计算。
-      return value == null ? "100" : value;
+    formatEvidenceStatus(value) {
+      const labels = { N: "不适用", P: "规划/检索中", R: "检索完成", S: "证据已固化", F: "失败" };
+      return labels[value] || "-";
     },
     formatMatchLabel(match) {
       if (!match) {
@@ -564,8 +607,30 @@ export default {
       return value === "A" ? "AI 模式" : "-";
     },
     formatGenerationStatus(value) {
-      const statusMap = { 0: "处理中", 1: "成功", 2: "失败" };
+      const statusMap = { 0: "处理中", 1: "成功", 2: "失败", 3: "待人工导入" };
       return statusMap[value] || "-";
+    },
+    formatResultSource(value) {
+      if (value === "A") return "自动AI";
+      if (value === "M") return "人工AI";
+      return "-";
+    },
+    formatConfidence(value) {
+      return value == null ? "-" : `${value}%`;
+    },
+    generationTaskType(row) {
+      if (row && row.generationStatus === "2") {
+        return { label: "自动失败可转人工", type: "danger" };
+      }
+      if (row && row.resultSource === "M") {
+        return row.generationStatus === "1"
+          ? { label: "人工AI已完成", type: "success" }
+          : { label: "人工AI任务", type: "warning" };
+      }
+      return { label: "自动AI", type: "info" };
+    },
+    isManualTaskRow(row) {
+      return Boolean(row) && ["2", "3"].includes(String(row.generationStatus));
     },
     openAnalysisPage() {
       this.$router.push({ path: "/dortmund/return-analysis/index" });
@@ -595,6 +660,7 @@ export default {
     resetBatchQuery() {
       this.batchQuery.generationStatus = null;
       this.batchQuery.generationMode = null;
+      this.batchQuery.resultSource = null;
       this.batchDateRange = [];
       this.handleBatchQuery();
     },
@@ -857,35 +923,74 @@ export default {
       if (value === "Q") return "warning";
       return "info";
     },
-    handleGenerationDetail(row) {
+    handleGenerationDetail(row, openImport = false) {
+      const snapshot = { ...(row || {}) };
       this.historyVisible = false;
       this.combinationVisible = false;
+      this.generationDetail = snapshot;
       this.generationVisible = true;
       this.generationLoading = true;
-      this.generationDetail = {};
       getGeneration(row.generationId).then((response) => {
-        this.generationDetail = (response && response.data) || {};
+        this.generationDetail = { ...snapshot, ...((response && response.data) || {}) };
+        if (openImport) {
+          this.$nextTick(() => {
+            const panel = this.$refs.manualAiTaskPanel;
+            if (panel && typeof panel.openImportDialog === "function") {
+              panel.openImportDialog();
+            }
+          });
+        }
       }).catch(() => {
-        this.generationVisible = false;
+        // 接口异常时保留列表快照，避免批次详情抽屉空白
       }).finally(() => {
         this.generationLoading = false;
       });
     },
+    handleManualTaskExport(row) {
+      if (!row || !row.generationId) return;
+      getManualTask(row.generationId).then((response) => {
+        const task = (response && response.data) || {};
+        if (!task.taskId || !task.responseContract) {
+          throw new Error("manual-task-invalid");
+        }
+        const content = JSON.stringify(task, null, 2);
+        const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+        this.$download.saveAs(blob, `dortmund-return-manual-task-${row.generationId}.json`);
+        this.$modal.msgSuccess("人工AI任务已导出，可直接交给第三方AI");
+      }).catch(() => {
+        this.$modal.msgError("人工AI任务导出失败，请刷新批次后重试");
+      });
+    },
+    handleManualTaskImport(row) {
+      if (!row || !row.generationId) return;
+      this.handleGenerationDetail(row, true);
+    },
+    handleManualImported() {
+      const generationId = this.generationDetail.generationId;
+      if (!generationId) return;
+      getGeneration(generationId).then((response) => {
+        this.generationDetail = (response && response.data) || {};
+      }).catch(() => {
+      });
+      this.getBatchList();
+      this.getCombinationList();
+    },
     handleCombinationDetail(row) {
       this.historyVisible = false;
       this.generationVisible = false;
+      this.combinationDetail = { ...(row || {}) };
       this.combinationVisible = true;
-      this.combinationDetail = {};
       this.refreshCombinationDetail(true, row.combinationId);
     },
     refreshCombinationDetail(showLoading = true, combinationId = null) {
       const targetId = combinationId || this.combinationDetail.combinationId;
       if (!targetId) return Promise.resolve();
+      const snapshot = { ...(this.combinationDetail || {}) };
       if (showLoading) this.combinationLoading = true;
       return getCombination(targetId).then((response) => {
-        this.combinationDetail = (response && response.data) || {};
+        this.combinationDetail = { ...snapshot, ...((response && response.data) || {}) };
       }).catch(() => {
-        if (showLoading) this.combinationVisible = false;
+        // 接口异常时保留列表快照，避免组合详情抽屉空白
       }).finally(() => {
         if (showLoading) this.combinationLoading = false;
       });
@@ -1353,6 +1458,88 @@ export default {
   }
 }
 
+.history-batch-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 13px 14px 1px;
+  margin-bottom: 12px;
+  background: #fff;
+  border: 1px solid #e5ebe7;
+  border-radius: 12px;
+
+  ::v-deep .el-form-item {
+    margin-right: 10px;
+    margin-bottom: 12px;
+  }
+
+  ::v-deep .el-form-item__label {
+    font-weight: 500;
+    color: #5b6b64;
+  }
+
+  ::v-deep .el-form-item__content {
+    min-width: 0;
+  }
+
+  ::v-deep .el-select {
+    width: 160px !important;
+  }
+
+  ::v-deep .el-date-editor {
+    width: 240px !important;
+  }
+
+  .history-batch-actions {
+    margin-right: 0;
+    margin-left: auto;
+
+    ::v-deep .el-form-item__content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    ::v-deep .el-button+.el-button {
+      margin-left: 0;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .history-batch-filter {
+    padding: 12px 10px 0;
+
+    ::v-deep .el-form-item {
+      width: 100%;
+      margin-right: 0;
+    }
+
+    ::v-deep .el-form-item__content {
+      width: calc(100% - 76px);
+    }
+
+    ::v-deep .el-select,
+    ::v-deep .el-date-editor {
+      width: 100% !important;
+    }
+
+    .history-batch-actions {
+      width: 100%;
+      margin-left: 0;
+
+      ::v-deep .el-form-item__content {
+        width: 100%;
+        padding-left: 76px;
+      }
+
+      ::v-deep .el-button {
+        flex: 1;
+      }
+    }
+  }
+}
+
 @at-root {
   .orphan-hero {
     display: flex;
@@ -1575,6 +1762,10 @@ export default {
   padding: 0 6px;
 }
 
+.return-detail-alert-block {
+  margin-top: 10px;
+}
+
 .return-detail-card {
   padding: 16px;
   margin-bottom: 14px;
@@ -1618,6 +1809,12 @@ export default {
   background: #fef0f0;
   border: 1px solid #fde2e2;
   border-radius: 8px;
+}
+
+.return-detail-alert.manual {
+  color: #9a6a1f;
+  background: #fffaf0;
+  border-color: #f0dfb7;
 }
 
 .return-input-summary {

@@ -304,7 +304,8 @@ $dl-theme: var(--current-color, #2ecc71);
   }
 
   /* ========== 列表容器 ========== */
-  .dl-list-card {
+  .dl-list-card,
+  .history-table-wrap {
     overflow: hidden;
     background: #fff;
     border: 1px solid $dl-border;
@@ -324,6 +325,27 @@ $dl-theme: var(--current-color, #2ecc71);
         color: #44604f;
         background-color: #f3f9f5;
         border-bottom: 1px solid $dl-border;
+      }
+
+      .el-table__header-wrapper th .cell,
+      .el-table__fixed-header-wrapper th .cell {
+        white-space: nowrap;
+        word-break: keep-all;
+      }
+
+      .el-table__body td.el-table__cell .cell,
+      .el-table__fixed-body-wrapper td.el-table__cell .cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: keep-all;
+      }
+
+      .dortmund-nowrap-cell .cell {
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: keep-all;
       }
 
       td.el-table__cell {
@@ -397,7 +419,8 @@ $dl-theme: var(--current-color, #2ecc71);
 }
 
 @media (max-width: 768px) {
-  .dl-page {
+  .dl-page,
+  .return-page {
     .dl-filter {
       padding: 14px 12px 2px;
     }

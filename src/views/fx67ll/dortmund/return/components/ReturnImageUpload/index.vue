@@ -15,8 +15,7 @@
 
     <transition-group name="image-pop" tag="div" class="image-grid">
       <div v-for="image in visibleImages" :key="image.imageId" class="image-tile">
-        <el-image class="image-thumb" :src="resolveUrl(image.objectKey)" fit="cover"
-          :preview-src-list="previewUrls">
+        <el-image class="image-thumb" :src="resolveUrl(image.objectKey)" fit="cover" :preview-src-list="previewUrls">
           <div slot="error" class="image-error"><i class="el-icon-picture-outline"></i></div>
         </el-image>
         <div class="image-caption" :title="image.originalName || image.objectKey">
@@ -130,7 +129,7 @@ export default {
     tipText() {
       if (this.planLinked) return "解除方案计划关联后可继续维护图片。";
       if (!this.isAdopted) return "图片归属当前已采用组合，请先完成采用。";
-      return "每条组合最多三张；删除失败会进入后台回收重试。";
+      return "每条组合最多三张，仅支持 JPG、JPEG、PNG、GIF、BMP，单张不超过 4MB；删除失败会进入后台回收重试。";
     },
   },
   methods: {
@@ -138,11 +137,13 @@ export default {
       return objectKey ? process.env.VUE_APP_BASE_API + objectKey : "";
     },
     handleBeforeUpload(file) {
-      if (!file.type || file.type.indexOf("image") !== 0) {
-        this.$modal.msgError("请上传图片文件");
+      const extension = String(file.name || "").split(".").pop().toLowerCase();
+      const allowedExtensions = ["bmp", "gif", "jpg", "jpeg", "png"];
+      if (!allowedExtensions.includes(extension)) {
+        this.$modal.msgError("仅支持 JPG、JPEG、PNG、GIF、BMP 格式图片");
         return false;
       }
-      if (file.size / 1024 / 1024 >= this.fileSize) {
+      if (file.size / 1024 / 1024 > this.fileSize) {
         this.$modal.msgError(`上传图片大小不能超过 ${this.fileSize}MB`);
         return false;
       }

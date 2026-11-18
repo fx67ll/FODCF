@@ -9,6 +9,15 @@ export function generateReturnCombination(data) {
   });
 }
 
+// 创建人工AI处理任务并冻结业务快照
+export function createManualTask(data) {
+  return request({
+    url: "/dortmund/return/manual-task",
+    method: "post",
+    data: data,
+  });
+}
+
 // 查询生成批次列表
 export function listGeneration(query) {
   return request({
@@ -24,6 +33,31 @@ export function getGeneration(generationId, params) {
     url: "/dortmund/return/generation/" + generationId,
     method: "get",
     params: params,
+  });
+}
+
+// 查询可人工处理批次的AI任务
+export function getManualTask(generationId) {
+  return request({
+    url: "/dortmund/return/generation/" + generationId + "/manual-task",
+    method: "get",
+  });
+}
+
+// 查询人工AI任务与标准化结果的可复制模板
+export function getManualTemplate() {
+  return request({
+    url: "/dortmund/return/manual-template",
+    method: "get",
+  });
+}
+
+// 导入第三方AI标准化结果并完成人工AI处理批次
+export function importManualResult(generationId, responseContent) {
+  return request({
+    url: "/dortmund/return/generation/" + generationId + "/manual-import",
+    method: "post",
+    data: { responseContent: responseContent },
   });
 }
 

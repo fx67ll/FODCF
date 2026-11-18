@@ -13,21 +13,21 @@
       <el-table-column label="标题" prop="pointTitle" min-width="170" show-overflow-tooltip />
       <el-table-column label="内容" prop="pointContent" min-width="220" show-overflow-tooltip />
       <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
-      <el-table-column label="生效时间" align="center" width="160">
+      <el-table-column label="生效时间" align="center" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}") || "-"
           }}</template>
       </el-table-column>
-      <el-table-column label="状态" align="center" width="80">
+      <el-table-column label="状态" align="center" width="96">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable || []" :value="scope.row.pointStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="140" fixed="right">
+      <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="90" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
-            @click="openEdit(scope.row)" v-hasPermi="['dortmund:info:point:edit']">编辑</el-button>
-          <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
-            @click="handleRemove(scope.row)" v-hasPermi="['dortmund:info:point:remove']">删除</el-button>
+          <dortmund-action-button label="编辑" icon="el-icon-edit" action="edit" @click="openEdit(scope.row)"
+            v-hasPermi="['dortmund:info:point:edit']" />
+          <dortmund-action-button label="删除" icon="el-icon-delete" action="delete" @click="handleRemove(scope.row)"
+            v-hasPermi="['dortmund:info:point:remove']" />
         </template>
       </el-table-column>
     </el-table>
@@ -46,11 +46,12 @@
 import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, delInfoPoint } from "@/api/fx67ll/dortmund/infoPoint";
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 
 export default {
   name: "DortmundInfoPointInlineEditor",
   dicts: ["sys_normal_disable"],
-  components: { DortmundInfoPointFormDialog, DortmundTeamSelectorModal },
+  components: { DortmundInfoPointFormDialog, DortmundTeamSelectorModal, DortmundActionButton },
   props: {
     anchorType: {
       type: String,
@@ -159,8 +160,8 @@ export default {
           teamName: rel.teamName || `球队 ${rel.teamId}`,
         }));
       }).catch(() => {
+        // 详情加载失败时关闭编辑框，避免基于列表旧数据提交覆盖；错误提示由请求拦截器统一展示
         this.editorVisible = false;
-        this.$modal.msgError("获取信息点详情失败");
       }).finally(() => {
         this.editLoading = false;
       });

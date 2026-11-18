@@ -252,7 +252,11 @@ export default {
       }
       listInfoPoint(this.queryParams).then(response => {
         this.infoPointList = this.formatObjectArrayNullProperty(response.rows || []);
-        this.total = response.total;
+        this.total = response.total || 0;
+      }).catch(() => {
+        // 列表加载失败时清空旧数据，避免筛选条件与残留结果不一致
+        this.infoPointList = [];
+        this.total = 0;
       }).finally(() => {
         this.loading = false;
       });
@@ -309,6 +313,10 @@ export default {
       this.editLoading = true;
       getInfoPoint(infoPointId).then(response => {
         const detail = response.data || {};
+        if (detail.infoPointId == null) {
+          this.$modal.msgWarning("信息点不存在或已删除，请刷新后重试");
+          return;
+        }
         this.editMode = "update";
         // 从详情中挑选允许修改的字段构建初始表单；类型、归属和状态只读，状态只走启停动作
         this.editForm = {
@@ -335,6 +343,9 @@ export default {
           pointRemark: detail.pointRemark,
         };
         this.pageScene = detail.infoPointType === "T" ? "editT" : "editM";
+      }).catch(() => {
+        // 接口异常由请求拦截器统一提示，这里只保持在列表场景
+        this.pageScene = "list";
       }).finally(() => {
         this.editLoading = false;
       });
@@ -367,11 +378,12 @@ export default {
     // 场景保存：录入场景校验并构建请求体后回传，父页面负责提交
     handleSceneSave(data) {
       const isAdd = this.editMode === "add";
+      const { newMatch, ...infoPointData } = data;
       this.submitting = true;
-      const request = isAdd && data.newMatch
+      const request = isAdd && newMatch
         ? addMatch({
-          ...data.newMatch,
-          newInfoPoints: [{ ...data, infoPointType: "M", allowPublic: "0" }],
+          ...newMatch,
+          newInfoPoints: [{ ...infoPointData, infoPointType: "M", allowPublic: "0" }],
         })
         : isAdd ? addInfoPoint(data) : updateInfoPoint(data);
       request.then(() => {
@@ -396,11 +408,19 @@ export default {
     },
     /** 详情按钮操作：只读展示完整详情 */
     handleViewDetail(row) {
+      const snapshot = { ...(row || {}) };
       this.detailLoading = true;
-      this.detailModel = {};
+      this.detailModel = snapshot;
       this.detailOpen = true;
       getInfoPoint(row.infoPointId).then(response => {
-        this.detailModel = response.data || {};
+        const detail = response.data || {};
+        if (detail.infoPointId == null) {
+          this.$modal.msgWarning("信息点不存在或已删除，请刷新后重试");
+          return;
+        }
+        this.detailModel = { ...snapshot, ...detail };
+      }).catch(() => {
+        // 接口异常由请求拦截器统一提示，保留列表快照避免详情抽屉空白
       }).finally(() => {
         this.detailLoading = false;
       });

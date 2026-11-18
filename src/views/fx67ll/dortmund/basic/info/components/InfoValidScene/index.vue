@@ -22,7 +22,7 @@
             validList.length }} 条）</span>
         </div>
         <el-table :data="validList" empty-text="暂无将进入分析的信息点">
-          <el-table-column label="信息点类型" align="center" prop="infoPointType" width="100">
+          <el-table-column label="信息点类型" align="center" prop="infoPointType" width="110">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="scope.row.infoPointType" />
             </template>
@@ -31,7 +31,7 @@
             :show-overflow-tooltip="true" />
           <el-table-column label="信息点内容" align="center" prop="pointContent" min-width="200"
             :show-overflow-tooltip="true" />
-          <el-table-column label="信息来源" align="center" prop="sourceName" width="120" :show-overflow-tooltip="true" />
+          <el-table-column label="信息来源" align="center" prop="sourceName" width="130" :show-overflow-tooltip="true" />
           <el-table-column label="是否可公开" align="center" prop="allowPublic" width="100">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="scope.row.allowPublic" />
@@ -47,7 +47,7 @@
             excludedList.length }} 条）</span>
         </div>
         <el-table :data="excludedList" empty-text="暂无被排除的信息点">
-          <el-table-column label="信息点类型" align="center" prop="infoPointType" width="100">
+          <el-table-column label="信息点类型" align="center" prop="infoPointType" width="110">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.fx67ll_dortmund_info_point_type" :value="scope.row.infoPointType" />
             </template>
@@ -56,7 +56,7 @@
             :show-overflow-tooltip="true" />
           <el-table-column label="信息点内容" align="center" prop="pointContent" min-width="200"
             :show-overflow-tooltip="true" />
-          <el-table-column label="信息来源" align="center" prop="sourceName" width="120" :show-overflow-tooltip="true" />
+          <el-table-column label="信息来源" align="center" prop="sourceName" width="130" :show-overflow-tooltip="true" />
           <el-table-column label="排除原因" align="center" prop="excludeReason" width="240" :show-overflow-tooltip="true" />
           <el-table-column label="是否可公开" align="center" prop="allowPublic" width="100">
             <template slot-scope="scope">

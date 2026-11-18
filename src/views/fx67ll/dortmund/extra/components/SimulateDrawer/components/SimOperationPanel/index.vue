@@ -56,16 +56,21 @@
 
         <!-- 模拟参数配置（标签不换行） -->
         <el-form :model="simForm" ref="simForm" size="small" :inline="true" class="sim-config-form" :rules="simRules"
-          label-width="80px">
-          <el-form-item label="初始数值" prop="initialValue">
+          label-width="100px">
+          <el-form-item prop="initialValue">
+            <dortmund-form-label slot="label" label="初始数值"
+              tip="必填，普通十进制数字，范围 0.01 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
             <el-input-number v-model="simForm.initialValue" :controls="false" :precision="2" :min="0.01"
               style="width: 140px" placeholder="请输入初始数值" />
           </el-form-item>
-          <el-form-item label="每轮系数" prop="coefficient">
+          <el-form-item prop="coefficient">
+            <dortmund-form-label slot="label" label="每轮系数" tip="必填，必须大于1，普通十进制数字，最多20位整数和2位小数，数值文本不超过23个字符" />
             <el-input-number v-model="simForm.coefficient" :controls="false" :precision="2" :min="1.01"
               style="width: 140px" placeholder="请输入每轮系数" />
           </el-form-item>
-          <el-form-item label="目标数值" prop="targetValue">
+          <el-form-item prop="targetValue">
+            <dortmund-form-label slot="label" label="目标数值"
+              tip="必填，普通十进制数字，范围 0.01 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
             <el-input-number v-model="simForm.targetValue" :controls="false" :precision="2" :min="0.01"
               style="width: 160px" placeholder="请输入目标数值" />
           </el-form-item>
@@ -119,8 +124,12 @@
 </template>
 
 <script>
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import { DORTMUND_LIMITS, decimalRule, formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
+
 export default {
   name: "SimOperationPanel",
+  components: { DortmundFormLabel },
   props: {
     // 数值模拟参数配置
     simForm: {
@@ -195,25 +204,31 @@ export default {
       // 数值模拟参数校验
       simRules: {
         initialValue: [
-          {
+          decimalRule("初始数值", {
             required: true,
-            message: "初始数值不能为空",
-            trigger: "blur",
-          },
+            min: 0.01,
+            maxIntegerDigits: 20,
+            maxFractionDigits: 2,
+            maxTextLength: DORTMUND_LIMITS.simulateValueText,
+          }),
         ],
         coefficient: [
-          {
+          decimalRule("每轮系数", {
             required: true,
-            message: "每轮系数不能为空",
-            trigger: "blur",
-          },
+            minExclusive: 1,
+            maxIntegerDigits: 20,
+            maxFractionDigits: 2,
+            maxTextLength: DORTMUND_LIMITS.simulateValueText,
+          }),
         ],
         targetValue: [
-          {
+          decimalRule("目标数值", {
             required: true,
-            message: "目标数值不能为空",
-            trigger: "blur",
-          },
+            min: 0.01,
+            maxIntegerDigits: 20,
+            maxFractionDigits: 2,
+            maxTextLength: DORTMUND_LIMITS.simulateValueText,
+          }),
         ],
       },
     };
@@ -239,7 +254,7 @@ export default {
   methods: {
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return parseFloat(value || 0).toFixed(2);
+      return formatPlainDecimal(value, 2, "0.00");
     },
   },
 };

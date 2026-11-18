@@ -7,10 +7,10 @@
         </div>
         <div class="odds-edit-hero-text">
           <div class="odds-edit-hero-title-row">
-            <h2>{{ editMode === "add" ? "新增倍率记录" : "修改倍率记录" }}</h2>
+            <h2>{{ heroTitle }}</h2>
             <span class="odds-edit-hero-type">Odds · 倍率版本</span>
           </div>
-          <p>维护比赛六类倍率与手工权重，保存后可单独设为有效版本</p>
+          <p>{{ heroDescription }}</p>
         </div>
       </div>
       <el-button type="text" class="dortmund-theme-text odds-edit-hero-back" icon="el-icon-back"
@@ -18,132 +18,42 @@
       </el-button>
     </div>
 
-    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="100px" class="odds-edit-form"
+    <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="120px" class="odds-edit-form"
       v-loading="editLoading">
-      <div class="odds-edit-card">
-        <div class="odds-edit-card-header">
-          <span class="odds-edit-card-chip"><i class="el-icon-document"></i></span>
-          <span class="odds-edit-card-title">基础信息</span>
-        </div>
-        <el-row :gutter="20">
-          <el-col :xs="24" :md="8">
-            <el-form-item label="倍率编码" prop="oddsCode">
-              <el-input v-model="editForm.oddsCode" maxlength="23" show-word-limit placeholder="推荐格式：体彩比赛日期+期号" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="8">
-            <el-form-item label="来源时间" prop="sourceTime">
-              <el-date-picker v-model="editForm.sourceTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择来源时间" />
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :md="8">
-            <el-form-item label="让分值" prop="handicapValue">
-              <el-input v-model="editForm.handicapValue" placeholder="必填，如 -0.25" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </div>
+      <dortmund-odds-form :form="editForm">
 
-      <div class="odds-edit-card">
-        <div class="odds-edit-card-header">
-          <span class="odds-edit-card-chip"><i class="el-icon-connection"></i></span>
-          <span class="odds-edit-card-title">归属设置</span>
-          <span class="odds-edit-card-tip" v-if="editMode === 'update'">修改时保留原有比赛归属</span>
-        </div>
-        <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
-              <dortmund-binding-control :display-text="formatSelectedMatch(selectedMatch)" show-create
-                @select="matchSelectorVisible = true" @create="toggleNewMatch" />
-              <div class="odds-association-hint">可选择已有比赛，或在当前倍率记录中同步新建一场比赛</div>
-            </el-form-item>
-            <el-form-item label="关联比赛" prop="matchId" v-else-if="editMode === 'add' && newMatchVisible">
-              <div class="odds-inline-control">
-                <el-tag type="success" size="small"><i class="el-icon-plus"></i> 当场新建比赛</el-tag>
-                <el-button type="text" class="dortmund-theme-text" icon="el-icon-close"
-                  @click="toggleNewMatch">改选已有比赛</el-button>
-              </div>
-            </el-form-item>
-            <el-form-item label="关联比赛" v-else>
-              <el-input :value="formatSelectedMatch(editForm)" disabled />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <transition name="odds-panel">
-          <div class="odds-new-match" v-if="editMode === 'add' && newMatchVisible">
-            <div class="odds-new-match-title">
-              <i class="el-icon-football"></i>
-              <span>当场新建比赛资料</span>
-              <small>赛季、主队、客队和比赛时间均为必填</small>
-            </div>
-            <el-row :gutter="20">
-              <el-col :xs="24" :md="12">
-                <el-form-item label="所属赛季" prop="newMatch.seasonId" label-width="96px">
-                  <dortmund-season-select ref="newSeasonSelect" v-model="editForm.newMatch.seasonId" />
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :md="12">
-                <el-form-item label="比赛时间" prop="newMatch.matchTime" label-width="96px">
-                  <el-date-picker v-model="editForm.newMatch.matchTime" type="datetime"
-                    popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%"
-                    placeholder="请选择比赛时间" />
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :md="12">
-                <el-form-item label="主队" prop="newMatch.homeTeamId" label-width="96px">
-                  <common-enhanced-select ref="newHomeTeamSelect" v-model="editForm.newMatch.homeTeamId"
-                    valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择主队" />
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :md="12">
-                <el-form-item label="客队" prop="newMatch.awayTeamId" label-width="96px">
-                  <common-enhanced-select ref="newAwayTeamSelect" v-model="editForm.newMatch.awayTeamId"
-                    valueKey="teamId" labelKey="teamName" :api-func="listTeam" placeholder="请选择客队" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item label="比赛备注" label-width="96px">
-                  <el-input v-model="editForm.newMatch.matchRemark" placeholder="请输入比赛备注（可空）" />
-                </el-form-item>
-              </el-col>
-            </el-row>
+        <div class="odds-edit-card">
+          <div class="odds-edit-card-header">
+            <span class="odds-edit-card-chip"><i class="el-icon-connection"></i></span>
+            <span class="odds-edit-card-title">归属设置</span>
+            <span class="odds-edit-card-tip" v-if="editMode !== 'add'">{{ associationTip }}</span>
           </div>
-        </transition>
-      </div>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="关联比赛" prop="matchId" v-if="editMode === 'add' && !newMatchVisible">
+                <dortmund-binding-control :display-text="formatSelectedMatch(selectedMatch)" show-create
+                  @select="matchSelectorVisible = true" @create="toggleNewMatch" />
+                <div class="odds-association-hint">可选择已有比赛，或在当前倍率记录中同步新建一场比赛</div>
+              </el-form-item>
+              <el-form-item label="关联比赛" prop="matchId" v-else-if="editMode === 'add' && newMatchVisible">
+                <div class="odds-inline-control">
+                  <el-tag type="success" size="small"><i class="el-icon-plus"></i> 当场新建比赛</el-tag>
+                  <el-button type="text" class="dortmund-theme-text" icon="el-icon-close"
+                    @click="toggleNewMatch">改选已有比赛</el-button>
+                </div>
+              </el-form-item>
+              <el-form-item label="关联比赛" v-else>
+                <el-input :value="formatSelectedMatch(editForm)" disabled />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-      <div class="odds-edit-card">
-        <div class="odds-edit-card-header">
-          <span class="odds-edit-card-chip"><i class="el-icon-set-up"></i></span>
-          <span class="odds-edit-card-title">六类倍率权重</span>
-          <span class="odds-edit-card-tip">手工权重为空时按 100 参与计算</span>
+          <transition name="odds-panel">
+            <dortmund-inline-match-create v-if="editMode === 'add' && newMatchVisible" :form="editForm.newMatch" />
+          </transition>
         </div>
-        <div class="odds-matrix-grid">
-          <div class="odds-matrix-item" v-for="row in oddsRows" :key="row.key">
-            <div class="odds-matrix-head">
-              <dict-tag :options="dict.type.fx67ll_dortmund_odds_type || []" :value="row.type" />
-            </div>
-            <el-form-item label="倍率" :prop="row.oddsField" label-width="56px">
-              <el-input v-model="editForm[row.oddsField]" placeholder="大于 0" />
-            </el-form-item>
-            <el-form-item label="权重" :prop="row.weightField" label-width="56px">
-              <el-input v-model="editForm[row.weightField]" placeholder="空默认 100" />
-            </el-form-item>
-          </div>
-        </div>
-      </div>
 
-      <div class="odds-edit-card">
-        <div class="odds-edit-card-header">
-          <span class="odds-edit-card-chip"><i class="el-icon-chat-line-square"></i></span>
-          <span class="odds-edit-card-title">附加说明</span>
-        </div>
-        <el-form-item label="其他说明" prop="oddsRemark">
-          <el-input v-model="editForm.oddsRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
-            placeholder="请输入其他说明（可空）" />
-        </el-form-item>
-      </div>
+      </dortmund-odds-form>
     </el-form>
 
     <div class="odds-edit-footer">
@@ -157,15 +67,30 @@
 </template>
 
 <script>
-import { listTeam } from "@/api/fx67ll/dortmund/team";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
-import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
+import DortmundInlineMatchCreate from "@/views/fx67ll/dortmund/other/component/DortmundInlineMatchCreate/index";
+import DortmundOddsForm from "@/views/fx67ll/dortmund/other/component/DortmundOddsForm/index";
+import { buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/utils/odds";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_STATUS_OPTIONS,
+  enumRule,
+  optionalTextRule,
+  requiredTextRule,
+  trimText,
+} from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "OddsEditScene",
   dicts: ["fx67ll_dortmund_odds_type"],
-  components: { DortmundMatchSelectorModal, DortmundBindingControl, DortmundSeasonSelect },
+  components: {
+    DortmundMatchSelectorModal,
+    DortmundBindingControl,
+    DortmundInlineMatchCreate,
+    DortmundOddsForm,
+  },
   props: {
     editMode: {
       type: String,
@@ -185,49 +110,12 @@ export default {
     },
   },
   data() {
-    const checkPositiveNumber = (label) => (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback(new Error(label + "不能为空"));
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value)) || parseFloat(value) <= 0) {
-        callback(new Error(label + "必须为大于 0 的数字"));
-        return;
-      }
-      callback();
-    };
-    const checkWeight = (rule, value, callback) => {
-      if (value == null || value === "") {
-        callback();
-        return;
-      }
-      if (!/^\d+(\.\d+)?$/.test(String(value))) {
-        callback(new Error("权重必须为非负数字"));
-        return;
-      }
-      if (parseFloat(value) > 100) {
-        callback(new Error("权重不能大于 100"));
-        return;
-      }
-      callback();
-    };
     return {
-      listTeam,
       selectedMatch: null,
       matchSelectorVisible: false,
       editForm: this.buildEditForm(),
       newMatchVisible: false,
-      oddsRows: [
-        { key: "homeWin", type: "HW", oddsField: "homeWinOdds", weightField: "homeWinWeight" },
-        { key: "draw", type: "DR", oddsField: "drawOdds", weightField: "drawWeight" },
-        { key: "awayWin", type: "AW", oddsField: "awayWinOdds", weightField: "awayWinWeight" },
-        { key: "handicapHomeWin", type: "HH", oddsField: "handicapHomeWinOdds", weightField: "handicapHomeWinWeight" },
-        { key: "handicapDraw", type: "HD", oddsField: "handicapDrawOdds", weightField: "handicapDrawWeight" },
-        { key: "handicapAwayWin", type: "HA", oddsField: "handicapAwayWinOdds", weightField: "handicapAwayWinWeight" },
-      ],
       editRules: {
-        oddsCode: [{ required: true, message: "倍率编码不能为空", trigger: "blur" }],
-        sourceTime: [{ required: true, message: "来源时间不能为空", trigger: "change" }],
         matchId: [{
           validator: (rule, value, callback) => {
             if (this.newMatchVisible || (value != null && value !== "")) {
@@ -238,43 +126,37 @@ export default {
           },
           trigger: "change",
         }],
+        "newMatch.matchCode": [requiredTextRule("新比赛编码", DORTMUND_LIMITS.matchCode)],
         "newMatch.seasonId": [{ required: true, message: "新比赛所属赛季不能为空", trigger: "change" }],
         "newMatch.homeTeamId": [{ required: true, message: "新比赛主队不能为空", trigger: "change" }],
         "newMatch.awayTeamId": [{ required: true, message: "新比赛客队不能为空", trigger: "change" }],
         "newMatch.matchTime": [{ required: true, message: "新比赛比赛时间不能为空", trigger: "change" }],
-        handicapValue: [{
-          required: true,
-          validator: (rule, value, callback) => {
-            if (value == null || value === "") {
-              callback(new Error("让分值不能为空"));
-              return;
-            }
-            if (!/^[+-]?\d+(\.\d+)?$/.test(String(value))) {
-              callback(new Error("让分值必须为数字"));
-              return;
-            }
-            callback();
-          },
-          trigger: "blur",
-        }],
-        homeWinOdds: [{ validator: checkPositiveNumber("主胜倍率"), trigger: "blur" }],
-        drawOdds: [{ validator: checkPositiveNumber("平局倍率"), trigger: "blur" }],
-        awayWinOdds: [{ validator: checkPositiveNumber("客胜倍率"), trigger: "blur" }],
-        handicapHomeWinOdds: [{ validator: checkPositiveNumber("让分主胜倍率"), trigger: "blur" }],
-        handicapDrawOdds: [{ validator: checkPositiveNumber("让分平局倍率"), trigger: "blur" }],
-        handicapAwayWinOdds: [{ validator: checkPositiveNumber("让分客胜倍率"), trigger: "blur" }],
-        homeWinWeight: [{ validator: checkWeight, trigger: "blur" }],
-        drawWeight: [{ validator: checkWeight, trigger: "blur" }],
-        awayWinWeight: [{ validator: checkWeight, trigger: "blur" }],
-        handicapHomeWinWeight: [{ validator: checkWeight, trigger: "blur" }],
-        handicapDrawWeight: [{ validator: checkWeight, trigger: "blur" }],
-        handicapAwayWinWeight: [{ validator: checkWeight, trigger: "blur" }],
+        "newMatch.matchStatus": [enumRule("新比赛状态", DORTMUND_STATUS_OPTIONS, true)],
+        "newMatch.matchVenue": [optionalTextRule("新比赛场地", DORTMUND_LIMITS.matchVenue)],
+        "newMatch.matchResult": [enumRule("新比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
+        "newMatch.matchRemark": [optionalTextRule("新比赛备注", DORTMUND_LIMITS.matchRemark)],
+        ...buildOddsRules(),
       },
     };
   },
   computed: {
     selectedMatchItem() {
-      return this.editMode === "update" ? this.editForm : this.selectedMatch;
+      return this.editMode === "add" ? this.selectedMatch : this.editForm;
+    },
+    heroTitle() {
+      if (this.editMode === "copy") {
+        return "基于当前版本新建";
+      }
+      return this.editMode === "add" ? "新增倍率记录" : "修改倍率记录";
+    },
+    heroDescription() {
+      if (this.editMode === "copy") {
+        return "已复制原版本的比赛归属、六类倍率与手工权重；保存后形成新的当前有效版本";
+      }
+      return "维护比赛六类倍率与手工权重，保存后可单独设为有效版本";
+    },
+    associationTip() {
+      return this.editMode === "copy" ? "新版本沿用原比赛归属，原版本保留为历史记录" : "修改时保留原有比赛归属";
     },
   },
   methods: {
@@ -289,31 +171,37 @@ export default {
       const initial = this.initialForm || {};
       const newMatch = initial.newMatch || {};
       return {
-        oddsId: initial.oddsId || null,
+        oddsId: this.editMode === "copy" ? null : (initial.oddsId || null),
         oddsCode: initial.oddsCode || null,
         matchId: initial.matchId || null,
         matchSummary: initial.matchSummary || null,
         matchCode: initial.matchCode || null,
         sourceTime: initial.sourceTime || null,
-        handicapValue: initial.handicapValue || null,
+        handicapValue: initial.handicapValue === undefined || initial.handicapValue === null
+          ? null
+          : initial.handicapValue,
         homeWinOdds: initial.homeWinOdds || null,
         drawOdds: initial.drawOdds || null,
         awayWinOdds: initial.awayWinOdds || null,
         handicapHomeWinOdds: initial.handicapHomeWinOdds || null,
         handicapDrawOdds: initial.handicapDrawOdds || null,
         handicapAwayWinOdds: initial.handicapAwayWinOdds || null,
-        homeWinWeight: initial.homeWinWeight || null,
-        drawWeight: initial.drawWeight || null,
-        awayWinWeight: initial.awayWinWeight || null,
-        handicapHomeWinWeight: initial.handicapHomeWinWeight || null,
-        handicapDrawWeight: initial.handicapDrawWeight || null,
-        handicapAwayWinWeight: initial.handicapAwayWinWeight || null,
+        homeWinWeight: initial.homeWinWeight === undefined ? null : initial.homeWinWeight,
+        drawWeight: initial.drawWeight === undefined ? null : initial.drawWeight,
+        awayWinWeight: initial.awayWinWeight === undefined ? null : initial.awayWinWeight,
+        handicapHomeWinWeight: initial.handicapHomeWinWeight === undefined ? null : initial.handicapHomeWinWeight,
+        handicapDrawWeight: initial.handicapDrawWeight === undefined ? null : initial.handicapDrawWeight,
+        handicapAwayWinWeight: initial.handicapAwayWinWeight === undefined ? null : initial.handicapAwayWinWeight,
         oddsRemark: initial.oddsRemark || null,
         newMatch: {
+          matchCode: newMatch.matchCode || null,
           seasonId: newMatch.seasonId || null,
           homeTeamId: newMatch.homeTeamId || null,
           awayTeamId: newMatch.awayTeamId || null,
           matchTime: newMatch.matchTime || null,
+          matchVenue: newMatch.matchVenue || null,
+          matchStatus: newMatch.matchStatus || "0",
+          matchResult: newMatch.matchResult || null,
           matchRemark: newMatch.matchRemark || null,
         },
       };
@@ -331,10 +219,14 @@ export default {
     },
     buildEmptyNewMatch() {
       return {
+        matchCode: null,
         seasonId: null,
         homeTeamId: null,
         awayTeamId: null,
         matchTime: null,
+        matchVenue: null,
+        matchStatus: "0",
+        matchResult: null,
         matchRemark: null,
       };
     },
@@ -346,39 +238,30 @@ export default {
         if (!valid) {
           return;
         }
-        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId === this.editForm.newMatch.awayTeamId) {
+        if (this.newMatchVisible && this.editForm.newMatch.homeTeamId != null && this.editForm.newMatch.awayTeamId != null
+          && String(this.editForm.newMatch.homeTeamId) === String(this.editForm.newMatch.awayTeamId)) {
           this.$modal.msgError("新比赛的主队和客队不能相同");
           return;
         }
-        const data = {
-          oddsCode: this.editForm.oddsCode,
-          sourceTime: this.editForm.sourceTime,
-          handicapValue: this.editForm.handicapValue,
-          homeWinOdds: this.editForm.homeWinOdds,
-          drawOdds: this.editForm.drawOdds,
-          awayWinOdds: this.editForm.awayWinOdds,
-          handicapHomeWinOdds: this.editForm.handicapHomeWinOdds,
-          handicapDrawOdds: this.editForm.handicapDrawOdds,
-          handicapAwayWinOdds: this.editForm.handicapAwayWinOdds,
-          homeWinWeight: this.editForm.homeWinWeight,
-          drawWeight: this.editForm.drawWeight,
-          awayWinWeight: this.editForm.awayWinWeight,
-          handicapHomeWinWeight: this.editForm.handicapHomeWinWeight,
-          handicapDrawWeight: this.editForm.handicapDrawWeight,
-          handicapAwayWinWeight: this.editForm.handicapAwayWinWeight,
-          oddsRemark: this.editForm.oddsRemark,
-        };
-        if (this.editMode === "add") {
+        const data = trimOddsFields(this.editForm);
+        if (this.editMode === "add" || this.editMode === "copy") {
           if (this.newMatchVisible) {
             data.newMatch = {
+              matchCode: trimText(this.editForm.newMatch.matchCode),
               seasonId: this.editForm.newMatch.seasonId,
               homeTeamId: this.editForm.newMatch.homeTeamId,
               awayTeamId: this.editForm.newMatch.awayTeamId,
               matchTime: this.editForm.newMatch.matchTime,
-              matchRemark: this.editForm.newMatch.matchRemark,
+              matchVenue: trimText(this.editForm.newMatch.matchVenue),
+              matchStatus: this.editForm.newMatch.matchStatus,
+              matchResult: trimText(this.editForm.newMatch.matchResult),
+              matchRemark: trimText(this.editForm.newMatch.matchRemark),
             };
           } else {
             data.matchId = this.editForm.matchId;
+          }
+          if (this.editMode === "copy") {
+            data.activeFlag = "Y";
           }
         } else {
           data.oddsId = this.editForm.oddsId;

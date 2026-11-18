@@ -37,14 +37,19 @@
       <el-form ref="simRecordForm" :model="simRecordForm" :rules="simRecordRules" label-width="0"
         class="sim-record-form">
         <el-form-item prop="roundNo">
-          <div class="sim-record-input-label">本轮轮次</div>
-          <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0"
-            class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }" placeholder="请输入本轮轮次" />
+          <div class="sim-record-input-label">
+            <dortmund-form-label label="本轮轮次" tip="必填，32位整数且不能为0；默认自动顺延，负值仅用于强制作废当前版本，保存后不可恢复" />
+          </div>
+          <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0" :min="-2147483648"
+            :max="2147483647" class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }"
+            placeholder="请输入本轮轮次" />
           <div class="sim-record-tip" :class="{ danger: simRecordForm.roundNo < 0 }">
             {{ simRecordForm.roundNo < 0 ? "轮次为负，保存后该版本将被强制作废" : "默认自动顺延可修改，支持负值" }} </div>
         </el-form-item>
         <el-form-item prop="returnValue">
-          <div class="sim-record-input-label">实际回收数值</div>
+          <div class="sim-record-input-label">
+            <dortmund-form-label label="实际回收数值" tip="必填，普通十进制数字，范围 0 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
+          </div>
           <el-input-number v-model="simRecordForm.returnValue" :controls="false" :precision="2" :min="0"
             class="sim-record-input" placeholder="请输入实际回收数值" />
           <div class="sim-record-tip">默认按系数计算，可按实际数值修改，支持部分回本</div>
@@ -75,10 +80,12 @@
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import PlanLinkSelector from "../../../PlanLinkSelector/index.vue";
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import { DORTMUND_LIMITS, decimalRule, formatPlainDecimal, integerRangeRule } from "@/views/fx67ll/dortmund/utils/validation";
 
 export default {
   name: "SimRecordDialog",
-  components: { PlanLinkSelector },
+  components: { DortmundFormLabel, PlanLinkSelector },
   props: {
     // 弹窗开关
     visible: {
@@ -126,18 +133,16 @@ export default {
       // 本轮结果表单校验
       simRecordRules: {
         roundNo: [
-          {
-            required: true,
-            message: "本轮轮次不能为空",
-            trigger: "blur",
-          },
+          integerRangeRule("本轮轮次", -2147483648, 2147483647, true, [0]),
         ],
         returnValue: [
-          {
+          decimalRule("实际回收数值", {
             required: true,
-            message: "实际回收数值不能为空",
-            trigger: "blur",
-          },
+            min: 0,
+            maxIntegerDigits: 20,
+            maxFractionDigits: 2,
+            maxTextLength: DORTMUND_LIMITS.simulateValueText,
+          }),
         ],
       },
       // 结束数值变动脉冲动画开关
@@ -155,16 +160,22 @@ export default {
     },
     // 本轮参与数值（半量滚动为开始数值的一半）
     joinValue() {
-      return this.simMode === "half"
-        ? parseFloat((this.nextStartValue / 2).toFixed(2))
-        : this.nextStartValue;
+      const value = this.simMode === "half"
+        ? Number(formatPlainDecimal(this.nextStartValue / 2, 2, "0"))
+        : Number(this.nextStartValue);
+      return Number.isFinite(value) ? value : 0;
     },
     // 本轮结束数值（半量滚动保留另一半，全量滚动即实际回收数值）
     endValue() {
       const keepValue = this.simMode === "half" ? this.nextStartValue / 2 : 0;
-      return parseFloat(
-        (keepValue + parseFloat(this.simRecordForm.returnValue || 0)).toFixed(2)
+      const value = Number(
+        formatPlainDecimal(
+          keepValue + parseFloat(this.simRecordForm.returnValue || 0),
+          2,
+          "0"
+        )
       );
+      return Number.isFinite(value) ? value : 0;
     },
     // 结束数值计算公式说明
     endValueFormula() {
@@ -192,14 +203,15 @@ export default {
     // 弹窗打开时按下一轮轮次与系数预填，可按实际数值修改
     handleDialogOpen() {
       this.simRecordForm.roundNo = this.nextRoundNo;
-      this.simRecordForm.returnValue =
-        this.isHit === "Y"
-          ? parseFloat(
-            (
-              this.joinValue * parseFloat(this.coefficient || 0)
-            ).toFixed(2)
-          )
-          : 0;
+      const defaultReturnValue = this.isHit === "Y"
+        ? formatPlainDecimal(
+          this.joinValue * parseFloat(this.coefficient || 0),
+          2
+        )
+        : "0";
+      this.simRecordForm.returnValue = defaultReturnValue
+        ? Number(defaultReturnValue)
+        : 0;
       this.$nextTick(() => {
         this.$refs["simRecordForm"] && this.$refs["simRecordForm"].clearValidate();
         // 每次打开都重置关联方案计划区域，避免上一轮的已选与新建残留
@@ -228,7 +240,7 @@ export default {
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return parseFloat(value || 0).toFixed(2);
+      return formatPlainDecimal(value, 2, "0.00");
     },
   },
 };

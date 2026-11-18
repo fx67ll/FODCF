@@ -5,32 +5,48 @@
       <i class="el-icon-collection-tag"></i>
       <span>当场新增赛季（与比赛保存在同一事务，任一步失败全部回滚）</span>
     </div>
-    <el-form ref="newSeasonForm" :model="newSeasonForm" :rules="newSeasonRules" label-width="85px">
+    <el-form ref="newSeasonForm" :model="newSeasonForm" :rules="newSeasonRules" label-width="105px">
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="赛季编码" prop="seasonCode">
-            <el-input v-model="newSeasonForm.seasonCode" placeholder="请输入赛季编码" />
+          <el-form-item prop="seasonCode">
+            <template slot="label">
+              <dortmund-form-label label="赛季编码" tip="必填；1-23个字符，全局唯一；可按开始日期自动生成 SEA-YYYYMMDD-XXXXXX" />
+            </template>
+            <dortmund-code-input v-model="newSeasonForm.seasonCode" code-kind="season"
+              :date-value="newSeasonForm.seasonStartDate" maxlength="23" placeholder="请输入或自动生成赛季编码" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="赛季名称" prop="seasonName">
-            <el-input v-model="newSeasonForm.seasonName" placeholder="请输入赛季名称" />
+          <el-form-item prop="seasonName">
+            <template slot="label">
+              <dortmund-form-label label="赛季名称" tip="必填；1-233个字符" />
+            </template>
+            <el-input v-model="newSeasonForm.seasonName" maxlength="233" show-word-limit placeholder="请输入赛季名称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="开始日期" prop="seasonStartDate">
+          <el-form-item prop="seasonStartDate">
+            <template slot="label">
+              <dortmund-form-label label="开始日期" tip="必填；格式yyyy-MM-dd，且不得晚于结束日期" />
+            </template>
             <el-date-picker clearable v-model="newSeasonForm.seasonStartDate" type="date" value-format="yyyy-MM-dd"
               popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季开始日期" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="结束日期" prop="seasonEndDate">
+          <el-form-item prop="seasonEndDate">
+            <template slot="label">
+              <dortmund-form-label label="结束日期" tip="必填；格式yyyy-MM-dd，且不得早于开始日期" />
+            </template>
             <el-date-picker clearable v-model="newSeasonForm.seasonEndDate" type="date" value-format="yyyy-MM-dd"
               popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择赛季结束日期" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="赛季状态" prop="seasonStatus">
+          <el-form-item prop="seasonStatus">
+            <template slot="label">
+              <dortmund-form-label label="赛季状态" tip="必填；0=进行中，1=已结束，2=未开始" />
+            </template>
             <el-select v-model="newSeasonForm.seasonStatus" style="width: 100%" placeholder="请选择赛季状态"
               popper-class="dortmund-theme-popper">
               <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
@@ -44,9 +60,21 @@
 </template>
 
 <script>
+import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_SEASON_STATUS_OPTIONS,
+  dateRangeRule,
+  enumRule,
+  requiredTextRule,
+  trimTextFields,
+} from "@/views/fx67ll/dortmund/utils/validation";
+
 export default {
   name: "MatchNewSeasonPanel",
   dicts: ["fx67ll_dortmund_status"],
+  components: { DortmundFormLabel, DortmundCodeInput },
   data() {
     return {
       // 当场新增赛季表单参数（提交进 newSeason，与比赛同一事务）
@@ -59,21 +87,19 @@ export default {
       },
       // 当场新增赛季表单校验（沿用赛季页必填项）
       newSeasonRules: {
-        seasonCode: [
-          { required: true, message: "赛季编码不能为空", trigger: "blur" }
-        ],
-        seasonName: [
-          { required: true, message: "赛季名称不能为空", trigger: "blur" }
-        ],
+        seasonCode: [requiredTextRule("赛季编码", DORTMUND_LIMITS.seasonCode)],
+        seasonName: [requiredTextRule("赛季名称", DORTMUND_LIMITS.seasonName)],
         seasonStartDate: [
-          { required: true, message: "赛季开始日期不能为空", trigger: "blur" }
+          { required: true, message: "赛季开始日期不能为空", trigger: "change" },
+          dateRangeRule("赛季日期", () => this.newSeasonForm.seasonStartDate,
+            () => this.newSeasonForm.seasonEndDate)
         ],
         seasonEndDate: [
-          { required: true, message: "赛季结束日期不能为空", trigger: "blur" }
+          { required: true, message: "赛季结束日期不能为空", trigger: "change" },
+          dateRangeRule("赛季日期", () => this.newSeasonForm.seasonStartDate,
+            () => this.newSeasonForm.seasonEndDate)
         ],
-        seasonStatus: [
-          { required: true, message: "赛季状态不能为空", trigger: "blur" }
-        ],
+        seasonStatus: [enumRule("赛季状态", DORTMUND_SEASON_STATUS_OPTIONS, true)],
       },
     };
   },
@@ -86,7 +112,7 @@ export default {
     },
     // 构建当场新增赛季提交体
     getSubmitData() {
-      return { ...this.newSeasonForm };
+      return trimTextFields(this.newSeasonForm, ["seasonCode", "seasonName"]);
     },
   },
 };

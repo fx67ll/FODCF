@@ -20,14 +20,14 @@
         </div>
         <div class="plan-card-footer">
           <span class="plan-card-time">{{ plan.updateBy || '-' }} · {{ parseTime(plan.updateTime, "{y}-{m}-{d}")
-            }}</span>
+          }}</span>
           <span class="plan-card-actions">
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-view"
-              @click="$emit('review', plan)" v-hasPermi="['dortmund:plan:query']">回顾</el-button>
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-edit"
-              @click="$emit('update', plan)" v-hasPermi="['dortmund:plan:edit']">修改</el-button>
-            <el-button size="mini" type="text" class="dortmund-theme-text" icon="el-icon-delete"
-              @click="$emit('delete', plan)" v-hasPermi="['dortmund:plan:remove']">删除</el-button>
+            <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="$emit('review', plan)"
+              v-hasPermi="['dortmund:plan:query']" />
+            <dortmund-action-button label="修改" icon="el-icon-edit" action="edit" @click="$emit('update', plan)"
+              v-hasPermi="['dortmund:plan:edit']" />
+            <dortmund-action-button label="删除" icon="el-icon-delete" action="delete" @click="$emit('delete', plan)"
+              v-hasPermi="['dortmund:plan:remove']" />
           </span>
         </div>
       </div>
@@ -41,8 +41,11 @@
 </template>
 
 <script>
+import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+
 export default {
   name: "PlanCardPane",
+  components: { DortmundActionButton },
   props: {
     // 方案计划列表数据（与列表视图同一份，父页面持有）
     rows: {
