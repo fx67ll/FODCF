@@ -32,17 +32,17 @@
           <template slot="label">
             <dortmund-form-label label="比赛编码" tip="必填；1-23个字符，全局唯一；可按比赛时间自动生成 MATCH-YYYYMMDD-XXXXXX；创建后不可修改" />
           </template>
-          <dortmund-code-input v-model="form.matchCode" code-kind="match" :date-value="form.matchTime" :maxlength="limits.matchCode"
-            :disabled="disabled" placeholder="必填，可自动生成比赛编码" />
+          <dortmund-code-input v-model="form.matchCode" code-kind="match" :date-value="form.matchTime"
+            :maxlength="limits.matchCode" :disabled="disabled" placeholder="必填，可自动生成比赛编码" />
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">
         <el-form-item :prop="fieldProp('matchVenue')" label-width="116px">
           <template slot="label">
-            <dortmund-form-label label="比赛场地" tip="选填；最多233个字符，可从已有场地中选择或直接输入" />
+            <dortmund-form-label label="球队主场" tip="选填；最多233个字符，可从已有球队主场中选择或直接输入" />
           </template>
           <dortmund-option-select v-model="form.matchVenue" option-type="venue" :disabled="disabled"
-            placeholder="请选择或输入比赛场地" />
+            placeholder="请选择或输入球队主场" />
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">

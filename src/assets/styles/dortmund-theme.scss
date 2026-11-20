@@ -10,7 +10,8 @@ $dortmund-theme-page-scopes: ".dl-page", ".return-page",
   ".dortmund-secondary-page";
 
 /* 弹窗/抽屉作用域：append-to-body 后脱离页面根，需要按 custom-class 回接主题 */
-$dortmund-theme-overlay-scopes: ".list-selector-drawer", ".season-edit-dialog",
+$dortmund-theme-overlay-scopes: ".list-selector-drawer", ".team-option-drawer",
+  ".season-edit-dialog",
   ".odds-detail-drawer", ".info-detail-dialog", ".dortmund-detail-drawer",
   ".dortmund-info-point-form-dialog", ".odds-inline-dialog",
   ".extra-merge-dialog", ".extra-history-chart-dialog", ".plan-summary-dialog",

@@ -13,7 +13,7 @@
           <div class="match-info-summary-meta">
             <span v-if="match.matchCode"><i class="el-icon-tickets"></i>{{ match.matchCode }}</span>
             <span><i class="el-icon-time"></i>{{ matchTimeText }}</span>
-            <span><i class="el-icon-location-outline"></i>{{ match.matchVenue || "未填写场地" }}</span>
+            <span><i class="el-icon-location-outline"></i>{{ match.matchVenue || "未填写球队主场" }}</span>
           </div>
         </div>
       </div>

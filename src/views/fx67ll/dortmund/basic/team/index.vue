@@ -26,13 +26,15 @@
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
-            <dortmund-option-select v-model="queryParams.teamVenue" option-type="venue" placeholder="请选择或输入球队主场" />
+            <dortmund-team-option-selector v-model="queryParams.teamVenue" option-type="venue" :multiple="false"
+              :allow-create="false" size="small" width="220px" placeholder="请选择球队主场" />
           </el-form-item>
           <el-form-item label="地区/联赛" prop="teamCountry">
             <dortmund-option-select v-model="queryParams.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
           </el-form-item>
           <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
-            <dortmund-option-select v-model="queryParams.teamTag" option-type="tag" placeholder="请选择或输入球队标签" />
+            <dortmund-team-option-selector v-model="queryParams.teamTag" option-type="tag" :multiple="false"
+              :allow-create="false" size="small" width="220px" placeholder="请选择球队标签" />
           </el-form-item>
           <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
             <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
@@ -157,7 +159,7 @@
       </div>
 
       <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-        @pagination="getList" />
+        :page-sizes="pageSizes" @pagination="getList" />
     </template>
 
     <!-- 添加或修改球队管理二级页面 -->
@@ -228,7 +230,7 @@
 
       <dortmund-detail-card title='球队备注' icon='el-icon-document' tone='green'>
         <div class='dortmund-detail-text-block team-detail-remark'>{{ displayValue(detailData.teamRemark, '暂无备注')
-        }}</div>
+          }}</div>
       </dortmund-detail-card>
 
       <dortmund-detail-card title='记录轨迹' subtitle='归属、创建与最近更新' icon='el-icon-time' tone='green'>
@@ -253,6 +255,7 @@ import {
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import TeamEditScene from "./components/TeamEditScene/index.vue";
 import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
 import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
@@ -261,7 +264,7 @@ import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/Dortmun
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
-  components: { TeamEditScene, DortmundOptionSelect, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  components: { TeamEditScene, DortmundOptionSelect, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
   computed: {
     teamTagList() {
       return this.formatTeamTagList(this.detailData.teamTag);
@@ -352,6 +355,7 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       // 表单参数
       form: {},
       // 表单校验

@@ -317,7 +317,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: DORTMUND_PAGINATION.compactPageSize,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         extraMoney: null,
         isWin: null,
         winMoney: null,

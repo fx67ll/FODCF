@@ -123,9 +123,9 @@
           <el-col :xs="24" :md="12">
             <el-form-item prop="matchVenue">
               <template slot="label">
-                <dortmund-form-label label="比赛场地" tip="选填；最多233个字符，可从已有场地中选择或直接输入" />
+                <dortmund-form-label label="球队主场" tip="选填；最多233个字符，可从已有球队主场中选择或直接输入" />
               </template>
-              <dortmund-option-select v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入比赛场地" />
+              <dortmund-option-select v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入球队主场" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -348,7 +348,7 @@ export default {
         ],
         matchStatus: [enumRule("比赛状态", DORTMUND_STATUS_OPTIONS, true)],
         matchCode: [requiredTextRule("比赛编码", DORTMUND_LIMITS.matchCode)],
-        matchVenue: [optionalTextRule("比赛场地", DORTMUND_LIMITS.matchVenue)],
+        matchVenue: [optionalTextRule("球队主场", DORTMUND_LIMITS.matchVenue)],
         matchResult: [enumRule("比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
         matchRemark: [optionalTextRule("比赛备注", DORTMUND_LIMITS.matchRemark)],
         ...buildOddsRules("newOdds."),

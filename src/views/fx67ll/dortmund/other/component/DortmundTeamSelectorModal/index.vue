@@ -2,13 +2,13 @@
   <list-selector-modal :visible.sync="dialogVisible" :title="multiple ? '选择球队' : '选择球队'" :api-func="listTeam"
     :query-params="{ teamStatus: '0', ...queryParams }" :columns="columns" :search-fields="searchFields"
     :selected-items="selectedItems" value-key="teamId" label-key="teamName" :multiple="multiple"
-    @confirm="$emit('confirm', $event)" />
+    :page-size="pageSize" :page-sizes="pageSizes" @confirm="$emit('confirm', $event)" />
 </template>
 
 <script>
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
-import { teamCountryOptions } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { DORTMUND_PAGINATION, teamCountryOptions } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundTeamSelectorModal",
@@ -34,6 +34,8 @@ export default {
   data() {
     return {
       listTeam,
+      pageSize: DORTMUND_PAGINATION.defaultPageSize,
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       columns: [
         { label: "球队全称", prop: "teamName", minWidth: 160 },
         { label: "球队昵称", prop: "teamNameShort", minWidth: 110 },

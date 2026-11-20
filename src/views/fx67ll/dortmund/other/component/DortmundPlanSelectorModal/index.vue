@@ -1,12 +1,14 @@
 <template>
   <list-selector-modal :visible.sync="dialogVisible" title="选择关联方案计划" :api-func="listPlan" :columns="columns"
     :search-fields="searchFields" :selected-items="selectedItems" value-key="planId" label-key="planContent"
-    :label-formatter="formatPlanLabel" multiple @confirm="$emit('confirm', $event)" />
+    :label-formatter="formatPlanLabel" multiple :page-size="pageSize" :page-sizes="pageSizes"
+    @confirm="$emit('confirm', $event)" />
 </template>
 
 <script>
 import { listPlan } from "@/api/fx67ll/dortmund/plan";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundPlanSelectorModal",
@@ -24,6 +26,8 @@ export default {
   data() {
     return {
       listPlan,
+      pageSize: DORTMUND_PAGINATION.defaultPageSize,
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       columns: [
         { label: "方案正文", prop: "planContent", minWidth: 260 },
         { label: "录入倍率", prop: "planRate", minWidth: 110 },

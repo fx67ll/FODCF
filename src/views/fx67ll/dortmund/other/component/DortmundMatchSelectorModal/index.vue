@@ -2,12 +2,13 @@
   <list-selector-modal :visible.sync="dialogVisible" :title="multiple ? '选择比赛' : '选择单场比赛'" :api-func="listMatch"
     :query-params="selectorQueryParams" :columns="columns" :search-fields="searchFields" :max-count="maxCount"
     :selected-items="selectedItems" value-key="matchId" label-key="matchCode" :label-formatter="formatMatchLabel"
-    :multiple="multiple" @confirm="$emit('confirm', $event)" />
+    :multiple="multiple" :page-size="pageSize" :page-sizes="pageSizes" @confirm="$emit('confirm', $event)" />
 </template>
 
 <script>
 import { listMatch } from "@/api/fx67ll/dortmund/match";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundMatchSelectorModal",
@@ -41,12 +42,14 @@ export default {
   data() {
     return {
       listMatch,
+      pageSize: DORTMUND_PAGINATION.defaultPageSize,
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       columns: [
         { label: "比赛编码", prop: "matchCode", minWidth: 120 },
         { label: "所属赛季", prop: "seasonName", minWidth: 140 },
         { label: "对阵", prop: "matchSummary", minWidth: 220 },
         { label: "比赛时间", prop: "matchTime", minWidth: 140, formatter: (row) => this.parseTime(row.matchTime, "{y}-{m}-{d} {h}:{i}") || "-" },
-        { label: "场地", prop: "matchVenue", minWidth: 140 },
+        { label: "球队主场", prop: "matchVenue", minWidth: 140 },
       ],
       searchFields: [
         { key: "teamName", label: "对阵球队", placeholder: "请输入主队或客队名称" },

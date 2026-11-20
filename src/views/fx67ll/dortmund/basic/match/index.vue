@@ -28,8 +28,9 @@
                 popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
                 end-placeholder="结束日期" clearable></el-date-picker>
             </el-form-item>
-            <el-form-item label="比赛场地" prop="matchVenue" v-if="isMoreQuery">
-              <dortmund-option-select v-model="queryParams.matchVenue" option-type="venue" placeholder="请选择或输入比赛场地" />
+            <el-form-item label="球队主场" prop="matchVenue" v-if="isMoreQuery">
+              <dortmund-team-option-selector v-model="queryParams.matchVenue" option-type="venue" :multiple="false"
+                :allow-create="false" size="small" width="220px" placeholder="请选择球队主场" />
             </el-form-item>
             <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
@@ -71,7 +72,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -104,7 +105,7 @@
                 <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="比赛场地" align="center" prop="matchVenue" min-width="150" show-overflow-tooltip />
+            <el-table-column label="球队主场" align="center" prop="matchVenue" min-width="150" show-overflow-tooltip />
             <el-table-column label="比赛状态" align="center" prop="matchStatus" width="96">
               <template slot-scope="scope">
                 <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchStatus" />
@@ -224,8 +225,8 @@
 <script>
 import { listMatch, getMatch, delMatch, addMatch, updateMatch } from "@/api/fx67ll/dortmund/match";
 
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
 import MatchEditScene from "./components/MatchEditScene/index";
 import MatchOddsDrawer from "./components/MatchOddsDrawer/index";
 import MatchInfoDrawer from "./components/MatchInfoDrawer/index";
@@ -240,7 +241,7 @@ export default {
   name: "Match",
   dicts: ["sys_notice_status", "fx67ll_match_result"],
   components: {
-    MatchEditScene, DortmundOptionSelect, DortmundSeasonSelect, MatchOddsDrawer, MatchInfoDrawer,
+    MatchEditScene, DortmundTeamOptionSelector, DortmundSeasonSelect, MatchOddsDrawer, MatchInfoDrawer,
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail
   },
   computed: {
@@ -248,14 +249,14 @@ export default {
       return [
         { label: '所属赛季', value: this.matchDetailData.seasonName, emptyText: '未关联赛季' },
         { label: '比赛时间', value: this.parseTime(this.matchDetailData.matchTime, '{y}-{m}-{d} {h}:{i}:{s}'), emptyText: '未记录' },
-        { label: '比赛场地', value: this.matchDetailData.matchVenue, emptyText: '未记录' },
+        { label: '球队主场', value: this.matchDetailData.matchVenue, emptyText: '未记录' },
       ];
     },
     matchScheduleItems() {
       return [
         { label: '所属赛季ID', value: this.matchDetailData.seasonId, emptyText: '未记录', icon: 'el-icon-collection-tag' },
         { label: '比赛时间', value: this.parseTime(this.matchDetailData.matchTime, '{y}-{m}-{d} {h}:{i}:{s}'), emptyText: '未记录', icon: 'el-icon-time' },
-        { label: '比赛场地', value: this.matchDetailData.matchVenue, emptyText: '未记录', icon: 'el-icon-location-outline' },
+        { label: '球队主场', value: this.matchDetailData.matchVenue, emptyText: '未记录', icon: 'el-icon-location-outline' },
         { label: '资料状态', value: this.displayDict(this.dict.type.sys_notice_status, this.matchDetailData.matchStatus, '未设置'), emptyText: '未设置', icon: 'el-icon-data-analysis' },
       ];
     },
@@ -373,7 +374,6 @@ export default {
       matchDetailVisible: false,
       matchDetailLoading: false,
       matchDetailData: {},
-      // 球场预设选项数组（查询表单比赛场地可选项）
     };
   },
   created() {

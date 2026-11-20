@@ -2,12 +2,13 @@
   <list-selector-modal :visible.sync="dialogVisible" title="选择关联回报组合" :api-func="loadCombinations"
     :query-params="queryParams" :columns="columns" :search-fields="searchFields" :selected-items="selectedItems"
     value-key="combinationId" label-key="combinationTitle" :label-formatter="formatCombinationLabel"
-    :multiple="multiple" @confirm="$emit('confirm', $event)" />
+    :multiple="multiple" :page-size="pageSize" :page-sizes="pageSizes" @confirm="$emit('confirm', $event)" />
 </template>
 
 <script>
 import { listCombination } from "@/api/fx67ll/dortmund/returnCombination";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundCombinationSelectorModal",
@@ -32,6 +33,8 @@ export default {
   },
   data() {
     return {
+      pageSize: DORTMUND_PAGINATION.defaultPageSize,
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       columns: [
         { label: "组合标题", prop: "combinationTitle", minWidth: 190 },
         { label: "组合编码", prop: "combinationCode", minWidth: 150 },

@@ -70,7 +70,7 @@
           <el-col :xs="24" :md="12">
             <el-form-item prop="teamVenue">
               <template slot="label">
-                <dortmund-form-label label="球队主场" tip="必填；1-233个字符，可从已有场地中选择或直接输入" />
+                <dortmund-form-label label="球队主场" tip="必填；1-233个字符，可从已有球队主场中选择或直接输入" />
               </template>
               <dortmund-team-option-selector v-model="editForm.teamVenue" option-type="venue" placeholder="请选择球队主场" />
             </el-form-item>

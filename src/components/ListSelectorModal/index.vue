@@ -76,7 +76,7 @@
           </el-table>
         </div>
         <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="internalPageSize"
-          :layout="paginationLayout" :pager-count="paginationPagerCount" :auto-scroll="false"
+          :page-sizes="pageSizes" :layout="paginationLayout" :pager-count="paginationPagerCount" :auto-scroll="false"
           class="list-selector-pagination" @pagination="loadRows" />
       </div>
 
@@ -150,6 +150,10 @@ export default {
       type: Number,
       default: 10,
     },
+    pageSizes: {
+      type: Array,
+      default: () => [10, 20, 50, 100],
+    },
   },
   data() {
     return {
@@ -187,7 +191,9 @@ export default {
       return "960px";
     },
     paginationLayout() {
-      return this.viewportWidth < 768 ? "prev, pager, next" : "total, prev, pager, next, jumper";
+      return this.viewportWidth < 768
+        ? "sizes, prev, pager, next"
+        : "total, sizes, prev, pager, next, jumper";
     },
     paginationPagerCount() {
       return this.viewportWidth < 768 ? 5 : 7;
@@ -742,7 +748,8 @@ export default {
     border-color: #bfe8d1;
   }
 
-  ::v-deep .el-pagination__jump .el-input__inner:focus {
+  ::v-deep .el-pagination__jump .el-input__inner:focus,
+  ::v-deep .el-pagination__sizes .el-input__inner:focus {
     border-color: var(--selector-theme);
   }
 }

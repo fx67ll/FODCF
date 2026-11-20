@@ -132,7 +132,7 @@ export default {
         "newMatch.awayTeamId": [{ required: true, message: "新比赛客队不能为空", trigger: "change" }],
         "newMatch.matchTime": [{ required: true, message: "新比赛比赛时间不能为空", trigger: "change" }],
         "newMatch.matchStatus": [enumRule("新比赛状态", DORTMUND_STATUS_OPTIONS, true)],
-        "newMatch.matchVenue": [optionalTextRule("新比赛场地", DORTMUND_LIMITS.matchVenue)],
+        "newMatch.matchVenue": [optionalTextRule("新球队主场", DORTMUND_LIMITS.matchVenue)],
         "newMatch.matchResult": [enumRule("新比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
         "newMatch.matchRemark": [optionalTextRule("新比赛备注", DORTMUND_LIMITS.matchRemark)],
         ...buildOddsRules(),

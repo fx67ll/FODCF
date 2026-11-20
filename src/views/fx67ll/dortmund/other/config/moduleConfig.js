@@ -235,24 +235,31 @@ export const DORTMUND_IMAGE_LIMITS = Object.freeze({
   maxSizeMb: 4,
 });
 
-/** 列表、选择器和内嵌明细的统一分页默认值。 */
+/** 列表、选择器和内嵌明细的统一分页默认值：默认10条，可切换为10/20/50/100条。 */
 export const DORTMUND_PAGINATION = Object.freeze({
   defaultPageSize: 10,
-  compactPageSize: 5,
   selectorPageSize: 10,
   largePageSize: 50,
   lookupPageSize: 100,
   oddsLookupPageSize: 200,
   existenceCheckPageSize: 1,
   exportAllPageSize: 999999999,
-  pageSizes: Object.freeze([5, 10, 23, 50, 100]),
+  pageSizes: Object.freeze([10, 20, 50, 100]),
 });
 
 /** 球队排序字段允许范围，与后端 DortmundModuleConfig.Team 一致。 */
-export const DORTMUND_TEAM_SORT_RANGE = Object.freeze({ min: 0, max: 1023, defaultValue: 0 });
+export const DORTMUND_TEAM_SORT_RANGE = Object.freeze({
+  min: 0,
+  max: 1023,
+  defaultValue: 0,
+});
 
 /** 赛季排序字段允许范围，与后端 DortmundModuleConfig.Season 一致。 */
-export const DORTMUND_SEASON_SORT_RANGE = Object.freeze({ min: 0, max: 1023, defaultValue: 0 });
+export const DORTMUND_SEASON_SORT_RANGE = Object.freeze({
+  min: 0,
+  max: 1023,
+  defaultValue: 0,
+});
 
 /** 数值模拟的用户初始参数；仅在浏览器没有历史缓存时使用。 */
 export const DORTMUND_SIMULATION_DEFAULTS = Object.freeze({
@@ -344,9 +351,21 @@ export const DORTMUND_PREFERENCE_DIMENSIONS = Object.freeze([
     key: "riskLevel",
     label: "风险水平",
     options: Object.freeze([
-      { value: "LOW", label: "低风险", description: "优先高信心、低波动与证据完整" },
-      { value: "BALANCED", label: "均衡风险", description: "兼顾信心与赔率波动" },
-      { value: "HIGH", label: "高风险", description: "接受更高波动并充分揭示风险" },
+      {
+        value: "LOW",
+        label: "低风险",
+        description: "优先高信心、低波动与证据完整",
+      },
+      {
+        value: "BALANCED",
+        label: "均衡风险",
+        description: "兼顾信心与赔率波动",
+      },
+      {
+        value: "HIGH",
+        label: "高风险",
+        description: "接受更高波动并充分揭示风险",
+      },
     ]),
   },
   {
@@ -363,18 +382,38 @@ export const DORTMUND_PREFERENCE_DIMENSIONS = Object.freeze([
     key: "stakeIntent",
     label: "投入意图",
     options: Object.freeze([
-      { value: "CONSERVATIVE", label: "低投入", description: "仅表达投入意图，金额仍以基础金额为准" },
+      {
+        value: "CONSERVATIVE",
+        label: "低投入",
+        description: "仅表达投入意图，金额仍以基础金额为准",
+      },
       { value: "BALANCED", label: "均衡投入", description: "保持投入意图均衡" },
-      { value: "AGGRESSIVE", label: "高投入", description: "表达集中投入意图，金额仍以基础金额为准" },
+      {
+        value: "AGGRESSIVE",
+        label: "高投入",
+        description: "表达集中投入意图，金额仍以基础金额为准",
+      },
     ]),
   },
   {
     key: "returnIntent",
     label: "回报意图",
     options: Object.freeze([
-      { value: "TARGET_SEEKING", label: "贴近目标", description: "优先使预计回报接近目标金额" },
-      { value: "BALANCED", label: "均衡回报", description: "在目标偏差、倍率与风险之间平衡" },
-      { value: "MAX_RETURN", label: "追求高回报", description: "优先更适合放大回报的结构，不承诺收益" },
+      {
+        value: "TARGET_SEEKING",
+        label: "贴近目标",
+        description: "优先使预计回报接近目标金额",
+      },
+      {
+        value: "BALANCED",
+        label: "均衡回报",
+        description: "在目标偏差、倍率与风险之间平衡",
+      },
+      {
+        value: "MAX_RETURN",
+        label: "追求高回报",
+        description: "优先更适合放大回报的结构，不承诺收益",
+      },
     ]),
   },
 ]);
@@ -426,18 +465,23 @@ export function resolvePreferenceCode(dimensions) {
   if (!dimensions) {
     return DORTMUND_DEFAULT_PREFERENCE_CODE;
   }
-  const matched = DORTMUND_PREFERENCE_OPTIONS.find((option) => ["riskLevel", "structure", "stakeIntent", "returnIntent"]
-    .every((key) => option.dimensions[key] === dimensions[key]));
+  const matched = DORTMUND_PREFERENCE_OPTIONS.find((option) =>
+    ["riskLevel", "structure", "stakeIntent", "returnIntent"].every(
+      (key) => option.dimensions[key] === dimensions[key]
+    )
+  );
   return matched ? matched.value : DORTMUND_PREFERENCE_CUSTOM_CODE;
 }
 
 /** 返回便于详情和摘要展示的偏好名称。 */
 export function getPreferenceLabel(code) {
-  const option = DORTMUND_PREFERENCE_OPTIONS.find((item) => item.value === code);
+  const option = DORTMUND_PREFERENCE_OPTIONS.find(
+    (item) => item.value === code
+  );
   if (option) {
     return option.label;
   }
-  return code === DORTMUND_PREFERENCE_CUSTOM_CODE ? "自定义组合" : (code || "-");
+  return code === DORTMUND_PREFERENCE_CUSTOM_CODE ? "自定义组合" : code || "-";
 }
 
 /** 把四项维度格式化为“维度：选项”摘要，未知编码原样展示。 */
@@ -448,7 +492,7 @@ export function formatPreferenceDimensionSummary(dimensions) {
   return DORTMUND_PREFERENCE_DIMENSIONS.map((group) => {
     const value = dimensions[group.key];
     const option = group.options.find((item) => item.value === value);
-    return `${group.label}：${option ? option.label : (value || "-")}`;
+    return `${group.label}：${option ? option.label : value || "-"}`;
   }).join(" · ");
 }
 
@@ -457,13 +501,22 @@ export function isPreferenceDimensionOptionDisabled(dimensions, key, value) {
   if (!dimensions) {
     return false;
   }
-  return (key === "structure" && value === "LONG" && dimensions.riskLevel === "LOW")
-    || (key === "riskLevel" && value === "LOW" && dimensions.structure === "LONG");
+  return (
+    (key === "structure" &&
+      value === "LONG" &&
+      dimensions.riskLevel === "LOW") ||
+    (key === "riskLevel" && value === "LOW" && dimensions.structure === "LONG")
+  );
 }
 
 /** 后端契约状态与壳层字段长度。 */
 export const DORTMUND_CONTRACT = Object.freeze({
-  status: Object.freeze({ processing: "0", success: "1", failed: "2", manualPending: "3" }),
+  status: Object.freeze({
+    processing: "0",
+    success: "1",
+    failed: "2",
+    manualPending: "3",
+  }),
   resultSource: Object.freeze({ auto: "A", manual: "M" }),
   yes: "Y",
   no: "N",
