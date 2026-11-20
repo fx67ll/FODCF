@@ -173,7 +173,7 @@
                 <div class="manual-prompt-head">
                   <div>
                     <strong>处理提示词</strong>
-                    <span>导出任务后，与任务JSON一起发送给第三方AI。</span>
+                    <span>完整提示词已内嵌在导出任务的exportPrompt字段，也可在此单独复制。</span>
                   </div>
                   <el-button size="mini" type="warning" plain icon="el-icon-copy-document"
                     :disabled="!templateExportPrompt" @click="copyPrompt('export')">复制处理提示词</el-button>
@@ -216,7 +216,7 @@ const SELECTION_TYPES = DORTMUND_MANUAL_AI_CONFIG.selectionTypes;
 const STEP_TITLES = ["导出任务", "外部AI处理", "导入结果"];
 const DEFAULT_STEPS = [
   "导出当前批次处理任务；业务快照已冻结，页面刷新后仍可重新导出。",
-  "把任务JSON与处理提示词一起交给第三方AI；中间检索和推理由外部AI完成。",
+  "把任务JSON交给第三方AI，完整处理提示词已内嵌在exportPrompt字段；中间检索和推理由外部AI完成。",
   "只把1.0标准JSON导入系统；后端重新校验、复算、去重并落库。",
 ];
 
@@ -303,14 +303,14 @@ export default {
       this.taskLoading = true;
       getManualTask(this.generationId).then((response) => {
         const task = (response && response.data) || {};
-        if (!task.taskId || !task.responseContract
+        if (!task.taskId || !task.responseContract || !task.exportPrompt
           || (this.generationCode && task.taskId !== this.generationCode)) {
           throw new Error("manual-task-invalid");
         }
         const content = JSON.stringify(task, null, 2);
         const blob = new Blob([content], { type: "application/json;charset=utf-8" });
         this.$download.saveAs(blob, `dortmund-return-manual-task-${this.generationId}.json`);
-        this.$modal.msgSuccess("人工AI任务已导出，可连同处理提示词交给第三方AI");
+        this.$modal.msgSuccess("人工AI任务已导出，完整处理提示词已内嵌，可直接交给第三方AI");
       }).catch(() => {
         this.$modal.msgError("人工AI任务导出失败，请刷新批次后重试");
       }).finally(() => {

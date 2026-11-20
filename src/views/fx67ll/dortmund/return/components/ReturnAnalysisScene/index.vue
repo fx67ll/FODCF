@@ -805,12 +805,12 @@ export default {
         const payload = this.buildGeneratePayload("manual");
         createManualTask(payload).then((response) => {
           const task = (response && response.data) || {};
-          if (!task.generationId || !task.taskId || !task.responseContract) {
-            this.$modal.msgError("人工任务响应缺少批次或响应契约，请到历史列表中确认");
+          if (!task.generationId || !task.taskId || !task.responseContract || !task.exportPrompt) {
+            this.$modal.msgError("人工任务响应缺少批次、处理提示词或响应契约，请到历史列表中确认");
             return;
           }
           this.downloadManualTask(task);
-          this.$modal.msgSuccess("人工AI任务已创建并下载，可交给第三方AI处理");
+          this.$modal.msgSuccess("人工AI任务已创建并下载，完整处理提示词已内嵌，可交给第三方AI处理");
           this.startPolling(task.generationId);
         }).catch(() => {
           this.$modal.msgWarning("人工任务创建结果未确认；使用相同条件重试会复用同一幂等请求号");
@@ -1711,6 +1711,8 @@ export default {
   background: #fffaf0;
   border: 1px solid #f0d9a8;
   box-shadow: none;
+  position: relative;
+  left: -8px;
 }
 
 .async-tip {
@@ -2004,6 +2006,7 @@ export default {
 }
 
 @media screen and (max-width: 991px) {
+
   .mode-cards,
   .submit-workspace {
     grid-template-columns: 1fr;
@@ -2015,6 +2018,7 @@ export default {
 }
 
 @media screen and (max-width: 1199px) {
+
   .preference-cards,
   .preference-dimension-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

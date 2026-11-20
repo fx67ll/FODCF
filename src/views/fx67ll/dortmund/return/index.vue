@@ -171,7 +171,7 @@
         <el-alert v-if="generationDetail.generationStatus === '2'" class="return-detail-alert-block" type="error"
           :closable="false" show-icon :title="generationDetail.generationRemark || '生成失败，没有产生可用的半截数据。'" />
         <el-alert v-if="generationDetail.generationStatus === '3'" class="return-detail-alert-block" type="warning"
-          :closable="false" show-icon title="人工AI任务已创建。可在下方导出任务交给第三方AI，再导入标准化结果完成批次。" />
+          :closable="false" show-icon title="人工AI任务已创建。导出任务已内嵌完整处理提示词，交给第三方AI后再导入标准化结果完成批次。" />
         <el-alert v-if="generationDetail.aiEvidenceError" class="return-detail-alert-block" type="error"
           :closable="false" show-icon :title="`证据流程：${generationDetail.aiEvidenceError}`" />
       </dortmund-detail-card>
@@ -962,13 +962,13 @@ export default {
       if (!row || !row.generationId) return;
       getManualTask(row.generationId).then((response) => {
         const task = (response && response.data) || {};
-        if (!task.taskId || !task.responseContract) {
+        if (!task.taskId || !task.responseContract || !task.exportPrompt) {
           throw new Error("manual-task-invalid");
         }
         const content = JSON.stringify(task, null, 2);
         const blob = new Blob([content], { type: "application/json;charset=utf-8" });
         this.$download.saveAs(blob, `dortmund-return-manual-task-${row.generationId}.json`);
-        this.$modal.msgSuccess("人工AI任务已导出，可直接交给第三方AI");
+        this.$modal.msgSuccess("人工AI任务已导出，完整处理提示词已内嵌，可直接交给第三方AI");
       }).catch(() => {
         this.$modal.msgError("人工AI任务导出失败，请刷新批次后重试");
       });
