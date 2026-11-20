@@ -42,7 +42,7 @@
           <span><label>契约版本</label><b>v1.0</b></span>
           <span><label>任务批次</label><b>{{ generationCode || "-" }}</b></span>
           <span><label>预检候选</label><b>{{ candidateCount }} 条</b></span>
-          <span><label>正文上限</label><b>2 MB</b></span>
+          <span><label>正文上限</label><b>8 MiB</b></span>
         </div>
         <div class="manual-import-toolbar">
           <span>导入前可先核对字段或复制修复提示词：</span>
@@ -63,7 +63,7 @@
             :on-change="handleFileChange">
             <el-button size="mini" type="primary" plain icon="el-icon-folder-opened">选择 JSON 文件</el-button>
           </el-upload>
-          <span>也可直接粘贴，正文上限 2 MB</span>
+          <span>也可直接粘贴，正文上限 8 MiB</span>
           <el-button type="text" class="dortmund-theme-text" :disabled="!responseContent"
             @click="handleClear">清空</el-button>
         </div>
@@ -208,7 +208,7 @@ import { getManualTask, getManualTemplate, importManualResult } from "@/api/fx67
 
 const SCHEMA_VERSION = "1.0";
 const TASK_TYPE = "DORTMUND_RETURN_COMBINATION";
-const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const MAX_CANDIDATES = 10;
 const MAX_SELECTIONS = 8;
 const SELECTION_TYPES = ["HW", "DR", "AW", "HH", "HD", "HA"];
@@ -421,7 +421,7 @@ export default {
       const rawFile = file && file.raw;
       if (!rawFile) return;
       if (rawFile.size > MAX_RESPONSE_BYTES) {
-        this.importError = "文件超过 2 MB 上限，请压缩后重新选择";
+        this.importError = "文件超过 8 MiB 上限，请压缩后重新选择";
         this.previewReady = false;
         this.previewCandidates = [];
         return;
@@ -459,7 +459,7 @@ export default {
       const raw = content.trim();
       if (!raw) return;
       if (new Blob([content]).size > MAX_RESPONSE_BYTES) {
-        this.importError = "正文超过 2 MB 上限，请压缩后重新导入";
+        this.importError = "正文超过 8 MiB 上限，请压缩后重新导入";
         return;
       }
       let payload;

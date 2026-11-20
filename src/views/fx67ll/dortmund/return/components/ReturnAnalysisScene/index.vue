@@ -142,7 +142,7 @@
               <div class="supplementary-list">
                 <div class="supplementary-item" v-for="(item, index) in generateForm.supplementaryObjectives"
                   :key="index">
-                  <el-input v-model="generateForm.supplementaryObjectives[index]" maxlength="200" show-word-limit
+                  <el-input v-model="generateForm.supplementaryObjectives[index]" maxlength="240" show-word-limit
                     :placeholder="`第 ${index + 1} 条补充目标，例如：优先选择主场优势明显的比赛`" />
                   <el-button type="text" class="supplementary-remove" icon="el-icon-delete" title="删除该补充目标"
                     @click="handleRemoveSupplementaryObjective(index)" />
@@ -327,13 +327,14 @@ import ReturnAiWorkflow from "../ReturnAiWorkflow/index";
 import ReturnAnalysisResult from "../ReturnAnalysisResult/index";
 
 const MAX_BUSINESS_AMOUNT = 999999999999.99;
-const MAX_SUPPLEMENTARY_OBJECTIVES = 5;
-const MAX_SUPPLEMENTARY_OBJECTIVE_LENGTH = 200;
-const MAX_SUPPLEMENTARY_OBJECTIVES_TOTAL_LENGTH = 1000;
+const MAX_SUPPLEMENTARY_OBJECTIVES = 8;
+const MAX_SUPPLEMENTARY_OBJECTIVE_LENGTH = 240;
+const MAX_SUPPLEMENTARY_OBJECTIVES_TOTAL_LENGTH = 1600;
 const ACTIVE_GENERATION_KEY = "dortmund.return.activeGenerationId";
 const PENDING_REQUEST_KEY = "dortmund.return.pendingClientRequestId";
 const POLL_INTERVAL_MS = 3000;
-const MAX_POLL_COUNT = 240;
+// 900秒租约按3秒轮询约300次，取360次覆盖网络抖动与状态写入余量。
+const MAX_POLL_COUNT = 360;
 
 function validateBusinessAmount(rule, value, callback) {
   const text = String(value == null ? "" : value).trim();
