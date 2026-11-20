@@ -11,7 +11,7 @@
           <template slot="label">
             <dortmund-form-label label="倍率编码" tip="必填；1-23个字符，同一用户内唯一；可按来源时间自动生成 ODDS-YYYYMMDD-XXXXXX" />
           </template>
-          <dortmund-code-input v-model="form.oddsCode" code-kind="odds" :date-value="form.sourceTime" maxlength="23"
+          <dortmund-code-input v-model="form.oddsCode" code-kind="odds" :date-value="form.sourceTime" :maxlength="limits.oddsCode"
             :disabled="disabled" placeholder="请输入或自动生成倍率编码" />
         </el-form-item>
         <el-form-item :prop="fieldProp('sourceTime')" class="dortmund-odds-form-field">
@@ -72,7 +72,7 @@
         <template slot="label">
           <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
         </template>
-        <el-input v-model="form.oddsRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
+        <el-input v-model="form.oddsRemark" type="textarea" :rows="3" :maxlength="limits.oddsRemark" show-word-limit
           :disabled="disabled" placeholder="请输入其他说明（可空）" />
       </el-form-item>
     </div>
@@ -82,7 +82,8 @@
 <script>
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
-import { ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/utils/odds";
+import { ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/other/utils/odds";
+import { DORTMUND_LIMITS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundOddsForm",
@@ -110,6 +111,7 @@ export default {
   },
   data() {
     return {
+      limits: DORTMUND_LIMITS,
       oddsRows: ODDS_MATRIX_ROWS,
     };
   },

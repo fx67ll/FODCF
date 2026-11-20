@@ -102,7 +102,7 @@
           </el-table>
         </div>
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" @pagination="getList" />
+          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
       </div>
 
       <odds-edit-scene key="edit" v-else-if="pageScene === 'edit'" :edit-mode="editMode" :initial-form="editForm"
@@ -190,8 +190,9 @@ import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 import { getMatch } from "@/api/fx67ll/dortmund/match";
-import { formatOddsWeight, ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/utils/odds";
-import { generateBusinessCode } from "@/views/fx67ll/dortmund/utils/codeGenerator";
+import { formatOddsWeight, ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/other/utils/odds";
+import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundOdds",
@@ -296,7 +297,7 @@ export default {
       matchSelectorVisible: false,
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         oddsCode: null,
         matchCode: null,
         activeFlag: null,
@@ -307,6 +308,7 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       detailVisible: false,
       detailLoading: false,
       detail: {},

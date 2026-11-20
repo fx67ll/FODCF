@@ -38,17 +38,17 @@
         class="sim-record-form">
         <el-form-item prop="roundNo">
           <div class="sim-record-input-label">
-            <dortmund-form-label label="本轮轮次" tip="必填，32位整数且不能为0；默认自动顺延，负值仅用于强制作废当前版本，保存后不可恢复" />
+            <dortmund-form-label label="本轮轮次" :tip="roundTip" />
           </div>
-          <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0" :min="-2147483648"
-            :max="2147483647" class="sim-record-input round" :class="{ negative: simRecordForm.roundNo < 0 }"
-            placeholder="请输入本轮轮次" />
+          <el-input-number v-model="simRecordForm.roundNo" :controls="false" :precision="0"
+            :min="simulationDefaults.roundNoMin" :max="simulationDefaults.roundNoMax" class="sim-record-input round"
+            :class="{ negative: simRecordForm.roundNo < 0 }" placeholder="请输入本轮轮次" />
           <div class="sim-record-tip" :class="{ danger: simRecordForm.roundNo < 0 }">
             {{ simRecordForm.roundNo < 0 ? "轮次为负，保存后该版本将被强制作废" : "默认自动顺延可修改，支持负值" }} </div>
         </el-form-item>
         <el-form-item prop="returnValue">
           <div class="sim-record-input-label">
-            <dortmund-form-label label="实际回收数值" tip="必填，普通十进制数字，范围 0 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
+            <dortmund-form-label label="实际回收数值" :tip="returnValueTip" />
           </div>
           <el-input-number v-model="simRecordForm.returnValue" :controls="false" :precision="2" :min="0"
             class="sim-record-input" placeholder="请输入实际回收数值" />
@@ -81,7 +81,12 @@ import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 import PlanLinkSelector from "../../../PlanLinkSelector/index.vue";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
-import { DORTMUND_LIMITS, decimalRule, formatPlainDecimal, integerRangeRule } from "@/views/fx67ll/dortmund/utils/validation";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_NUMERIC,
+  DORTMUND_SIMULATION_DEFAULTS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { decimalRule, formatPlainDecimal, integerRangeRule } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "SimRecordDialog",
@@ -105,7 +110,7 @@ export default {
     // 本轮使用系数
     coefficient: {
       type: Number,
-      default: 2,
+      default: DORTMUND_SIMULATION_DEFAULTS.coefficient,
     },
     // 本轮开始数值
     nextStartValue: {
@@ -115,7 +120,7 @@ export default {
     // 下一轮轮次序号
     nextRoundNo: {
       type: Number,
-      default: 1,
+      default: DORTMUND_SIMULATION_DEFAULTS.firstRoundNo,
     },
     // 保存中状态
     submitting: {
@@ -127,20 +132,26 @@ export default {
     return {
       // 本轮结果表单（轮次支持负值，实际回收数值支持部分回本）
       simRecordForm: {
-        roundNo: 1,
+        roundNo: DORTMUND_SIMULATION_DEFAULTS.firstRoundNo,
         returnValue: 0,
       },
       // 本轮结果表单校验
       simRecordRules: {
         roundNo: [
-          integerRangeRule("本轮轮次", -2147483648, 2147483647, true, [0]),
+          integerRangeRule(
+            "本轮轮次",
+            DORTMUND_SIMULATION_DEFAULTS.roundNoMin,
+            DORTMUND_SIMULATION_DEFAULTS.roundNoMax,
+            true,
+            [0]
+          ),
         ],
         returnValue: [
           decimalRule("实际回收数值", {
             required: true,
             min: 0,
-            maxIntegerDigits: 20,
-            maxFractionDigits: 2,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxSimulationIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxSimulationFractionDigits,
             maxTextLength: DORTMUND_LIMITS.simulateValueText,
           }),
         ],
@@ -150,6 +161,20 @@ export default {
     };
   },
   computed: {
+    numeric() {
+      return DORTMUND_NUMERIC;
+    },
+    simulationDefaults() {
+      return DORTMUND_SIMULATION_DEFAULTS;
+    },
+    roundTip() {
+      return `必填，32位整数且不能为0；默认自动顺延，负值仅用于强制作废当前版本，保存后不可恢复`;
+    },
+    returnValueTip() {
+      return `必填，普通十进制数字，范围 0 至 ${DORTMUND_NUMERIC.maxSimulationAmount}，` +
+        `最多${DORTMUND_NUMERIC.maxSimulationFractionDigits}位小数，` +
+        `数值文本不超过${DORTMUND_LIMITS.simulateValueText}个字符`;
+    },
     dialogVisible: {
       get() {
         return this.visible;
@@ -161,17 +186,23 @@ export default {
     // 本轮参与数值（半量滚动为开始数值的一半）
     joinValue() {
       const value = this.simMode === "half"
-        ? Number(formatPlainDecimal(this.nextStartValue / 2, 2, "0"))
+        ? Number(formatPlainDecimal(
+          this.nextStartValue / DORTMUND_SIMULATION_DEFAULTS.halfModeDivisor,
+          DORTMUND_NUMERIC.maxSimulationFractionDigits,
+          "0"
+        ))
         : Number(this.nextStartValue);
       return Number.isFinite(value) ? value : 0;
     },
     // 本轮结束数值（半量滚动保留另一半，全量滚动即实际回收数值）
     endValue() {
-      const keepValue = this.simMode === "half" ? this.nextStartValue / 2 : 0;
+      const keepValue = this.simMode === "half"
+        ? this.nextStartValue / DORTMUND_SIMULATION_DEFAULTS.halfModeDivisor
+        : 0;
       const value = Number(
         formatPlainDecimal(
           keepValue + parseFloat(this.simRecordForm.returnValue || 0),
-          2,
+          DORTMUND_NUMERIC.maxSimulationFractionDigits,
           "0"
         )
       );
@@ -180,7 +211,9 @@ export default {
     // 结束数值计算公式说明
     endValueFormula() {
       if (this.simMode === "half") {
-        return `保留 ${this.formatSimNumber(this.nextStartValue / 2)} + 回收 ${this.formatSimNumber(this.simRecordForm.returnValue)} 计算`;
+        return `保留 ${this.formatSimNumber(
+          this.nextStartValue / DORTMUND_SIMULATION_DEFAULTS.halfModeDivisor
+        )} + 回收 ${this.formatSimNumber(this.simRecordForm.returnValue)} 计算`;
       }
       return `即本轮实际回收数值`;
     },
@@ -206,7 +239,7 @@ export default {
       const defaultReturnValue = this.isHit === "Y"
         ? formatPlainDecimal(
           this.joinValue * parseFloat(this.coefficient || 0),
-          2
+          DORTMUND_NUMERIC.maxSimulationFractionDigits
         )
         : "0";
       this.simRecordForm.returnValue = defaultReturnValue
@@ -240,7 +273,12 @@ export default {
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return formatPlainDecimal(value, 2, "0.00");
+      const fractionDigits = DORTMUND_NUMERIC.maxSimulationFractionDigits;
+      return formatPlainDecimal(
+        value,
+        fractionDigits,
+        `0.${"0".repeat(fractionDigits)}`
+      );
     },
   },
 };

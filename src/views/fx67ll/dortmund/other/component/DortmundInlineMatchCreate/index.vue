@@ -32,7 +32,7 @@
           <template slot="label">
             <dortmund-form-label label="比赛编码" tip="必填；1-23个字符，全局唯一；可按比赛时间自动生成 MATCH-YYYYMMDD-XXXXXX；创建后不可修改" />
           </template>
-          <dortmund-code-input v-model="form.matchCode" code-kind="match" :date-value="form.matchTime" maxlength="23"
+          <dortmund-code-input v-model="form.matchCode" code-kind="match" :date-value="form.matchTime" :maxlength="limits.matchCode"
             :disabled="disabled" placeholder="必填，可自动生成比赛编码" />
         </el-form-item>
       </el-col>
@@ -92,7 +92,7 @@
           <template slot="label">
             <dortmund-form-label label="比赛备注" tip="选填；最多1023个字符" />
           </template>
-          <el-input v-model="form.matchRemark" maxlength="1023" show-word-limit :disabled="disabled"
+          <el-input v-model="form.matchRemark" :maxlength="limits.matchRemark" show-word-limit :disabled="disabled"
             placeholder="请输入比赛备注（可空）" />
         </el-form-item>
       </el-col>
@@ -110,6 +110,7 @@ import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/Dort
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
+import { DORTMUND_LIMITS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundInlineMatchCreate",
@@ -147,6 +148,9 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     selectedTeamItems() {
       if (this.teamSelectorSide === "home") {
         return this.selectedHomeTeam ? [this.selectedHomeTeam] : [];

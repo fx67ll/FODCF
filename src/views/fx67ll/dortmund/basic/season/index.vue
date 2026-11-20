@@ -124,7 +124,7 @@
     </div>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
+      :page-sizes="pageSizes" @pagination="getList" />
 
     <dortmund-detail-drawer :visible.sync="detailVisible" title="赛季详情"
       :subtitle="detailData.seasonCode ? `赛季编码 · ${detailData.seasonCode}` : '查看赛季完整资料与审计信息'" icon="el-icon-trophy"
@@ -201,7 +201,7 @@
               </template>
               <!-- 编码创建后不可修改，需要更换编码时新建资源、迁移引用并停用旧资源 -->
               <dortmund-code-input v-model="form.seasonCode" code-kind="season" :date-value="form.seasonStartDate"
-                maxlength="23" placeholder="请输入或自动生成赛季编码" :disabled="form.seasonId != null" />
+                :maxlength="limits.seasonCode" placeholder="请输入或自动生成赛季编码" :disabled="form.seasonId != null" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -209,7 +209,8 @@
               <template slot="label">
                 <dortmund-form-label label="赛季名称" tip="必填；1-233个字符，例如：2025-2026赛季德甲联赛" />
               </template>
-              <el-input v-model="form.seasonName" maxlength="233" show-word-limit placeholder="请输入赛季名称" />
+              <el-input v-model="form.seasonName" :maxlength="limits.seasonName" show-word-limit
+                placeholder="请输入赛季名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -247,10 +248,10 @@
           <el-col :span="12">
             <el-form-item prop="seasonSort">
               <template slot="label">
-                <dortmund-form-label label="赛季排序" tip="选填；0-1023的整数；数值越小越靠前，默认0" />
+                <dortmund-form-label label="赛季排序" :tip="seasonSortTip" />
               </template>
-              <el-input-number v-model="form.seasonSort" :min="0" :max="1023" :step="1" style="width: 100%"
-                placeholder="请输入赛季排序" />
+              <el-input-number v-model="form.seasonSort" :min="seasonSortRange.min" :max="seasonSortRange.max" :step="1"
+                style="width: 100%" placeholder="请输入赛季排序" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -258,8 +259,8 @@
               <template slot="label">
                 <dortmund-form-label label="赛季备注" tip="选填；最多1023个字符，可说明赛事级别、规则等" />
               </template>
-              <el-input v-model="form.seasonRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
-                placeholder="请输入赛季备注内容" />
+              <el-input v-model="form.seasonRemark" type="textarea" :rows="3" :maxlength="limits.seasonRemark"
+                show-word-limit placeholder="请输入赛季备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -292,13 +293,23 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimTextFields,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
+import {
+  DORTMUND_PAGINATION,
+  DORTMUND_SEASON_SORT_RANGE,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "Season",
   dicts: ["fx67ll_dortmund_status"],
   components: { DortmundFormLabel, DortmundCodeInput, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
+    seasonSortTip() {
+      return `选填；${this.seasonSortRange.min}-${this.seasonSortRange.max}的整数；数值越小越靠前，默认${this.seasonSortRange.defaultValue}`;
+    },
     seasonMetrics() {
       return [
         { label: '赛季编码', value: this.detailData.seasonCode, icon: 'el-icon-collection-tag' },
@@ -350,7 +361,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         seasonCode: null,
         seasonName: null,
         seasonStartDate: null,
@@ -363,6 +374,8 @@ export default {
       },
       // 表单参数
       form: {},
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
+      seasonSortRange: DORTMUND_SEASON_SORT_RANGE,
       // 提交中状态，防止重复提交
       submitting: false,
       // 表单校验
@@ -378,7 +391,7 @@ export default {
           dateRangeRule("赛季日期", () => this.form.seasonStartDate, () => this.form.seasonEndDate)
         ],
         seasonStatus: [enumRule("赛季状态", DORTMUND_SEASON_STATUS_OPTIONS, true)],
-        seasonSort: [integerRangeRule("赛季排序", 0, 1023, false)],
+        seasonSort: [integerRangeRule("赛季排序", DORTMUND_SEASON_SORT_RANGE.min, DORTMUND_SEASON_SORT_RANGE.max, false)],
         seasonRemark: [optionalTextRule("赛季备注", DORTMUND_LIMITS.seasonRemark)],
       },
     };

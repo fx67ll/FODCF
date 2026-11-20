@@ -100,7 +100,7 @@
                 <label>反向证据</label>
                 <div class="decision-ref-list">
                   <span v-for="ref in parseRefs(match.counterEvidenceRefs)" :key="ref" class="decision-ref">{{ ref
-                    }}</span>
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -121,7 +121,7 @@
 
 <script>
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
-import { formatOddsWeight } from "@/views/fx67ll/dortmund/utils/odds";
+import { formatOddsWeight } from "@/views/fx67ll/dortmund/other/utils/odds";
 import ReturnEvidenceChain from "../ReturnEvidenceChain/index";
 
 const SELECTION_LABELS = {

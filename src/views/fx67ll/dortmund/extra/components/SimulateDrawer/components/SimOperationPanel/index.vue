@@ -58,21 +58,22 @@
         <el-form :model="simForm" ref="simForm" size="small" :inline="true" class="sim-config-form" :rules="simRules"
           label-width="100px">
           <el-form-item prop="initialValue">
-            <dortmund-form-label slot="label" label="初始数值"
-              tip="必填，普通十进制数字，范围 0.01 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
-            <el-input-number v-model="simForm.initialValue" :controls="false" :precision="2" :min="0.01"
-              style="width: 140px" placeholder="请输入初始数值" />
+            <dortmund-form-label slot="label" label="初始数值" :tip="simulationValueTip" />
+            <el-input-number v-model="simForm.initialValue" :controls="false"
+              :precision="numeric.maxSimulationFractionDigits" :min="simulationDefaults.minValue" style="width: 140px"
+              placeholder="请输入初始数值" />
           </el-form-item>
           <el-form-item prop="coefficient">
-            <dortmund-form-label slot="label" label="每轮系数" tip="必填，必须大于1，普通十进制数字，最多20位整数和2位小数，数值文本不超过23个字符" />
-            <el-input-number v-model="simForm.coefficient" :controls="false" :precision="2" :min="1.01"
+            <dortmund-form-label slot="label" label="每轮系数" :tip="coefficientTip" />
+            <el-input-number v-model="simForm.coefficient" :controls="false"
+              :precision="numeric.maxSimulationFractionDigits" :min="simulationDefaults.coefficientMinValue"
               style="width: 140px" placeholder="请输入每轮系数" />
           </el-form-item>
           <el-form-item prop="targetValue">
-            <dortmund-form-label slot="label" label="目标数值"
-              tip="必填，普通十进制数字，范围 0.01 至 99999999999999999999.99，最多2位小数，数值文本不超过23个字符" />
-            <el-input-number v-model="simForm.targetValue" :controls="false" :precision="2" :min="0.01"
-              style="width: 160px" placeholder="请输入目标数值" />
+            <dortmund-form-label slot="label" label="目标数值" :tip="simulationValueTip" />
+            <el-input-number v-model="simForm.targetValue" :controls="false"
+              :precision="numeric.maxSimulationFractionDigits" :min="simulationDefaults.minValue" style="width: 160px"
+              placeholder="请输入目标数值" />
           </el-form-item>
         </el-form>
       </div>
@@ -125,7 +126,12 @@
 
 <script>
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
-import { DORTMUND_LIMITS, decimalRule, formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_NUMERIC,
+  DORTMUND_SIMULATION_DEFAULTS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { decimalRule, formatPlainDecimal } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "SimOperationPanel",
@@ -206,27 +212,27 @@ export default {
         initialValue: [
           decimalRule("初始数值", {
             required: true,
-            min: 0.01,
-            maxIntegerDigits: 20,
-            maxFractionDigits: 2,
+            min: DORTMUND_SIMULATION_DEFAULTS.minValue,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxSimulationIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxSimulationFractionDigits,
             maxTextLength: DORTMUND_LIMITS.simulateValueText,
           }),
         ],
         coefficient: [
           decimalRule("每轮系数", {
             required: true,
-            minExclusive: 1,
-            maxIntegerDigits: 20,
-            maxFractionDigits: 2,
+            minExclusive: DORTMUND_SIMULATION_DEFAULTS.coefficientExclusiveMin,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxSimulationIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxSimulationFractionDigits,
             maxTextLength: DORTMUND_LIMITS.simulateValueText,
           }),
         ],
         targetValue: [
           decimalRule("目标数值", {
             required: true,
-            min: 0.01,
-            maxIntegerDigits: 20,
-            maxFractionDigits: 2,
+            min: DORTMUND_SIMULATION_DEFAULTS.minValue,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxSimulationIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxSimulationFractionDigits,
             maxTextLength: DORTMUND_LIMITS.simulateValueText,
           }),
         ],
@@ -234,6 +240,23 @@ export default {
     };
   },
   computed: {
+    numeric() {
+      return DORTMUND_NUMERIC;
+    },
+    simulationDefaults() {
+      return DORTMUND_SIMULATION_DEFAULTS;
+    },
+    simulationValueTip() {
+      return `必填，普通十进制数字，范围 ${DORTMUND_SIMULATION_DEFAULTS.minValue} 至 ` +
+        `${DORTMUND_NUMERIC.maxSimulationAmount}，最多${DORTMUND_NUMERIC.maxSimulationFractionDigits}位小数，` +
+        `数值文本不超过${DORTMUND_LIMITS.simulateValueText}个字符`;
+    },
+    coefficientTip() {
+      return `必填，必须大于${DORTMUND_SIMULATION_DEFAULTS.coefficientExclusiveMin}，普通十进制数字，` +
+        `最多${DORTMUND_NUMERIC.maxSimulationIntegerDigits}位整数和` +
+        `${DORTMUND_NUMERIC.maxSimulationFractionDigits}位小数，` +
+        `数值文本不超过${DORTMUND_LIMITS.simulateValueText}个字符`;
+    },
     // 数值模拟启用的版本列表（停用版本不在下拉中展示）
     simEnabledVersionList() {
       return this.simVersionList.filter((item) => item.delFlag !== "2");
@@ -254,7 +277,12 @@ export default {
   methods: {
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return formatPlainDecimal(value, 2, "0.00");
+      const fractionDigits = DORTMUND_NUMERIC.maxSimulationFractionDigits;
+      return formatPlainDecimal(
+        value,
+        fractionDigits,
+        `0.${"0".repeat(fractionDigits)}`
+      );
     },
   },
 };

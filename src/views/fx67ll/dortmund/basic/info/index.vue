@@ -101,7 +101,7 @@
         </transition>
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" @pagination="getList" />
+          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
 
         <!-- 信息点详情对话框（只读） -->
         <info-detail-dialog :visible.sync="detailOpen" :detail-model="detailModel" :detail-loading="detailLoading" />
@@ -136,6 +136,7 @@ import InfoDetailDialog from "./components/InfoDetailDialog/index.vue";
 import InfoEditTScene from "./components/InfoEditTScene/index.vue";
 import InfoEditMScene from "./components/InfoEditMScene/index.vue";
 import InfoValidScene from "./components/InfoValidScene/index.vue";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 // 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
 const VIEW_MODE_KEY = "dortmund-info-view-mode";
@@ -185,7 +186,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         infoPointType: null,
         seasonId: null,
         matchId: null,
@@ -197,6 +198,7 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       // 完整只读详情（详情对话框展示）
       detailModel: {},
       // 录入场景初始表单（进入录入场景前由父页面构建，场景组件复制出可编辑副本）

@@ -61,7 +61,7 @@
     </el-table>
 
     <pagination v-show="total > 0" :total="total" :page.sync="pageNumValue" :limit.sync="pageSizeValue"
-      :page-sizes="[10, 23, 50, 100]" @pagination="$emit('pagination')" />
+      :page-sizes="pageSizes" @pagination="$emit('pagination')" />
 
     <!-- 关联方案计划只读摘要弹窗（点击轮次关联列打开，已有轮次没有补关联入口） -->
     <plan-summary-dialog :visible.sync="roundPlansOpen" title="本轮关联方案计划" :loading="roundPlansLoading"
@@ -71,7 +71,11 @@
 
 <script>
 import { getSimRoundPlans } from "@/api/fx67ll/dortmund/extraSimulate";
-import { formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
+import {
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { formatPlainDecimal } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 import PlanSummaryDialog from "../../../PlanSummaryDialog/index.vue";
 
@@ -102,7 +106,7 @@ export default {
     // 每页条数
     limit: {
       type: Number,
-      default: 10,
+      default: DORTMUND_PAGINATION.defaultPageSize,
     },
   },
   data() {
@@ -118,6 +122,9 @@ export default {
     };
   },
   computed: {
+    pageSizes() {
+      return DORTMUND_PAGINATION.pageSizes;
+    },
     pageNumValue: {
       get() {
         return this.page;
@@ -151,7 +158,12 @@ export default {
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return formatPlainDecimal(value, 2, "0.00");
+      const fractionDigits = DORTMUND_NUMERIC.maxSimulationFractionDigits;
+      return formatPlainDecimal(
+        value,
+        fractionDigits,
+        `0.${"0".repeat(fractionDigits)}`
+      );
     },
   },
 };

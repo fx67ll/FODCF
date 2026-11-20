@@ -89,6 +89,8 @@
 </template>
 
 <script>
+import { DORTMUND_DISPLAY_FORMAT } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+
 const STATE_LABELS = {
   success: "已完成",
   error: "失败",
@@ -539,7 +541,10 @@ export default {
     formatDuration(value) {
       const millis = Number(value);
       if (!Number.isFinite(millis) || millis < 0) return "-";
-      return millis < 1000 ? `${millis} ms` : `${(millis / 1000).toFixed(1)} s`;
+      return millis < DORTMUND_DISPLAY_FORMAT.millisPerSecond
+        ? `${millis} ms`
+        : `${(millis / DORTMUND_DISPLAY_FORMAT.millisPerSecond)
+          .toFixed(DORTMUND_DISPLAY_FORMAT.fractionDigits)} s`;
     },
     formatDateTime(value) {
       if (!value) return "-";
@@ -568,8 +573,12 @@ export default {
     formatBytes(content) {
       const size = new Blob([String(content || "")]).size;
       if (size < 1024) return `${size} B`;
-      if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-      return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      if (size < DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte * DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte) {
+        return `${(size / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte)
+          .toFixed(DORTMUND_DISPLAY_FORMAT.fractionDigits)} KB`;
+      }
+      return `${(size / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte
+        / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte).toFixed(DORTMUND_DISPLAY_FORMAT.fractionDigits)} MB`;
     },
   },
 };

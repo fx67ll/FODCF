@@ -20,6 +20,12 @@
 
 <script>
 import { listExtra } from "@/api/fx67ll/dortmund/extra";
+import {
+  DORTMUND_CHART_CONFIG,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+  DORTMUND_TIMINGS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 import * as echarts from "echarts";
 
@@ -56,14 +62,14 @@ export default {
       setTimeout(() => {
         self.setChartDomHeight();
         self.formatHistoiryListData();
-      }, 518);
+      }, DORTMUND_TIMINGS.chartRenderDelayMs);
       setTimeout(() => {
         self.historyDataChartLoading = false;
-      }, 5918);
+      }, DORTMUND_TIMINGS.chartLoadingOverlayMs);
     },
     // 动态赋值图表高度
     setChartDomHeight() {
-      const domHeight = window.innerHeight - 114;
+      const domHeight = window.innerHeight - DORTMUND_CHART_CONFIG.viewportHeightOffset;
       document.getElementById("historyDataAnalysisContainer").style.height =
         domHeight + "px";
     },
@@ -72,7 +78,7 @@ export default {
       const self = this;
       listExtra({
         pageNum: 1,
-        pageSize: 999999999,
+        pageSize: DORTMUND_PAGINATION.exportAllPageSize,
       }).then((response) => {
         const hisListData = response?.rows;
         const chartListData = [];
@@ -82,13 +88,13 @@ export default {
               parseFloat(item?.extraMoney || 0) -
               parseFloat(item?.seedMoney || 0) -
               parseFloat(item?.winMoney || 0)
-            ).toFixed(2)
+            ).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits)
           );
           const nowMoney = parseFloat(
             (
               parseFloat(item?.extraMoney || 0) -
               parseFloat(item?.seedMoney || 0)
-            ).toFixed(2)
+            ).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits)
           );
           const highMoney = lastMoney > nowMoney ? lastMoney : nowMoney;
           const lowMoney = lastMoney < nowMoney ? lastMoney : nowMoney;
@@ -142,7 +148,11 @@ export default {
           for (var j = 0; j < dayCount; j++) {
             sum += +data0.values[i - j][1];
           }
-          result.push(parseFloat((sum / dayCount).toFixed(2)));
+          result.push(
+            parseFloat(
+              (sum / dayCount).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits)
+            )
+          );
         }
         return result;
       }
@@ -160,7 +170,10 @@ export default {
         },
         legend: {
           // data: ["日K", "MA5", "MA10", "MA20", "MA30"],
-          data: ["外快盈亏", "MA5", "MA10", "MA20", "MA30"],
+          data: [
+            "外快盈亏",
+            ...DORTMUND_CHART_CONFIG.movingAverageWindows.map((window) => `MA${window}`),
+          ],
         },
         grid: {
           left: "10%",
@@ -295,42 +308,15 @@ export default {
               ],
             },
           },
-          {
-            name: "MA5",
+          ...DORTMUND_CHART_CONFIG.movingAverageWindows.map((window) => ({
+            name: `MA${window}`,
             type: "line",
-            data: calculateMA(5),
+            data: calculateMA(window),
             smooth: true,
             lineStyle: {
               opacity: 0.5,
             },
-          },
-          {
-            name: "MA10",
-            type: "line",
-            data: calculateMA(10),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-          {
-            name: "MA20",
-            type: "line",
-            data: calculateMA(20),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
-          {
-            name: "MA30",
-            type: "line",
-            data: calculateMA(30),
-            smooth: true,
-            lineStyle: {
-              opacity: 0.5,
-            },
-          },
+          })),
         ],
       };
 

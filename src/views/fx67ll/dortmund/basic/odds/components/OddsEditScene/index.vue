@@ -71,7 +71,7 @@ import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 import DortmundInlineMatchCreate from "@/views/fx67ll/dortmund/other/component/DortmundInlineMatchCreate/index";
 import DortmundOddsForm from "@/views/fx67ll/dortmund/other/component/DortmundOddsForm/index";
-import { buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/utils/odds";
+import { buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/other/utils/odds";
 import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
@@ -80,7 +80,7 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "OddsEditScene",

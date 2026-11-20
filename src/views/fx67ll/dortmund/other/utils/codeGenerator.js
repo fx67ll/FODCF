@@ -5,6 +5,8 @@
  * 全局唯一性仍由后端校验；发生冲突时可直接在表单中重新生成，不改变手工录入规则。
  */
 
+import { DORTMUND_CODE_GENERATION } from "../config/moduleConfig";
+
 const CODE_PREFIXES = Object.freeze({
   season: "SEA",
   team: "TEAM",
@@ -12,8 +14,8 @@ const CODE_PREFIXES = Object.freeze({
   odds: "ODDS",
 });
 
-const CODE_SUFFIX_LENGTH = 6;
-const CODE_SUFFIX_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CODE_SUFFIX_LENGTH = DORTMUND_CODE_GENERATION.suffixLength;
+const CODE_SUFFIX_ALPHABET = DORTMUND_CODE_GENERATION.suffixAlphabet;
 
 function pad2(value) {
   return String(value).padStart(2, "0");

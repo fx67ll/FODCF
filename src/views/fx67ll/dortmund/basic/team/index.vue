@@ -244,7 +244,11 @@
 <script>
 import { listTeam, getTeam, delTeam, addTeam, updateTeam } from "@/api/fx67ll/dortmund/team";
 
-import { teamTagOptions } from "@/utils/constant/football";
+import {
+  DORTMUND_PAGINATION,
+  DORTMUND_TAG_SPLIT_PATTERN,
+  TEAM_TAG_FALLBACK_OPTIONS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import TeamEditScene from "./components/TeamEditScene/index.vue";
@@ -335,7 +339,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         teamCode: null,
         teamName: null,
         teamNameShort: null,
@@ -378,7 +382,7 @@ export default {
         ],
       },
       // 球队标签预设选项数组
-      teamTagOptions,
+      teamTagOptions: TEAM_TAG_FALLBACK_OPTIONS,
     };
   },
   created() {
@@ -416,7 +420,10 @@ export default {
         this.queryParams.endUpdateTime = this.daterangeUpdateTime[1];
       }
       listTeam(this.queryParams).then(response => {
-        const teamListTmp = (response.rows || []).map(item => ({ ...item, teamTag: item.teamTag ? item.teamTag.split(',').map(t => t.trim()) : [] }));
+        const teamListTmp = (response.rows || []).map(item => ({
+          ...item,
+          teamTag: this.formatTeamTagList(item.teamTag),
+        }));
         this.teamList = this.formatObjectArrayNullProperty(teamListTmp);
         this.total = response.total;
       }).catch(() => {
@@ -505,7 +512,10 @@ export default {
       if (Array.isArray(value)) {
         return value.map((item) => String(item || "").trim()).filter(Boolean);
       }
-      return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+      return String(value || "")
+        .split(DORTMUND_TAG_SPLIT_PATTERN)
+        .map((item) => item.trim())
+        .filter(Boolean);
     },
     // 空值处理：仅 null、undefined 和空白字符串视为缺失，数字 0 正常展示
     displayValue(value, fallback = "-") {
@@ -528,7 +538,7 @@ export default {
       const teamId = row.teamId || this.ids
       getTeam(teamId).then(response => {
         const formDataObj = response.data;
-        formDataObj.teamTag = formDataObj?.teamTag ? formDataObj.teamTag?.split(",") || [] : '';
+        formDataObj.teamTag = this.formatTeamTagList(formDataObj && formDataObj.teamTag);
         this.form = formDataObj;
         this.editMode = "update";
         this.open = true;
@@ -576,11 +586,21 @@ export default {
   display: inline-flex;
 
   .team-logo-img {
+    display: block;
     width: 50px;
     height: 50px;
+    overflow: hidden;
     border-radius: 8px;
     border: 1px solid #e2eee7;
     transition: transform 0.2s ease;
+
+    /* el-image 的内部 img 不继承组件根节点尺寸，列表单元格必须显式撑满并裁切。 */
+    ::v-deep .el-image__inner {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
     &:hover {
       transform: scale(1.06);

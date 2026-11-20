@@ -39,14 +39,15 @@
                   <template slot="label">
                     <dortmund-form-label label="方案计划" tip="必填；1-1023个字符" />
                   </template>
-                  <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
+                  <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="limits.planContent" show-word-limit
                     placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :md="12">
                 <el-form-item prop="planRate">
                   <template slot="label">
-                    <dortmund-form-label label="录入倍率" tip="选填；普通十进制数，不允许科学计数法；填写时须大于0，最多18位整数和6位小数；留空使用后端自动计算值" />
+                    <dortmund-form-label label="录入倍率"
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空使用后端自动计算值`" />
                   </template>
                   <el-input v-model="editForm.planRate" clearable :disabled="selectedCombinationCount === 0"
                     placeholder="默认根据关联回报组合自动计算，可手动调整" />
@@ -55,7 +56,8 @@
               <el-col :xs="24" :md="12">
                 <el-form-item prop="planAmount">
                   <template slot="label">
-                    <dortmund-form-label label="录入金额" tip="选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多22位整数和2位小数；留空使用后端自动计算值" />
+                    <dortmund-form-label label="录入金额"
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
                   </template>
                   <el-input v-model="editForm.planAmount" clearable :disabled="selectedCombinationCount === 0"
                     placeholder="默认根据关联回报组合自动计算，可手动调整" />
@@ -66,7 +68,7 @@
                   <template slot="label">
                     <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
                   </template>
-                  <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
+                  <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="limits.planRemark" show-word-limit
                     placeholder="请输入其他说明" />
                 </el-form-item>
               </el-col>
@@ -215,7 +217,8 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
+import { DORTMUND_NUMERIC } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "PlanEditScene",
@@ -255,10 +258,14 @@ export default {
       editRules: {
         planContent: [requiredTextRule("方案计划", DORTMUND_LIMITS.planContent)],
         planRate: [decimalRule("录入倍率", {
-          minExclusive: 0, maxIntegerDigits: 18, maxFractionDigits: 6,
+          minExclusive: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
         })],
         planAmount: [decimalRule("录入金额", {
-          min: 0, maxIntegerDigits: 22, maxFractionDigits: 2,
+          min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
         })],
         planRemark: [optionalTextRule("其他说明", DORTMUND_LIMITS.planRemark)],
         combinationIds: [],
@@ -273,6 +280,12 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
+    numeric() {
+      return DORTMUND_NUMERIC;
+    },
     // 当场新建比赛必填项是否填写完整
     isNewMatchFilled() {
       const newMatch = this.editForm?.newMatch || {};
@@ -323,8 +336,10 @@ export default {
         totalReturn += Number(combination.estimatedReturn || 0);
         totalInput += Number(combination.generationInputAmount || 0);
       });
-      const planAmount = totalInput > 0 ? totalReturn.toFixed(2) : null;
-      const planRate = totalInput > 0 ? (totalReturn / totalInput).toFixed(4) : null;
+      const planAmount = totalInput > 0
+        ? totalReturn.toFixed(DORTMUND_NUMERIC.maxPlanAmountFractionDigits) : null;
+      const planRate = totalInput > 0
+        ? (totalReturn / totalInput).toFixed(DORTMUND_NUMERIC.calculatedRateFractionDigits) : null;
       return { planRate, planAmount };
     },
   },

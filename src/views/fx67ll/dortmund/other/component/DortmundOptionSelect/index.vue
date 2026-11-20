@@ -9,7 +9,11 @@
 </template>
 
 <script>
-import { teamCountryOptions, teamTagOptions, teamVenueOptions } from "@/utils/constant/football";
+import {
+  teamCountryOptions,
+  teamTagOptions,
+  teamVenueOptions,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 const dortmundOptionMap = {
   country: teamCountryOptions,

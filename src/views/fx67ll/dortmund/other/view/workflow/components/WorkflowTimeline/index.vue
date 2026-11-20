@@ -47,6 +47,8 @@
 </template>
 
 <script>
+import { DORTMUND_TIMINGS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+
 export default {
   name: "WorkflowTimeline",
   props: {
@@ -63,7 +65,7 @@ export default {
   },
   data() {
     return {
-      // 正在跳转动画中的节点key（260ms 后交由父页面执行真实跳转）
+      // 正在跳转动画中的节点key（动画结束后交由父页面执行真实跳转）
       jumpingKey: "",
     };
   },
@@ -110,7 +112,7 @@ export default {
       setTimeout(() => {
         self.jumpingKey = "";
         self.$emit("navigate", node);
-      }, 260);
+      }, DORTMUND_TIMINGS.workflowJumpDelayMs);
     },
   },
 };

@@ -52,6 +52,7 @@
 <script>
 import { getToken } from "@/utils/common/auth";
 import { removeReturnImage } from "@/api/fx67ll/dortmund/returnCombination";
+import { DORTMUND_IMAGE_LIMITS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "ReturnImageManager",
@@ -78,11 +79,11 @@ export default {
     },
     limit: {
       type: Number,
-      default: 3,
+      default: DORTMUND_IMAGE_LIMITS.maxCount,
     },
     fileSize: {
       type: Number,
-      default: 4,
+      default: DORTMUND_IMAGE_LIMITS.maxSizeMb,
     },
   },
   data() {
@@ -129,7 +130,7 @@ export default {
     tipText() {
       if (this.planLinked) return "解除方案计划关联后可继续维护图片。";
       if (!this.isAdopted) return "图片归属当前已采用组合，请先完成采用。";
-      return "每条组合最多三张，仅支持 JPG、JPEG、PNG、GIF、BMP，单张不超过 4MB；删除失败会进入后台回收重试。";
+      return `每条组合最多${this.limit}张，仅支持 JPG、JPEG、PNG、GIF、BMP，单张不超过 ${this.fileSize}MB；删除失败会进入后台回收重试。`;
     },
   },
   methods: {

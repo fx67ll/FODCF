@@ -153,7 +153,7 @@
         </el-table>
       </div>
       <pagination v-show="combinationTotal > 0" :total="combinationTotal" :page.sync="combinationQuery.pageNum"
-        :limit.sync="combinationQuery.pageSize" @pagination="getCombinationList" />
+        :limit.sync="combinationQuery.pageSize" :page-sizes="pageSizes" @pagination="getCombinationList" />
       <div v-if="!combinationListLoading && !combinationList.length" class="history-empty combination-empty">
         <i class="el-icon-collection"></i>
         <span>暂无符合筛选条件的回报组合</span>
@@ -313,7 +313,7 @@
             </el-table>
           </div>
           <pagination v-show="batchTotal > 0" :total="batchTotal" :page.sync="batchQuery.pageNum"
-            :limit.sync="batchQuery.pageSize" @pagination="getBatchList" />
+            :limit.sync="batchQuery.pageSize" :page-sizes="pageSizes" @pagination="getBatchList" />
           <div v-if="!batchLoading && !batchList.length" class="history-empty">
             <i class="el-icon-time"></i>
             <span>暂无符合条件的历史批次</span>
@@ -454,6 +454,12 @@ import ReturnImageUpload from "./components/ReturnImageUpload/index";
 import ManualAiTaskPanel from "./components/ManualAiTaskPanel/index";
 import ReturnAiWorkflow from "./components/ReturnAiWorkflow/index";
 import ReturnAnalysisResult from "./components/ReturnAnalysisResult/index";
+import {
+  DORTMUND_DISPLAY_FORMAT,
+  DORTMUND_PAGINATION,
+  formatPreferenceDimensionSummary,
+  getPreferenceLabel,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundReturnCombination",
@@ -473,7 +479,7 @@ export default {
       batchDateRange: [],
       batchQuery: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         generationStatus: null,
         generationMode: null,
         resultSource: null,
@@ -495,7 +501,7 @@ export default {
       combinationMatchSelectorVisible: false,
       combinationQuery: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         keyword: null,
         generationMode: null,
         adoptedFlag: null,
@@ -506,6 +512,7 @@ export default {
         beginCreateTime: null,
         endCreateTime: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       selectedCombinationIds: [],
       batchAdoptLoading: false,
       reviewingId: null,
@@ -559,7 +566,10 @@ export default {
       }
       try {
         const value = JSON.parse(snapshot);
-        return `模式：${this.formatGenerationMode(value.generationMode)}\n基础金额：${value.inputAmount}\n目标金额：${value.targetAmount}\n比赛：${(value.matchIds || []).join("、")}`;
+        const dimensionSummary = formatPreferenceDimensionSummary(value.preferenceDimensions);
+        return `模式：${this.formatGenerationMode(value.generationMode)}\n偏好：${getPreferenceLabel(value.preferenceCode)}`
+          + `${dimensionSummary ? `\n组合维度：${dimensionSummary}` : ""}`
+          + `\n基础金额：${value.inputAmount}\n目标金额：${value.targetAmount}\n比赛：${(value.matchIds || []).join("、")}`;
       } catch (error) {
         return snapshot;
       }
@@ -910,9 +920,11 @@ export default {
         return `${bytes} B`;
       }
       if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte)
+          .toFixed(DORTMUND_DISPLAY_FORMAT.fractionDigits)} KB`;
       }
-      return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+      return `${(bytes / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte
+        / DORTMUND_DISPLAY_FORMAT.bytesPerKilobyte).toFixed(DORTMUND_DISPLAY_FORMAT.fractionDigits)} MB`;
     },
     formatOrphanImageState(value) {
       const stateMap = { T: "T 临时", B: "B 关联失效", D: "D 待删除", Q: "Q 已隔离" };

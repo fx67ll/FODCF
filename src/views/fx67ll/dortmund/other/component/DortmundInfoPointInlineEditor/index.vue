@@ -47,6 +47,7 @@ import { listInfoPoint, getInfoPoint, addInfoPoint, updateInfoPoint, delInfoPoin
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundInfoPointInlineEditor",
@@ -106,8 +107,18 @@ export default {
       }
       this.loading = true;
       const query = this.anchorType === "match"
-        ? { infoPointType: "M", matchId: this.matchId, pageNum: 1, pageSize: 100 }
-        : { infoPointType: "T", teamIds: [this.teamId], pageNum: 1, pageSize: 100 };
+        ? {
+          infoPointType: "M",
+          matchId: this.matchId,
+          pageNum: 1,
+          pageSize: DORTMUND_PAGINATION.lookupPageSize,
+        }
+        : {
+          infoPointType: "T",
+          teamIds: [this.teamId],
+          pageNum: 1,
+          pageSize: DORTMUND_PAGINATION.lookupPageSize,
+        };
       listInfoPoint(query).then((response) => {
         this.rows = response.rows || [];
       }).catch(() => {

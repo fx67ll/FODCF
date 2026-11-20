@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { generateBusinessCode } from "@/views/fx67ll/dortmund/utils/codeGenerator";
+import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
 
 export default {
   name: "DortmundCodeInput",

@@ -1,4 +1,4 @@
-k/*
+/*
  * Dortmund 倍率字段定义与通用校验规则
  * 与 fx67ll_dortmund_odds 表结构、DortmundFieldValidator 及六类倍率字典保持一致
  */
@@ -10,11 +10,12 @@ import {
   requiredTextRule,
   trimText,
 } from "./validation";
+import { DORTMUND_NUMERIC } from "../config/moduleConfig";
 
 // 权重统一使用0-1区间；接口最多四位小数，落库由后端放大10000倍保存为整数
-export const ODDS_WEIGHT_MIN = 0;
-export const ODDS_WEIGHT_MAX = 1;
-export const ODDS_WEIGHT_DEFAULT = "1.0000";
+export const ODDS_WEIGHT_MIN = DORTMUND_NUMERIC.oddsWeightMin;
+export const ODDS_WEIGHT_MAX = DORTMUND_NUMERIC.oddsWeightMax;
+export const ODDS_WEIGHT_DEFAULT = DORTMUND_NUMERIC.oddsWeightDefault;
 
 // 权重展示统一补齐四位小数，空值按业务默认权重显示
 export function formatOddsWeight(value, emptyText = ODDS_WEIGHT_DEFAULT) {
@@ -22,7 +23,9 @@ export function formatOddsWeight(value, emptyText = ODDS_WEIGHT_DEFAULT) {
     return emptyText;
   }
   const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric.toFixed(4) : String(value);
+  return Number.isFinite(numeric)
+    ? numeric.toFixed(DORTMUND_NUMERIC.oddsWeightFractionDigits)
+    : String(value);
 }
 
 // 六类倍率固定展示顺序；组件、列表摘要与提交字段共用，避免不同入口出现偏差
@@ -173,8 +176,8 @@ export function buildOddsRules(prefix = "") {
       decimalRule("让分值", {
         required: true,
         allowNegative: true,
-        maxIntegerDigits: 6,
-        maxFractionDigits: 2,
+        maxIntegerDigits: DORTMUND_NUMERIC.maxHandicapIntegerDigits,
+        maxFractionDigits: DORTMUND_NUMERIC.maxHandicapFractionDigits,
       }),
     ],
     [path("oddsRemark")]: [
@@ -187,16 +190,16 @@ export function buildOddsRules(prefix = "") {
       decimalRule(row.oddsLabel, {
         required: true,
         minExclusive: 0,
-        maxIntegerDigits: 6,
-        maxFractionDigits: 4,
+        maxIntegerDigits: DORTMUND_NUMERIC.maxOddsIntegerDigits,
+        maxFractionDigits: DORTMUND_NUMERIC.maxOddsFractionDigits,
       }),
     ];
     rules[path(row.weightField)] = [
       decimalRule(row.weightLabel, {
         min: ODDS_WEIGHT_MIN,
         max: ODDS_WEIGHT_MAX,
-        maxIntegerDigits: 1,
-        maxFractionDigits: 4,
+        maxIntegerDigits: DORTMUND_NUMERIC.oddsWeightIntegerDigits,
+        maxFractionDigits: DORTMUND_NUMERIC.oddsWeightFractionDigits,
       }),
     ];
   });

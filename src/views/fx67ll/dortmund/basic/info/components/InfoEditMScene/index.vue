@@ -80,7 +80,8 @@
               <template slot="label">
                 <dortmund-form-label label="信息点标题" tip="必填；1-233个字符" />
               </template>
-              <el-input v-model="editForm.pointTitle" maxlength="233" show-word-limit placeholder="请输入信息点标题" />
+              <el-input v-model="editForm.pointTitle" :maxlength="limits.infoTitle" show-word-limit
+                placeholder="请输入信息点标题" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -88,8 +89,8 @@
               <template slot="label">
                 <dortmund-form-label label="信息点内容" tip="必填；当前界面与后端业务限制为最多1023个字符" />
               </template>
-              <el-input v-model="editForm.pointContent" type="textarea" :rows="4" :maxlength="1023" show-word-limit
-                placeholder="请输入客观信息内容" />
+              <el-input v-model="editForm.pointContent" type="textarea" :rows="4" :maxlength="limits.infoContent"
+                show-word-limit placeholder="请输入客观信息内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -109,7 +110,8 @@
               <template slot="label">
                 <dortmund-form-label label="信息来源名称" tip="必填；1-233个字符" />
               </template>
-              <el-input v-model="editForm.sourceName" maxlength="233" show-word-limit placeholder="请输入信息来源名称" />
+              <el-input v-model="editForm.sourceName" :maxlength="limits.infoSourceName" show-word-limit
+                placeholder="请输入信息来源名称" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -117,7 +119,8 @@
               <template slot="label">
                 <dortmund-form-label label="信息来源地址" tip="选填；最多1023个字符，建议填写完整URL" />
               </template>
-              <el-input v-model="editForm.sourceUrl" maxlength="1023" show-word-limit placeholder="请输入信息来源地址" />
+              <el-input v-model="editForm.sourceUrl" :maxlength="limits.infoSourceUrl" show-word-limit
+                placeholder="请输入信息来源地址" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -191,8 +194,8 @@
               <template slot="label">
                 <dortmund-form-label label="备注" tip="选填；最多1023个字符" />
               </template>
-              <el-input v-model="editForm.pointRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
-                placeholder="请输入备注" />
+              <el-input v-model="editForm.pointRemark" type="textarea" :rows="2" :maxlength="limits.infoRemark"
+                show-word-limit placeholder="请输入备注" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -225,7 +228,7 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "InfoEditMScene",
@@ -303,6 +306,9 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     // VS横幅是否展示（修改时有归属即展示，新增时选中比赛后展示）
     matchBannerVisible() {
       return !!this.editForm.matchId;

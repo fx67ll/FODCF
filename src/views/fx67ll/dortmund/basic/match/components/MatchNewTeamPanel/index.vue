@@ -12,7 +12,7 @@
             <template slot="label">
               <dortmund-form-label label="球队编码" tip="必填；1-23个字符，全局唯一；可自动生成 TEAM-YYYYMMDD-XXXXXX" />
             </template>
-            <dortmund-code-input v-model="newTeamForm.teamCode" code-kind="team" maxlength="23"
+            <dortmund-code-input v-model="newTeamForm.teamCode" code-kind="team" :maxlength="limits.teamCode"
               placeholder="请输入或自动生成球队编码" />
           </el-form-item>
         </el-col>
@@ -21,7 +21,8 @@
             <template slot="label">
               <dortmund-form-label label="球队全称" tip="必填；1-233个字符" />
             </template>
-            <el-input v-model="newTeamForm.teamName" maxlength="233" show-word-limit placeholder="请输入球队中文全称" />
+            <el-input v-model="newTeamForm.teamName" :maxlength="limits.teamName" show-word-limit
+              placeholder="请输入球队中文全称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -29,7 +30,8 @@
             <template slot="label">
               <dortmund-form-label label="球队昵称" tip="必填；1-10个字符" />
             </template>
-            <el-input v-model="newTeamForm.teamNameShort" maxlength="10" show-word-limit placeholder="请输入球队昵称/简称" />
+            <el-input v-model="newTeamForm.teamNameShort" :maxlength="limits.teamNameShort" show-word-limit
+              placeholder="请输入球队昵称/简称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -37,7 +39,8 @@
             <template slot="label">
               <dortmund-form-label label="球队英文" tip="必填；1-233个字符" />
             </template>
-            <el-input v-model="newTeamForm.teamNameEn" maxlength="233" show-word-limit placeholder="请输入球队英文名称" />
+            <el-input v-model="newTeamForm.teamNameEn" :maxlength="limits.teamNameEn" show-word-limit
+              placeholder="请输入球队英文名称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -61,7 +64,7 @@
             <template slot="label">
               <dortmund-form-label label="球队Logo" tip="必填；1-1023个字符，请填写可公开访问的图片URL" />
             </template>
-            <el-input v-model="newTeamForm.teamLogoUrl" maxlength="1023" show-word-limit
+            <el-input v-model="newTeamForm.teamLogoUrl" :maxlength="limits.teamLogoUrl" show-word-limit
               placeholder="请输入球队Logo图片的链接地址" />
           </el-form-item>
         </el-col>
@@ -96,7 +99,7 @@ import {
   enumRule,
   requiredTextRule,
   trimTextFields,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "MatchNewTeamPanel",
@@ -110,6 +113,7 @@ export default {
   },
   data() {
     return {
+      limits: DORTMUND_LIMITS,
       // 当场新增球队表单参数（提交进 newHomeTeam/newAwayTeam，与比赛同一事务）
       newTeamForm: {
         teamCode: null,

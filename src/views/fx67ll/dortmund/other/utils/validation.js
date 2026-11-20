@@ -1,44 +1,26 @@
 /*
- * Dortmund 业务字段校验常量与通用规则
- * 与 fx67ll_dortmund_* 表结构及后端 DortmundFieldValidator 保持一致
+ * Dortmund 业务字段通用校验规则。
+ * 业务常量统一来自 config/moduleConfig.js，本文件只保留表格和表单共用的校验函数。
  */
 
-export const DORTMUND_LIMITS = Object.freeze({
-  seasonCode: 23,
-  seasonName: 233,
-  seasonRemark: 1023,
-  teamCode: 23,
-  teamName: 233,
-  teamNameShort: 10,
-  teamNameEn: 233,
-  teamLogoUrl: 1023,
-  teamVenue: 233,
-  teamCountry: 23,
-  teamTag: 1023,
-  teamRemark: 1023,
-  matchCode: 23,
-  matchVenue: 233,
-  matchRemark: 1023,
-  infoTitle: 233,
-  infoContent: 1023,
-  infoSourceName: 233,
-  infoSourceUrl: 1023,
-  infoRemark: 1023,
-  oddsCode: 23,
-  oddsRemark: 1023,
-  planContent: 1023,
-  planRemark: 1023,
-  extraRemark: 1023,
-  extraMoney: 23,
-  simulateVersionName: 64,
-  simulateValueText: 23,
-});
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_NUMERIC,
+  DORTMUND_SEASON_STATUS_OPTIONS,
+  DORTMUND_SIM_MODE_OPTIONS,
+  DORTMUND_STATUS_OPTIONS,
+  DORTMUND_YES_NO_OPTIONS,
+} from "../config/moduleConfig";
 
-export const DORTMUND_STATUS_OPTIONS = Object.freeze(["0", "1"]);
-export const DORTMUND_SEASON_STATUS_OPTIONS = Object.freeze(["0", "1", "2"]);
-export const DORTMUND_MATCH_RESULT_OPTIONS = Object.freeze(["", "0", "1", "2"]);
-export const DORTMUND_YES_NO_OPTIONS = Object.freeze(["Y", "N"]);
-export const DORTMUND_SIM_MODE_OPTIONS = Object.freeze(["full", "half"]);
+export {
+  DORTMUND_LIMITS,
+  DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_SEASON_STATUS_OPTIONS,
+  DORTMUND_SIM_MODE_OPTIONS,
+  DORTMUND_STATUS_OPTIONS,
+  DORTMUND_YES_NO_OPTIONS,
+};
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 const INTEGER_PATTERN = /^-?\d+$/;
@@ -56,13 +38,17 @@ function textLength(value) {
 }
 
 // 将数值格式化为普通十进制文本，无法安全格式化时回退，避免科学计数法进入接口或展示
-export function formatPlainDecimal(value, fractionDigits = 2, fallback = "") {
+export function formatPlainDecimal(
+  value,
+  fractionDigits = DORTMUND_NUMERIC.defaultDecimalFractionDigits,
+  fallback = ""
+) {
   const numeric = Number(value);
   if (
     !Number.isFinite(numeric) ||
     !Number.isInteger(fractionDigits) ||
     fractionDigits < 0 ||
-    fractionDigits > 20
+    fractionDigits > DORTMUND_NUMERIC.maxSupportedFractionDigits
   ) {
     return fallback;
   }
@@ -165,8 +151,8 @@ export function decimalRule(label, options = {}) {
     min = null,
     max = null,
     minExclusive = null,
-    maxIntegerDigits = 20,
-    maxFractionDigits = 2,
+    maxIntegerDigits = DORTMUND_NUMERIC.defaultDecimalIntegerDigits,
+    maxFractionDigits = DORTMUND_NUMERIC.defaultDecimalFractionDigits,
     allowNegative = false,
     maxTextLength = null,
   } = options;
@@ -238,9 +224,9 @@ export function decimalTextRule(label, required) {
         callback(new Error(`${label}必须为有效十进制数字`));
         return;
       }
-      if (textLength(text) > DORTMUND_LIMITS.extraMoney) {
+      if (textLength(text) > DORTMUND_NUMERIC.maxExtraTextLength) {
         callback(
-          new Error(`${label}总长度不能超过${DORTMUND_LIMITS.extraMoney}个字符`)
+          new Error(`${label}总长度不能超过${DORTMUND_NUMERIC.maxExtraTextLength}个字符`)
         );
         return;
       }

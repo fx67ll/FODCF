@@ -67,7 +67,7 @@
                   <span slot="label">
                     <dortmund-form-label label="方案计划" tip="必填；最多1023个字符" />
                   </span>
-                  <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="1023"
+                  <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="limits.planContent"
                     show-word-limit placeholder="请输入方案计划" />
                 </el-form-item>
                 <el-form-item prop="planRate" class="plan-link-new-field">
@@ -94,8 +94,8 @@
                   <span slot="label">
                     <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
                   </span>
-                  <el-input v-model="newPlanForm.planRemark" type="textarea" :rows="2" :maxlength="1023" show-word-limit
-                    placeholder="请输入其他说明" />
+                  <el-input v-model="newPlanForm.planRemark" type="textarea" :rows="2" :maxlength="limits.planRemark"
+                    show-word-limit placeholder="请输入其他说明" />
                 </el-form-item>
               </div>
               <div class="plan-link-new-actions">
@@ -161,10 +161,16 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
+import {
+  DORTMUND_BUSINESS_MINIMUMS,
+  DORTMUND_DISPLAY_COUNTS,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 // 所达比赛默认折叠条数
-const MATCH_COLLAPSE_COUNT = 5;
+const MATCH_COLLAPSE_COUNT = DORTMUND_DISPLAY_COUNTS.planLinkMatchCollapse;
 
 export default {
   name: "PlanLinkSelector",
@@ -220,19 +226,19 @@ export default {
         planRate: [
           decimalRule("录入倍率", {
             minExclusive: 0,
-            maxIntegerDigits: 18,
-            maxFractionDigits: 6,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
           })
         ],
         planAmount: [
           decimalRule("录入金额", {
             min: 0,
-            maxIntegerDigits: 22,
-            maxFractionDigits: 2,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
           })
         ],
         matchIds: [
-          { required: true, type: "array", min: 1, message: "至少要关联一场比赛", trigger: "change" }
+          { required: true, type: "array", min: DORTMUND_BUSINESS_MINIMUMS.planMatchCount, message: "至少要关联一场比赛", trigger: "change" }
         ],
         planRemark: [
           optionalTextRule("其他说明", DORTMUND_LIMITS.planRemark)
@@ -250,6 +256,9 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     // 同时具备方案计划列表与查询权限时才渲染整个区域
     hasPlanListPermission() {
       return checkPermi(["dortmund:plan:list"]);
@@ -314,7 +323,7 @@ export default {
         return;
       }
       this.matchAvailabilityChecked = true;
-      listMatch({ pageNum: 1, pageSize: 1, matchStatus: "0" }).then(response => {
+      listMatch({ pageNum: 1, pageSize: DORTMUND_PAGINATION.existenceCheckPageSize, matchStatus: "0" }).then(response => {
         this.matchCount = Number(response.total) || (response.rows || []).length;
       }).catch(() => {
         this.matchAvailabilityChecked = false;

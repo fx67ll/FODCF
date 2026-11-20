@@ -17,6 +17,12 @@
 </template>
 
 <script>
+import {
+  DORTMUND_DISPLAY_COUNTS,
+  DORTMUND_PAGINATION,
+  DORTMUND_TIMINGS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+
 export default {
   name: "OverviewStatCards",
   props: {
@@ -42,7 +48,7 @@ export default {
     loadStatTotals() {
       this.cards.forEach((item) => {
         item
-          .apiFunc({ pageNum: 1, pageSize: 1 })
+          .apiFunc({ pageNum: 1, pageSize: DORTMUND_PAGINATION.existenceCheckPageSize })
           .then((response) => {
             this.animateStatValue(item.key, response.total || 0);
             this.$set(this.statSubs, item.key, this.deriveStatSub(item.key, response.rows));
@@ -60,7 +66,7 @@ export default {
         this.$set(this.statTotals, key, targetValue);
         return;
       }
-      const duration = 600;
+      const duration = DORTMUND_TIMINGS.statCountUpMs;
       const startTime = performance.now();
       const step = (now) => {
         const progress = Math.min((now - startTime) / duration, 1);
@@ -104,7 +110,8 @@ export default {
     // 方案摘要文案：内容过长时截断展示
     formatPlanBrief(row) {
       const content = row.planContent || "-";
-      return content.length > 12 ? content.slice(0, 12) + "…" : content;
+      const limit = DORTMUND_DISPLAY_COUNTS.planBriefLength;
+      return content.length > limit ? content.slice(0, limit) + "…" : content;
     },
     // 带符号金额文案：正数带加号，非法值返回占位符
     formatSignedMoney(value) {

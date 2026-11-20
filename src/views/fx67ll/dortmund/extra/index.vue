@@ -75,7 +75,7 @@
           v-hasPermi="['dortmund:extra:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="warning" plain icon="el-icon-magic-stick" size="mini" :disabled="ids.length < 2"
+        <el-button type="warning" plain icon="el-icon-magic-stick" size="mini" :disabled="ids.length < mergeMinimum"
           @click="handleMerge" v-hasPermi="['dortmund:extra:merge']">合并</el-button>
       </el-col>
       <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
@@ -145,7 +145,8 @@
         </template>
       </el-table-column>
       <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
-      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="150" class-name="dortmund-nowrap-cell">
+      <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="150"
+        class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
@@ -153,23 +154,23 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
         fixed="right" width="122">
         <template slot-scope="scope">
-        <dortmund-action-button label="详情" icon="el-icon-document" action="detail"
-          @click="handleDetail(scope.row)" v-hasPermi="['dortmund:extra:query']" />
-        <dortmund-action-button label="修改" icon="el-icon-edit" action="edit"
-          @click="handleUpdate(scope.row)" v-hasPermi="['dortmund:extra:edit']" />
-        <dortmund-action-button label="删除" icon="el-icon-delete" action="delete"
-          @click="handleDelete(scope.row)" v-hasPermi="['dortmund:extra:remove']" />
+          <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="handleDetail(scope.row)"
+            v-hasPermi="['dortmund:extra:query']" />
+          <dortmund-action-button label="修改" icon="el-icon-edit" action="edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['dortmund:extra:edit']" />
+          <dortmund-action-button label="删除" icon="el-icon-delete" action="delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['dortmund:extra:remove']" />
         </template>
       </el-table-column>
     </el-table>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      :page-sizes="[5, 10, 23, 50, 100]" @pagination="getList" />
+      :page-sizes="pageSizes" @pagination="getList" />
 
     <!-- 外快盈亏只读详情抽屉：金额构成、关联方案与审计信息统一在侧边展示 -->
     <dortmund-detail-drawer :visible.sync="detailVisible" title="外快盈亏详情"
-      :subtitle="detailData.extraId ? `记录编号 · ${detailData.extraId}` : '查看金额构成、关联方案与审计信息'"
-      icon="el-icon-wallet" tone="amber" size="680px" :loading="detailLoading" feature="extra">
+      :subtitle="detailData.extraId ? `记录编号 · ${detailData.extraId}` : '查看金额构成、关联方案与审计信息'" icon="el-icon-wallet"
+      tone="amber" size="680px" :loading="detailLoading" feature="extra">
       <dortmund-detail-card title="金额与状态" icon="el-icon-money" tone="amber">
         <dortmund-detail-block variant='ledger' tone='amber' :items='extraLedgerItems' />
       </dortmund-detail-card>
@@ -192,7 +193,7 @@
       </dortmund-detail-card>
 
       <dortmund-detail-card title="审计信息" icon="el-icon-time" tone="green">
-      <dortmund-detail-block variant='timeline' tone='green' :items='extraAuditTimeline' />
+        <dortmund-detail-block variant='timeline' tone='green' :items='extraAuditTimeline' />
       </dortmund-detail-card>
       <template slot="footer">
         <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="detailVisible = false">关闭</el-button>
@@ -233,6 +234,12 @@ import ExtraHistoryChartDialog from "./components/ExtraHistoryChartDialog/index.
 import ExtraMergeDialog from "./components/ExtraMergeDialog/index.vue";
 import PlanSummaryDialog from "./components/PlanSummaryDialog/index.vue";
 import SimulateDrawer from "./components/SimulateDrawer/index.vue";
+import {
+  DORTMUND_BUSINESS_MINIMUMS,
+  DORTMUND_LIMITS,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 // 二级录入页固定路由
 const EXTRA_EDIT_ROUTE_PATH = "/dortmund/extra-edit/index";
@@ -251,6 +258,9 @@ export default {
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
   },
   computed: {
+    mergeMinimum() {
+      return DORTMUND_BUSINESS_MINIMUMS.extraMergeRowCount;
+    },
     extraLedgerItems() {
       const target = parseFloat(this.detailData.targetMoney) || 0;
       const saved = parseFloat(this.detailData.saveMoney) || 0;
@@ -307,7 +317,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 5,
+        pageSize: DORTMUND_PAGINATION.compactPageSize,
         extraMoney: null,
         isWin: null,
         winMoney: null,
@@ -322,6 +332,7 @@ export default {
         planId: null,
         hasPlan: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       // 外快盈亏历史数据走势图弹窗开关
       historyDataAnalysisOpen: false,
       // 合并确认弹窗开关
@@ -431,7 +442,7 @@ export default {
           ...item,
           currentMoney: (
             parseFloat(item.extraMoney || 0) - parseFloat(item.seedMoney || 0)
-          ).toFixed(2),
+          ).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits),
         };
         listResult.push(objTmp);
       });
@@ -542,13 +553,13 @@ export default {
     /** 合并按钮操作：校验通过后打开合并确认弹窗，弹窗内录入备注并确认后由后台事务完成合并+删除旧数据 */
     handleMerge() {
       // 前置校验：至少选择两条记录
-      if (!this.ids || this.ids.length < 2) {
+      if (!this.ids || this.ids.length < this.mergeMinimum) {
         this.$modal.msgWarning("请至少选择两条记录进行合并！");
         return;
       }
-      // 前置校验：单次合并数量上限（与后台 MERGE_MAX_INPUT_COUNT 保持一致）
-      if (this.ids.length > 23) {
-        this.$modal.msgWarning("单次最多合并23条记录！");
+      // 前置校验：单次合并数量上限（与后台合并输入上限保持一致）
+      if (this.ids.length > DORTMUND_LIMITS.extraMergeCount) {
+        this.$modal.msgWarning(`单次最多合并${DORTMUND_LIMITS.extraMergeCount}条记录！`);
         return;
       }
       // 前置校验：所选记录在当前列表中必须连续（后台仍会按全量历史数据校验）

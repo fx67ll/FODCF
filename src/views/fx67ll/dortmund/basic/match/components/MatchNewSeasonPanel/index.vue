@@ -13,7 +13,7 @@
               <dortmund-form-label label="赛季编码" tip="必填；1-23个字符，全局唯一；可按开始日期自动生成 SEA-YYYYMMDD-XXXXXX" />
             </template>
             <dortmund-code-input v-model="newSeasonForm.seasonCode" code-kind="season"
-              :date-value="newSeasonForm.seasonStartDate" maxlength="23" placeholder="请输入或自动生成赛季编码" />
+              :date-value="newSeasonForm.seasonStartDate" :maxlength="limits.seasonCode" placeholder="请输入或自动生成赛季编码" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -21,7 +21,8 @@
             <template slot="label">
               <dortmund-form-label label="赛季名称" tip="必填；1-233个字符" />
             </template>
-            <el-input v-model="newSeasonForm.seasonName" maxlength="233" show-word-limit placeholder="请输入赛季名称" />
+            <el-input v-model="newSeasonForm.seasonName" :maxlength="limits.seasonName" show-word-limit
+              placeholder="请输入赛季名称" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -69,7 +70,7 @@ import {
   enumRule,
   requiredTextRule,
   trimTextFields,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "MatchNewSeasonPanel",
@@ -77,6 +78,7 @@ export default {
   components: { DortmundFormLabel, DortmundCodeInput },
   data() {
     return {
+      limits: DORTMUND_LIMITS,
       // 当场新增赛季表单参数（提交进 newSeason，与比赛同一事务）
       newSeasonForm: {
         seasonCode: null,

@@ -33,8 +33,8 @@
           <div class="sim-version-create-label">
             <dortmund-form-label label="版本名称" tip="必填，最多64个字符；仅用于辨识版本，不能全部为空格" />
           </div>
-          <el-input v-model="simVersionForm.versionName" maxlength="64" show-word-limit placeholder="请输入新版本名称"
-            clearable />
+          <el-input v-model="simVersionForm.versionName" :maxlength="limits.simulateVersionName" show-word-limit
+            placeholder="请输入新版本名称" clearable />
           <div class="sim-version-create-tip">名称仅用于辨识版本，创建后随版本保存</div>
         </el-form-item>
       </el-form>
@@ -76,7 +76,7 @@
 <script>
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
-import { DORTMUND_LIMITS, formatPlainDecimal, requiredTextRule } from "@/views/fx67ll/dortmund/utils/validation";
+import { DORTMUND_LIMITS, formatPlainDecimal, requiredTextRule } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "SimVersionCreateDialog",
@@ -113,6 +113,9 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     dialogVisible: {
       get() {
         return this.visible;

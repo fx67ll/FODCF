@@ -51,46 +51,59 @@
                 <i class="el-icon-success mode-card-check" v-if="generateForm.generationMode === 'A'"></i>
               </button>
             </div>
+            <div class="preference-block">
+              <div class="preference-head">
+                <strong>组合偏好</strong>
+                <small>快捷预设会填充四项受控维度；偏好仅作为 AI 组合策略提示，不改变金额、倍率、回报与偏差的确定性计算</small>
+              </div>
+              <div class="preference-cards" role="radiogroup" aria-label="组合偏好">
+                <button v-for="option in preferenceOptions" :key="option.value" type="button" class="preference-card"
+                  :class="{ active: generateForm.preferenceCode === option.value }"
+                  :aria-pressed="generateForm.preferenceCode === option.value ? 'true' : 'false'"
+                  @click="handlePreferencePresetClick(option)">
+                  <i :class="option.icon" class="preference-card-icon"></i>
+                  <span class="preference-card-copy">
+                    <strong>{{ option.label }}</strong>
+                    <small>{{ option.description }}</small>
+                  </span>
+                </button>
+              </div>
+              <div class="preference-dimension-head">
+                <div>
+                  <strong>高级组合维度</strong>
+                  <small>逐项组合风险、结构、投入与回报意图；调整任一项后自动切换为自定义</small>
+                </div>
+                <span class="preference-active-label">{{ preferenceLabel }}</span>
+              </div>
+              <div class="preference-dimension-grid">
+                <div v-for="group in preferenceDimensionGroups" :key="group.key" class="preference-dimension">
+                  <div class="preference-dimension-title">
+                    <span>{{ group.label }}</span>
+                    <small>{{ selectedDimensionDescription(group) }}</small>
+                  </div>
+                  <div class="preference-dimension-options" role="radiogroup" :aria-label="group.label">
+                    <button v-for="option in group.options" :key="option.value" type="button"
+                      class="preference-dimension-option"
+                      :class="{ active: generateForm.preferenceDimensions[group.key] === option.value }"
+                      :aria-pressed="generateForm.preferenceDimensions[group.key] === option.value ? 'true' : 'false'"
+                      :disabled="isPreferenceDimensionDisabled(group.key, option.value)"
+                      :title="preferenceDimensionOptionTitle(group, option)"
+                      @click="handlePreferenceDimensionChange(group.key, option.value)">
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
+
 
           <section class="generate-section">
             <div class="generate-section-head">
               <span class="generate-step">02</span>
               <div class="generate-section-copy">
-                <strong>金额参数</strong>
-                <small>金额须为普通十进制数，最多保留两位小数</small>
-              </div>
-            </div>
-            <el-row :gutter="12">
-              <el-col :xs="24" :sm="12">
-                <el-form-item prop="inputAmount">
-                  <template slot="label">
-                    <dortmund-form-label label="基础金额" tip="必填；普通十进制数，不允许科学计数法；必须大于0，最多2位小数，且不超过999999999999.99" />
-                  </template>
-                  <el-input v-model="generateForm.inputAmount" placeholder="如 100.00">
-                    <template slot="append">元</template>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :sm="12">
-                <el-form-item prop="targetAmount">
-                  <template slot="label">
-                    <dortmund-form-label label="目标金额" tip="必填；普通十进制数，不允许科学计数法；必须大于0，最多2位小数，且不超过999999999999.99" />
-                  </template>
-                  <el-input v-model="generateForm.targetAmount" placeholder="如 128.50">
-                    <template slot="append">元</template>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </section>
-
-          <section class="generate-section">
-            <div class="generate-section-head">
-              <span class="generate-step">03</span>
-              <div class="generate-section-copy">
                 <strong>参与比赛</strong>
-                <small>仅展示存在有效 odds 的比赛，单次最多选择 8 场</small>
+                <small>仅展示存在有效 odds 的比赛，单次最多选择 {{ maxAnalysisMatches }} 场</small>
               </div>
             </div>
             <el-form-item prop="matchIds">
@@ -132,7 +145,7 @@
 
           <section class="generate-section">
             <div class="generate-section-head">
-              <span class="generate-step">04</span>
+              <span class="generate-step">03</span>
               <div class="generate-section-copy">
                 <strong>补充业务目标</strong>
                 <small>与后端预定义目标共同生效，不覆盖统一业务规则</small>
@@ -142,7 +155,8 @@
               <div class="supplementary-list">
                 <div class="supplementary-item" v-for="(item, index) in generateForm.supplementaryObjectives"
                   :key="index">
-                  <el-input v-model="generateForm.supplementaryObjectives[index]" maxlength="240" show-word-limit
+                  <el-input v-model="generateForm.supplementaryObjectives[index]"
+                    :maxlength="objectiveLimits.maxSingleLength" show-word-limit
                     :placeholder="`第 ${index + 1} 条补充目标，例如：优先选择主场优势明显的比赛`" />
                   <el-button type="text" class="supplementary-remove" icon="el-icon-delete" title="删除该补充目标"
                     @click="handleRemoveSupplementaryObjective(index)" />
@@ -161,27 +175,72 @@
 
           <section class="generate-section generate-submit-section">
             <div class="generate-section-head">
-              <span class="generate-step">05</span>
+              <span class="generate-step">04</span>
               <div class="generate-section-copy">
-                <strong>提交批次</strong>
-                <small>自动分析与人工任务共用同一份业务参数</small>
+                <strong>金额与提交</strong>
+                <small>金额仅参与后台确定性计算；确认参数后提交自动分析或创建人工任务</small>
               </div>
             </div>
-            <div class="generate-actions">
-              <el-button type="success" class="generate-btn" icon="el-icon-magic-stick"
-                :loading="submitting || generationProcessing" :disabled="generationProcessing || manualSubmitting"
-                @click="handleGenerate" v-hasPermi="['dortmund:return:generate']">
-                {{ generationProcessing ? "后台分析中，可继续等待或离开页面" : "提交自动AI分析批次" }}
-              </el-button>
-              <el-button type="warning" plain class="generate-btn manual-generate-btn" icon="el-icon-document-add"
-                :loading="manualSubmitting" :disabled="submitting || manualSubmitting || generationProcessing"
-                @click="handleCreateManualTask" v-hasPermi="['dortmund:return:generate']">
-                {{ manualSubmitting ? "正在创建人工任务" : "创建并导出人工AI任务" }}
-              </el-button>
-            </div>
-            <div class="async-tip">
-              <i class="el-icon-info"></i>
-              <span>自动批次由后台异步执行；人工批次立即冻结同一份业务快照，不进入自动AI队列。</span>
+            <div class="submit-workspace">
+              <div class="amount-parameter-panel">
+                <div class="parameter-panel-head">
+                  <div>
+                    <strong>金额参数</strong>
+                    <small>普通十进制数，最多保留两位小数</small>
+                  </div>
+                  <span class="parameter-panel-tag">单笔上限 {{ maxBusinessAmount }} 元</span>
+                </div>
+                <el-row :gutter="12">
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item prop="inputAmount">
+                      <template slot="label">
+                        <dortmund-form-label label="基础金额" :tip="amountTip" />
+                      </template>
+                      <el-input v-model="generateForm.inputAmount" placeholder="如 100.00">
+                        <template slot="append">元</template>
+                      </el-input>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item prop="targetAmount">
+                      <template slot="label">
+                        <dortmund-form-label label="目标金额" :tip="amountTip" />
+                      </template>
+                      <el-input v-model="generateForm.targetAmount" placeholder="如 128.50">
+                        <template slot="append">元</template>
+                      </el-input>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+                <div class="amount-parameter-note">
+                  <i class="el-icon-info"></i>
+                  <span>基础金额用于投入与回报测算，目标金额用于偏差参考；候选回报、倍率和偏差均以后台计算结果为准。</span>
+                </div>
+              </div>
+              <div class="submit-action-panel">
+                <div class="parameter-panel-head">
+                  <div>
+                    <strong>批次执行方式</strong>
+                    <small>自动分析与人工任务共用上方业务参数</small>
+                  </div>
+                </div>
+                <div class="generate-actions">
+                  <el-button type="success" class="generate-btn" icon="el-icon-magic-stick"
+                    :loading="submitting || generationProcessing" :disabled="generationProcessing || manualSubmitting"
+                    @click="handleGenerate" v-hasPermi="['dortmund:return:generate']">
+                    {{ generationProcessing ? "后台分析中，可继续等待或离开页面" : "提交自动AI分析批次" }}
+                  </el-button>
+                  <el-button type="warning" plain class="generate-btn manual-generate-btn" icon="el-icon-document-add"
+                    :loading="manualSubmitting" :disabled="submitting || manualSubmitting || generationProcessing"
+                    @click="handleCreateManualTask" v-hasPermi="['dortmund:return:generate']">
+                    {{ manualSubmitting ? "正在创建人工任务" : "创建并导出人工AI任务" }}
+                  </el-button>
+                </div>
+                <div class="async-tip">
+                  <i class="el-icon-info"></i>
+                  <span>自动批次由后台异步执行；人工批次立即冻结同一份业务快照，不进入自动AI队列。</span>
+                </div>
+              </div>
             </div>
           </section>
         </el-form>
@@ -300,7 +359,7 @@
     </dortmund-detail-drawer>
 
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" multiple :selected-items="selectedMatches"
-      require-active-odds :max-count="8" @confirm="handleMatchSelectorConfirm" />
+      require-active-odds :max-count="maxAnalysisMatches" @confirm="handleMatchSelectorConfirm" />
   </div>
 </template>
 
@@ -325,16 +384,30 @@ import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundF
 import ManualAiTaskPanel from "../ManualAiTaskPanel/index";
 import ReturnAiWorkflow from "../ReturnAiWorkflow/index";
 import ReturnAnalysisResult from "../ReturnAnalysisResult/index";
+import {
+  DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS,
+  DORTMUND_DEFAULT_PREFERENCE_CODE,
+  DORTMUND_OBJECTIVE_LIMITS,
+  DORTMUND_PAGINATION,
+  DORTMUND_PREFERENCE_DIMENSIONS,
+  DORTMUND_PREFERENCE_OPTIONS,
+  DORTMUND_RETURN_CONFIG,
+  DORTMUND_RETURN_POLLING,
+  getPreferenceLabel,
+  getPreferencePresetDimensions,
+  isPreferenceDimensionOptionDisabled,
+  resolvePreferenceCode,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
-const MAX_BUSINESS_AMOUNT = 999999999999.99;
-const MAX_SUPPLEMENTARY_OBJECTIVES = 8;
-const MAX_SUPPLEMENTARY_OBJECTIVE_LENGTH = 240;
-const MAX_SUPPLEMENTARY_OBJECTIVES_TOTAL_LENGTH = 1600;
+const MAX_BUSINESS_AMOUNT = Number(DORTMUND_RETURN_CONFIG.maxBusinessAmount);
+const MAX_SUPPLEMENTARY_OBJECTIVES = DORTMUND_OBJECTIVE_LIMITS.maxCount;
+const MAX_SUPPLEMENTARY_OBJECTIVE_LENGTH = DORTMUND_OBJECTIVE_LIMITS.maxSingleLength;
+const MAX_SUPPLEMENTARY_OBJECTIVES_TOTAL_LENGTH = DORTMUND_OBJECTIVE_LIMITS.maxTotalLength;
 const ACTIVE_GENERATION_KEY = "dortmund.return.activeGenerationId";
 const PENDING_REQUEST_KEY = "dortmund.return.pendingClientRequestId";
-const POLL_INTERVAL_MS = 3000;
-// 900秒租约按3秒轮询约300次，取360次覆盖网络抖动与状态写入余量。
-const MAX_POLL_COUNT = 360;
+const POLL_INTERVAL_MS = DORTMUND_RETURN_POLLING.intervalMs;
+// 3秒轮询600次覆盖1500秒租约，并给状态写入和网络抖动留出余量。
+const MAX_POLL_COUNT = DORTMUND_RETURN_POLLING.maxCount;
 
 function validateBusinessAmount(rule, value, callback) {
   const text = String(value == null ? "" : value).trim();
@@ -398,12 +471,19 @@ export default {
       manualSubmitting: false,
       generateForm: {
         generationMode: "S",
+        preferenceCode: DORTMUND_DEFAULT_PREFERENCE_CODE,
+        preferenceDimensions: { ...DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS },
         inputAmount: null,
         targetAmount: null,
         matchIds: [],
         supplementaryObjectives: [""],
       },
       selectedMatches: [],
+      preferenceOptions: DORTMUND_PREFERENCE_OPTIONS,
+      preferenceDimensionGroups: DORTMUND_PREFERENCE_DIMENSIONS,
+      maxAnalysisMatches: DORTMUND_RETURN_CONFIG.maxAnalysisMatches,
+      maxBusinessAmount: DORTMUND_RETURN_CONFIG.maxBusinessAmount,
+      objectiveLimits: DORTMUND_OBJECTIVE_LIMITS,
       matchSelectorVisible: false,
       availableMatchCount: 0,
       generationId: null,
@@ -435,8 +515,8 @@ export default {
             type: "array",
             required: true,
             min: 1,
-            max: 8,
-            message: "请选择 1–8 场存在有效 odds 的比赛",
+            max: DORTMUND_RETURN_CONFIG.maxAnalysisMatches,
+            message: `请选择 ${DORTMUND_RETURN_CONFIG.minAnalysisMatches}–${DORTMUND_RETURN_CONFIG.maxAnalysisMatches} 场存在有效 odds 的比赛`,
             trigger: "change",
           },
         ],
@@ -447,6 +527,12 @@ export default {
     };
   },
   computed: {
+    preferenceLabel() {
+      return getPreferenceLabel(this.generateForm.preferenceCode);
+    },
+    amountTip() {
+      return `必填；普通十进制数，不允许科学计数法；必须大于0，最多2位小数，且不超过${this.maxBusinessAmount}`;
+    },
     combinationBatchContext() {
       if (!this.generationDetail || !this.combinationDetail) return null;
       return String(this.generationDetail.generationId || '') === String(this.combinationDetail.generationId || '')
@@ -587,7 +673,12 @@ export default {
       });
     },
     loadMatchOptions() {
-      return listMatch({ pageNum: 1, pageSize: 1, matchStatus: "0", hasActiveOdds: "Y" }).then((response) => {
+      return listMatch({
+        pageNum: 1,
+        pageSize: DORTMUND_PAGINATION.existenceCheckPageSize,
+        matchStatus: "0",
+        hasActiveOdds: "Y",
+      }).then((response) => {
         this.availableMatchCount = Number(response && response.total || 0);
       }).catch(() => {
         this.availableMatchCount = 0;
@@ -606,10 +697,41 @@ export default {
         if (this.$refs.generateForm) this.$refs.generateForm.clearValidate("supplementaryObjectives");
       });
     },
+    handlePreferencePresetClick(option) {
+      this.generateForm.preferenceCode = option.value;
+      this.generateForm.preferenceDimensions = option.dimensions
+        ? { ...option.dimensions } : getPreferencePresetDimensions(option.value);
+    },
+    handlePreferenceDimensionChange(groupKey, value) {
+      const dimensions = {
+        ...this.generateForm.preferenceDimensions,
+        [groupKey]: value,
+      };
+      if (isPreferenceDimensionOptionDisabled(dimensions, groupKey, value)) {
+        return;
+      }
+      this.generateForm.preferenceDimensions = dimensions;
+      this.generateForm.preferenceCode = resolvePreferenceCode(dimensions);
+    },
+    selectedDimensionDescription(group) {
+      const selectedValue = this.generateForm.preferenceDimensions[group.key];
+      const option = group.options.find((item) => item.value === selectedValue);
+      return option ? option.description : "";
+    },
+    isPreferenceDimensionDisabled(groupKey, value) {
+      return isPreferenceDimensionOptionDisabled(this.generateForm.preferenceDimensions, groupKey, value);
+    },
+    preferenceDimensionOptionTitle(group, option) {
+      return this.isPreferenceDimensionDisabled(group.key, option.value)
+        ? "低风险偏好不能与长串结构组合，请先调整另一维度"
+        : option.description;
+    },
     buildRequestFingerprint(workflow) {
       return JSON.stringify({
         workflow: workflow,
         generationMode: this.generateForm.generationMode,
+        preferenceCode: this.generateForm.preferenceCode,
+        preferenceDimensions: { ...this.generateForm.preferenceDimensions },
         inputAmount: this.generateForm.inputAmount,
         targetAmount: this.generateForm.targetAmount,
         matchIds: [...this.generateForm.matchIds].sort((left, right) => left - right),
@@ -619,6 +741,8 @@ export default {
     buildGeneratePayload(workflow) {
       return {
         generationMode: this.generateForm.generationMode,
+        preferenceCode: this.generateForm.preferenceCode,
+        preferenceDimensions: { ...this.generateForm.preferenceDimensions },
         inputAmount: this.generateForm.inputAmount,
         targetAmount: this.generateForm.targetAmount,
         matchIds: [...this.generateForm.matchIds],
@@ -976,22 +1100,94 @@ export default {
   }
 }
 
-.generate-form>.generate-section:nth-of-type(1),
-.generate-form>.generate-section:nth-of-type(4) {
-  grid-column: span 7;
-}
-
-.generate-form>.generate-section:nth-of-type(2),
-.generate-form>.generate-section:nth-of-type(5) {
-  grid-column: span 5;
-}
-
-.generate-form>.generate-section:nth-of-type(3) {
-  grid-column: span 12;
-}
 
 .generate-submit-section {
   background: linear-gradient(135deg, #f7fcf9 0%, #fff 100%);
+}
+
+.submit-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 14px;
+}
+
+.amount-parameter-panel,
+.submit-action-panel {
+  min-width: 0;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e3eee8;
+  border-radius: 12px;
+}
+
+.submit-action-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.parameter-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  >div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  strong {
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #7c8b84;
+  }
+}
+
+.parameter-panel-tag {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #238c51;
+  white-space: nowrap;
+  background: #effaf4;
+  border: 1px solid #cbeed9;
+  border-radius: 999px;
+}
+
+.amount-parameter-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 9px 10px;
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #7c8b84;
+  background: #f7fbf9;
+  border: 1px solid #e3eee8;
+  border-radius: 8px;
+
+  i {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #27ad60;
+  }
+}
+
+.submit-action-panel .generate-actions {
+  margin-top: 0;
+}
+
+.submit-action-panel .async-tip {
+  margin-top: auto;
+  padding-top: 10px;
 }
 
 .generate-section-head {
@@ -1099,6 +1295,197 @@ export default {
   right: 8px;
   font-size: 13px;
   color: #2ecc71;
+}
+
+.preference-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #dcebe2;
+}
+
+.preference-head {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 9px;
+
+  strong {
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #7c8b84;
+  }
+}
+
+.preference-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preference-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 68px;
+  padding: 9px 10px;
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #e3eee8;
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #b9e2ca;
+  }
+
+  &.active {
+    background: #f2fbf6;
+    border-color: #61c88d;
+    box-shadow: 0 5px 12px rgba(46, 204, 113, 0.1);
+  }
+}
+
+.preference-card-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 15px;
+  color: #27ad60;
+}
+
+.preference-card-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #7c8b84;
+  }
+}
+
+.preference-dimension-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 9px;
+
+  strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #7c8b84;
+  }
+}
+
+.preference-active-label {
+  flex-shrink: 0;
+  max-width: 45%;
+  padding: 4px 8px;
+  overflow: hidden;
+  font-size: 11px;
+  color: #238c51;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #effaf4;
+  border: 1px solid #cbeed9;
+  border-radius: 999px;
+}
+
+.preference-dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preference-dimension {
+  min-width: 0;
+  padding: 9px 10px;
+  background: #fbfdfc;
+  border: 1px solid #e3eee8;
+  border-radius: 10px;
+}
+
+.preference-dimension-title {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 7px;
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #33443e;
+  }
+
+  small {
+    min-height: 30px;
+    font-size: 10px;
+    line-height: 1.45;
+    color: #829089;
+  }
+}
+
+.preference-dimension-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.preference-dimension-option {
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #52635d;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #dcebe2;
+  border-radius: 7px;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+
+  &:hover:not(:disabled) {
+    color: #238c51;
+    border-color: #a8dbbc;
+  }
+
+  &.active {
+    color: #1f8b4d;
+    background: #edf9f2;
+    border-color: #61c88d;
+  }
+
+  &:disabled {
+    color: #b4bdb9;
+    cursor: not-allowed;
+    background: #f5f7f6;
+    border-color: #e7ece9;
+  }
+}
+
+@media (max-width: 640px) {
+  .preference-dimension-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preference-active-label {
+    max-width: 50%;
+  }
 }
 
 .selected-match-panel {
@@ -1324,8 +1711,6 @@ export default {
   background: #fffaf0;
   border: 1px solid #f0d9a8;
   box-shadow: none;
-  position: relative;
-  left: -8px;
 }
 
 .async-tip {
@@ -1619,7 +2004,8 @@ export default {
 }
 
 @media screen and (max-width: 991px) {
-  .mode-cards {
+  .mode-cards,
+  .submit-workspace {
     grid-template-columns: 1fr;
   }
 
@@ -1629,12 +2015,9 @@ export default {
 }
 
 @media screen and (max-width: 1199px) {
-
-  .generate-form>.generate-section:nth-of-type(1),
-  .generate-form>.generate-section:nth-of-type(2),
-  .generate-form>.generate-section:nth-of-type(4),
-  .generate-form>.generate-section:nth-of-type(5) {
-    grid-column: span 12;
+  .preference-cards,
+  .preference-dimension-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1653,6 +2036,20 @@ export default {
 
   .generate-section {
     padding: 12px;
+  }
+
+  .amount-parameter-panel,
+  .submit-action-panel {
+    padding: 12px;
+  }
+
+  .preference-cards,
+  .preference-dimension-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .parameter-panel-head {
+    flex-direction: column;
   }
 
   .generate-card-heading small {

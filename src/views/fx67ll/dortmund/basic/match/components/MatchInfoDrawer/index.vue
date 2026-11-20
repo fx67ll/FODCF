@@ -175,6 +175,7 @@ import {
 } from "@/api/fx67ll/dortmund/infoPoint";
 import DortmundInfoPointForm from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointForm/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "MatchInfoDrawer",
@@ -338,7 +339,7 @@ export default {
         infoPointType: "M",
         matchId,
         pageNum: 1,
-        pageSize: 100,
+        pageSize: DORTMUND_PAGINATION.lookupPageSize,
       }).then((response) => {
         if (serial !== this.loadSerial) {
           return;

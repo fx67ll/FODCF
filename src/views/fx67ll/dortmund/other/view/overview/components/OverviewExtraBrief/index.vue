@@ -36,6 +36,11 @@
 
 <script>
 import { listExtra } from "@/api/fx67ll/dortmund/extra";
+import {
+  DORTMUND_DISPLAY_COUNTS,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "OverviewExtraBrief",
@@ -59,7 +64,7 @@ export default {
   methods: {
     // 加载盈亏速览：取最近一批记录派生累计盈亏、胜率与近十次走势，失败时整卡隐藏
     loadExtraBrief() {
-      listExtra({ pageNum: 1, pageSize: 50 }).then((response) => {
+      listExtra({ pageNum: 1, pageSize: DORTMUND_PAGINATION.largePageSize }).then((response) => {
         const rows = response.rows || [];
         const total = response.total || 0;
         this.extraBriefPartial = total > rows.length;
@@ -83,7 +88,7 @@ export default {
         }
       });
       // 近十次走势条形：按时间正序展示最近十条，红亏绿赢灰平，高度按绝对值占比缩放
-      const recentRows = rows.slice(0, 10);
+      const recentRows = rows.slice(0, DORTMUND_DISPLAY_COUNTS.extraRecentTrendCount);
       const maxAbs = Math.max(1, ...recentRows.map((item) => Math.abs(parseFloat(item.winMoney) || 0)));
       const trendBars = recentRows
         .slice()
@@ -91,11 +96,17 @@ export default {
         .map((item) => {
           const winMoney = parseFloat(item.winMoney) || 0;
           const cls = winMoney > 0 ? "win" : winMoney < 0 ? "lose" : "zero";
-          return { cls, height: Math.max(18, Math.round((Math.abs(winMoney) / maxAbs) * 100)) };
+          return {
+            cls,
+            height: Math.max(
+              DORTMUND_DISPLAY_COUNTS.trendBarMinHeight,
+              Math.round((Math.abs(winMoney) / maxAbs) * 100)
+            ),
+          };
         });
       const loadedCount = rows.length;
       return {
-        netMoney: netMoney.toFixed(2),
+        netMoney: netMoney.toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits),
         loadedCount: loadedCount,
         winRate: loadedCount === 0 ? "-" : `${Math.round((winCount / loadedCount) * 100)}%`,
         trendBars: trendBars,

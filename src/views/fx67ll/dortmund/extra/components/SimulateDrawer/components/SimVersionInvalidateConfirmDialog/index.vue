@@ -64,6 +64,7 @@
 
 <script>
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import { DORTMUND_TIMINGS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "SimVersionInvalidateConfirmDialog",
@@ -80,7 +81,7 @@ export default {
   },
   data() {
     return {
-      countdown: 5,
+      countdown: DORTMUND_TIMINGS.versionInvalidateCountdownSeconds,
       countdownTimer: null,
     };
   },
@@ -120,7 +121,7 @@ export default {
       this.stopCountdown();
     },
     startCountdown() {
-      this.countdown = 5;
+      this.countdown = DORTMUND_TIMINGS.versionInvalidateCountdownSeconds;
       this.stopCountdown();
       this.countdownTimer = setInterval(() => {
         if (this.countdown > 0) {
@@ -128,7 +129,7 @@ export default {
         } else {
           this.stopCountdown();
         }
-      }, 1000);
+      }, DORTMUND_TIMINGS.countdownTickMs);
     },
     stopCountdown() {
       if (this.countdownTimer) {

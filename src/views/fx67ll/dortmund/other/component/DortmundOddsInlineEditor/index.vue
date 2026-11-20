@@ -139,6 +139,7 @@
 import { listOdds, addOdds, activateOdds, delOdds } from "@/api/fx67ll/dortmund/odds";
 import DortmundOddsForm from "@/views/fx67ll/dortmund/other/component/DortmundOddsForm/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import {
   ODDS_FORM_FIELDS,
   ODDS_MATRIX_ROWS,
@@ -146,7 +147,7 @@ import {
   buildOddsRules,
   formatOddsWeight,
   trimOddsFields,
-} from "@/views/fx67ll/dortmund/utils/odds";
+} from "@/views/fx67ll/dortmund/other/utils/odds";
 
 export default {
   name: "DortmundOddsInlineEditor",
@@ -211,7 +212,11 @@ export default {
       const serial = ++this.loadSerial;
       this.loading = true;
       this.loadError = false;
-      listOdds({ matchId: this.matchId, pageNum: 1, pageSize: 200 }).then((response) => {
+      listOdds({
+        matchId: this.matchId,
+        pageNum: 1,
+        pageSize: DORTMUND_PAGINATION.oddsLookupPageSize,
+      }).then((response) => {
         if (serial !== this.loadSerial) {
           return;
         }

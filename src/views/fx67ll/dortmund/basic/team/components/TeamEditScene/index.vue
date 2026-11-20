@@ -29,7 +29,7 @@
               <template slot="label">
                 <dortmund-form-label label="球队编码" tip="必填；1-23个字符，全局唯一；可自动生成 TEAM-YYYYMMDD-XXXXXX；创建后不可修改" />
               </template>
-              <dortmund-code-input v-model="editForm.teamCode" code-kind="team" maxlength="23"
+              <dortmund-code-input v-model="editForm.teamCode" code-kind="team" :maxlength="limits.teamCode"
                 placeholder="请输入或自动生成球队编码" :disabled="editMode === 'update'" />
             </el-form-item>
           </el-col>
@@ -38,7 +38,7 @@
               <template slot="label">
                 <dortmund-form-label label="球队全称" tip="必填；1-233个字符，例如：多特蒙德足球俱乐部" />
               </template>
-              <el-input v-model="editForm.teamName" maxlength="233" placeholder="请输入球队中文全称" />
+              <el-input v-model="editForm.teamName" :maxlength="limits.teamName" placeholder="请输入球队中文全称" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -46,7 +46,8 @@
               <template slot="label">
                 <dortmund-form-label label="球队昵称" tip="必填；1-10个字符，例如：我横、大黄蜂" />
               </template>
-              <el-input v-model="editForm.teamNameShort" maxlength="10" show-word-limit placeholder="请输入球队昵称/简称" />
+              <el-input v-model="editForm.teamNameShort" :maxlength="limits.teamNameShort" show-word-limit
+                placeholder="请输入球队昵称/简称" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -54,7 +55,7 @@
               <template slot="label">
                 <dortmund-form-label label="球队英文" tip="必填；1-233个字符，例如：Borussia Dortmund" />
               </template>
-              <el-input v-model="editForm.teamNameEn" maxlength="233" placeholder="请输入球队英文名称" />
+              <el-input v-model="editForm.teamNameEn" :maxlength="limits.teamNameEn" placeholder="请输入球队英文名称" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -71,8 +72,7 @@
               <template slot="label">
                 <dortmund-form-label label="球队主场" tip="必填；1-233个字符，可从已有场地中选择或直接输入" />
               </template>
-              <dortmund-option-select v-model="editForm.teamVenue" option-type="venue" maxlength="233"
-                placeholder="请选择或输入球队主场" />
+              <dortmund-team-option-selector v-model="editForm.teamVenue" option-type="venue" placeholder="请选择球队主场" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -80,8 +80,8 @@
               <template slot="label">
                 <dortmund-form-label label="地区/联赛" tip="必填；1-23个字符，例如：德国、英格兰" />
               </template>
-              <dortmund-option-select v-model="editForm.teamCountry" option-type="country" maxlength="23"
-                placeholder="请选择地区/联赛（支持搜索）" />
+              <dortmund-option-select v-model="editForm.teamCountry" option-type="country"
+                :maxlength="limits.teamCountry" placeholder="请选择地区/联赛（支持搜索）" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -89,7 +89,8 @@
               <template slot="label">
                 <dortmund-form-label label="球队Logo" tip="必填；1-1023个字符，请填写可公开访问的图片URL" />
               </template>
-              <el-input v-model="editForm.teamLogoUrl" maxlength="1023" show-word-limit placeholder="请输入球队Logo图片链接地址" />
+              <el-input v-model="editForm.teamLogoUrl" :maxlength="limits.teamLogoUrl" show-word-limit
+                placeholder="请输入球队Logo图片链接地址" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -97,7 +98,8 @@
               <template slot="label">
                 <dortmund-form-label label="球队标签" tip="必填；至少1个标签；多个标签用逗号分隔后合计不超过1023个字符" />
               </template>
-              <dortmund-option-select v-model="editForm.teamTag" option-type="tag" placeholder="请选择或输入球队标签" multiple />
+              <dortmund-team-option-selector v-model="editForm.teamTag" option-type="tag" placeholder="请选择球队标签"
+                multiple />
             </el-form-item>
           </el-col>
         </el-row>
@@ -120,9 +122,10 @@
           <el-col :xs="24" :md="8">
             <el-form-item prop="teamSort">
               <template slot="label">
-                <dortmund-form-label label="球队排序" tip="选填；0-1023的整数；数值越小越靠前，默认0" />
+                <dortmund-form-label label="球队排序" :tip="teamSortTip" />
               </template>
-              <el-input-number v-model="editForm.teamSort" :min="0" :max="1023" :step="1" style="width: 100%" />
+              <el-input-number v-model="editForm.teamSort" :min="teamSortRange.min" :max="teamSortRange.max" :step="1"
+                style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -130,8 +133,8 @@
               <template slot="label">
                 <dortmund-form-label label="球队备注" tip="选填；最多1023个字符" />
               </template>
-              <el-input v-model="editForm.teamRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
-                placeholder="请输入球队备注内容" />
+              <el-input v-model="editForm.teamRemark" type="textarea" :rows="3" :maxlength="limits.teamRemark"
+                show-word-limit placeholder="请输入球队备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -186,6 +189,8 @@ import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
+import { DORTMUND_TEAM_SORT_RANGE } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import {
   DORTMUND_LIMITS,
   DORTMUND_STATUS_OPTIONS,
@@ -194,12 +199,19 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimTextFields,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "TeamEditScene",
   dicts: ["sys_normal_disable"],
-  components: { DortmundFormLabel, DortmundInfoPointFormDialog, DortmundOptionSelect, DortmundCodeInput, DortmundActionButton },
+  components: {
+    DortmundFormLabel,
+    DortmundInfoPointFormDialog,
+    DortmundOptionSelect,
+    DortmundCodeInput,
+    DortmundActionButton,
+    DortmundTeamOptionSelector,
+  },
   props: {
     editMode: {
       type: String,
@@ -222,9 +234,16 @@ export default {
       draftIndex: -1,
       newInfoPoints: [],
       draftForm: this.buildDraftForm(),
+      teamSortRange: DORTMUND_TEAM_SORT_RANGE,
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
+    teamSortTip() {
+      return `选填；${this.teamSortRange.min}-${this.teamSortRange.max}的整数；数值越小越靠前，默认${this.teamSortRange.defaultValue}`;
+    },
     editRules() {
       return {
         teamCode: [requiredTextRule("球队编码", DORTMUND_LIMITS.teamCode)],
@@ -252,7 +271,7 @@ export default {
           trigger: "change",
         }],
         teamStatus: [enumRule("球队状态", DORTMUND_STATUS_OPTIONS, true)],
-        teamSort: [integerRangeRule("球队排序", 0, 1023, false)],
+        teamSort: [integerRangeRule("球队排序", this.teamSortRange.min, this.teamSortRange.max, false)],
         teamRemark: [optionalTextRule("球队备注", DORTMUND_LIMITS.teamRemark)],
       };
     },

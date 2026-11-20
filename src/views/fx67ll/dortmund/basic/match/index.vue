@@ -71,7 +71,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -161,7 +161,7 @@
         </div>
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" @pagination="getList" />
+          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
       </div>
 
       <!-- 比赛编排场景：新增/修改共用整页，按填写顺序铺开 -->
@@ -234,6 +234,7 @@ import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/Dortmund
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "Match",
@@ -343,7 +344,7 @@ export default {
       // 查询参数
       queryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
         matchId: null,
         matchCode: null,
         seasonId: null,
@@ -359,6 +360,7 @@ export default {
         beginUpdateTime: null,
         endUpdateTime: null,
       },
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       // 编排场景初始表单（进入编排场景前由父页面构建，场景组件复制出可编辑副本）
       editForm: {},
       // 比赛关联倍率抽屉

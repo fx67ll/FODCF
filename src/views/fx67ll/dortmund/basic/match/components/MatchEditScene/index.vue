@@ -117,7 +117,7 @@
                 <dortmund-form-label label="比赛编码" tip="必填；1-23个字符，全局唯一；可自动生成 MATCH-YYYYMMDD-XXXXXX；创建后不可修改" />
               </template>
               <dortmund-code-input v-model="editForm.matchCode" code-kind="match" :date-value="editForm.matchTime"
-                maxlength="23" placeholder="必填，可自动生成比赛编码" :disabled="editMode !== 'add'" />
+                :maxlength="limits.matchCode" placeholder="必填，可自动生成比赛编码" :disabled="editMode !== 'add'" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -157,8 +157,8 @@
               <template slot="label">
                 <dortmund-form-label label="比赛备注" tip="选填；最多1023个字符" />
               </template>
-              <el-input v-model="editForm.matchRemark" type="textarea" :rows="3" maxlength="1023" show-word-limit
-                placeholder="请输入比赛备注内容" />
+              <el-input v-model="editForm.matchRemark" type="textarea" :rows="3" :maxlength="limits.matchRemark"
+                show-word-limit placeholder="请输入比赛备注内容" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -259,7 +259,7 @@ import DortmundOddsForm from "@/views/fx67ll/dortmund/other/component/DortmundOd
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
-import { buildEmptyOdds, buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/utils/odds";
+import { buildEmptyOdds, buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/other/utils/odds";
 import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
@@ -269,7 +269,7 @@ import {
   requiredTextRule,
   trimText,
   trimTextFields,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "MatchEditScene",
@@ -302,6 +302,9 @@ export default {
     },
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
   },
   data() {
     // 归属字段的校验：已选已有记录或已展开当场新增面板均视为已填写

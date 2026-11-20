@@ -99,12 +99,12 @@
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="extraMoney" class="money-form-item">
                     <span slot="label" class="entry-field-label">
-                      <dortmund-form-label label="当前总金额"
-                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <dortmund-form-label label="当前总金额" tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
                       <small>联动推算</small>
                     </span>
-                    <el-input v-model="form.extraMoney" class="money-input money-input--primary" maxlength="23"
-                      prefix-icon="el-icon-coin" placeholder="请输入当前外快总金额" @input="handleExtraMoneyChangeDubounce" />
+                    <el-input v-model="form.extraMoney" class="money-input money-input--primary"
+                      :maxlength="numeric.maxExtraTextLength" prefix-icon="el-icon-coin" placeholder="请输入当前外快总金额"
+                      @input="handleExtraMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
@@ -124,45 +124,41 @@
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="seedMoney" class="money-form-item">
                     <span slot="label" class="entry-field-label">
-                      <dortmund-form-label label="当前本金"
-                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <dortmund-form-label label="当前本金" tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
                       <small>独立录入</small>
                     </span>
-                    <el-input v-model="form.seedMoney" class="money-input" maxlength="23"
+                    <el-input v-model="form.seedMoney" class="money-input" :maxlength="numeric.maxExtraTextLength"
                       prefix-icon="el-icon-bank-card" placeholder="请输入当前投入本金" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="winMoney" class="money-form-item">
                     <span slot="label" class="entry-field-label">
-                      <dortmund-form-label label="盈亏金额"
-                        tip="必填；可填负数；最多19位整数和2位小数（含负号总长度不超过23个字符）" />
+                      <dortmund-form-label label="盈亏金额" tip="必填；可填负数；最多19位整数和2位小数（含负号总长度不超过23个字符）" />
                       <small>联动推算</small>
                     </span>
-                    <el-input v-model="form.winMoney" class="money-input" maxlength="23" prefix-icon="el-icon-data-line"
-                      placeholder="请输入外快盈亏金额" @input="handleWinMoneyChangeDubounce" />
+                    <el-input v-model="form.winMoney" class="money-input" :maxlength="numeric.maxExtraTextLength"
+                      prefix-icon="el-icon-data-line" placeholder="请输入外快盈亏金额" @input="handleWinMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="saveMoney" class="money-form-item">
                     <span slot="label" class="entry-field-label">
-                      <dortmund-form-label label="落袋金额"
-                        tip="必填；不得为负；最多20位整数和2位小数，总长度不超过23个字符" />
+                      <dortmund-form-label label="落袋金额" tip="必填；不得为负；最多20位整数和2位小数，总长度不超过23个字符" />
                       <small>不联动其他金额</small>
                     </span>
-                    <el-input v-model="form.saveMoney" class="money-input" maxlength="23" prefix-icon="el-icon-box"
-                      placeholder="请输入已经落袋为安的盈利金额" @input="handleSaveMoneyChangeDubounce" />
+                    <el-input v-model="form.saveMoney" class="money-input" :maxlength="numeric.maxExtraTextLength"
+                      prefix-icon="el-icon-box" placeholder="请输入已经落袋为安的盈利金额" @input="handleSaveMoneyChangeDubounce" />
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
                   <el-form-item prop="targetMoney" class="money-form-item">
                     <span slot="label" class="entry-field-label">
-                      <dortmund-form-label label="目标金额"
-                        tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
+                      <dortmund-form-label label="目标金额" tip="必填；非负十进制数，最多20位整数和2位小数，总长度不超过23个字符" />
                       <small>用于进度预览</small>
                     </span>
-                    <el-input v-model="form.targetMoney" class="money-input" maxlength="23" prefix-icon="el-icon-flag"
-                      placeholder="请输入目标金额" />
+                    <el-input v-model="form.targetMoney" class="money-input" :maxlength="numeric.maxExtraTextLength"
+                      prefix-icon="el-icon-flag" placeholder="请输入目标金额" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -190,10 +186,10 @@
               </div>
               <el-form-item prop="extraRemark" class="remark-form-item">
                 <span slot="label" class="entry-field-label">
-                  <dortmund-form-label label="记录说明" tip="选填；最多1023个字符" />
+                  <dortmund-form-label label="记录说明" :tip="`选填；最多${limits.extraRemark}个字符`" />
                 </span>
-                <el-input v-model="form.extraRemark" type="textarea" :rows="4" :maxlength="1023" show-word-limit
-                  placeholder="请输入外快备注内容" />
+                <el-input v-model="form.extraRemark" type="textarea" :rows="4" :maxlength="limits.extraRemark"
+                  show-word-limit placeholder="请输入外快备注内容" />
               </el-form-item>
             </section>
           </main>
@@ -300,13 +296,19 @@ import PlanLinkSelector from "../PlanLinkSelector/index.vue";
 import _ from "underscore";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import {
+  DORTMUND_DISPLAY_COUNTS,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+  DORTMUND_TIMINGS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import {
   DORTMUND_LIMITS,
   DORTMUND_YES_NO_OPTIONS,
   decimalRule,
   enumRule,
   optionalTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 // 二级录入页保存成功后通知列表页刷新（仅当前浏览器会话有效）
 const EXTRA_EDIT_REFRESH_KEY = "dortmund-extra-edit-refresh-required";
@@ -347,24 +349,34 @@ export default {
       },
       rules: {
         extraMoney: [decimalRule("当前外快总金额", {
-          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          required: true, min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxExtraUnsignedIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxExtraFractionDigits,
           maxTextLength: DORTMUND_LIMITS.extraMoney,
         })],
         isWin: [enumRule("是否盈利", DORTMUND_YES_NO_OPTIONS, true)],
         winMoney: [decimalRule("外快盈亏金额", {
-          required: true, allowNegative: true, maxIntegerDigits: 19, maxFractionDigits: 2,
+          required: true, allowNegative: true,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxExtraSignedIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxExtraFractionDigits,
           maxTextLength: DORTMUND_LIMITS.extraMoney,
         })],
         seedMoney: [decimalRule("当前投入本金", {
-          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          required: true, min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxExtraUnsignedIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxExtraFractionDigits,
           maxTextLength: DORTMUND_LIMITS.extraMoney,
         })],
         saveMoney: [decimalRule("落袋金额", {
-          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          required: true, min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxExtraUnsignedIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxExtraFractionDigits,
           maxTextLength: DORTMUND_LIMITS.extraMoney,
         })],
         targetMoney: [decimalRule("目标金额", {
-          required: true, min: 0, maxIntegerDigits: 20, maxFractionDigits: 2,
+          required: true, min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxExtraUnsignedIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxExtraFractionDigits,
           maxTextLength: DORTMUND_LIMITS.extraMoney,
         })],
         extraRemark: [optionalTextRule("记录说明", DORTMUND_LIMITS.extraRemark)],
@@ -376,6 +388,12 @@ export default {
     };
   },
   computed: {
+    numeric() {
+      return DORTMUND_NUMERIC;
+    },
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     isAdd() {
       return this.extraId == null;
     },
@@ -426,7 +444,7 @@ export default {
       if (this.toNumber(this.form.targetMoney) <= 0) {
         return "未设置";
       }
-      return `${this.targetProgress.toFixed(1)}%`;
+      return `${this.targetProgress.toFixed(DORTMUND_DISPLAY_COUNTS.targetProgressFractionDigits)}%`;
     },
     targetGapLabel() {
       const target = this.toNumber(this.form.targetMoney);
@@ -573,7 +591,7 @@ export default {
     getPreExtraMoney() {
       this.formLoading = true;
       this.preExtraData = EMPTY_PRE_EXTRA();
-      listExtra({ pageNum: 1, pageSize: 1 })
+      listExtra({ pageNum: 1, pageSize: DORTMUND_PAGINATION.existenceCheckPageSize })
         .then((response) => {
           if (response && response.code === 200) {
             const lastData = response.rows && response.rows[0];
@@ -666,7 +684,7 @@ export default {
     },
     handleExtraMoneyChangeDubounce: _.debounce(function (val) {
       this.handleExtraMoneyChange(val);
-    }, 444),
+    }, DORTMUND_TIMINGS.extraMoneyDebounceMs),
     handleExtraMoneyChange(val) {
       if (val !== "" && val != null) {
         this.form.extraMoney = this.padMoneyToTwoDecimal(val);
@@ -682,12 +700,14 @@ export default {
       const unsigned = negative ? raw.slice(1) : raw;
       const parts = unsigned.split(".");
       const integerPart = parts[0].replace(/^0+(?=\d)/, "");
-      const fractionPart = (parts[1] || "").padEnd(2, "0").slice(0, 2);
+      const fractionPart = (parts[1] || "")
+        .padEnd(DORTMUND_NUMERIC.maxExtraFractionDigits, "0")
+        .slice(0, DORTMUND_NUMERIC.maxExtraFractionDigits);
       return `${negative ? "-" : ""}${integerPart}.${fractionPart}`;
     },
     handleWinMoneyChangeDubounce: _.debounce(function () {
       this.handleWinMoneyChange();
-    }, 444),
+    }, DORTMUND_TIMINGS.extraMoneyDebounceMs),
     handleWinMoneyChange() {
       const winMoney = parseFloat(this.form && this.form.winMoney);
       if (!isNaN(winMoney)) {
@@ -709,7 +729,7 @@ export default {
     },
     handleSaveMoneyChangeDubounce: _.debounce(function () {
       this.handleSaveMoneyChange();
-    }, 444),
+    }, DORTMUND_TIMINGS.extraMoneyDebounceMs),
     handleSaveMoneyChange() {
       const saveMoney = parseFloat(this.form && this.form.saveMoney);
       if (isNaN(saveMoney) || saveMoney === 0) {
@@ -756,14 +776,14 @@ export default {
         parseFloat((this.form && this.form.extraMoney) || 0) -
         parseFloat((this.form && this.form.seedMoney) || 0) -
         this.calcPreNetMoney()
-      ).toFixed(2);
+      ).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits);
     },
     calcExtraMoneyByForm() {
       return (
         parseFloat((this.form && this.form.winMoney) || 0) +
         parseFloat((this.form && this.form.seedMoney) || 0) +
         this.calcPreNetMoney()
-      ).toFixed(2);
+      ).toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits);
     },
     handleWinMoneyCount() {
       const nowWinMoney = this.calcWinMoneyByForm();
@@ -883,14 +903,16 @@ export default {
     },
     formatAmount(value) {
       const numberValue = parseFloat(value);
-      return isNaN(numberValue) ? "-" : numberValue.toFixed(2);
+      return isNaN(numberValue)
+        ? "-"
+        : numberValue.toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits);
     },
     formatSignedAmount(value) {
       const numberValue = parseFloat(value);
       if (isNaN(numberValue)) {
         return "-";
       }
-      const fixed = numberValue.toFixed(2);
+      const fixed = numberValue.toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits);
       return numberValue > 0 ? `+${fixed}` : fixed;
     },
     moneyTone(value) {

@@ -61,7 +61,13 @@ import SimVersionCreateDialog from "../SimVersionCreateDialog/index.vue";
 import SimVersionInvalidateConfirmDialog from "../SimVersionInvalidateConfirmDialog/index.vue";
 import SimVersionInvalidateDangerDialog from "../SimVersionInvalidateDangerDialog/index.vue";
 import SimVersionInvalidNoticeDialog from "../SimVersionInvalidNoticeDialog/index.vue";
-import { DORTMUND_LIMITS, formatPlainDecimal } from "@/views/fx67ll/dortmund/utils/validation";
+import {
+  DORTMUND_LIMITS,
+  DORTMUND_NUMERIC,
+  DORTMUND_PAGINATION,
+  DORTMUND_SIMULATION_DEFAULTS,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { formatPlainDecimal } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 // 数值模拟参数本地缓存键
 const SIM_CONFIG_CACHE_KEY = "dortmund-extra-sim-config";
@@ -83,10 +89,10 @@ export default {
     return {
       // 数值模拟参数配置
       simForm: {
-        simMode: "full",
-        initialValue: 100,
-        coefficient: 2,
-        targetValue: 500000,
+        simMode: DORTMUND_SIMULATION_DEFAULTS.mode,
+        initialValue: DORTMUND_SIMULATION_DEFAULTS.initialValue,
+        coefficient: DORTMUND_SIMULATION_DEFAULTS.coefficient,
+        targetValue: DORTMUND_SIMULATION_DEFAULTS.targetValue,
       },
       // 数值模拟轮次记录列表数据
       simRounds: [],
@@ -101,7 +107,7 @@ export default {
       // 数值模拟轮次记录查询参数
       simQueryParams: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: DORTMUND_PAGINATION.defaultPageSize,
       },
       // 数值模拟轮次记录总条数
       simTotal: 0,
@@ -174,7 +180,9 @@ export default {
         return "0.00%";
       }
       const progress = (this.simNowValue / targetValue) * 100;
-      return Number.isFinite(progress) ? progress.toFixed(2) + "%" : "0.00%";
+      return Number.isFinite(progress)
+        ? progress.toFixed(DORTMUND_NUMERIC.maxSimulationFractionDigits) + "%"
+        : `0.${"0".repeat(DORTMUND_NUMERIC.maxSimulationFractionDigits)}%`;
     },
     // 数值模拟从下一轮开始数值连续达成达目标所需轮次
     simRequiredRounds() {
@@ -378,7 +386,7 @@ export default {
       }
       listExtraSimulate({
         pageNum: 1,
-        pageSize: 1,
+        pageSize: DORTMUND_PAGINATION.existenceCheckPageSize,
         versionId: this.currentVersionId,
       }).then((response) => {
         const rows = response?.rows || [];
@@ -614,10 +622,18 @@ export default {
         const text = String(field.value == null ? "" : field.value);
         const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
         const numeric = Number(text);
-        if (!/^\d+(?:\.\d{1,2})?$/.test(text) || !Number.isFinite(numeric)
-          || numeric <= field.minExclusive || integerDigits > 20
+        const decimalPattern = new RegExp(
+          `^\\d+(?:\\.\\d{1,${DORTMUND_NUMERIC.maxSimulationFractionDigits}})?$`
+        );
+        if (!decimalPattern.test(text) || !Number.isFinite(numeric)
+          || numeric <= field.minExclusive
+          || integerDigits > DORTMUND_NUMERIC.maxSimulationIntegerDigits
           || text.length > DORTMUND_LIMITS.simulateValueText) {
-          this.$modal.msgWarning(`${field.label}格式不正确，请填写大于${field.minExclusive}、最多20位整数和2位小数的数字`);
+          this.$modal.msgWarning(
+            `${field.label}格式不正确，请填写大于${field.minExclusive}、最多` +
+            `${DORTMUND_NUMERIC.maxSimulationIntegerDigits}位整数和` +
+            `${DORTMUND_NUMERIC.maxSimulationFractionDigits}位小数的数字`
+          );
           return false;
         }
       }
@@ -627,7 +643,8 @@ export default {
     validateSimRound(record) {
       const roundNo = Number(record && record.roundNo);
       if (!Number.isInteger(roundNo) || roundNo === 0
-        || roundNo < -2147483648 || roundNo > 2147483647) {
+        || roundNo < DORTMUND_SIMULATION_DEFAULTS.roundNoMin
+        || roundNo > DORTMUND_SIMULATION_DEFAULTS.roundNoMax) {
         this.$modal.msgWarning("本轮轮次必须为非零的32位整数");
         return false;
       }
@@ -643,10 +660,19 @@ export default {
           this.$modal.msgWarning(`${field.label}格式不正确，请返回后重新录入`);
           return false;
         }
-        const text = formatPlainDecimal(numeric, 2);
+        const text = formatPlainDecimal(
+          numeric,
+          DORTMUND_NUMERIC.maxSimulationFractionDigits
+        );
         const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
-        if (!text || integerDigits > 20 || text.length > DORTMUND_LIMITS.simulateValueText) {
-          this.$modal.msgWarning(`${field.label}超出范围，请填写最多20位整数和2位小数的数字`);
+        if (!text
+          || integerDigits > DORTMUND_NUMERIC.maxSimulationIntegerDigits
+          || text.length > DORTMUND_LIMITS.simulateValueText) {
+          this.$modal.msgWarning(
+            `${field.label}超出范围，请填写最多` +
+            `${DORTMUND_NUMERIC.maxSimulationIntegerDigits}位整数和` +
+            `${DORTMUND_NUMERIC.maxSimulationFractionDigits}位小数的数字`
+          );
           return false;
         }
       }
@@ -654,22 +680,31 @@ export default {
     },
     // 数值模拟变动倍数格式化为数据库可接受的两位小数普通十进制文本
     formatSimRoundChange(value) {
-      const text = formatPlainDecimal(value, 2);
+      const text = formatPlainDecimal(
+        value,
+        DORTMUND_NUMERIC.maxSimulationFractionDigits
+      );
       if (!text) {
         return "";
       }
       const integerDigits = text.split(".")[0].replace(/^0+/, "").length;
-      return integerDigits <= 20 && text.length <= DORTMUND_LIMITS.simulateValueText
+      return integerDigits <= DORTMUND_NUMERIC.maxSimulationIntegerDigits
+        && text.length <= DORTMUND_LIMITS.simulateValueText
         ? text
         : "";
     },
     // 数值模拟金额格式化，保留两位小数
     formatSimNumber(value) {
-      return formatPlainDecimal(value, 2, "0.00");
+      const fractionDigits = DORTMUND_NUMERIC.maxSimulationFractionDigits;
+      return formatPlainDecimal(
+        value,
+        fractionDigits,
+        `0.${"0".repeat(fractionDigits)}`
+      );
     },
     // 数值模拟乘数格式化，去除多余的零
     formatSimFactor(value) {
-      const text = formatPlainDecimal(value, 4);
+      const text = formatPlainDecimal(value, DORTMUND_NUMERIC.maxOddsFractionDigits);
       return text ? Number(text) : 0;
     },
   },

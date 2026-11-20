@@ -50,7 +50,7 @@
             <template slot="label">
               <dortmund-form-label label="信息点标题" tip="必填；1-233个字符" />
             </template>
-            <el-input v-model="form.pointTitle" maxlength="233" show-word-limit placeholder="请输入信息点标题" />
+            <el-input v-model="form.pointTitle" :maxlength="limits.infoTitle" show-word-limit placeholder="请输入信息点标题" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -58,7 +58,7 @@
             <template slot="label">
               <dortmund-form-label label="信息点内容" tip="必填；当前界面与后端业务限制为最多1023个字符" />
             </template>
-            <el-input v-model="form.pointContent" type="textarea" :rows="4" maxlength="1023" show-word-limit
+            <el-input v-model="form.pointContent" type="textarea" :rows="4" :maxlength="limits.infoContent" show-word-limit
               placeholder="请输入客观信息内容" />
           </el-form-item>
         </el-col>
@@ -76,7 +76,7 @@
             <template slot="label">
               <dortmund-form-label label="信息来源名称" tip="必填；1-233个字符" />
             </template>
-            <el-input v-model="form.sourceName" maxlength="233" show-word-limit placeholder="请输入信息来源名称" />
+            <el-input v-model="form.sourceName" :maxlength="limits.infoSourceName" show-word-limit placeholder="请输入信息来源名称" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :md="12">
@@ -84,7 +84,7 @@
             <template slot="label">
               <dortmund-form-label label="信息来源地址" tip="选填；最多1023个字符，建议填写完整URL" />
             </template>
-            <el-input v-model="form.sourceUrl" maxlength="1023" show-word-limit placeholder="请输入信息来源地址" />
+            <el-input v-model="form.sourceUrl" :maxlength="limits.infoSourceUrl" show-word-limit placeholder="请输入信息来源地址" />
           </el-form-item>
         </el-col>
         <el-col v-if="showAdvanced" :xs="24" :md="12">
@@ -149,7 +149,7 @@
             <template slot="label">
               <dortmund-form-label label="备注" tip="选填；最多1023个字符" />
             </template>
-            <el-input v-model="form.pointRemark" type="textarea" :rows="2" maxlength="1023" show-word-limit
+            <el-input v-model="form.pointRemark" type="textarea" :rows="2" :maxlength="limits.infoRemark" show-word-limit
               placeholder="请输入备注" />
           </el-form-item>
         </el-col>
@@ -170,7 +170,7 @@ import {
   optionalTextRule,
   requiredTextRule,
   trimText,
-} from "@/views/fx67ll/dortmund/utils/validation";
+} from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "DortmundInfoPointForm",
@@ -218,6 +218,9 @@ export default {
     },
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     teamsLocked() {
       return this.showTeams && this.mode === "update" && this.lockTeamsOnEdit;
     },

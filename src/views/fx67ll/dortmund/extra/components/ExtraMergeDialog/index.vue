@@ -78,7 +78,7 @@
           <span slot="label">
             <dortmund-form-label label="合并后备注" tip="选填；最多1023个字符，首尾空格会自动去除" />
           </span>
-          <el-input v-model="mergeRemark" type="textarea" :rows="3" :maxlength="1023" show-word-limit
+          <el-input v-model="mergeRemark" type="textarea" :rows="3" :maxlength="limits.extraRemark" show-word-limit
             placeholder="请输入合并后新记录的备注，不填写则不保留备注" />
         </el-form-item>
       </el-form>
@@ -96,7 +96,12 @@ import { mergeExtra } from "@/api/fx67ll/dortmund/extra";
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
-import { trimText } from "@/views/fx67ll/dortmund/utils/validation";
+import {
+  DORTMUND_BUSINESS_MINIMUMS,
+  DORTMUND_LIMITS,
+  DORTMUND_NUMERIC,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { trimText } from "@/views/fx67ll/dortmund/other/utils/validation";
 
 export default {
   name: "ExtraMergeDialog",
@@ -123,6 +128,9 @@ export default {
     };
   },
   computed: {
+    limits() {
+      return DORTMUND_LIMITS;
+    },
     dialogVisible: {
       get() {
         return this.visible;
@@ -151,7 +159,7 @@ export default {
           total += winMoney;
         }
       });
-      return total.toFixed(2);
+      return total.toFixed(DORTMUND_NUMERIC.maxExtraFractionDigits);
     },
     // 合并后盈亏金额展示文本（正数带加号，与列表展示习惯一致）
     mergedWinMoneyText() {
@@ -187,7 +195,7 @@ export default {
     handleMergeConfirm() {
       const extraIds = (this.mergeRows || []).map((item) => item.extraId);
       // 兜底校验：至少两条记录才允许发起合并
-      if (!extraIds || extraIds.length < 2) {
+      if (!extraIds || extraIds.length < DORTMUND_BUSINESS_MINIMUMS.extraMergeRowCount) {
         this.$modal.msgWarning("请至少选择两条记录进行合并！");
         return;
       }

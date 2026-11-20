@@ -8,7 +8,7 @@
 <script>
 import { listTeam } from "@/api/fx67ll/dortmund/team";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
-import { teamCountryOptions } from "@/utils/constant/football";
+import { teamCountryOptions } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundTeamSelectorModal",
