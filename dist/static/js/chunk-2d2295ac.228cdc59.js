@@ -1,0 +1,1 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["chunk-2d2295ac","chunk-2d2295ac","chunk-2d2295ac"],{dca8:function(e,c,n){var a=n("23e7"),t=n("bb2f"),d=n("d039"),o=n("861d"),f=n("f183").onFreeze,r=Object.freeze,u=d((function(){r(1)}));a({target:"Object",stat:!0,forced:u,sham:!t},{freeze:function(e){return r&&o(e)?r(f(e)):e}})}}]);
