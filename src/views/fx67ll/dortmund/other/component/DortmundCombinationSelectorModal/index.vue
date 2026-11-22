@@ -8,7 +8,10 @@
 <script>
 import { listCombination } from "@/api/fx67ll/dortmund/returnCombination";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
-import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import {
+  DORTMUND_PAGINATION,
+  getReturnVerificationOption,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
   name: "DortmundCombinationSelectorModal",
@@ -41,7 +44,18 @@ export default {
         { label: "组合倍率", prop: "combinedOdds", minWidth: 100 },
         { label: "预计回报", prop: "estimatedReturn", minWidth: 110 },
         { label: "比赛数", prop: "matchCount", minWidth: 90 },
-        { label: "审核时间", prop: "reviewTime", minWidth: 140 },
+        {
+          label: "核验状态",
+          prop: "verificationStatus",
+          minWidth: 100,
+          formatter: (row) => getReturnVerificationOption(row.verificationStatus).label,
+        },
+        {
+          label: "审核时间",
+          prop: "reviewTime",
+          minWidth: 150,
+          formatter: (row) => this.parseTime(row.reviewTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-",
+        },
       ],
       searchFields: [
         {

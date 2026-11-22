@@ -22,42 +22,46 @@
     </div>
 
     <transition name="dl-filter">
-      <el-form ref="combinationQueryForm" :model="combinationQuery" class="dl-filter" size="small" :inline="true"
-        label-width="68px">
-        <el-form-item label="搜索组合" prop="keyword">
-          <el-input v-model="combinationQuery.keyword" placeholder="请输入组合编码或标题" clearable style="width: 210px"
+      <el-form ref="combinationQueryForm" :model="combinationQuery" class="dl-filter" size="small" :inline="true">
+        <el-form-item label="搜索组合" prop="keyword" label-width="auto">
+          <el-input v-model="combinationQuery.keyword" placeholder="请输入组合编码或标题" clearable style="width: 220px"
             @keyup.enter.native="handleCombinationQuery" />
         </el-form-item>
-        <el-form-item label="关联比赛" prop="matchId">
+        <el-form-item label="关联比赛" prop="matchId" label-width="auto">
           <el-input :value="combinationMatchLabel" readonly clearable placeholder="请选择关联比赛"
-            prefix-icon="el-icon-football" style="width: 240px" @click.native="openCombinationMatchQuery"
+            prefix-icon="el-icon-football" style="width: 220px" @click.native="openCombinationMatchQuery"
             @clear="clearCombinationMatch" />
         </el-form-item>
-        <el-form-item label="采用状态" prop="adoptedFlag">
-          <el-select v-model="combinationQuery.adoptedFlag" placeholder="请选择采用状态" clearable style="width: 140px"
+        <el-form-item label="采用状态" prop="adoptedFlag" label-width="auto">
+          <el-select v-model="combinationQuery.adoptedFlag" placeholder="请选择采用状态" clearable style="width: 220px"
             popper-class="dortmund-theme-popper">
             <el-option label="未采用" value="N" />
             <el-option label="已采用" value="Y" />
           </el-select>
         </el-form-item>
-        <el-form-item label="生成模式" prop="generationMode" v-if="isMoreCombinationQuery">
-          <el-select v-model="combinationQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px"
+        <el-form-item label="生成模式" prop="generationMode" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-select v-model="combinationQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 220px"
             popper-class="dortmund-theme-popper">
             <el-option label="主观模式" value="S" />
             <el-option label="AI 模式" value="A" />
           </el-select>
         </el-form-item>
-        <el-form-item label="批次状态" prop="generationStatus" v-if="isMoreCombinationQuery">
-          <el-select v-model="combinationQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
+        <el-form-item label="批次状态" prop="generationStatus" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-select v-model="combinationQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 220px"
             popper-class="dortmund-theme-popper">
             <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="创建时间" v-if="isMoreCombinationQuery">
-          <el-date-picker v-model="combinationDateRange" type="daterange" value-format="yyyy-MM-dd" range-separator="-"
-            popper-class="dortmund-theme-popper" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px"
-            clearable />
+        <el-form-item label="创建时间" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-date-picker v-model="combinationDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
+            end-placeholder="结束时间" style="width: 360px" clearable />
+        </el-form-item>
+        <el-form-item label="审核时间" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-date-picker v-model="combinationAuditDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
+            end-placeholder="结束时间" style="width: 360px" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleCombinationQuery">搜索</el-button>
@@ -98,18 +102,25 @@
               <el-option label="升序" value="asc" />
             </el-select>
           </div>
-          <el-button type="success" plain size="mini" icon="el-icon-check" :loading="batchAdoptLoading"
-            :disabled="!selectedCombinationIds.length" @click="handleBatchAdopt"
-            v-hasPermi="['dortmund:return:review']">
-            批量采用
-          </el-button>
+          <div class="combination-batch-actions">
+            <el-button type="success" plain size="mini" icon="el-icon-check" :loading="batchAdoptLoading"
+              :disabled="!selectedCombinationIds.length" @click="handleBatchAdopt"
+              v-hasPermi="['dortmund:return:review']">
+              批量采用
+            </el-button>
+            <el-button type="primary" plain size="mini" icon="el-icon-circle-check" :loading="batchVerifyLoading"
+              :disabled="!selectedCombinationIds.length" @click="handleBatchVerify"
+              v-hasPermi="['dortmund:return:review']">
+              批量核验
+            </el-button>
+          </div>
         </div>
       </div>
       <div class="history-table-wrap">
         <el-table ref="combinationTable" v-loading="combinationListLoading" :data="combinationList"
           row-key="combinationId" size="small" class="history-table combination-table"
           @selection-change="handleCombinationSelectionChange">
-          <el-table-column type="selection" width="46" fixed="left" :selectable="isCombinationSelectable" />
+          <el-table-column type="selection" width="46" fixed="left" />
           <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip fixed="left" />
           <el-table-column label="组合标题" prop="combinationTitle" min-width="190" show-overflow-tooltip />
           <el-table-column label="模式" align="center" width="108">
@@ -120,14 +131,6 @@
               <dict-tag :options="dict.type.fx67ll_ai_analysis_status || []" :value="scope.row.generationStatus" />
             </template>
           </el-table-column>
-          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="100" />
-          <el-table-column label="预计回报" align="center" width="112">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
-          </el-table-column>
-          <el-table-column label="偏差金额" align="center" width="112">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
-          </el-table-column>
-          <el-table-column label="场次" align="center" prop="matchCount" width="80" />
           <el-table-column label="采用状态" align="center" width="100">
             <template slot-scope="scope">
               <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
@@ -135,10 +138,35 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="审核时间" align="center" width="150" class-name="dortmund-nowrap-cell">
-            <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}") || "-" }}</template>
+          <el-table-column label="核验状态" align="center" width="104">
+            <template slot-scope="scope">
+              <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
+            </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="90" fixed="right">
+          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="100" />
+          <el-table-column label="预计回报" align="center" width="112">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
+          </el-table-column>
+          <el-table-column label="偏差金额" align="center" width="112">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
+          </el-table-column>
+          <el-table-column label="场次" align="center" width="80">
+            <template slot-scope="scope">
+              <el-button v-if="scope.row.matchCount > 0" type="text" class="dortmund-theme-text"
+                :title="`查看组合内 ${scope.row.matchCount || 0} 场比赛`" @click="handleCombinationDetail(scope.row)"
+                v-hasPermi="['dortmund:return:query']">
+                {{ scope.row.matchCount }}
+              </el-button>
+              <span v-else class="combination-match-zero">0</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="审核时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+            <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+          </el-table-column>
+          <el-table-column label="创建时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+            <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="122" fixed="right">
             <template slot-scope="scope">
               <dortmund-action-button label="详情" icon="el-icon-document" action="detail"
                 @click="handleCombinationDetail(scope.row)" v-hasPermi="['dortmund:return:query']" />
@@ -148,6 +176,9 @@
               <dortmund-action-button v-else label="不采用" icon="el-icon-close" action="reject"
                 :loading="reviewingId === scope.row.combinationId" @click="handleReview(scope.row, 'N')"
                 v-hasPermi="['dortmund:return:review']" />
+              <dortmund-action-button v-if="scope.row.adoptedFlag === 'Y'" label="核验赛果"
+                icon="el-icon-circle-check" action="verify" :loading="verifyingId === scope.row.combinationId"
+                @click="handleVerify(scope.row)" v-hasPermi="['dortmund:return:review']" />
             </template>
           </el-table-column>
         </el-table>
@@ -176,13 +207,16 @@
           :closable="false" show-icon :title="`证据流程：${generationDetail.aiEvidenceError}`" />
       </dortmund-detail-card>
 
-      <dortmund-detail-card title="AI分析工作流" icon="el-icon-share" tone="green" subtitle="追溯规划、检索、分析、校验与落库；异常和偏置会给出诊断提示">
+      <dortmund-detail-card v-if="showAiWorkflow" title="AI分析工作流" icon="el-icon-share" tone="green"
+        subtitle="追溯规划、检索、分析、校验与落库；异常和偏置会给出诊断提示">
         <return-ai-workflow :generation="generationDetail" :can-view-raw="hasRemarkQueryPermission" />
       </dortmund-detail-card>
 
       <manual-ai-task-panel ref="manualAiTaskPanel" :generation-id="generationDetail.generationId || null"
         :generation-code="generationDetail.generationCode || ''"
-        :generation-status="generationDetail.generationStatus || null" @imported="handleManualImported" />
+        :generation-status="generationDetail.generationStatus || null"
+        :result-source="generationDetail.resultSource || ''" :generated-count="generationDetail.generatedCount || 0"
+        @imported="handleManualImported" />
 
       <dortmund-detail-card v-if="generationInputSummary" title="业务输入摘要" icon="el-icon-document" tone="green">
         <pre class="return-input-summary">{{ generationInputSummary }}</pre>
@@ -200,6 +234,11 @@
           <el-table-column label="AI风险提示" prop="riskNotes" min-width="160" show-overflow-tooltip />
           <el-table-column label="采用" align="center" prop="adoptedFlag" width="84">
             <template slot-scope="scope">{{ scope.row.adoptedFlag === "Y" ? "是" : "否" }}</template>
+          </el-table-column>
+          <el-table-column label="核验" align="center" width="104">
+            <template slot-scope="scope">
+              <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
+            </template>
           </el-table-column>
           <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="68" fixed="right">
             <template slot-scope="scope">
@@ -229,33 +268,32 @@
               @click="handleBatchExport" v-hasPermi="['dortmund:return:export']">导出批次</el-button>
           </div>
         </div>
-        <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter" size="small" :inline="true"
-          label-width="76px">
-          <el-form-item label="批次状态" prop="generationStatus">
+        <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter" size="small" :inline="true">
+          <el-form-item label="批次状态" prop="generationStatus" label-width="auto">
             <el-select v-model="batchQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
               popper-class="dortmund-theme-popper">
               <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="生成模式" prop="generationMode">
+          <el-form-item label="生成模式" prop="generationMode" label-width="auto">
             <el-select v-model="batchQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px"
               popper-class="dortmund-theme-popper">
               <el-option label="主观模式" value="S" />
               <el-option label="AI 模式" value="A" />
             </el-select>
           </el-form-item>
-          <el-form-item label="任务来源" prop="resultSource">
+          <el-form-item label="任务来源" prop="resultSource" label-width="auto">
             <el-select v-model="batchQuery.resultSource" placeholder="请选择任务来源" clearable style="width: 150px"
               popper-class="dortmund-theme-popper">
               <el-option label="自动AI批次" value="A" />
               <el-option label="人工AI批次" value="M" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间">
-            <el-date-picker v-model="batchDateRange" type="daterange" value-format="yyyy-MM-dd" range-separator="-"
-              popper-class="dortmund-theme-popper" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px"
-              clearable />
+          <el-form-item label="创建时间" label-width="auto">
+            <el-date-picker v-model="batchDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+              range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
+              end-placeholder="结束时间" style="width: 360px" clearable />
           </el-form-item>
           <el-form-item class="history-batch-actions">
             <el-button type="primary" icon="el-icon-search" size="mini" :loading="batchLoading"
@@ -294,8 +332,8 @@
               <el-table-column label="基础金额" align="center" prop="inputAmount" width="110" />
               <el-table-column label="目标金额" align="center" prop="targetAmount" width="110" />
               <el-table-column label="组合数" align="center" prop="generatedCount" width="84" />
-              <el-table-column label="完成时间" align="center" width="150" class-name="dortmund-nowrap-cell">
-                <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}") || "-"
+              <el-table-column label="完成时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+                <template slot-scope="scope">{{ parseTime(scope.row.finishedTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
                 }}</template>
               </el-table-column>
               <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="122" fixed="right">
@@ -347,9 +385,9 @@
           <span><i class="el-icon-info"></i> 查询跨度最多 366 天，单次最多删除 100 张</span>
         </div>
         <div class="orphan-filter-card">
-          <el-date-picker v-model="orphanDateRange" size="small" type="daterange" value-format="yyyy-MM-dd"
-            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-            style="width: 260px" clearable />
+          <el-date-picker v-model="orphanDateRange" size="small" type="datetimerange"
+            value-format="yyyy-MM-dd HH:mm:ss" popper-class="dortmund-theme-popper" range-separator="-"
+            start-placeholder="开始时间" end-placeholder="结束时间" style="width: 360px" clearable />
           <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
             @click="handleOrphanImageSearch">搜索孤儿图片</el-button>
           <el-button type="danger" plain size="mini" icon="el-icon-delete" :loading="orphanDeleteLoading"
@@ -387,12 +425,12 @@
               <template slot-scope="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
             </el-table-column>
             <el-table-column label="上传时间" align="center" width="150" class-name="dortmund-nowrap-cell">
-              <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}") || "-"
+              <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
               }}</template>
             </el-table-column>
             <el-table-column label="过期/重试" align="center" width="150" class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
-                {{ parseTime(scope.row.nextRetryTime || scope.row.expireTime, "{y}-{m}-{d} {h}:{i}") || "-" }}
+                {{ parseTime(scope.row.nextRetryTime || scope.row.expireTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}
               </template>
             </el-table-column>
             <el-table-column label="删除尝试" align="center" prop="deleteAttempts" width="92" />
@@ -407,9 +445,11 @@
     </el-drawer>
 
     <dortmund-detail-drawer :visible.sync="combinationVisible" title="回报组合详情"
-      :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : '查看组合指标、证据链、图片与逐场明细'"
+      :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : (combinationIsManual ? '查看组合指标、第三方AI分析与逐场理由' : '查看组合指标、证据链、图片与逐场明细')"
       icon="el-icon-connection" tone="green" size="780px" :loading="combinationLoading" feature="return">
-      <return-analysis-result :combination="combinationDetail" :batch="combinationBatchContext"
+      <return-manual-result v-if="combinationIsManual" :combination="combinationDetail" :batch="combinationBatchContext"
+        :can-view-reason="hasRemarkQueryPermission" />
+      <return-analysis-result v-else :combination="combinationDetail" :batch="combinationBatchContext"
         :can-view-reason="hasRemarkQueryPermission" />
 
       <dortmund-detail-card v-if="hasImageQueryPermission" title="组合图片" icon="el-icon-picture-outline" tone="amber">
@@ -436,6 +476,7 @@ import { getMatch } from "@/api/fx67ll/dortmund/match";
 import {
   adoptCombination,
   batchAdoptCombinations,
+  batchVerifyCombinations,
   deleteOrphanReturnImages,
   getCombination,
   getGeneration,
@@ -444,20 +485,26 @@ import {
   listGeneration,
   listOrphanReturnImages,
   rejectCombination,
+  verifyCombination,
 } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 import ReturnImageUpload from "./components/ReturnImageUpload/index";
 import ManualAiTaskPanel from "./components/ManualAiTaskPanel/index";
 import ReturnAiWorkflow from "./components/ReturnAiWorkflow/index";
 import ReturnAnalysisResult from "./components/ReturnAnalysisResult/index";
+import ReturnManualResult from "./components/ReturnManualResult/index";
 import {
   DORTMUND_DISPLAY_FORMAT,
   DORTMUND_PAGINATION,
+  DORTMUND_RETURN_VERIFICATION_STATUS,
   formatPreferenceDimensionSummary,
+  getReturnVerificationOption,
   getPreferenceLabel,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
@@ -466,8 +513,9 @@ export default {
   dicts: ["fx67ll_dortmund_odds_type", "fx67ll_ai_analysis_status"],
   components: {
     DortmundMatchSelectorModal, ReturnImageUpload, ManualAiTaskPanel,
-    ReturnAiWorkflow, ReturnAnalysisResult,
-    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
+    ReturnAiWorkflow, ReturnAnalysisResult, ReturnManualResult,
+    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock,
+    DortmundVerificationStatusTag,
   },
   data() {
     return {
@@ -496,6 +544,7 @@ export default {
       combinationTotal: 0,
       combinationListLoading: false,
       combinationDateRange: [],
+      combinationAuditDateRange: [],
       isMoreCombinationQuery: false,
       combinationMatch: null,
       combinationMatchSelectorVisible: false,
@@ -511,11 +560,15 @@ export default {
         sortOrder: "desc",
         beginCreateTime: null,
         endCreateTime: null,
+        beginReviewTime: null,
+        endReviewTime: null,
       },
       pageSizes: DORTMUND_PAGINATION.pageSizes,
       selectedCombinationIds: [],
       batchAdoptLoading: false,
+      batchVerifyLoading: false,
       reviewingId: null,
+      verifyingId: null,
       orphanImageVisible: false,
       orphanDateRange: [],
       orphanImageList: [],
@@ -537,15 +590,24 @@ export default {
         { label: '基础金额', value: this.generationDetail.inputAmount || '-', icon: 'el-icon-money' },
         { label: '目标金额', value: this.generationDetail.targetAmount || '-', icon: 'el-icon-aim' },
         { label: '组合数', value: this.generationDetail.generatedCount || 0, icon: 'el-icon-collection-tag' },
-        { label: '完成时间', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-time' },
+        { label: '完成时间', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-time' },
       ];
     },
     generationLifecycle() {
-      return [
-        { label: '任务创建', value: this.parseTime(this.generationDetail.createTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-time' },
-        { label: '证据流程', value: this.generationDetail.generationMode === 'A' ? this.formatEvidenceStatus(this.generationDetail.aiEvidenceStatus) : '非AI模式', icon: 'el-icon-share', state: this.generationDetail.aiEvidenceError ? 'danger' : 'success' },
-        { label: '批次完成', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}') || '-', icon: 'el-icon-circle-check', state: this.generationDetail.generationStatus === '1' ? 'success' : 'warning' },
+      const items = [
+        { label: '任务创建', value: this.parseTime(this.generationDetail.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-time' },
+        { label: '批次完成', value: this.parseTime(this.generationDetail.finishedTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-circle-check', state: this.generationDetail.generationStatus === '1' ? 'success' : 'warning' },
       ];
+      if (!this.isManualGeneration) {
+        items.splice(1, 0, {
+          label: '证据流程',
+          value: this.generationDetail.generationMode === 'A'
+            ? this.formatEvidenceStatus(this.generationDetail.aiEvidenceStatus) : '非AI模式',
+          icon: 'el-icon-share',
+          state: this.generationDetail.aiEvidenceError ? 'danger' : 'success',
+        });
+      }
+      return items;
     },
     hasImageUploadPermission() {
       return checkPermi(["dortmund:return:image:upload"]);
@@ -558,6 +620,23 @@ export default {
       if (!this.generationDetail.generationId || !this.combinationDetail.generationId) return null;
       return String(this.generationDetail.generationId) === String(this.combinationDetail.generationId)
         ? this.generationDetail : null;
+    },
+    isManualGeneration() {
+      return String(this.generationDetail.resultSource || '') === 'M';
+    },
+    showAiWorkflow() {
+      // 待人工批次和人工来源批次都不展示自动AI工作流，避免详情页把人工任务误判为自动分析。
+      if (!this.generationDetail.generationId || this.isManualGeneration) return false;
+      return String(this.generationDetail.generationStatus || '') !== '3';
+    },
+    combinationIsManual() {
+      const combinationSource = String(this.combinationDetail.resultSource || '');
+      if (combinationSource) return combinationSource === 'M';
+      if (this.combinationBatchContext) {
+        return String(this.combinationBatchContext.resultSource || '') === 'M';
+      }
+      return String(this.generationDetail.generationId || '') === String(this.combinationDetail.generationId || '')
+        && this.isManualGeneration;
     },
     generationInputSummary() {
       const snapshot = this.generationDetail.requestSnapshot;
@@ -606,7 +685,7 @@ export default {
       if (!match.homeTeamName && !match.awayTeamName) {
         return `比赛 #${match.matchId || "-"}`;
       }
-      const time = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const time = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vs = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       return time ? `${vs}（${time}）` : vs;
     },
@@ -693,17 +772,18 @@ export default {
     handleCombinationSelectionChange(selection) {
       this.selectedCombinationIds = (selection || []).map((item) => item.combinationId);
     },
-    isCombinationSelectable(row) {
-      return row.adoptedFlag !== "Y";
-    },
     handleBatchAdopt() {
-      if (!this.selectedCombinationIds.length) {
+      const selectedRows = this.combinationList.filter((row) =>
+        this.selectedCombinationIds.includes(row.combinationId) && row.adoptedFlag !== "Y");
+      if (!selectedRows.length) {
+        this.$modal.msgWarning("请选择尚未采用的回报组合；已采用组合无需重复采用");
         return;
       }
-      const count = this.selectedCombinationIds.length;
+      const combinationIds = selectedRows.map((row) => row.combinationId);
+      const count = combinationIds.length;
       this.$modal.confirm(`确认批量采用当前选中的 ${count} 条回报组合？`).then(() => {
         this.batchAdoptLoading = true;
-        return batchAdoptCombinations(this.selectedCombinationIds);
+        return batchAdoptCombinations(combinationIds);
       }).then((response) => {
         const updated = Number((response && response.data) || 0);
         this.$modal.msgSuccess(`批量采用完成，本次更新 ${updated} 条`);
@@ -718,6 +798,86 @@ export default {
       }).finally(() => {
         this.batchAdoptLoading = false;
       });
+    },
+    handleBatchVerify() {
+      const combinationIds = this.combinationList
+        .filter((row) => this.selectedCombinationIds.includes(row.combinationId) && row.adoptedFlag === "Y")
+        .map((row) => row.combinationId);
+      if (!combinationIds.length) {
+        this.$modal.msgWarning("请选择已采用的回报组合进行赛果核验");
+        return;
+      }
+      this.$modal.confirm(`确认按人工登记的比赛结果核验当前选中的 ${combinationIds.length} 条回报组合？`)
+        .then(() => {
+          this.batchVerifyLoading = true;
+          return batchVerifyCombinations(combinationIds);
+        }).then((response) => {
+          const data = (response && response.data) || {};
+          const successCount = Number(data.successCount) || 0;
+          const failedCount = Number(data.failedCount) || 0;
+          const unverifiedCount = Number(data.unverifiedCount) || 0;
+          const skippedCount = Number(data.skippedCount) || 0;
+          const message = `批量核验完成：成功 ${successCount} 条，失败 ${failedCount} 条，未核验 ${unverifiedCount} 条`
+            + (skippedCount ? `，跳过未采用 ${skippedCount} 条` : "");
+          if (failedCount || unverifiedCount || skippedCount) {
+            this.$modal.msgWarning(message);
+          } else {
+            this.$modal.msgSuccess(message);
+          }
+          this.selectedCombinationIds = [];
+          this.$nextTick(() => {
+            if (this.$refs.combinationTable) {
+              this.$refs.combinationTable.clearSelection();
+            }
+          });
+          return this.refreshAfterVerification();
+        }).catch(() => {
+        }).finally(() => {
+          this.batchVerifyLoading = false;
+        });
+    },
+    handleVerify(combination) {
+      if (!combination || !this.isPositiveId(combination.combinationId)) {
+        this.$modal.msgWarning("该回报组合编号无效，请刷新列表后重试");
+        return;
+      }
+      this.$modal.confirm(`确认按人工登记的比赛结果核验组合「${combination.combinationTitle
+        || combination.combinationCode}」？`).then(() => {
+        this.verifyingId = combination.combinationId;
+        return verifyCombination(combination.combinationId);
+      }).then((response) => {
+        const status = (response && response.data && response.data.verificationStatus)
+          || DORTMUND_RETURN_VERIFICATION_STATUS.unverified;
+        const label = getReturnVerificationOption(status).label;
+        if (status === DORTMUND_RETURN_VERIFICATION_STATUS.success) {
+          this.$modal.msgSuccess(`赛果核验完成：${label}`);
+        } else if (status === DORTMUND_RETURN_VERIFICATION_STATUS.failed) {
+          this.$modal.msgError(`赛果核验完成：${label}`);
+        } else {
+          this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入赛果，状态保持${label}`);
+        }
+        return this.refreshAfterVerification(combination.combinationId);
+      }).catch(() => {
+      }).finally(() => {
+        this.verifyingId = null;
+      });
+    },
+    refreshAfterVerification(combinationId = null) {
+      const refreshTasks = [this.getCombinationList()];
+      if (this.generationVisible && this.generationDetail.generationId) {
+        refreshTasks.push(getGeneration(this.generationDetail.generationId).then((response) => {
+          this.generationDetail = (response && response.data) || {};
+        }).catch(() => {
+        }));
+      }
+      if (this.combinationVisible && this.combinationDetail.combinationId
+        && (!combinationId || this.combinationDetail.combinationId === combinationId)) {
+        refreshTasks.push(getCombination(this.combinationDetail.combinationId).then((response) => {
+          this.combinationDetail = { ...this.combinationDetail, ...((response && response.data) || {}) };
+        }).catch(() => {
+        }));
+      }
+      return Promise.all(refreshTasks);
     },
     initializeCombinationMatchFromRoute() {
       const rawMatchId = this.$route && this.$route.query ? this.$route.query.matchId : null;
@@ -739,9 +899,15 @@ export default {
       this.combinationListLoading = true;
       this.combinationQuery.beginCreateTime = null;
       this.combinationQuery.endCreateTime = null;
+      this.combinationQuery.beginReviewTime = null;
+      this.combinationQuery.endReviewTime = null;
       if (this.combinationDateRange && this.combinationDateRange.length === 2) {
         this.combinationQuery.beginCreateTime = this.combinationDateRange[0];
         this.combinationQuery.endCreateTime = this.combinationDateRange[1];
+      }
+      if (this.combinationAuditDateRange && this.combinationAuditDateRange.length === 2) {
+        this.combinationQuery.beginReviewTime = this.combinationAuditDateRange[0];
+        this.combinationQuery.endReviewTime = this.combinationAuditDateRange[1];
       }
       listCombination(this.combinationQuery).then((response) => {
         this.combinationList = response.rows || [];
@@ -775,6 +941,7 @@ export default {
       this.combinationQuery.sortField = "createTime";
       this.combinationQuery.sortOrder = "desc";
       this.combinationDateRange = [];
+      this.combinationAuditDateRange = [];
       this.combinationMatch = null;
       this.selectedCombinationIds = [];
       this.setCombinationMatchRoute(null);
@@ -853,7 +1020,10 @@ export default {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
     handleOrphanImageQuery() {
       if (!this.orphanDateRange || this.orphanDateRange.length !== 2) {
@@ -988,24 +1158,38 @@ export default {
       this.getCombinationList();
     },
     handleCombinationDetail(row) {
+      if (!row || !this.isPositiveId(row.combinationId)) {
+        this.$modal.msgWarning("该回报组合编号无效，请刷新列表后重试");
+        return;
+      }
       this.historyVisible = false;
       this.generationVisible = false;
+      // 直接打开全局组合列表时没有批次上下文，先清空旧批次，避免误用上一次批次的来源与证据状态
+      this.generationDetail = {};
       this.combinationDetail = { ...(row || {}) };
       this.combinationVisible = true;
       this.refreshCombinationDetail(true, row.combinationId);
     },
     refreshCombinationDetail(showLoading = true, combinationId = null) {
       const targetId = combinationId || this.combinationDetail.combinationId;
-      if (!targetId) return Promise.resolve();
+      const normalizedId = this.normalizePositiveId(targetId);
+      if (!normalizedId) return Promise.resolve();
       const snapshot = { ...(this.combinationDetail || {}) };
       if (showLoading) this.combinationLoading = true;
-      return getCombination(targetId).then((response) => {
+      return getCombination(normalizedId).then((response) => {
         this.combinationDetail = { ...snapshot, ...((response && response.data) || {}) };
       }).catch(() => {
         // 接口异常时保留列表快照，避免组合详情抽屉空白
       }).finally(() => {
         if (showLoading) this.combinationLoading = false;
       });
+    },
+    isPositiveId(value) {
+      return Boolean(this.normalizePositiveId(value));
+    },
+    normalizePositiveId(value) {
+      const id = Number(value);
+      return Number.isInteger(id) && id > 0 ? id : null;
     },
     handleReview(combination, adoptedFlag) {
       const action = adoptedFlag === "Y" ? "采用" : "不采用";
@@ -1049,10 +1233,16 @@ export default {
         matchId: this.combinationQuery.matchId,
         beginCreateTime: null,
         endCreateTime: null,
+        beginReviewTime: null,
+        endReviewTime: null,
       };
       if (this.combinationDateRange && this.combinationDateRange.length === 2) {
         params.beginCreateTime = this.combinationDateRange[0];
         params.endCreateTime = this.combinationDateRange[1];
+      }
+      if (this.combinationAuditDateRange && this.combinationAuditDateRange.length === 2) {
+        params.beginReviewTime = this.combinationAuditDateRange[0];
+        params.endReviewTime = this.combinationAuditDateRange[1];
       }
       this.download("/dortmund/return/export", {
         ...params,
@@ -1400,6 +1590,10 @@ export default {
   min-width: 1120px;
 }
 
+.combination-match-zero {
+  color: #98a6a0;
+}
+
 .combination-empty {
   min-height: 160px;
   margin-top: 10px;
@@ -1470,6 +1664,17 @@ export default {
   }
 }
 
+.combination-batch-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 0;
+
+  ::v-deep .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
 .history-batch-filter {
   display: flex;
   flex-wrap: wrap;
@@ -1486,8 +1691,10 @@ export default {
   }
 
   ::v-deep .el-form-item__label {
+    padding-left: 0;
     font-weight: 500;
     color: #5b6b64;
+    text-align: left;
   }
 
   ::v-deep .el-form-item__content {

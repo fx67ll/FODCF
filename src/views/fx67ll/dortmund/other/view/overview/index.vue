@@ -188,7 +188,7 @@ export default {
               title: "方案计划",
               icon: "el-icon-notebook-2",
               desc: "三场景编写方案计划，关联已采用回报组合并自动派生比赛与金额",
-              features: ["编写回顾", "组合关联", "自动金额"],
+              features: ["编写回顾", "组合关联", "自动回报"],
               action: { type: "jump", componentPath: PAGE_COMPONENTS.plan },
             },
             {

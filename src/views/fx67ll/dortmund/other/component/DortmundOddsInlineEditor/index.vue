@@ -317,7 +317,7 @@ export default {
       });
     },
     formatDateTime(value) {
-      return this.parseTime(value, "{y}-{m}-{d} {h}:{i}") || "-";
+      return this.parseTime(value, "{y}-{m}-{d} {h}:{i}:{s}") || "-";
     },
     formatValue(value) {
       return value === null || value === undefined || value === "" ? "-" : value;

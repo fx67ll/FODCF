@@ -48,7 +48,8 @@
             <template slot="label">
               <dortmund-form-label label="球队主场" tip="必填；1-233个字符" />
             </template>
-            <dortmund-option-select v-model="newTeamForm.teamVenue" option-type="venue" placeholder="请选择或输入球队主场" />
+            <dortmund-team-option-selector v-model="newTeamForm.teamVenue" option-type="venue" placeholder="请选择或输入球队主场"
+              @change="handleTeamVenueChange" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -56,7 +57,8 @@
             <template slot="label">
               <dortmund-form-label label="地区/联赛" tip="必填；1-23个字符" />
             </template>
-            <dortmund-option-select v-model="newTeamForm.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
+            <dortmund-team-option-selector v-model="newTeamForm.teamCountry" option-type="country"
+              placeholder="请选择或输入地区/联赛" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -73,7 +75,8 @@
             <template slot="label">
               <dortmund-form-label label="球队标签" tip="必填；至少1个标签；多个标签合计不超过1023个字符" />
             </template>
-            <dortmund-option-select v-model="newTeamForm.teamTag" option-type="tag" placeholder="请选择或输入球队标签" multiple />
+            <dortmund-team-option-selector v-model="newTeamForm.teamTag" option-type="tag" placeholder="请选择或输入球队标签"
+              multiple />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -90,7 +93,7 @@
 </template>
 
 <script>
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import {
@@ -103,7 +106,7 @@ import {
 
 export default {
   name: "MatchNewTeamPanel",
-  components: { DortmundFormLabel, DortmundOptionSelect, DortmundCodeInput },
+  components: { DortmundFormLabel, DortmundTeamOptionSelector, DortmundCodeInput },
   props: {
     // 面板所属方（home主队 away客队），控制标题文案
     side: {
@@ -156,6 +159,12 @@ export default {
     };
   },
   methods: {
+    // 当场新建主队时，把已确定的球队主场同步给比赛表单，避免用户重复填写。
+    handleTeamVenueChange(value) {
+      if (this.side === "home") {
+        this.$emit("venue-change", value || "");
+      }
+    },
     // 校验面板表单（返回Promise，供编排场景汇总校验）
     validate() {
       return new Promise(resolve => {

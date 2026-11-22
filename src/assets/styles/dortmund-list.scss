@@ -139,8 +139,10 @@ $dl-theme: var(--current-color, #2ecc71);
     }
 
     .el-form-item__label {
+      padding-left: 0;
       font-weight: 500;
       color: #5b6b64;
+      text-align: left;
     }
 
     .el-input__inner,

@@ -14,7 +14,7 @@
         <el-select :value="currentVersionId" size="small" class="sim-version-select" placeholder="暂无版本，记录本轮或重新模拟将自动开启"
           popper-class="dortmund-theme-popper" @change="$emit('version-change', $event)">
           <el-option v-for="version in simEnabledVersionList" :key="version.versionId"
-            :label="`${version.versionName || `版本${version.versionNo}`}（${parseTime(version.createTime, '{m}-{d} {h}:{i}')}）`"
+            :label="`${version.versionName || `版本${version.versionNo}`}（${parseTime(version.createTime, '{m}-{d} {h}:{i}:{s}')}）`"
             :value="version.versionId" />
         </el-select>
         <el-tag size="small" effect="plain" type="info">启用 {{ simEnabledVersionList.length }} / 共 {{

@@ -119,9 +119,12 @@ export default {
         // 适配返回格式：{rows: 数组, total: 数字}
         this.originOptions = response.rows || [];
         this.options = [...this.originOptions];
+        // 通知宿主首个可用选项已就绪；用于新增表单的默认值联动。
+        this.$emit("loaded", this.options);
       } catch (error) {
         this.options = [];
         this.originOptions = [];
+        this.$emit("loaded", []);
       }
     },
     /** 前台模糊过滤（匹配label字段） */

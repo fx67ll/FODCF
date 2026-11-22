@@ -16,7 +16,7 @@
         <el-button type="warning" plain size="mini" icon="el-icon-download" :loading="taskLoading"
           @click="handleExportTask">导出处理任务</el-button>
         <el-button type="success" plain size="mini" icon="el-icon-upload2" @click="openImportDialog">
-          导入标准化结果
+          {{ isManualCompleted ? "重新导入结果" : "导入标准化结果" }}
         </el-button>
       </div>
     </div>
@@ -42,7 +42,21 @@
           <span><label>契约版本</label><b>v1.0</b></span>
           <span><label>任务批次</label><b>{{ generationCode || "-" }}</b></span>
           <span><label>预检候选</label><b>{{ candidateCount }} 条</b></span>
+          <span><label>批次现有</label><b>{{ existingCount }} 条</b></span>
           <span><label>正文上限</label><b>{{ maxResponseSizeText }}</b></span>
+        </div>
+        <div class="manual-mode-row">
+          <span class="manual-mode-label">导入方式</span>
+          <el-radio-group v-model="importMode" size="mini">
+            <el-radio-button label="REPLACE">覆盖重导</el-radio-button>
+            <el-radio-button label="APPEND">追加合并</el-radio-button>
+          </el-radio-group>
+          <small v-if="importMode === 'REPLACE'">
+            清空本批次未采用、未关联方案且无图片的旧候选后重导。
+          </small>
+          <small v-else>
+            保留现有候选，合并不同第三方AI结论；同一组合签名自动跳过，批次最多 {{ maxTotalCandidates }} 条。
+          </small>
         </div>
         <div class="manual-import-toolbar">
           <span>导入前可先核对字段或复制修复提示词：</span>
@@ -55,8 +69,8 @@
         </div>
         <div class="manual-guidance">
           <i class="el-icon-info"></i>
-          <span>只粘贴 responseContract 定义的单个 JSON 对象。系统不接受模型自行计算的倍率、回报或金额，最终数据以后端复算为准；
-            confidence 和 riskNotes 为可选复核信息。</span>
+          <span>只粘贴 responseContract 定义的单个 JSON 对象；同一批次可反复覆盖重导或追加多份AI结论。系统不接受模型自行计算的倍率、
+            回报或金额，最终数据以后端复算为准；confidence 和 riskNotes 用于复核。</span>
         </div>
         <div class="manual-upload-row">
           <el-upload action="#" accept=".json,.txt" :auto-upload="false" :show-file-list="false"
@@ -211,6 +225,7 @@ const SCHEMA_VERSION = DORTMUND_MANUAL_AI_CONFIG.schemaVersion;
 const TASK_TYPE = DORTMUND_MANUAL_AI_CONFIG.taskType;
 const MAX_RESPONSE_BYTES = DORTMUND_MANUAL_AI_CONFIG.maxResponseBytes;
 const MAX_CANDIDATES = DORTMUND_MANUAL_AI_CONFIG.maxCandidates;
+const MAX_TOTAL_CANDIDATES = DORTMUND_MANUAL_AI_CONFIG.maxTotalCandidates;
 const MAX_SELECTIONS = DORTMUND_MANUAL_AI_CONFIG.maxSelections;
 const SELECTION_TYPES = DORTMUND_MANUAL_AI_CONFIG.selectionTypes;
 const STEP_TITLES = ["导出任务", "外部AI处理", "导入结果"];
@@ -243,6 +258,14 @@ export default {
       type: [Number, String],
       default: null,
     },
+    resultSource: {
+      type: String,
+      default: "",
+    },
+    generatedCount: {
+      type: [Number, String],
+      default: 0,
+    },
   },
   data() {
     return {
@@ -250,6 +273,7 @@ export default {
       importVisible: false,
       importLoading: false,
       responseContent: "",
+      importMode: "REPLACE",
       importError: "",
       previewReady: false,
       previewTaskId: "",
@@ -274,23 +298,37 @@ export default {
     maxResponseSizeText() {
       return `${Math.round(MAX_RESPONSE_BYTES / 1024 / 1024)} MiB`;
     },
+    maxTotalCandidates() {
+      return MAX_TOTAL_CANDIDATES;
+    },
     isManualPending() {
       return String(this.generationStatus) === "3";
     },
+    isManualCompleted() {
+      return String(this.generationStatus) === "1" && String(this.resultSource) === "M";
+    },
+    existingCount() {
+      const count = Number(this.generatedCount);
+      return Number.isFinite(count) && count > 0 ? count : 0;
+    },
     panelTitle() {
+      if (this.isManualCompleted) return "人工AI结果复核与重复导入";
       return this.isManualPending ? "人工AI任务处理" : "自动AI失败批次兼容处理";
     },
     panelSubtitle() {
+      if (this.isManualCompleted) {
+        return "可保留现有候选追加其他AI结论，也可在未进入采用/方案/图片流程时覆盖重导";
+      }
       return this.isManualPending
         ? "任务已冻结业务快照，导出后交给第三方AI并按标准契约回填"
         : "该批次属于自动AI最终失败的历史兼容分支，可复用原快照转人工处理";
     },
     panelNote() {
-      return "人工模式不执行平台内证据检索，沿用1.0结构化输入输出契约；中间分析由第三方AI在平台外完成，导入后重新执行候选校验、去重、复算和落库。";
+      return "人工模式不执行平台内证据检索，沿用1.0结构化输入输出契约；第三方AI必须主动补充最新真实信息，不得把球队标签当作完整档案。导入后重新执行候选校验、签名去重、金额复算和落库。";
     },
     visible() {
       return Boolean(this.generationId)
-        && ["2", "3"].includes(String(this.generationStatus))
+        && (["2", "3"].includes(String(this.generationStatus)) || this.isManualCompleted)
         && checkPermi(["dortmund:return:generate"]);
     },
     stepTitles() {
@@ -318,6 +356,7 @@ export default {
       });
     },
     openImportDialog() {
+      this.importMode = this.isManualCompleted && this.existingCount > 0 ? "APPEND" : "REPLACE";
       this.importVisible = true;
       this.importError = "";
       this.previewReady = false;
@@ -567,6 +606,9 @@ export default {
       }
       return "";
     },
+    formatImportMode(value) {
+      return value === "APPEND" ? "追加合并" : "覆盖重导";
+    },
     normalizeJson(content) {
       let value = String(content || "").trim();
       if (!value.startsWith("```")) {
@@ -585,10 +627,14 @@ export default {
       this.refreshPreview();
       if (this.importError || !this.previewReady) return;
       this.importLoading = true;
-      importManualResult(this.generationId, this.responseContent).then((response) => {
+      importManualResult(this.generationId, this.responseContent, this.importMode).then((response) => {
         const result = (response && response.data) || {};
         this.importVisible = false;
-        this.$modal.msgSuccess(`人工结果导入成功，写入 ${result.generatedCount || 0} 条回报组合`);
+        const duplicateText = Number(result.duplicateCount) > 0
+          ? `，跳过重复 ${result.duplicateCount} 条` : "";
+        this.$modal.msgSuccess(`人工结果${this.formatImportMode(result.importMode || this.importMode)}成功：`
+          + `新增 ${result.importedCount != null ? result.importedCount : (result.generatedCount || 0)} 条${duplicateText}，`
+          + `批次共 ${result.totalCount || 0} 条`);
         this.$emit("imported", result);
       }).catch(() => {
         // 服务端已返回受控校验错误，保留输入便于修正后重试。
@@ -724,6 +770,42 @@ export default {
   i {
     margin: 2px 7px 0 0;
   }
+}
+
+.manual-mode-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  padding: 10px 12px;
+  margin-bottom: 11px;
+  font-size: 12px;
+  background: #fbfdfc;
+  border: 1px solid #e2eee7;
+  border-radius: 10px;
+
+  small {
+    flex-basis: 100%;
+    padding-left: 67px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #8b9a92;
+  }
+}
+
+.manual-mode-label {
+  color: #52615a;
+  font-weight: 600;
+}
+
+.manual-mode-row ::v-deep .el-radio-button__orig-radio:checked+.el-radio-button__inner {
+  background-color: #2ecc71;
+  border-color: #2ecc71;
+  box-shadow: -1px 0 0 0 #2ecc71;
+}
+
+.manual-mode-row ::v-deep .el-radio-button__inner:hover {
+  color: #27ad60;
 }
 
 .manual-dialog-body {

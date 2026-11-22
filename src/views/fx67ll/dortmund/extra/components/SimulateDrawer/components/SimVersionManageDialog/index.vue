@@ -30,7 +30,7 @@
             版本{{ version.versionNo }} · 初始 {{ version.initialValue }} · 系数 {{ version.coefficient }} · 目标 {{
               version.targetValue }}
           </div>
-          <div class="sim-version-manage-time">{{ parseTime(version.createTime, "{y}-{m}-{d} {h}:{i}") }}</div>
+          <div class="sim-version-manage-time">{{ parseTime(version.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</div>
         </div>
         <div class="sim-version-manage-actions">
           <el-switch :value="version.delFlag === '2' ? '2' : '0'" active-value="0" inactive-value="2"

@@ -14,8 +14,8 @@
       <el-table-column label="内容" prop="pointContent" min-width="220" show-overflow-tooltip />
       <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
       <el-table-column label="生效时间" align="center" width="150" class-name="dortmund-nowrap-cell">
-        <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}") || "-"
-          }}</template>
+        <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
+        }}</template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="96">
         <template slot-scope="scope">

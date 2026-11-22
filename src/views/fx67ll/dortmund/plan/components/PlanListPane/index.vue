@@ -5,22 +5,43 @@
       <el-table-column type="selection" width="46" align="center" />
       <el-table-column label="方案计划" align="center" prop="planContent" min-width="260" fixed="left"
         :show-overflow-tooltip="true" />
-      <el-table-column label="录入倍率" align="center" prop="planRate" width="100">
+      <el-table-column label="组合核验" align="center" width="104">
         <template slot-scope="scope">
-          <span class="plan-rate-tag">{{ scope.row.planRate || '-' }}</span>
+          <dortmund-verification-status-tag v-if="scope.row.combinationIds && scope.row.combinationIds.length"
+            :status="scope.row.combinationVerificationStatus" />
+          <span v-else class="plan-empty-status">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="录入金额" align="center" prop="planAmount" width="112">
+      <el-table-column label="预计本金" align="center" prop="effectiveExpectedPrincipal" width="118">
         <template slot-scope="scope">
-          <span class="plan-amount-text">{{ formatMoneyDisplay(scope.row.planAmount) }}</span>
+          <span class="plan-amount-text">{{ formatMoneyDisplay(effectivePrincipal(scope.row)) }}</span>
         </template>
+      </el-table-column>
+      <el-table-column label="预计倍率" align="center" prop="effectiveExpectedOdds" width="100">
+        <template slot-scope="scope">
+          <span class="plan-rate-tag">{{ effectiveOdds(scope.row) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="预计回报" align="center" prop="effectiveExpectedReturn" width="118">
+        <template slot-scope="scope">
+          <span class="plan-amount-text">{{ formatMoneyDisplay(effectiveReturn(scope.row)) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="实际本金" align="center" prop="planActualPrincipal" width="118">
+        <template slot-scope="scope">
+          <span class="plan-amount-text">{{ formatMoneyDisplay(scope.row.planActualPrincipal) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="实际倍率" align="center" prop="planActualOdds" width="100" />
+      <el-table-column label="实际回报" align="center" prop="planActualReturn" width="118">
+        <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planActualReturn) }}</template>
       </el-table-column>
       <el-table-column label="关联比赛" align="center" prop="matchSummary" min-width="260" :show-overflow-tooltip="true">
         <template slot-scope="scope">
           <span>{{ formatMatchSummary(scope.row) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="组合倍率" align="center" prop="calculatedPlanRate" width="100" />
+      <el-table-column label="自动预计倍率" align="center" prop="calculatedExpectedOdds" width="110" />
       <el-table-column label="其他说明" align="center" prop="planRemark" min-width="180" :show-overflow-tooltip="true" />
       <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
@@ -45,12 +66,14 @@
 
 <script>
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 
 export default {
   name: "PlanListPane",
-  components: { DortmundActionButton },
+  components: { DortmundActionButton, DortmundVerificationStatusTag },
   props: {
     // 方案计划列表数据（与卡片视图同一份，父页面持有）
     rows: {
@@ -81,6 +104,23 @@ export default {
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
     },
+    // 预计本金优先取服务端有效值；旧快照或局部刷新时回退到手工值和自动值。
+    effectivePrincipal(row) {
+      const value = row.effectiveExpectedPrincipal !== null && row.effectiveExpectedPrincipal !== undefined
+        ? row.effectiveExpectedPrincipal : (row.planExpectedPrincipal ?? row.calculatedExpectedPrincipal);
+      return value === null || value === undefined || value === "" ? "" : value;
+    },
+    // 预计值优先取后端计算的有效值；旧数据或局部刷新时回退到手工值/自动值。
+    effectiveOdds(row) {
+      const value = row.effectiveExpectedOdds !== null && row.effectiveExpectedOdds !== undefined
+        ? row.effectiveExpectedOdds : (row.planExpectedOdds ?? row.calculatedExpectedOdds);
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    effectiveReturn(row) {
+      const value = row.effectiveExpectedReturn !== null && row.effectiveExpectedReturn !== undefined
+        ? row.effectiveExpectedReturn : (row.planExpectedReturn ?? row.calculatedExpectedReturn);
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
   },
 };
 </script>
@@ -102,5 +142,9 @@ export default {
   font-size: 13px;
   font-weight: 600;
   color: #2b3a36;
+}
+
+.plan-empty-status {
+  color: #a8b3ad;
 }
 </style>

@@ -21,12 +21,46 @@
         </div>
         <el-form ref="generateForm" :model="generateForm" :rules="generateRules" label-position="top" size="small"
           class="generate-form">
-          <section class="generate-section">
+          <section class="generate-section generate-path-section">
             <div class="generate-section-head">
               <span class="generate-step">01</span>
               <div class="generate-section-copy">
-                <strong>分析模式</strong>
-                <small>主观模式沿用人工权重，AI 模式由模型独立评估</small>
+                <strong>分析路径</strong>
+                <small>先选择分析由系统内部执行，或导出给第三方 AI 离线处理；两种路径共用下方业务参数</small>
+              </div>
+            </div>
+            <div class="path-cards" role="radiogroup" aria-label="分析路径">
+              <button type="button" class="path-card" :class="{ active: analysisPath === 'internal' }"
+                :aria-pressed="analysisPath === 'internal' ? 'true' : 'false'" @click="analysisPath = 'internal'">
+                <span class="path-card-icon"><i class="el-icon-cpu"></i></span>
+                <span class="path-card-copy">
+                  <strong>内部系统分析</strong>
+                  <small>提交后由系统内部异步执行 AI 分析，候选结果直接回到本页</small>
+                </span>
+                <i class="el-icon-success path-card-check" v-if="analysisPath === 'internal'"></i>
+              </button>
+              <button type="button" class="path-card" :class="{ active: analysisPath === 'manual' }"
+                :aria-pressed="analysisPath === 'manual' ? 'true' : 'false'" @click="analysisPath = 'manual'">
+                <span class="path-card-icon"><i class="el-icon-document-add"></i></span>
+                <span class="path-card-copy">
+                  <strong>人工导出分析 <em>默认</em></strong>
+                  <small>冻结同一业务快照并下载第三方 AI 任务，导入标准 JSON 后回到本页</small>
+                </span>
+                <i class="el-icon-success path-card-check" v-if="analysisPath === 'manual'"></i>
+              </button>
+            </div>
+            <div class="path-note">
+              <i class="el-icon-info"></i>
+              <span>分析路径只决定本次提交去向，不写入批次或数据库字段；下方主观/AI 模式仍决定权重与检索策略。</span>
+            </div>
+          </section>
+
+          <section class="generate-section">
+            <div class="generate-section-head">
+              <span class="generate-step">02</span>
+              <div class="generate-section-copy">
+                <strong>分析模式与组合偏好</strong>
+                <small>主观模式沿用人工权重，AI 模式由模型独立评估；组合偏好约束候选结构但不改写金额公式</small>
               </div>
             </div>
             <div class="mode-cards" role="radiogroup" aria-label="分析模式">
@@ -45,7 +79,7 @@
                 @click="generateForm.generationMode = 'A'">
                 <span class="mode-card-icon"><i class="el-icon-cpu"></i></span>
                 <span class="mode-card-copy">
-                  <strong>AI 模式</strong>
+                  <strong>AI 模式 <em>默认</em></strong>
                   <small>先规划并受控检索补充信息，再独立评估权重</small>
                 </span>
                 <i class="el-icon-success mode-card-check" v-if="generateForm.generationMode === 'A'"></i>
@@ -58,7 +92,7 @@
               </div>
               <div class="preference-cards" role="radiogroup" aria-label="组合偏好">
                 <button v-for="option in preferenceOptions" :key="option.value" type="button" class="preference-card"
-                  :class="{ active: generateForm.preferenceCode === option.value }"
+                  :class="[preferenceToneClass(option), { active: generateForm.preferenceCode === option.value }]"
                   :aria-pressed="generateForm.preferenceCode === option.value ? 'true' : 'false'"
                   @click="handlePreferencePresetClick(option)">
                   <i :class="option.icon" class="preference-card-icon"></i>
@@ -73,7 +107,7 @@
                   <strong>高级组合维度</strong>
                   <small>逐项组合风险、结构、投入与回报意图；调整任一项后自动切换为自定义</small>
                 </div>
-                <span class="preference-active-label">{{ preferenceLabel }}</span>
+                <span class="preference-active-label" :class="preferenceActiveToneClass">{{ preferenceLabel }}</span>
               </div>
               <div class="preference-dimension-grid">
                 <div v-for="group in preferenceDimensionGroups" :key="group.key" class="preference-dimension">
@@ -84,11 +118,9 @@
                   <div class="preference-dimension-options" role="radiogroup" :aria-label="group.label">
                     <button v-for="option in group.options" :key="option.value" type="button"
                       class="preference-dimension-option"
-                      :class="{ active: generateForm.preferenceDimensions[group.key] === option.value }"
+                      :class="[preferenceDimensionToneClass(option), { active: generateForm.preferenceDimensions[group.key] === option.value }]"
                       :aria-pressed="generateForm.preferenceDimensions[group.key] === option.value ? 'true' : 'false'"
-                      :disabled="isPreferenceDimensionDisabled(group.key, option.value)"
-                      :title="preferenceDimensionOptionTitle(group, option)"
-                      @click="handlePreferenceDimensionChange(group.key, option.value)">
+                      :title="option.description" @click="handlePreferenceDimensionChange(group.key, option.value)">
                       {{ option.label }}
                     </button>
                   </div>
@@ -100,7 +132,7 @@
 
           <section class="generate-section">
             <div class="generate-section-head">
-              <span class="generate-step">02</span>
+              <span class="generate-step">03</span>
               <div class="generate-section-copy">
                 <strong>参与比赛</strong>
                 <small>仅展示存在有效 odds 的比赛，单次最多选择 {{ maxAnalysisMatches }} 场</small>
@@ -145,17 +177,32 @@
 
           <section class="generate-section">
             <div class="generate-section-head">
-              <span class="generate-step">03</span>
+              <span class="generate-step">04</span>
               <div class="generate-section-copy">
                 <strong>补充业务目标</strong>
-                <small>与后端预定义目标共同生效，不覆盖统一业务规则</small>
+                <small>先阅读固定业务约束，再补充本次分析特有的目标；补充内容不得复述或覆盖固定规则</small>
               </div>
             </div>
             <el-form-item prop="supplementaryObjectives">
+              <div class="predefined-objective-panel">
+                <div class="predefined-objective-head">
+                  <span class="predefined-objective-title">
+                    <i class="el-icon-lock"></i>
+                    <strong>后端预定义业务目标</strong>
+                  </span>
+                  <span class="predefined-objective-badge">{{ predefinedBusinessObjectives.length }} 条固定约束</span>
+                </div>
+                <ol class="predefined-objective-list">
+                  <li v-for="(objective, index) in predefinedBusinessObjectives" :key="index">{{ objective }}</li>
+                </ol>
+                <div class="predefined-objective-note">
+                  以下补充目标与固定约束同时生效；重复、冲突或试图弱化固定约束的内容不会成为有效业务目标。
+                </div>
+              </div>
               <div class="supplementary-list">
                 <div class="supplementary-item" v-for="(item, index) in generateForm.supplementaryObjectives"
                   :key="index">
-                  <el-input v-model="generateForm.supplementaryObjectives[index]"
+                  <el-input :value="item" @input="handleSupplementaryObjectiveInput(index, $event)"
                     :maxlength="objectiveLimits.maxSingleLength" show-word-limit
                     :placeholder="`第 ${index + 1} 条补充目标，例如：优先选择主场优势明显的比赛`" />
                   <el-button type="text" class="supplementary-remove" icon="el-icon-delete" title="删除该补充目标"
@@ -167,18 +214,22 @@
                   添加业务目标（{{ generateForm.supplementaryObjectives.length }} / {{ supplementaryObjectiveLimit }}）
                 </el-button>
               </div>
+              <div class="supplementary-conflict" v-if="supplementaryObjectiveConflict">
+                <i class="el-icon-warning-outline"></i>
+                <span>{{ supplementaryObjectiveConflict }}</span>
+              </div>
               <div class="supplementary-hint">
-                预定义业务目标由后端统一提供；此处内容作为补充约束与预定义目标同时生效。
+                请填写固定约束未覆盖的本次分析意图，例如比赛层面的特定关注点；无需重复上方规则。
               </div>
             </el-form-item>
           </section>
 
           <section class="generate-section generate-submit-section">
             <div class="generate-section-head">
-              <span class="generate-step">04</span>
+              <span class="generate-step">05</span>
               <div class="generate-section-copy">
                 <strong>金额与提交</strong>
-                <small>金额仅参与后台确定性计算；确认参数后提交自动分析或创建人工任务</small>
+                <small>金额仅参与后台确定性计算；确认路径与参数后使用唯一提交按钮执行</small>
               </div>
             </div>
             <div class="submit-workspace">
@@ -220,25 +271,30 @@
               <div class="submit-action-panel">
                 <div class="parameter-panel-head">
                   <div>
-                    <strong>批次执行方式</strong>
-                    <small>自动分析与人工任务共用上方业务参数</small>
+                    <strong>提交确认</strong>
+                    <small>当前路径已决定唯一执行动作，减少误点另一入口的风险</small>
                   </div>
                 </div>
+                <div class="submit-path-summary">
+                  <span class="submit-path-icon"><i :class="analysisPathIcon"></i></span>
+                  <span class="submit-path-copy">
+                    <strong>{{ analysisPathLabel }}</strong>
+                    <small>{{ analysisPathDescription }}</small>
+                  </span>
+                </div>
                 <div class="generate-actions">
-                  <el-button type="success" class="generate-btn" icon="el-icon-magic-stick"
-                    :loading="submitting || generationProcessing" :disabled="generationProcessing || manualSubmitting"
-                    @click="handleGenerate" v-hasPermi="['dortmund:return:generate']">
-                    {{ generationProcessing ? "后台分析中，可继续等待或离开页面" : "提交自动AI分析批次" }}
-                  </el-button>
-                  <el-button type="warning" plain class="generate-btn manual-generate-btn" icon="el-icon-document-add"
-                    :loading="manualSubmitting" :disabled="submitting || manualSubmitting || generationProcessing"
-                    @click="handleCreateManualTask" v-hasPermi="['dortmund:return:generate']">
-                    {{ manualSubmitting ? "正在创建人工任务" : "创建并导出人工AI任务" }}
+                  <el-button type="success" class="generate-btn"
+                    :class="{ 'manual-generate-btn': analysisPath === 'manual' }" :icon="analysisPathIcon"
+                    :loading="submitting || manualSubmitting || generationProcessing"
+                    :disabled="submitting || manualSubmitting || generationProcessing || !!supplementaryObjectiveConflict"
+                    @click="handleSelectedPathSubmit" v-hasPermi="['dortmund:return:generate']">
+                    {{ selectedSubmitText }}
                   </el-button>
                 </div>
                 <div class="async-tip">
                   <i class="el-icon-info"></i>
-                  <span>自动批次由后台异步执行；人工批次立即冻结同一份业务快照，不进入自动AI队列。</span>
+                  <span>{{ analysisPath === 'manual' ? '人工批次立即冻结同一份业务快照，不进入自动 AI 队列。' :
+                    '内部批次由后台异步执行，页面轮询只负责读取状态，不会中断后台任务。' }}</span>
                 </div>
               </div>
             </div>
@@ -281,14 +337,14 @@
             <span v-if="generationDetail.generationCode">{{ generationDetail.generationCode }}</span>
             <span v-if="generationDetail.resultSource">来源：{{ formatResultSource(generationDetail.resultSource)
               }}</span>
-            <span v-if="generationDetail.generationMode === 'A'">证据：{{
+            <span v-if="generationDetail.generationMode === 'A' && !isManualGeneration">证据：{{
               formatEvidenceStatus(generationDetail.aiEvidenceStatus)
             }}</span>
             <span v-if="pollCount && generationProcessing">第 {{ pollCount }} 次状态检查</span>
           </div>
         </div>
 
-        <div v-if="generationId" class="analysis-card ai-workflow-card">
+        <div v-if="generationId && showAiWorkflow" class="analysis-card ai-workflow-card">
           <div class="analysis-card-title">
             <i class="el-icon-share"></i>AI分析工作流
           </div>
@@ -297,7 +353,9 @@
 
         <manual-ai-task-panel :generation-id="generationDetail.generationId || generationId"
           :generation-code="generationDetail.generationCode || ''"
-          :generation-status="generationDetail.generationStatus || generationStatus" @imported="handleManualImported" />
+          :generation-status="generationDetail.generationStatus || generationStatus"
+          :result-source="generationDetail.resultSource || ''" :generated-count="generationDetail.generatedCount || 0"
+          @imported="handleManualImported" />
 
         <transition-group name="candidate-pop" tag="div" class="candidate-list" v-if="candidateList.length">
           <div class="candidate-item" v-for="(combination, index) in candidateList" :key="combination.combinationId">
@@ -310,6 +368,7 @@
                 <el-tag :type="combination.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
                   {{ combination.adoptedFlag === "Y" ? "已采用" : "未采用" }}
                 </el-tag>
+                <dortmund-verification-status-tag :status="combination.verificationStatus" />
               </div>
               <div class="candidate-metrics">
                 <span>预计回报 <b>{{ formatMoneyDisplay(combination.estimatedReturn) }}</b></span>
@@ -352,14 +411,17 @@
     </div>
 
     <dortmund-detail-drawer :visible.sync="combinationVisible" :title="combinationDetail.combinationTitle || '组合详情'"
-      :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : '查看倍率、证据链与逐场明细'"
+      :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : (combinationIsManual ? '查看倍率、第三方AI分析与逐场理由' : '查看倍率、证据链与逐场明细')"
       icon="el-icon-collection-tag" tone="cyan" size="720px" :loading="combinationLoading" feature="return">
-      <return-analysis-result :combination="combinationDetail" :batch="combinationBatchContext"
+      <return-manual-result v-if="combinationIsManual" :combination="combinationDetail" :batch="combinationBatchContext"
+        :can-view-reason="hasRemarkQueryPermission" />
+      <return-analysis-result v-else :combination="combinationDetail" :batch="combinationBatchContext"
         :can-view-reason="hasRemarkQueryPermission" />
     </dortmund-detail-drawer>
 
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" multiple :selected-items="selectedMatches"
-      require-active-odds :max-count="maxAnalysisMatches" @confirm="handleMatchSelectorConfirm" />
+      require-active-odds :max-count="maxAnalysisMatches" restrict-past-matches
+      :default-match-time-days="matchSelectionWindowDays" @confirm="handleMatchSelectorConfirm" />
   </div>
 </template>
 
@@ -374,6 +436,7 @@ import {
   generateReturnCombination,
   getCombination,
   getGeneration,
+  getReturnBusinessObjectives,
   rejectCombination,
 } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
@@ -381,21 +444,28 @@ import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 import ManualAiTaskPanel from "../ManualAiTaskPanel/index";
 import ReturnAiWorkflow from "../ReturnAiWorkflow/index";
 import ReturnAnalysisResult from "../ReturnAnalysisResult/index";
+import ReturnManualResult from "../ReturnManualResult/index";
 import {
+  DORTMUND_DEFAULT_ANALYSIS_PATH,
+  DORTMUND_DEFAULT_GENERATION_MODE,
   DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS,
   DORTMUND_DEFAULT_PREFERENCE_CODE,
   DORTMUND_OBJECTIVE_LIMITS,
   DORTMUND_PAGINATION,
   DORTMUND_PREFERENCE_DIMENSIONS,
   DORTMUND_PREFERENCE_OPTIONS,
+  DORTMUND_PREDEFINED_BUSINESS_OBJECTIVES,
   DORTMUND_RETURN_CONFIG,
+  DORTMUND_RETURN_VERIFICATION_STATUS,
   DORTMUND_RETURN_POLLING,
   getPreferenceLabel,
   getPreferencePresetDimensions,
-  isPreferenceDimensionOptionDisabled,
+  normalizeDortmundObjectiveText,
   resolvePreferenceCode,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
@@ -464,13 +534,20 @@ function createClientRequestId() {
 export default {
   name: "DortmundReturnAnalysis",
   dicts: ["fx67ll_dortmund_odds_type", "fx67ll_ai_analysis_status"],
-  components: { DortmundMatchSelectorModal, DortmundFormLabel, ManualAiTaskPanel, ReturnAiWorkflow, ReturnAnalysisResult, DortmundDetailDrawer, DortmundDetailCard, DortmundDetailBlock },
+  components: {
+    DortmundMatchSelectorModal, DortmundFormLabel, DortmundVerificationStatusTag, ManualAiTaskPanel,
+    ReturnAiWorkflow, ReturnAnalysisResult, ReturnManualResult, DortmundDetailDrawer, DortmundDetailCard,
+    DortmundDetailBlock
+  },
   data() {
     return {
       submitting: false,
       manualSubmitting: false,
+      // 分析路径仅用于前端分流提交动作，不进入 generateForm、请求体或批次快照。
+      analysisPath: DORTMUND_DEFAULT_ANALYSIS_PATH,
+      predefinedBusinessObjectives: [...DORTMUND_PREDEFINED_BUSINESS_OBJECTIVES],
       generateForm: {
-        generationMode: "S",
+        generationMode: DORTMUND_DEFAULT_GENERATION_MODE,
         preferenceCode: DORTMUND_DEFAULT_PREFERENCE_CODE,
         preferenceDimensions: { ...DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS },
         inputAmount: null,
@@ -482,6 +559,7 @@ export default {
       preferenceOptions: DORTMUND_PREFERENCE_OPTIONS,
       preferenceDimensionGroups: DORTMUND_PREFERENCE_DIMENSIONS,
       maxAnalysisMatches: DORTMUND_RETURN_CONFIG.maxAnalysisMatches,
+      matchSelectionWindowDays: DORTMUND_RETURN_CONFIG.matchSelectionWindowDays,
       maxBusinessAmount: DORTMUND_RETURN_CONFIG.maxBusinessAmount,
       objectiveLimits: DORTMUND_OBJECTIVE_LIMITS,
       matchSelectorVisible: false,
@@ -489,6 +567,7 @@ export default {
       generationId: null,
       generationDetail: {},
       generationStatus: null,
+      generationDetailLoaded: false,
       pollCount: 0,
       pollTimer: null,
       pollErrorCount: 0,
@@ -530,13 +609,73 @@ export default {
     preferenceLabel() {
       return getPreferenceLabel(this.generateForm.preferenceCode);
     },
+    preferenceActiveToneClass() {
+      return this.preferenceToneClassByCode(this.generateForm.preferenceCode);
+    },
     amountTip() {
       return `必填；普通十进制数，不允许科学计数法；必须大于0，最多2位小数，且不超过${this.maxBusinessAmount}`;
+    },
+    analysisPathLabel() {
+      return this.analysisPath === "manual" ? "人工导出分析" : "内部系统分析";
+    },
+    analysisPathDescription() {
+      return this.analysisPath === "manual"
+        ? "提交后冻结业务快照并下载人工 AI 任务，不触发内部自动分析队列。"
+        : "提交后由系统内部自动分析并异步生成候选，不下载外部任务文件。";
+    },
+    analysisPathIcon() {
+      return this.analysisPath === "manual" ? "el-icon-document-add" : "el-icon-cpu";
+    },
+    selectedSubmitText() {
+      if (this.generationProcessing) return "后台分析中，可继续等待或离开页面";
+      if (this.submitting) return "正在提交内部系统分析";
+      if (this.manualSubmitting) return "正在创建人工任务";
+      return this.analysisPath === "manual" ? "创建并导出人工AI任务" : "提交内部系统分析";
+    },
+    supplementaryObjectiveConflict() {
+      const predefinedKeys = new Set(
+        this.predefinedBusinessObjectives.map((item) => normalizeDortmundObjectiveText(item))
+      );
+      const seen = new Map();
+      const objectives = Array.isArray(this.generateForm.supplementaryObjectives)
+        ? this.generateForm.supplementaryObjectives : [];
+      for (let index = 0; index < objectives.length; index += 1) {
+        const text = String(objectives[index] == null ? "" : objectives[index]).trim();
+        const key = normalizeDortmundObjectiveText(text);
+        if (!key) continue;
+        if (predefinedKeys.has(key)) {
+          return `第 ${index + 1} 条与上方固定业务约束重复，请改为填写本次分析特有的补充要求。`;
+        }
+        if (seen.has(key)) {
+          return `第 ${index + 1} 条与第 ${seen.get(key) + 1} 条补充目标重复，请合并或删除。`;
+        }
+        seen.set(key, index);
+      }
+      return "";
     },
     combinationBatchContext() {
       if (!this.generationDetail || !this.combinationDetail) return null;
       return String(this.generationDetail.generationId || '') === String(this.combinationDetail.generationId || '')
         ? this.generationDetail : null;
+    },
+    isManualGeneration() {
+      return String(this.generationDetail.resultSource || '') === 'M';
+    },
+    showAiWorkflow() {
+      // 仅在批次状态已确认且来源不是人工AI时展示自动AI工作流，避免人工任务创建后的首屏误显示。
+      if (!this.generationDetailLoaded || this.isManualGeneration) return false;
+      if (String(this.generationStatus || '') === '3') return false;
+      const source = String(this.generationDetail.resultSource || '');
+      return source === 'A' || source === '';
+    },
+    combinationIsManual() {
+      const combinationSource = String(this.combinationDetail.resultSource || '');
+      if (combinationSource) return combinationSource === 'M';
+      if (this.combinationBatchContext) {
+        return String(this.combinationBatchContext.resultSource || '') === 'M';
+      }
+      const sameBatch = String(this.generationDetail.generationId || '') === String(this.combinationDetail.generationId || '');
+      return sameBatch && this.isManualGeneration;
     },
     modeHint() {
       return this.generateForm.generationMode === "S"
@@ -568,6 +707,7 @@ export default {
       return "el-icon-loading";
     },
     statusTitle() {
+      if (this.generationId && !this.generationDetailLoaded) return "正在读取批次状态";
       if (this.generationStatus === "1" && this.generationDetail.resultSource === "M") return "人工AI处理完成";
       if (this.generationStatus === "1") return "分析完成";
       if (this.generationStatus === "2") return "分析失败";
@@ -575,6 +715,9 @@ export default {
       return "批次处理中";
     },
     statusDescription() {
+      if (this.generationId && !this.generationDetailLoaded) {
+        return "正在确认批次来源与处理状态，请稍候。";
+      }
       if (this.generationStatus === "1") {
         const sourceText = this.generationDetail.resultSource === "M" ? "结果来自人工AI。" : "结果来自自动AI。";
         return `已生成 ${this.generationDetail.generatedCount || this.candidateList.length} 条候选组合。${sourceText}`;
@@ -589,6 +732,7 @@ export default {
     },
   },
   created() {
+    this.loadPredefinedBusinessObjectives();
     this.loadMatchOptions();
     const routeGenerationId = this.parseGenerationId(this.$route && this.$route.query
       ? this.$route.query.generationId
@@ -603,6 +747,24 @@ export default {
     this.stopPolling();
   },
   methods: {
+    /**
+     * 读取后端当前预定义业务目标，确保页面提示与实际送入 AI 的固定约束一致。
+     * 接口失败或返回空值时保留模块公共配置兜底，不阻塞分析表单。
+     */
+    loadPredefinedBusinessObjectives() {
+      return getReturnBusinessObjectives().then((response) => {
+        const payload = response && response.data;
+        const result = Array.isArray(payload) ? payload : payload && payload.objectives;
+        const objectives = (Array.isArray(result) ? result : [])
+          .map((item) => String(item == null ? "" : item).trim())
+          .filter(Boolean);
+        if (objectives.length) {
+          this.predefinedBusinessObjectives = objectives;
+        }
+      }).catch(() => {
+        this.predefinedBusinessObjectives = [...DORTMUND_PREDEFINED_BUSINESS_OBJECTIVES];
+      });
+    },
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
     },
@@ -626,7 +788,7 @@ export default {
       return teams || `比赛 #${match.matchId || "-"}`;
     },
     formatMatchTime(match) {
-      return this.parseTime(match && match.matchTime, "{y}-{m}-{d} {h}:{i}") || "";
+      return this.parseTime(match && match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "";
     },
     refreshCandidateSort() {
       if (this.generationId && this.generationStatus !== "0") {
@@ -691,6 +853,10 @@ export default {
       }
       this.generateForm.supplementaryObjectives.push("");
     },
+    handleSupplementaryObjectiveInput(index, value) {
+      // 使用 $set 替换数组下标值，确保 Vue 2 能立即重新计算重复/冲突校验并刷新提交按钮状态。
+      this.$set(this.generateForm.supplementaryObjectives, index, value);
+    },
     handleRemoveSupplementaryObjective(index) {
       this.generateForm.supplementaryObjectives.splice(index, 1);
       this.$nextTick(() => {
@@ -702,13 +868,38 @@ export default {
       this.generateForm.preferenceDimensions = option.dimensions
         ? { ...option.dimensions } : getPreferencePresetDimensions(option.value);
     },
+    /** 快捷预设按业务含义着色：高投入橙、低风险短串蓝、均衡主题绿、高风险红。 */
+    preferenceToneClass(option) {
+      return this.preferenceToneClassByCode(option && option.value);
+    },
+    preferenceToneClassByCode(code) {
+      const option = this.preferenceOptions.find((item) => item.value === code);
+      if (option && option.tone) {
+        return `is-tone-${option.tone}`;
+      }
+      return this.preferenceRiskToneClass(this.generateForm.preferenceDimensions.riskLevel);
+    },
+    /** 自定义组合按风险水平回退：低风险蓝、均衡主题绿、高风险红。 */
+    preferenceRiskToneClass(riskLevel) {
+      if (riskLevel === "HIGH") return "is-tone-danger";
+      if (riskLevel === "BALANCED") return "is-tone-success";
+      return "is-tone-primary";
+    },
+    preferenceDimensionToneClass(option) {
+      return option && option.tone ? `is-tone-${option.tone}` : "";
+    },
     handlePreferenceDimensionChange(groupKey, value) {
       const dimensions = {
         ...this.generateForm.preferenceDimensions,
         [groupKey]: value,
       };
-      if (isPreferenceDimensionOptionDisabled(dimensions, groupKey, value)) {
-        return;
+      // 低风险与长串互斥：保持两个选项都可点击，并将另一维度归一化为合法组合。
+      if (dimensions.riskLevel === "LOW" && dimensions.structure === "LONG") {
+        if (groupKey === "riskLevel") {
+          dimensions.structure = "BALANCED";
+        } else {
+          dimensions.riskLevel = "BALANCED";
+        }
       }
       this.generateForm.preferenceDimensions = dimensions;
       this.generateForm.preferenceCode = resolvePreferenceCode(dimensions);
@@ -717,14 +908,6 @@ export default {
       const selectedValue = this.generateForm.preferenceDimensions[group.key];
       const option = group.options.find((item) => item.value === selectedValue);
       return option ? option.description : "";
-    },
-    isPreferenceDimensionDisabled(groupKey, value) {
-      return isPreferenceDimensionOptionDisabled(this.generateForm.preferenceDimensions, groupKey, value);
-    },
-    preferenceDimensionOptionTitle(group, option) {
-      return this.isPreferenceDimensionDisabled(group.key, option.value)
-        ? "低风险偏好不能与长串结构组合，请先调整另一维度"
-        : option.description;
     },
     buildRequestFingerprint(workflow) {
       return JSON.stringify({
@@ -766,6 +949,28 @@ export default {
     clearPendingRequest() {
       sessionStorage.removeItem(PENDING_REQUEST_KEY);
     },
+    /**
+     * 唯一提交入口：路径只在浏览器内决定调用自动分析还是人工任务接口。
+     * 两种接口继续复用同一份表单、校验与幂等指纹，分析路径本身不进入请求体。
+     */
+    handleSelectedPathSubmit() {
+      if (this.submitting || this.manualSubmitting) {
+        return;
+      }
+      if (this.generationProcessing) {
+        this.$modal.msgWarning("已有批次正在后台处理，请等待完成或返回历史列表。");
+        return;
+      }
+      if (this.supplementaryObjectiveConflict) {
+        this.$modal.msgWarning(this.supplementaryObjectiveConflict);
+        return;
+      }
+      if (this.analysisPath === "manual") {
+        this.handleCreateManualTask();
+      } else {
+        this.handleGenerate();
+      }
+    },
     handleGenerate() {
       if (this.generationProcessing) {
         this.$modal.msgWarning("已有批次正在后台处理，请等待完成或返回历史列表。");
@@ -786,7 +991,14 @@ export default {
             return;
           }
           this.$modal.msgSuccess("分析批次已受理，后台正在执行");
-          this.startPolling(generation.generationId);
+          this.startPolling(generation.generationId, {
+            generationStatus: generation.generationStatus || "0",
+            resultSource: generation.resultSource || "A",
+            generationCode: generation.generationCode || "",
+            generationMode: generation.generationMode || this.generateForm.generationMode,
+            inputAmount: generation.inputAmount,
+            targetAmount: generation.targetAmount,
+          });
         }).catch(() => {
           this.$modal.msgWarning("未确认批次是否受理；使用相同条件重试会复用同一幂等请求号");
         }).finally(() => {
@@ -811,7 +1023,16 @@ export default {
           }
           this.downloadManualTask(task);
           this.$modal.msgSuccess("人工AI任务已创建并下载，完整处理提示词已内嵌，可交给第三方AI处理");
-          this.startPolling(task.generationId);
+          this.startPolling(task.generationId, {
+            generationStatus: "3",
+            resultSource: "M",
+            generationCode: task.taskId || "",
+            generationMode: task.generationMode || this.generateForm.generationMode,
+            inputAmount: task.input && task.input.inputAmount,
+            targetAmount: task.input && task.input.targetAmount,
+            generatedCount: 0,
+            generationRemark: "人工AI任务已创建，等待导入第三方AI标准化结果。",
+          });
         }).catch(() => {
           this.$modal.msgWarning("人工任务创建结果未确认；使用相同条件重试会复用同一幂等请求号");
         }).finally(() => {
@@ -824,11 +1045,15 @@ export default {
       const blob = new Blob([content], { type: "application/json;charset=utf-8" });
       this.$download.saveAs(blob, `dortmund-return-manual-task-${task.generationId}.json`);
     },
-    startPolling(generationId) {
+    startPolling(generationId, initialDetail) {
       this.stopPolling();
       this.generationId = generationId;
-      this.generationStatus = "0";
-      this.generationDetail = { generationId };
+      this.generationDetailLoaded = Boolean(initialDetail);
+      this.generationStatus = initialDetail && initialDetail.generationStatus
+        ? initialDetail.generationStatus : "0";
+      this.generationDetail = initialDetail ? { ...initialDetail, generationId } : { generationId };
+      this.candidateList = [];
+      this.selectedCandidateIds = [];
       this.pollCount = 0;
       this.pollErrorCount = 0;
       sessionStorage.setItem(ACTIVE_GENERATION_KEY, String(generationId));
@@ -847,6 +1072,7 @@ export default {
           throw new Error("batch-not-found");
         }
         this.generationDetail = detail;
+        this.generationDetailLoaded = true;
         this.generationStatus = detail.generationStatus;
         this.candidateList = detail.combinations || [];
         this.selectedCandidateIds = this.selectedCandidateIds.filter((id) =>
@@ -889,6 +1115,7 @@ export default {
       if (clearBatch) {
         this.generationId = null;
         this.generationStatus = null;
+        this.generationDetailLoaded = false;
         this.generationDetail = {};
         this.candidateList = [];
         this.selectedCandidateIds = [];
@@ -917,7 +1144,7 @@ export default {
         const count = Number((response && response.data) || 0);
         this.$modal.msgSuccess(`批量采用完成，本次更新 ${count} 条`);
         this.candidateList = this.candidateList.map((item) => this.selectedCandidateIds.includes(item.combinationId)
-          ? { ...item, adoptedFlag: "Y" }
+          ? { ...item, adoptedFlag: "Y", verificationStatus: DORTMUND_RETURN_VERIFICATION_STATUS.unverified }
           : item);
         this.selectedCandidateIds = [];
       }).catch(() => {
@@ -935,7 +1162,7 @@ export default {
       }).then(() => {
         this.$modal.msgSuccess(`${action}成功`);
         this.candidateList = this.candidateList.map((item) => item.combinationId === combination.combinationId
-          ? { ...item, adoptedFlag }
+          ? { ...item, adoptedFlag, verificationStatus: DORTMUND_RETURN_VERIFICATION_STATUS.unverified }
           : item);
         this.selectedCandidateIds = this.selectedCandidateIds.filter((id) => id !== combination.combinationId);
       }).catch(() => {
@@ -944,6 +1171,10 @@ export default {
       });
     },
     handleCombinationDetail(row) {
+      if (!row || !this.isPositiveId(row.combinationId)) {
+        this.$modal.msgWarning("该候选组合尚未生成有效编号，请等待批次完成或刷新后重试");
+        return;
+      }
       this.combinationVisible = true;
       this.combinationLoading = true;
       this.combinationDetail = {};
@@ -954,6 +1185,10 @@ export default {
       }).finally(() => {
         this.combinationLoading = false;
       });
+    },
+    isPositiveId(value) {
+      const id = Number(value);
+      return Number.isInteger(id) && id > 0;
     },
     handleManualImported() {
       this.pollGeneration();
@@ -1085,6 +1320,14 @@ export default {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: stretch;
   gap: 16px 18px;
+
+  /* 顶部标签本身按内容自然排版，显式清除 Element 默认的右侧留白与偏移。 */
+  ::v-deep .el-form-item__label {
+    padding-right: 0;
+    padding-left: 0;
+    margin-left: 0;
+    text-align: left;
+  }
 }
 
 .generate-section {
@@ -1099,7 +1342,6 @@ export default {
     margin-bottom: 0;
   }
 }
-
 
 .generate-submit-section {
   background: linear-gradient(135deg, #f7fcf9 0%, #fff 100%);
@@ -1185,6 +1427,45 @@ export default {
   margin-top: 0;
 }
 
+.submit-path-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  margin-bottom: 12px;
+  background: #f7fbf9;
+  border: 1px solid #dcefe4;
+  border-radius: 10px;
+}
+
+.submit-path-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: #1c9e55;
+  background: #e8f8ef;
+  border-radius: 9px;
+}
+
+.submit-path-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #7c8b84;
+  }
+}
+
 .submit-action-panel .async-tip {
   margin-top: auto;
   padding-top: 10px;
@@ -1225,6 +1506,108 @@ export default {
     font-size: 12px;
     line-height: 1.45;
     color: #8a9892;
+  }
+}
+
+.path-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.path-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #e3eee8;
+  border-radius: 11px;
+  transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+
+  &:hover {
+    border-color: #b9e2ca;
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #f2fbf6, #fff);
+    border-color: #61c88d;
+    box-shadow: 0 7px 16px rgba(46, 204, 113, 0.11);
+  }
+}
+
+.path-card-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: #1c9e55;
+  background: #e8f8ef;
+  border-radius: 9px;
+}
+
+.path-card-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding-right: 18px;
+
+  strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #2b3a36;
+  }
+
+  em {
+    padding: 1px 6px;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 500;
+    color: #1c9e55;
+    background: #e8f8ef;
+    border-radius: 999px;
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #7c8b84;
+  }
+}
+
+.path-card-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 13px;
+  color: #2ecc71;
+}
+
+.path-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #6f7f78;
+  background: #f7fbf9;
+  border: 1px dashed #d7e9df;
+  border-radius: 8px;
+
+  i {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #27ad60;
   }
 }
 
@@ -1278,8 +1661,21 @@ export default {
   padding-right: 12px;
 
   strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
     color: #2b3a36;
+  }
+
+  em {
+    padding: 1px 6px;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 500;
+    color: #1c9e55;
+    background: #e8f8ef;
+    border-radius: 999px;
   }
 
   small {
@@ -1323,38 +1719,146 @@ export default {
 .preference-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
+}
+
+/* 预设与高级维度共用同一套浅色语义色，选中态只叠加透明色晕，避免大面积实色。 */
+.preference-card,
+.preference-active-label,
+.preference-dimension-option {
+  --preference-accent: #2ecc71;
+  --preference-accent-strong: #1f8b4d;
+  --preference-accent-soft: rgba(46, 204, 113, 0.09);
+  --preference-accent-soft-strong: rgba(46, 204, 113, 0.16);
+  --preference-accent-border: rgba(46, 204, 113, 0.36);
+  --preference-accent-shadow: rgba(46, 204, 113, 0.16);
+
+  &.is-tone-warning {
+    --preference-accent: #e6a23c;
+    --preference-accent-strong: #b88230;
+    --preference-accent-soft: rgba(230, 162, 60, 0.09);
+    --preference-accent-soft-strong: rgba(230, 162, 60, 0.16);
+    --preference-accent-border: rgba(230, 162, 60, 0.36);
+    --preference-accent-shadow: rgba(230, 162, 60, 0.16);
+  }
+
+  &.is-tone-primary {
+    --preference-accent: #409eff;
+    --preference-accent-strong: #337ecc;
+    --preference-accent-soft: rgba(64, 158, 255, 0.09);
+    --preference-accent-soft-strong: rgba(64, 158, 255, 0.16);
+    --preference-accent-border: rgba(64, 158, 255, 0.36);
+    --preference-accent-shadow: rgba(64, 158, 255, 0.16);
+  }
+
+  &.is-tone-success {
+    --preference-accent: #2ecc71;
+    --preference-accent-strong: #1f8b4d;
+    --preference-accent-soft: rgba(46, 204, 113, 0.09);
+    --preference-accent-soft-strong: rgba(46, 204, 113, 0.16);
+    --preference-accent-border: rgba(46, 204, 113, 0.36);
+    --preference-accent-shadow: rgba(46, 204, 113, 0.16);
+  }
+
+  &.is-tone-danger {
+    --preference-accent: #f56c6c;
+    --preference-accent-strong: #c45656;
+    --preference-accent-soft: rgba(245, 108, 108, 0.09);
+    --preference-accent-soft-strong: rgba(245, 108, 108, 0.16);
+    --preference-accent-border: rgba(245, 108, 108, 0.36);
+    --preference-accent-shadow: rgba(245, 108, 108, 0.16);
+  }
 }
 
 .preference-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  min-height: 68px;
-  padding: 9px 10px;
+  min-height: 72px;
+  padding: 10px 11px;
+  overflow: hidden;
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #e3eee8;
-  border-radius: 10px;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(207, 226, 216, 0.9);
+  border-radius: 11px;
+  box-shadow: 0 1px 2px rgba(31, 62, 48, 0.03);
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.24s ease,
+    box-shadow 0.24s ease, background-color 0.24s ease;
+
+  &::before {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(135deg, var(--preference-accent-soft-strong), var(--preference-accent-soft) 52%,
+        rgba(255, 255, 255, 0) 88%);
+    opacity: 0;
+    transition: opacity 0.24s ease;
+  }
+
+  >* {
+    position: relative;
+    z-index: 1;
+  }
 
   &:hover {
-    border-color: #b9e2ca;
+    border-color: var(--preference-accent-border);
+    box-shadow: 0 8px 18px var(--preference-accent-shadow);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 0.58;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--preference-accent-border);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    box-shadow: 0 3px 9px var(--preference-accent-shadow);
+    transform: translateY(0) scale(0.985);
   }
 
   &.active {
-    background: #f2fbf6;
-    border-color: #61c88d;
-    box-shadow: 0 5px 12px rgba(46, 204, 113, 0.1);
+    background: rgba(255, 255, 255, 0.72);
+    border-color: var(--preference-accent);
+    box-shadow: inset 0 0 0 1px var(--preference-accent-soft-strong), 0 8px 18px var(--preference-accent-shadow);
+    animation: preferenceCardSelect 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .preference-card-icon {
+      color: var(--preference-accent-strong);
+      background: var(--preference-accent-soft-strong);
+      transform: scale(1.04);
+    }
+
+    .preference-card-copy strong {
+      color: var(--preference-accent-strong);
+    }
   }
 }
 
 .preference-card-icon {
+  display: grid;
   flex-shrink: 0;
-  margin-top: 1px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   font-size: 15px;
-  color: #27ad60;
+  color: var(--preference-accent);
+  background: var(--preference-accent-soft);
+  border-radius: 8px;
+  transition: color 0.22s ease, background-color 0.22s ease, transform 0.22s ease;
 }
 
 .preference-card-copy {
@@ -1365,6 +1869,7 @@ export default {
   strong {
     font-size: 12px;
     color: #2b3a36;
+    transition: color 0.22s ease;
   }
 
   small {
@@ -1402,12 +1907,13 @@ export default {
   padding: 4px 8px;
   overflow: hidden;
   font-size: 11px;
-  color: #238c51;
+  color: var(--preference-accent-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
-  background: #effaf4;
-  border: 1px solid #cbeed9;
+  background: var(--preference-accent-soft);
+  border: 1px solid var(--preference-accent-border);
   border-radius: 999px;
+  transition: color 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
 }
 
 .preference-dimension-grid {
@@ -1419,9 +1925,16 @@ export default {
 .preference-dimension {
   min-width: 0;
   padding: 9px 10px;
-  background: #fbfdfc;
-  border: 1px solid #e3eee8;
+  background: rgba(251, 253, 252, 0.76);
+  border: 1px solid rgba(227, 238, 232, 0.9);
   border-radius: 10px;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+
+  &:hover {
+    background: rgba(251, 253, 252, 0.96);
+    border-color: rgba(46, 204, 113, 0.24);
+    box-shadow: 0 6px 15px rgba(46, 204, 113, 0.07);
+  }
 }
 
 .preference-dimension-title {
@@ -1450,24 +1963,42 @@ export default {
 }
 
 .preference-dimension-option {
-  padding: 4px 8px;
+  position: relative;
+  min-height: 27px;
+  padding: 4px 9px;
   font-size: 11px;
   color: #52635d;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #dcebe2;
-  border-radius: 7px;
-  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(220, 235, 226, 0.94);
+  border-radius: 8px;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease,
+    color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover:not(:disabled) {
-    color: #238c51;
-    border-color: #a8dbbc;
+    color: var(--preference-accent-strong);
+    background: var(--preference-accent-soft);
+    border-color: var(--preference-accent-border);
+    box-shadow: 0 4px 10px var(--preference-accent-shadow);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--preference-accent-border);
+    outline-offset: 1px;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.96);
   }
 
   &.active {
-    color: #1f8b4d;
-    background: #edf9f2;
-    border-color: #61c88d;
+    font-weight: 600;
+    color: var(--preference-accent-strong);
+    background: linear-gradient(135deg, var(--preference-accent-soft-strong), var(--preference-accent-soft));
+    border-color: var(--preference-accent);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.44), 0 4px 10px var(--preference-accent-shadow);
+    animation: preferenceOptionSelect 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   &:disabled {
@@ -1478,6 +2009,34 @@ export default {
   }
 }
 
+@keyframes preferenceCardSelect {
+  0% {
+    transform: translateY(0) scale(0.985);
+  }
+
+  62% {
+    transform: translateY(-2px) scale(1.006);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes preferenceOptionSelect {
+  0% {
+    transform: scale(0.94);
+  }
+
+  68% {
+    transform: scale(1.035);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 @media (max-width: 640px) {
   .preference-dimension-grid {
     grid-template-columns: 1fr;
@@ -1485,6 +2044,20 @@ export default {
 
   .preference-active-label {
     max-width: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .preference-card,
+  .preference-card::before,
+  .preference-card-icon,
+  .preference-card-copy strong,
+  .preference-active-label,
+  .preference-dimension,
+  .preference-dimension-option {
+    transition: none;
+    animation: none;
   }
 }
 
@@ -1650,6 +2223,91 @@ export default {
   color: #8b9a93;
 }
 
+.predefined-objective-panel {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #fffaf0 0%, #fffdf8 100%);
+  border: 1px solid #f0d9a8;
+  border-left: 4px solid #d69d38;
+  border-radius: 12px;
+}
+
+.predefined-objective-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.predefined-objective-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8a5b16;
+
+  i {
+    font-size: 14px;
+    color: #c78624;
+  }
+}
+
+.predefined-objective-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: #9a681d;
+  background: #fff3dc;
+  border: 1px solid #efd7a7;
+  border-radius: 999px;
+}
+
+.predefined-objective-list {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #5f5542;
+  list-style: decimal;
+
+  li::marker {
+    font-weight: 700;
+    color: #b88230;
+  }
+}
+
+.predefined-objective-note {
+  padding-top: 8px;
+  margin-top: 9px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #9a7a45;
+  border-top: 1px dashed #ecd7ae;
+}
+
+.supplementary-conflict {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #c45656;
+  background: #fdf5f4;
+  border: 1px solid #f0d4d0;
+  border-radius: 8px;
+
+  i {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
 .supplementary-list {
   width: 100%;
 }
@@ -1707,12 +2365,10 @@ export default {
 }
 
 .manual-generate-btn {
-  color: #b88230;
-  background: #fffaf0;
-  border: 1px solid #f0d9a8;
-  box-shadow: none;
-  position: relative;
-  left: -8px;
+  color: #8a5b16;
+  background: linear-gradient(135deg, #fff6e5, #fffaf0);
+  border: 1px solid #e7c77f;
+  box-shadow: 0 9px 20px rgba(214, 157, 56, 0.18);
 }
 
 .async-tip {
@@ -2007,11 +2663,13 @@ export default {
 
 @media screen and (max-width: 991px) {
 
+  .path-cards,
   .mode-cards,
   .submit-workspace {
     grid-template-columns: 1fr;
   }
 
+  .path-card,
   .mode-card {
     min-height: auto;
   }
@@ -2050,6 +2708,11 @@ export default {
   .preference-cards,
   .preference-dimension-grid {
     grid-template-columns: 1fr;
+  }
+
+  .predefined-objective-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .parameter-panel-head {

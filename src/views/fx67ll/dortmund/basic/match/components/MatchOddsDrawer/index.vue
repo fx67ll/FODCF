@@ -68,7 +68,7 @@ export default {
       return `${this.match.homeTeamName || "主队"} vs ${this.match.awayTeamName || "客队"}`;
     },
     matchTimeText() {
-      return this.parseTime(this.match && this.match.matchTime, "{y}-{m}-{d} {h}:{i}") || "未填写比赛时间";
+      return this.parseTime(this.match && this.match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "未填写比赛时间";
     },
   },
   mounted() {

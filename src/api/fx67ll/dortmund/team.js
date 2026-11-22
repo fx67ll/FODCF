@@ -1,6 +1,6 @@
 import request from "@/utils/common/request";
 
-// 查询球队主场与标签选项（后端内置目录 + 球队表去重值）
+// 查询球队主场、地区/联赛与标签选项（后端内置目录 + 球队表去重值）
 export function getTeamOptions() {
   return request({
     url: "/dortmund/team/options",

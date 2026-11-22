@@ -14,17 +14,23 @@
           </div>
         </div>
 
-        <el-form v-if="searchFields.length" :model="searchForm" size="small" inline class="list-selector-search"
-          label-width="76px">
-          <el-form-item v-for="field in searchFields" :key="field.key" :label="field.label">
+        <el-form v-if="searchFields.length || $slots.search" :model="searchForm" size="small" inline
+          class="list-selector-search" label-width="76px">
+          <el-form-item v-for="field in visibleSearchFields" :key="field.key" :label="field.label">
             <el-select v-if="field.type === 'select'" v-model="searchForm[field.key]" :placeholder="field.placeholder"
               popper-class="dortmund-theme-popper" clearable filterable class="list-selector-search-control">
               <el-option v-for="item in field.options || []" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
+            <el-date-picker v-else-if="field.type === 'datetimerange'" v-model="searchForm[field.key]"
+              type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
+              :start-placeholder="field.startPlaceholder || '开始时间'" :end-placeholder="field.endPlaceholder || '结束时间'"
+              clearable class="list-selector-search-control is-range" />
             <el-input v-else v-model="searchForm[field.key]" :placeholder="field.placeholder" clearable
               class="list-selector-search-control" @keyup.enter.native="handleSearch" />
           </el-form-item>
+          <!-- 复杂控件由业务选择器注入；标准字段仍由 searchFields 配置，避免通用组件耦合业务组件。 -->
+          <slot name="search" :search-form="searchForm" :search="handleSearch" :reset="handleReset" />
           <el-form-item class="list-selector-search-actions">
             <el-button type="primary" icon="el-icon-search" :loading="loading" @click="handleSearch">搜索</el-button>
             <el-button icon="el-icon-refresh" :disabled="loading" @click="handleReset">重置</el-button>
@@ -55,10 +61,12 @@
           <el-table ref="selectorTable" v-loading="loading" :data="rows" :row-key="valueKey" size="small"
             :height="tableHeight" class="list-selector-table" highlight-current-row @row-click="handleRowClick"
             @row-dblclick="handleRowDoubleClick" @selection-change="handleSelectionChange">
-            <el-table-column v-if="multiple" type="selection" width="46" align="center" reserve-selection />
+            <el-table-column v-if="multiple" type="selection" width="46" align="center" reserve-selection
+              :selectable="isRowSelectable" />
             <el-table-column v-else width="46" align="center">
               <template slot-scope="scope">
-                <el-radio :value="selectedValue" :label="scope.row[valueKey]" class="list-selector-radio">
+                <el-radio :value="selectedValue" :label="scope.row[valueKey]" :disabled="!isRowSelectable(scope.row)"
+                  class="list-selector-radio">
                   <span></span>
                 </el-radio>
               </template>
@@ -66,6 +74,12 @@
             <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop"
               :min-width="column.minWidth || 120" align="center" show-overflow-tooltip>
               <template slot-scope="scope">{{ formatColumn(column, scope.row) }}</template>
+            </el-table-column>
+            <el-table-column v-if="showDetail" label="操作" width="82" align="center" fixed="right">
+              <template slot-scope="scope">
+                <el-button type="text" class="list-selector-detail" icon="el-icon-document"
+                  @click.stop="$emit('detail', scope.row)">详情</el-button>
+              </template>
             </el-table-column>
             <template slot="empty">
               <div class="list-selector-empty">
@@ -154,6 +168,18 @@ export default {
       type: Array,
       default: () => [10, 20, 50, 100],
     },
+    showDetail: {
+      type: Boolean,
+      default: false,
+    },
+    rowSelectable: {
+      type: Function,
+      default: null,
+    },
+    rowSelectableMessage: {
+      type: String,
+      default: "",
+    },
   },
   data() {
     return {
@@ -173,6 +199,10 @@ export default {
     };
   },
   computed: {
+    // type=slot 仍初始化 searchForm，但具体控件由业务侧 search 插槽渲染。
+    visibleSearchFields() {
+      return (this.searchFields || []).filter((field) => field.type !== "slot");
+    },
     drawerVisible: {
       get() {
         return this.visible;
@@ -225,7 +255,9 @@ export default {
   methods: {
     buildSearchForm() {
       return (this.searchFields || []).reduce((result, field) => {
-        result[field.key] = field.defaultValue !== undefined ? field.defaultValue : null;
+        result[field.key] = typeof field.defaultValueFactory === "function"
+          ? field.defaultValueFactory()
+          : (field.defaultValue !== undefined ? field.defaultValue : null);
         return result;
       }, {});
     },
@@ -318,7 +350,7 @@ export default {
         pageNum: this.pageNum,
         pageSize: this.internalPageSize,
         ...this.queryParams,
-        ...this.searchForm,
+        ...this.buildQuerySearch(),
       };
       Promise.resolve().then(() => {
         if (typeof this.apiFunc !== "function") {
@@ -357,11 +389,31 @@ export default {
       this.pageNum = 1;
       this.loadRows();
     },
+    buildQuerySearch() {
+      const result = { ...this.searchForm };
+      (this.searchFields || []).forEach((field) => {
+        if (field.type !== "datetimerange") {
+          return;
+        }
+        const range = this.searchForm[field.key];
+        delete result[field.key];
+        const rangeKeys = field.rangeKeys || [];
+        if (Array.isArray(range) && range.length === 2 && rangeKeys.length === 2) {
+          result[rangeKeys[0]] = range[0];
+          result[rangeKeys[1]] = range[1];
+        }
+      });
+      return result;
+    },
     handleReset() {
       this.searchForm = this.buildSearchForm();
       this.handleSearch();
     },
     handleRowClick(row, column) {
+      if (!this.isRowSelectable(row)) {
+        this.notifyRowDisabled();
+        return;
+      }
       if (this.multiple) {
         if (column && column.type === "selection") {
           return;
@@ -372,6 +424,10 @@ export default {
       this.selectedRows = [row];
     },
     handleRowDoubleClick(row) {
+      if (!this.isRowSelectable(row)) {
+        this.notifyRowDisabled();
+        return;
+      }
       if (this.multiple) {
         return;
       }
@@ -392,6 +448,21 @@ export default {
         this.$nextTick(() => this.syncTableSelection());
       }
       this.selectedRows = selectedRows;
+    },
+    isRowSelectable(row) {
+      if (typeof this.rowSelectable !== "function") {
+        return true;
+      }
+      try {
+        return this.rowSelectable(row) !== false;
+      } catch (error) {
+        return true;
+      }
+    },
+    notifyRowDisabled() {
+      if (this.rowSelectableMessage) {
+        this.$modal.msgWarning(this.rowSelectableMessage);
+      }
     },
     syncTableSelection() {
       if (!this.$refs.selectorTable) {
@@ -551,6 +622,14 @@ export default {
 
 .list-selector-search-control {
   width: 190px;
+}
+
+.list-selector-search-control.is-range {
+  width: 330px;
+}
+
+.list-selector-detail {
+  padding: 0;
 }
 
 .list-selector-search-actions {

@@ -12,6 +12,7 @@
           <el-tag :type="isAdopted ? 'success' : 'info'" size="mini">
             {{ isAdopted ? "已采用" : "未采用" }}
           </el-tag>
+          <dortmund-verification-status-tag :status="combination.verificationStatus" />
           <span v-if="confidence != null" class="result-badge">AI置信度 {{ confidence }}%</span>
           <span class="result-badge">{{ matches.length }} 场</span>
           <span v-if="evidenceFactorCount" class="result-badge">{{ evidenceFactorCount }} 个证据因子</span>
@@ -122,6 +123,8 @@
 <script>
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 import { formatOddsWeight } from "@/views/fx67ll/dortmund/other/utils/odds";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 import ReturnEvidenceChain from "../ReturnEvidenceChain/index";
 
 const SELECTION_LABELS = {
@@ -154,7 +157,7 @@ function parseJson(value, fallback) {
 
 export default {
   name: "ReturnAnalysisResult",
-  components: { ReturnEvidenceChain },
+  components: { DortmundVerificationStatusTag, ReturnEvidenceChain },
   props: {
     combination: {
       type: Object,
@@ -259,7 +262,7 @@ export default {
           label: "目标偏差",
           value: formatMoneyDisplay(this.combination.deviationAmount),
           hint: "预计回报与目标金额差额",
-          state: Number.isFinite(deviation) && deviation < 0 ? "is-positive" : "is-warning",
+          state: Number.isFinite(deviation) && deviation >= 0 ? "is-positive" : "is-warning",
         },
         {
           label: "比赛场次",

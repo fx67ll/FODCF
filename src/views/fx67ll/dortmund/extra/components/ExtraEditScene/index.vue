@@ -39,7 +39,7 @@
                   </span>
                   <div class="entry-card-heading">
                     <h2>上次记录参考</h2>
-                    <p>{{ parseTime(preExtraData.createTime, "{y}-{m}-{d} {h}:{i}") }} 已带入本次表单</p>
+                    <p>{{ parseTime(preExtraData.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }} 已带入本次表单</p>
                   </div>
                   <el-button type="text" class="dortmund-theme-text" icon="el-icon-refresh-right"
                     @click="handleRestorePreExtra">恢复参考值</el-button>

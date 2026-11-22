@@ -21,14 +21,14 @@
                 @click.native="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -44,7 +44,7 @@
         <div class="dl-toolbar">
           <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-              v-hasPermi="['dortmund:plan:add']">新增</el-button>
+              v-hasPermi="['dortmund:plan:add']">编写方案计划</el-button>
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:plan:edit']">修改</el-button>
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
@@ -53,7 +53,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -256,12 +256,13 @@ export default {
       return combination.combinationTitle || combination.combinationCode || `组合 ${combination.combinationId}`;
     },
     handleCombinationSelectorConfirm(combinationList) {
-      const combination = Array.isArray(combinationList) ? combinationList[0] || null : null;
+      // 兼容单选组件直接回传对象和回传数组两种事件形态。
+      const combination = Array.isArray(combinationList) ? combinationList[0] || null : combinationList || null;
       this.selectedCombination = combination;
       this.queryParams.combinationId = combination ? combination.combinationId : null;
     },
     formatSelectedMatch(match) {
-      const matchTime = this.parseTime(match?.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match?.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const teams = [match?.homeTeamName, match?.awayTeamName].filter(Boolean).join(" vs ");
       return teams ? `${teams}${matchTime ? `（${matchTime}）` : ""}` : (match?.matchCode || "");
     },
@@ -294,8 +295,12 @@ export default {
         this.editForm = {
           planId: detail.planId,
           planContent: detail.planContent,
-          planRate: detail.planRate,
-          planAmount: detail.planAmount,
+          planExpectedPrincipal: detail.planExpectedPrincipal,
+          planExpectedOdds: detail.planExpectedOdds,
+          planExpectedReturn: detail.planExpectedReturn,
+          planActualPrincipal: detail.planActualPrincipal,
+          planActualOdds: detail.planActualOdds,
+          planActualReturn: detail.planActualReturn,
           planRemark: detail.planRemark,
           combinationIds: detail.combinationIds || [],
           summaryUpdateFlag: detail.summaryUpdateFlag || "Y",
@@ -371,8 +376,12 @@ export default {
       this.editForm = {
         planId: null,
         planContent: null,
-        planRate: null,
-        planAmount: null,
+        planExpectedPrincipal: null,
+        planExpectedOdds: null,
+        planExpectedReturn: null,
+        planActualPrincipal: null,
+        planActualOdds: null,
+        planActualReturn: null,
         planRemark: null,
         combinationIds: [],
         summaryUpdateFlag: "Y",

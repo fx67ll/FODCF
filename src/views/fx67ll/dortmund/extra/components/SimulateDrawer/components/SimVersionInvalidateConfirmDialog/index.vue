@@ -34,7 +34,7 @@
         <el-descriptions-item label="版本编号">
           <span class="version-info-text">版本{{ versionInfo.versionNo }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ parseTime(versionInfo.createTime, "{y}-{m}-{d} {h}:{i}") }}
+        <el-descriptions-item label="创建时间">{{ parseTime(versionInfo.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}
         </el-descriptions-item>
         <el-descriptions-item label="版本配置">
           {{ versionInfo.simMode === "half" ? "半量滚动" : "全量滚动" }} · 初始 {{ versionInfo.initialValue }} · 系数

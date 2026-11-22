@@ -330,7 +330,7 @@ export default {
       return {
         homeText: homeResult,
         awayText: awayResult,
-        matchTimeText: this.parseTime(matchTime, "{y}-{m}-{d} {h}:{i}") || "",
+        matchTimeText: this.parseTime(matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "",
       };
     },
   },
@@ -402,7 +402,7 @@ export default {
       if (!match || !match.matchId) {
         return "";
       }
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vsText = [match.homeTeamName, match.awayTeamName].filter(Boolean).join(" vs ");
       const matchText = vsText || match.matchSummary || match.matchCode || `比赛 ${match.matchId}`;
       return matchTime ? `${matchText}（${matchTime}）` : matchText;

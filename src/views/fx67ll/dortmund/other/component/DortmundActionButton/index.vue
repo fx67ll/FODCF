@@ -23,6 +23,7 @@ const actionIcons = {
   copy: 'el-icon-document-copy',
   upload: 'el-icon-upload2',
   download: 'el-icon-download',
+  verify: 'el-icon-circle-check',
 };
 
 export default {
@@ -177,6 +178,22 @@ export default {
     background: #ecf9f2;
     border-color: #b9e1c9;
     box-shadow: 0 3px 0 rgba(47, 132, 96, .12);
+  }
+
+  &:hover:not(:disabled) i {
+    transform: scale(1.18);
+  }
+}
+
+.dortmund-action-btn[data-action='verify'] {
+  --action-accent: #2f78a8;
+  --action-soft: #eaf4fb;
+
+  &:hover:not(:disabled) {
+    color: #286a96;
+    background: #edf6fc;
+    border-color: #bdd9ec;
+    box-shadow: 0 3px 0 rgba(47, 120, 168, .12);
   }
 
   &:hover:not(:disabled) i {

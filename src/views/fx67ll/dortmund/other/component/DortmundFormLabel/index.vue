@@ -1,5 +1,6 @@
 <template>
   <span class="dortmund-form-label">
+    <em v-if="required" class="dortmund-form-label-required" aria-hidden="true">*</em>
     <span>{{ label }}</span>
     <el-tooltip v-if="tip" :content="tip" placement="top" popper-class="dortmund-theme-popper">
       <i class="el-icon-question dortmund-form-label-tip" tabindex="0" :aria-label="`${label}填写说明`"></i>
@@ -18,6 +19,11 @@ export default {
     tip: {
       type: String,
       default: ''
+    },
+    // Element UI 会依据 form-item 的 required 规则自动显示星号；仅在无规则但需要视觉提示时启用，避免双星号。
+    required: {
+      type: Boolean,
+      default: false
     }
   }
 }
@@ -42,5 +48,11 @@ export default {
     color: #27ad60;
     outline: none;
   }
+}
+
+.dortmund-form-label-required {
+  color: #f56c6c;
+  font-style: normal;
+  line-height: 1;
 }
 </style>

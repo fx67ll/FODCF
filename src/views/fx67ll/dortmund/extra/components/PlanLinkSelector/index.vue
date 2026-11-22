@@ -70,17 +70,55 @@
                   <el-input v-model="newPlanForm.planContent" type="textarea" :rows="3" :maxlength="limits.planContent"
                     show-word-limit placeholder="请输入方案计划" />
                 </el-form-item>
-                <el-form-item prop="planRate" class="plan-link-new-field">
+                <div class="plan-link-new-group is-full">
+                  <span><i class="el-icon-data-line"></i>预计数据 <em>选填</em></span>
+                  <small>有值时可手工覆盖，留空使用服务端根据关联组合计算的值</small>
+                </div>
+                <el-form-item prop="planExpectedPrincipal" class="plan-link-new-field">
                   <span slot="label">
-                    <dortmund-form-label label="录入倍率" tip="选填；有值时必须大于0，普通十进制数字，最多18位整数和6位小数" />
+                    <dortmund-form-label label="方案预计本金"
+                      :tip="`选填；有值时必须大于等于0，普通十进制数字，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
                   </span>
-                  <el-input v-model="newPlanForm.planRate" placeholder="可空；有值时必须大于0" />
+                  <el-input v-model="newPlanForm.planExpectedPrincipal" placeholder="可空；有值时必须大于等于0" />
                 </el-form-item>
-                <el-form-item prop="planAmount" class="plan-link-new-field">
+                <el-form-item prop="planExpectedOdds" class="plan-link-new-field">
                   <span slot="label">
-                    <dortmund-form-label label="录入金额" tip="选填；有值时必须大于等于0，普通十进制数字，最多22位整数和2位小数" />
+                    <dortmund-form-label label="方案预计倍率"
+                      :tip="`选填；有值时必须大于0，普通十进制数字，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数`" />
                   </span>
-                  <el-input v-model="newPlanForm.planAmount" placeholder="可空；有值时必须大于等于0" />
+                  <el-input v-model="newPlanForm.planExpectedOdds" placeholder="可空；有值时必须大于0" />
+                </el-form-item>
+                <el-form-item prop="planExpectedReturn" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="方案预计回报"
+                      :tip="`选填；有值时必须大于等于0，普通十进制数字，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                  </span>
+                  <el-input v-model="newPlanForm.planExpectedReturn" placeholder="可空；有值时必须大于等于0" />
+                </el-form-item>
+                <div class="plan-link-new-group is-actual is-full">
+                  <span><i class="el-icon-finished"></i>实际数据 <em class="is-required">必填</em></span>
+                  <small>仅支持手工填写，不随关联回报组合自动计算</small>
+                </div>
+                <el-form-item prop="planActualPrincipal" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="方案实际本金"
+                      :tip="`必填；普通十进制数字，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                  </span>
+                  <el-input v-model="newPlanForm.planActualPrincipal" placeholder="请输入实际投入本金" />
+                </el-form-item>
+                <el-form-item prop="planActualOdds" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="方案实际倍率"
+                      :tip="`必填；允许为0，普通十进制数字，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数`" />
+                  </span>
+                  <el-input v-model="newPlanForm.planActualOdds" placeholder="请输入实际倍率" />
+                </el-form-item>
+                <el-form-item prop="planActualReturn" class="plan-link-new-field">
+                  <span slot="label">
+                    <dortmund-form-label label="方案实际回报"
+                      :tip="`必填；允许为0，普通十进制数字，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                  </span>
+                  <el-input v-model="newPlanForm.planActualReturn" placeholder="请输入实际回报" />
                 </el-form-item>
                 <el-form-item prop="matchIds" class="plan-link-new-field is-full">
                   <span slot="label">
@@ -123,7 +161,9 @@
             <div class="plan-link-summary-plan-header">
               <span class="plan-link-summary-plan-content">{{ formatPlanSummaryText(plan) }}</span>
               <span class="plan-link-summary-plan-extra">
-                倍率：{{ plan.planRate || '空' }} 金额：{{ plan.planAmount || '空' }}
+                预计本金：{{ displayPlanAmount(effectiveExpectedPrincipal(plan)) }} 预计倍率：{{ displayPlanOdds(plan) }} 预计回报：{{
+                  displayPlanExpectedReturn(plan) }} 实际本金：{{ displayPlanAmount(plan.planActualPrincipal) }} 实际倍率：{{
+                  displayPlanAmount(plan.planActualOdds) }} 实际回报：{{ displayPlanAmount(plan.planActualReturn) }}
               </span>
             </div>
             <!-- 所达比赛（去重后超过5场默认折叠） -->
@@ -213,8 +253,12 @@ export default {
       // 当场新建方案计划表单
       newPlanForm: {
         planContent: null,
-        planRate: null,
-        planAmount: null,
+        planExpectedPrincipal: null,
+        planExpectedOdds: null,
+        planExpectedReturn: null,
+        planActualPrincipal: null,
+        planActualOdds: null,
+        planActualReturn: null,
         planRemark: null,
         matchIds: [],
       },
@@ -223,15 +267,46 @@ export default {
         planContent: [
           requiredTextRule("方案计划", DORTMUND_LIMITS.planContent)
         ],
-        planRate: [
-          decimalRule("录入倍率", {
+        planExpectedPrincipal: [
+          decimalRule("方案预计本金", {
+            min: 0,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+          })
+        ],
+        planExpectedOdds: [
+          decimalRule("方案预计倍率", {
             minExclusive: 0,
             maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
             maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
           })
         ],
-        planAmount: [
-          decimalRule("录入金额", {
+        planExpectedReturn: [
+          decimalRule("方案预计回报", {
+            min: 0,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+          })
+        ],
+        planActualPrincipal: [
+          decimalRule("方案实际本金", {
+            required: true,
+            min: 0,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+          })
+        ],
+        planActualOdds: [
+          decimalRule("方案实际倍率", {
+            required: true,
+            min: 0,
+            maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
+            maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
+          })
+        ],
+        planActualReturn: [
+          decimalRule("方案实际回报", {
+            required: true,
             min: 0,
             maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
             maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
@@ -258,6 +333,9 @@ export default {
   computed: {
     limits() {
       return DORTMUND_LIMITS;
+    },
+    numeric() {
+      return DORTMUND_NUMERIC;
     },
     // 同时具备方案计划列表与查询权限时才渲染整个区域
     hasPlanListPermission() {
@@ -379,8 +457,12 @@ export default {
     resetNewPlanForm() {
       this.newPlanForm = {
         planContent: null,
-        planRate: null,
-        planAmount: null,
+        planExpectedPrincipal: null,
+        planExpectedOdds: null,
+        planExpectedReturn: null,
+        planActualPrincipal: null,
+        planActualOdds: null,
+        planActualReturn: null,
         planRemark: null,
         matchIds: [],
       };
@@ -393,8 +475,12 @@ export default {
         }
         this.newPlanList.push({
           planContent: trimText(this.newPlanForm.planContent),
-          planRate: trimText(this.newPlanForm.planRate),
-          planAmount: trimText(this.newPlanForm.planAmount),
+          planExpectedPrincipal: trimText(this.newPlanForm.planExpectedPrincipal),
+          planExpectedOdds: trimText(this.newPlanForm.planExpectedOdds),
+          planExpectedReturn: trimText(this.newPlanForm.planExpectedReturn),
+          planActualPrincipal: trimText(this.newPlanForm.planActualPrincipal),
+          planActualOdds: trimText(this.newPlanForm.planActualOdds),
+          planActualReturn: trimText(this.newPlanForm.planActualReturn),
           planRemark: trimText(this.newPlanForm.planRemark),
           // 当场新建的方案计划比赛只能是已有正常比赛，不能带 newMatches
           matchIds: [...this.newPlanForm.matchIds],
@@ -452,9 +538,25 @@ export default {
     formatPlanSummaryText(plan) {
       return plan.planContent || "";
     },
+    // 组合关联摘要统一展示服务端有效预计值，空值明确显示占位符。
+    displayPlanOdds(plan) {
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      return value === null || value === undefined || value === "" ? "空" : value;
+    },
+    displayPlanExpectedReturn(plan) {
+      const value = plan.effectiveExpectedReturn ?? plan.planExpectedReturn ?? plan.calculatedExpectedReturn;
+      return this.displayPlanAmount(value);
+    },
+    effectiveExpectedPrincipal(plan) {
+      const value = plan.effectiveExpectedPrincipal ?? plan.planExpectedPrincipal ?? plan.calculatedExpectedPrincipal;
+      return value === null || value === undefined || value === "" ? null : value;
+    },
+    displayPlanAmount(value) {
+      return value === null || value === undefined || value === "" ? "空" : value;
+    },
     // 比赛下拉选项展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
     formatMatchOptionLabel(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },
@@ -472,8 +574,12 @@ export default {
         planIds: [...this.selectedPlanIds],
         newPlans: this.newPlanList.map(plan => ({
           planContent: plan.planContent,
-          planRate: plan.planRate,
-          planAmount: plan.planAmount,
+          planExpectedPrincipal: plan.planExpectedPrincipal,
+          planExpectedOdds: plan.planExpectedOdds,
+          planExpectedReturn: plan.planExpectedReturn,
+          planActualPrincipal: plan.planActualPrincipal,
+          planActualOdds: plan.planActualOdds,
+          planActualReturn: plan.planActualReturn,
           planRemark: plan.planRemark,
           matchIds: [...(plan.matchIds || [])],
         })),
@@ -709,6 +815,63 @@ export default {
 
 .plan-link-new-field.is-full {
   grid-column: 1 / -1;
+}
+
+/* 当场新建表单的预计/实际分组标题，明确可选项与必填项边界。 */
+.plan-link-new-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  color: #2f6f52;
+  background: rgba(46, 204, 113, 0.07);
+  border-left: 3px solid #46b97b;
+  border-radius: 8px;
+
+  &.is-full {
+    grid-column: 1 / -1;
+  }
+
+  >span {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+
+    i {
+      margin-right: 5px;
+    }
+
+    em {
+      margin-left: 5px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 500;
+      color: #5c8a73;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 999px;
+
+      &.is-required {
+        color: #d24d4d;
+        background: rgba(245, 108, 108, 0.1);
+      }
+    }
+  }
+
+  >small {
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #789086;
+    text-align: right;
+  }
+
+  &.is-actual {
+    color: #8a5a13;
+    background: rgba(230, 162, 60, 0.09);
+    border-left-color: #e6a23c;
+  }
 }
 
 .plan-link-new-actions {

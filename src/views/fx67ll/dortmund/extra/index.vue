@@ -38,14 +38,14 @@
         <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
-        <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-          clearable></el-date-picker>
+        <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-"
+          start-placeholder="开始时间" end-placeholder="结束时间" clearable></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" v-if="isMoreQuery">
-        <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-          popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-          clearable></el-date-picker>
+        <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-"
+          start-placeholder="开始时间" end-placeholder="结束时间" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
@@ -64,7 +64,7 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-          v-hasPermi="['dortmund:extra:add']">新增</el-button>
+          v-hasPermi="['dortmund:extra:add']">记录外快盈亏</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
@@ -183,9 +183,23 @@
         :subtitle="`当前用户可见 ${(detailData.plans || []).length} 条`">
         <el-table :data="detailData.plans || []" size="small" empty-text="暂无有权查看的关联方案计划">
           <el-table-column label="方案计划" prop="planContent" min-width="220" show-overflow-tooltip />
-          <el-table-column label="录入倍率" align="center" prop="planRate" width="100" />
-          <el-table-column label="录入金额" align="center" prop="planAmount" width="120">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planAmount) }}</template>
+          <el-table-column label="预计本金" align="center" width="100">
+            <template slot-scope="scope">{{ formatMoneyDisplay(effectivePlanPrincipal(scope.row)) }}</template>
+          </el-table-column>
+          <el-table-column label="预计倍率" align="center" width="96">
+            <template slot-scope="scope">{{ effectivePlanOdds(scope.row) }}</template>
+          </el-table-column>
+          <el-table-column label="预计回报" align="center" width="110">
+            <template slot-scope="scope">{{ formatMoneyDisplay(effectivePlanReturn(scope.row)) }}</template>
+          </el-table-column>
+          <el-table-column label="实际本金" align="center" width="100">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planActualPrincipal) }}</template>
+          </el-table-column>
+          <el-table-column label="实际倍率" align="center" width="96">
+            <template slot-scope="scope">{{ displayNumber(scope.row.planActualOdds) }}</template>
+          </el-table-column>
+          <el-table-column label="实际回报" align="center" width="110">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planActualReturn) }}</template>
           </el-table-column>
         </el-table>
         <el-alert v-if="detailData.hiddenPlanCount > 0" class="extra-detail-hidden-tip" type="warning" :closable="false"
@@ -409,6 +423,21 @@ export default {
       this.queryParams.endCreateTime = null;
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
+    },
+    // 关联方案展示：优先采用后端有效值，局部刷新时回退到手工值或自动值。
+    effectivePlanPrincipal(plan) {
+      const value = plan.effectiveExpectedPrincipal ?? plan.planExpectedPrincipal ?? plan.calculatedExpectedPrincipal;
+      return value === null || value === undefined || value === "" ? null : value;
+    },
+    displayNumber(value) {
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    effectivePlanOdds(plan) {
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    effectivePlanReturn(plan) {
+      return plan.effectiveExpectedReturn ?? plan.planExpectedReturn ?? plan.calculatedExpectedReturn;
     },
     /** 查询外快盈亏记录列表 */
     getList() {

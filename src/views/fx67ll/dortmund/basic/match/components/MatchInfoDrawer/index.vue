@@ -157,9 +157,8 @@
           </template>
         </el-table>
       </div>
-      <p v-if="total > rows.length" class="match-info-limit-hint">
-        当前展示前 {{ rows.length }} 条，共 {{ total }} 条；可刷新获取最新数据。
-      </p>
+      <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="pageSize" :page-sizes="pageSizes"
+        :auto-scroll="false" @pagination="load" />
     </div>
   </el-drawer>
 </template>
@@ -200,6 +199,9 @@ export default {
       actionError: "",
       rows: [],
       total: 0,
+      pageNum: 1,
+      pageSize: DORTMUND_PAGINATION.defaultPageSize,
+      pageSizes: DORTMUND_PAGINATION.pageSizes,
       loadSerial: 0,
       loadedMatchId: null,
       editorVisible: false,
@@ -242,7 +244,7 @@ export default {
       return `${this.match.homeTeamName || "主队"} vs ${this.match.awayTeamName || "客队"}`;
     },
     matchTimeText() {
-      return this.parseTime(this.match && this.match.matchTime, "{y}-{m}-{d} {h}:{i}") || "未填写比赛时间";
+      return this.parseTime(this.match && this.match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "未填写比赛时间";
     },
     editorTitle() {
       return this.editorMode === "update" ? "编辑关联信息点" : "新增关联信息点";
@@ -331,6 +333,7 @@ export default {
       if (String(this.loadedMatchId || "") !== String(matchId)) {
         this.rows = [];
         this.total = 0;
+        this.pageNum = 1;
       }
       this.loading = true;
       this.loadError = false;
@@ -338,8 +341,8 @@ export default {
       listInfoPoint({
         infoPointType: "M",
         matchId,
-        pageNum: 1,
-        pageSize: DORTMUND_PAGINATION.lookupPageSize,
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
       }).then((response) => {
         if (serial !== this.loadSerial) {
           return;
@@ -351,6 +354,12 @@ export default {
         const rows = Array.isArray(payload.rows) ? payload.rows : Array.isArray(payload) ? payload : [];
         this.rows = rows;
         this.total = Number(payload.total) || rows.length;
+        const maxPage = Math.max(1, Math.ceil(this.total / this.pageSize));
+        if (this.pageNum > maxPage) {
+          this.pageNum = maxPage;
+          this.load();
+          return;
+        }
         this.loadedMatchId = matchId;
         this.pendingDeleteId = null;
       }).catch(() => {
@@ -488,6 +497,9 @@ export default {
         request.then(() => {
           this.$modal.msgSuccess(this.editorMode === "add" ? "信息点新增成功" : "信息点修改成功");
           this.editorVisible = false;
+          if (this.editorMode === "add") {
+            this.pageNum = 1;
+          }
           this.load();
           this.$emit("refresh");
         }).catch((error) => {
@@ -545,7 +557,7 @@ export default {
       if (!value || value === "-") {
         return "-";
       }
-      return this.parseTime(value, "{y}-{m}-{d} {h}:{i}") || "-";
+      return this.parseTime(value, "{y}-{m}-{d} {h}:{i}:{s}") || "-";
     },
     sourceHref(value) {
       const url = value ? String(value).trim() : "";

@@ -20,22 +20,22 @@
     <div class="plan-edit-body">
       <!-- 左侧：表单主区 -->
       <div class="plan-edit-main">
-        <el-form ref="editForm" :model="editForm" :rules="editRules" label-width="110px" class="plan-edit-form"
+        <el-form ref="editForm" :model="editForm" :rules="editRules" label-position="left" class="plan-edit-form"
           v-loading="editLoading">
           <!-- 分区一：方案内容 -->
-          <div class="plan-edit-card">
+          <div class="plan-edit-card plan-content-card">
             <div class="plan-edit-card-header">
               <span class="plan-edit-card-chip">
                 <i class="el-icon-edit-outline"></i>
               </span>
-              <span class="plan-edit-card-title">方案内容</span>
-              <el-button type="success" plain size="mini" class="plan-combination-recalculate" icon="el-icon-refresh"
-                :loading="detailLoading" :disabled="!selectedCombinationCount"
-                @click="handleRecalculate">重新计算</el-button>
+              <div class="plan-edit-card-heading">
+                <span class="plan-edit-card-title">方案内容</span>
+                <small>正文与其他说明集中填写，数值口径在下方分区登记</small>
+              </div>
             </div>
             <el-row :gutter="20">
               <el-col :span="24">
-                <el-form-item prop="planContent">
+                <el-form-item prop="planContent" label-width="auto">
                   <template slot="label">
                     <dortmund-form-label label="方案计划" tip="必填；1-1023个字符" />
                   </template>
@@ -43,28 +43,8 @@
                     placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
-              <el-col :xs="24" :md="12">
-                <el-form-item prop="planRate">
-                  <template slot="label">
-                    <dortmund-form-label label="录入倍率"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空使用后端自动计算值`" />
-                  </template>
-                  <el-input v-model="editForm.planRate" clearable :disabled="selectedCombinationCount === 0"
-                    placeholder="默认根据关联回报组合自动计算，可手动调整" />
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :md="12">
-                <el-form-item prop="planAmount">
-                  <template slot="label">
-                    <dortmund-form-label label="录入金额"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
-                  </template>
-                  <el-input v-model="editForm.planAmount" clearable :disabled="selectedCombinationCount === 0"
-                    placeholder="默认根据关联回报组合自动计算，可手动调整" />
-                </el-form-item>
-              </el-col>
               <el-col :span="24">
-                <el-form-item prop="planRemark">
+                <el-form-item prop="planRemark" label-width="auto">
                   <template slot="label">
                     <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
                   </template>
@@ -73,14 +53,14 @@
                 </el-form-item>
               </el-col>
               <el-col :span="24" v-if="editMode === 'update'">
-                <el-form-item label="摘要状态">
+                <el-form-item label="摘要状态" label-width="auto">
                   <div class="plan-summary-flag">
                     <el-radio-group v-model="editForm.summaryUpdateFlag" size="mini">
                       <el-radio-button label="Y">标记待刷新</el-radio-button>
                       <el-radio-button label="N" :disabled="!editForm.summaryContent">标记为已同步</el-radio-button>
                     </el-radio-group>
                     <span class="plan-summary-flag-tip">
-                      仅当摘要已存在且正文、金额、说明、组合关系均未变化时可提交 N；后端检测到变化或摘要为空时会强制改为 Y。
+                      仅当摘要已存在且正文、预计/实际数值、说明、组合关系均未变化时可提交 N；后端检测到变化或摘要为空时会强制改为 Y。
                     </span>
                   </div>
                 </el-form-item>
@@ -88,7 +68,107 @@
             </el-row>
           </div>
 
-          <!-- 分区二：关联回报组合 -->
+          <!-- 分区二：预计数据（选填，关联组合后自动派生，允许手工修正） -->
+          <div class="plan-edit-card plan-finance-card">
+            <div class="plan-finance-head">
+              <span class="plan-finance-step">01</span>
+              <div class="plan-finance-copy">
+                <strong>预计数据</strong>
+                <small>关联回报组合后自动计算，可逐项手动修正；留空时以后端自动值为准</small>
+              </div>
+              <span class="plan-finance-tag is-optional">选填</span>
+            </div>
+            <el-row :gutter="20">
+              <!-- 预计本金独占一行，计算器紧随输入框，避免挤占首行主字段的阅读空间 -->
+              <el-col :span="24">
+                <el-form-item prop="planExpectedPrincipal" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案预计本金"
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
+                  </template>
+                  <div class="plan-money-field-row">
+                    <el-input v-model="editForm.planExpectedPrincipal" class="plan-money-field-input" clearable
+                      placeholder="关联组合后自动带出，可手动修正" />
+                    <el-button type="success" plain size="small" class="plan-money-action-button plan-calculator-trigger"
+                      icon="el-icon-s-order" title="打开数值计算器，快速核算实际本金、实际回报与实际倍率"
+                      @click="calculatorVisible = true">计算器</el-button>
+                  </div>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item prop="planExpectedOdds" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案预计倍率"
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空使用后端自动计算值`" />
+                  </template>
+                  <el-input v-model="editForm.planExpectedOdds" clearable
+                    placeholder="关联组合后自动带出，可手动修正" />
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item prop="planExpectedReturn" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案预计回报"
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
+                  </template>
+                  <el-input v-model="editForm.planExpectedReturn" clearable
+                    placeholder="关联组合后自动带出，可手动修正" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- 分区三：实际数据（必填，仅登记结算事实，重新计算不会覆盖） -->
+          <div class="plan-edit-card plan-finance-card is-actual">
+            <div class="plan-finance-head is-actual">
+              <span class="plan-finance-step">02</span>
+              <div class="plan-finance-copy">
+                <strong>实际数据</strong>
+                <small>仅支持手工填写，不随关联回报组合自动计算；重新计算时保留已登记的实际值</small>
+              </div>
+              <span class="plan-finance-tag is-required">必填</span>
+            </div>
+            <el-row :gutter="20">
+              <!-- 实际本金独占一行，重新计算紧随输入框，便于人工修正后立即刷新预计值 -->
+              <el-col :span="24">
+                <el-form-item prop="planActualPrincipal" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案实际本金"
+                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                  </template>
+                  <div class="plan-money-field-row">
+                    <el-input v-model="editForm.planActualPrincipal" class="plan-money-field-input" clearable
+                      placeholder="请输入实际投入本金" />
+                    <el-button type="warning" plain size="small"
+                      class="plan-money-action-button plan-combination-recalculate" icon="el-icon-refresh"
+                      :loading="detailLoading" :disabled="!selectedCombinationCount" @click="handleRecalculate">重新计算</el-button>
+                  </div>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item prop="planActualOdds" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案实际倍率"
+                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数`" />
+                  </template>
+                  <el-input v-model="editForm.planActualOdds" clearable
+                    placeholder="赛事结算后登记实际倍率" />
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item prop="planActualReturn" label-width="auto">
+                  <template slot="label">
+                    <dortmund-form-label label="方案实际回报"
+                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                  </template>
+                  <el-input v-model="editForm.planActualReturn" clearable
+                    placeholder="赛事结算后登记实际回报" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- 分区四：关联回报组合 -->
           <div class="plan-edit-card" v-loading="detailLoading">
             <div class="plan-edit-card-header">
               <span class="plan-edit-card-chip">
@@ -99,7 +179,7 @@
                 共{{ selectedCombinationCount }}条
               </span>
             </div>
-            <el-form-item label="回报组合" prop="combinationIds">
+            <el-form-item label="回报组合" prop="combinationIds" label-width="auto">
               <div class="plan-combination-selector">
                 <el-input :value="selectedCombinationSummary" readonly placeholder="可选择 0 至多条已采用的回报组合"
                   prefix-icon="el-icon-trophy" @click="combinationSelectorVisible = true" />
@@ -120,10 +200,12 @@
                 @click="retryCombinationDetails">重试加载</el-button>
             </div>
             <div class="plan-combination-list" v-if="selectedCombinationCount">
-              <div class="plan-combination-item" v-for="combination in selectedCombinationPreviewList"
-                :key="combination.combinationId">
+              <div class="plan-combination-item is-clickable" v-for="combination in selectedCombinationPreviewList"
+                :key="combination.combinationId" role="button" tabindex="0"
+                @click="openCombinationDetail(combination)" @keyup.enter="openCombinationDetail(combination)">
                 <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode ||
                   `组合 ${combination.combinationId}` }}</span>
+                <dortmund-verification-status-tag :status="combination.verificationStatus" />
                 <span class="plan-combination-metrics is-error" v-if="combination._detailLoadFailed">
                   明细加载失败
                 </span>
@@ -157,20 +239,40 @@
             </span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">自动倍率</span>
-            <span class="plan-preview-value">{{ autoPreview.planRate || "按组合保存后生成" }}</span>
+            <span class="plan-preview-label">自动预计本金</span>
+            <span class="plan-preview-value">{{ autoPreview.expectedPrincipal || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">自动金额</span>
-            <span class="plan-preview-value">{{ autoPreview.planAmount || "按组合保存后生成" }}</span>
+            <span class="plan-preview-label">自动预计倍率</span>
+            <span class="plan-preview-value">{{ autoPreview.expectedOdds || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">手工倍率</span>
-            <span class="plan-preview-value">{{ editForm.planRate || "使用自动值" }}</span>
+            <span class="plan-preview-label">自动预计回报</span>
+            <span class="plan-preview-value">{{ autoPreview.expectedReturn || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">手工金额</span>
-            <span class="plan-preview-value">{{ editForm.planAmount || "使用自动值" }}</span>
+            <span class="plan-preview-label">当前预计本金</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedPrincipal) ? editForm.planExpectedPrincipal : (autoPreview.expectedPrincipal || "使用自动值") }}</span>
+          </div>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">当前预计倍率</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedOdds) ? editForm.planExpectedOdds : (autoPreview.expectedOdds || "使用自动值") }}</span>
+          </div>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">当前预计回报</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedReturn) ? editForm.planExpectedReturn : (autoPreview.expectedReturn || "使用自动值") }}</span>
+          </div>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">实际本金</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualPrincipal) ? editForm.planActualPrincipal : "等待手工填写" }}</span>
+          </div>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">实际倍率</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualOdds) ? editForm.planActualOdds : "等待手工填写" }}</span>
+          </div>
+          <div class="plan-preview-row">
+            <span class="plan-preview-label">实际回报</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualReturn) ? editForm.planActualReturn : "等待手工填写" }}</span>
           </div>
           <div class="plan-preview-hint" :class="{ ok: selectedCombinationCount > 0 }">
             <i :class="selectedCombinationCount > 0 ? 'el-icon-success' : 'el-icon-info'"></i>
@@ -194,7 +296,9 @@
             <i class="el-icon-football"></i>
             <span>比赛清单</span>
           </div>
-          <div class="plan-preview-match" v-for="(match, index) in derivedMatches" :key="'p-open-' + index">
+          <div class="plan-preview-match is-clickable" v-for="(match, index) in derivedMatches"
+            :key="'p-open-' + index" role="button" tabindex="0" @click="openMatchDetail(match)"
+            @keyup.enter="openMatchDetail(match)">
             <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
           </div>
         </div>
@@ -203,14 +307,24 @@
 
     <dortmund-combination-selector-modal :visible.sync="combinationSelectorVisible" multiple
       :selected-items="combinationDetails" @confirm="handleCombinationSelectorConfirm" />
+    <dortmund-return-combination-detail-drawer :visible.sync="combinationDetailVisible"
+      :combination-id="selectedCombinationId" :snapshot="selectedCombination" />
+    <dortmund-match-detail-drawer :visible.sync="matchDetailVisible" :match-id="selectedMatchId"
+      :snapshot="selectedMatch" />
+    <calculator :visible.sync="calculatorVisible" />
   </div>
 </template>
 
 <script>
+import Calculator from "@/components/Calculator/index";
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 import { getCombination, getGeneration } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundCombinationSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundCombinationSelectorModal/index";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import DortmundReturnCombinationDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundReturnCombinationDetailDrawer/index";
+import DortmundMatchDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundMatchDetailDrawer/index";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 import {
   DORTMUND_LIMITS,
   decimalRule,
@@ -222,7 +336,14 @@ import { DORTMUND_NUMERIC } from "@/views/fx67ll/dortmund/other/config/moduleCon
 
 export default {
   name: "PlanEditScene",
-  components: { DortmundCombinationSelectorModal, DortmundFormLabel },
+  components: {
+    Calculator,
+    DortmundCombinationSelectorModal,
+    DortmundFormLabel,
+    DortmundReturnCombinationDetailDrawer,
+    DortmundMatchDetailDrawer,
+    DortmundVerificationStatusTag,
+  },
   props: {
     // 编写场景模式（add新增 update修改）
     editMode: {
@@ -257,12 +378,35 @@ export default {
       // 编写场景表单校验
       editRules: {
         planContent: [requiredTextRule("方案计划", DORTMUND_LIMITS.planContent)],
-        planRate: [decimalRule("录入倍率", {
+        planExpectedPrincipal: [decimalRule("方案预计本金", {
+          min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+        })],
+        planExpectedOdds: [decimalRule("方案预计倍率", {
           minExclusive: 0,
           maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
           maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
         })],
-        planAmount: [decimalRule("录入金额", {
+        planExpectedReturn: [decimalRule("方案预计回报", {
+          min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+        })],
+        planActualPrincipal: [decimalRule("方案实际本金", {
+          required: true,
+          min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
+        })],
+        planActualOdds: [decimalRule("方案实际倍率", {
+          required: true,
+          min: 0,
+          maxIntegerDigits: DORTMUND_NUMERIC.maxPlanRateIntegerDigits,
+          maxFractionDigits: DORTMUND_NUMERIC.maxPlanRateFractionDigits,
+        })],
+        planActualReturn: [decimalRule("方案实际回报", {
+          required: true,
           min: 0,
           maxIntegerDigits: DORTMUND_NUMERIC.maxPlanAmountIntegerDigits,
           maxFractionDigits: DORTMUND_NUMERIC.maxPlanAmountFractionDigits,
@@ -277,6 +421,16 @@ export default {
       combinationSelectorVisible: false,
       combinationLoadSerial: 0,
       combinationDetailErrorIds: [],
+      // 关联组合详情抽屉：保存前即可查看组合分析，不改变当前选择。
+      combinationDetailVisible: false,
+      selectedCombinationId: null,
+      selectedCombination: null,
+      // 派生比赛详情抽屉：用于核对比赛原始资料。
+      matchDetailVisible: false,
+      selectedMatchId: null,
+      selectedMatch: null,
+      // 通用计算器弹层：仅辅助实际字段核算，不参与表单自动赋值。
+      calculatorVisible: false,
     };
   },
   computed: {
@@ -328,7 +482,7 @@ export default {
     // 自动值前端预览：仅用于展示；保存时由后端重新汇总并写入最终值
     autoPreview() {
       if (!this.combinationDetails.length) {
-        return { planRate: null, planAmount: null };
+        return { expectedPrincipal: null, expectedOdds: null, expectedReturn: null };
       }
       let totalReturn = 0;
       let totalInput = 0;
@@ -336,15 +490,24 @@ export default {
         totalReturn += Number(combination.estimatedReturn || 0);
         totalInput += Number(combination.generationInputAmount || 0);
       });
-      const planAmount = totalInput > 0
+      const expectedReturn = totalInput > 0
         ? totalReturn.toFixed(DORTMUND_NUMERIC.maxPlanAmountFractionDigits) : null;
-      const planRate = totalInput > 0
+      const expectedPrincipal = totalInput > 0
+        ? totalInput.toFixed(DORTMUND_NUMERIC.maxPlanAmountFractionDigits) : null;
+      const expectedOdds = totalInput > 0
         ? (totalReturn / totalInput).toFixed(DORTMUND_NUMERIC.calculatedRateFractionDigits) : null;
-      return { planRate, planAmount };
+      return { expectedPrincipal, expectedOdds, expectedReturn };
     },
   },
   watch: {
-    // 最后一条组合移除后，同步清空手工倍率与金额，避免留下无归属的覆盖值
+    // 组合明细刷新后，仅为空白的预计字段回填自动值，不覆盖用户已手工修正的内容。
+    autoPreview: {
+      handler() {
+        this.$nextTick(this.fillExpectedFieldsFromPreview);
+      },
+      deep: true,
+    },
+    // 最后一条组合移除后，同步清空手工预计倍率与预计回报，避免留下无归属的覆盖值
     selectedCombinationCount(value) {
       if (!value) {
         this.resetManualAdjustment();
@@ -364,8 +527,13 @@ export default {
       return {
         planId: initial.planId || null,
         planContent: initial.planContent || null,
-        planRate: combinationIds.length ? initial.planRate || null : null,
-        planAmount: combinationIds.length ? initial.planAmount || null : null,
+        // 使用空值合并保留合法的0，避免实际无返还或零回报被误判为未填写。
+        planExpectedPrincipal: initial.planExpectedPrincipal ?? null,
+        planExpectedOdds: initial.planExpectedOdds ?? null,
+        planExpectedReturn: initial.planExpectedReturn ?? null,
+        planActualPrincipal: initial.planActualPrincipal ?? null,
+        planActualOdds: initial.planActualOdds ?? null,
+        planActualReturn: initial.planActualReturn ?? null,
         planRemark: initial.planRemark || null,
         combinationIds,
         summaryUpdateFlag: initial.summaryUpdateFlag || "Y",
@@ -424,7 +592,14 @@ export default {
         });
     },
     handleCombinationSelectorConfirm(combinations) {
-      const selectedRows = Array.isArray(combinations) ? combinations.filter(Boolean) : [];
+      // 选择器兼容单选对象与多选数组两种回调形态，避免筛选值无法回填。
+      const selectedRows = Array.isArray(combinations) ? combinations.filter(Boolean) : [combinations].filter(Boolean);
+      const previousKey = [...(this.editForm.combinationIds || [])].sort().join(",");
+      const nextKey = selectedRows.map((item) => item.combinationId).sort().join(",");
+      if (previousKey !== nextKey) {
+        // 组合集合变化后旧的手工预计值失去口径，实际结算值不受影响。
+        this.resetManualAdjustment();
+      }
       this.editForm.combinationIds = selectedRows.map((item) => item.combinationId);
       const detailMap = new Map(this.combinationDetails.map((item) => [item.combinationId, item]));
       selectedRows.forEach((item) => {
@@ -494,13 +669,50 @@ export default {
         this.$modal.msgWarning("重新计算未完成，请检查网络后重试；当前保留已有选择");
       });
     },
-    // 清空手工调整字段，恢复后端自动计算口径
+    // 清空三条手工预计字段，恢复后端自动计算口径；实际字段是结算事实，不参与重置。
     resetManualAdjustment() {
-      this.editForm.planRate = null;
-      this.editForm.planAmount = null;
+      this.editForm.planExpectedPrincipal = null;
+      this.editForm.planExpectedOdds = null;
+      this.editForm.planExpectedReturn = null;
       this.$nextTick(() => {
-        this.$refs.editForm && this.$refs.editForm.clearValidate(["planRate", "planAmount"]);
+        this.$refs.editForm && this.$refs.editForm.clearValidate([
+          "planExpectedPrincipal", "planExpectedOdds", "planExpectedReturn",
+        ]);
+        this.fillExpectedFieldsFromPreview();
       });
+    },
+    // 只为空白预计字段填入自动值，保留用户已经手动修正的数值。
+    fillExpectedFieldsFromPreview() {
+      const mapping = {
+        planExpectedPrincipal: this.autoPreview.expectedPrincipal,
+        planExpectedOdds: this.autoPreview.expectedOdds,
+        planExpectedReturn: this.autoPreview.expectedReturn,
+      };
+      Object.keys(mapping).forEach((field) => {
+        if (!this.hasValue(this.editForm[field]) && this.hasValue(mapping[field])) {
+          this.editForm[field] = mapping[field];
+        }
+      });
+    },
+    // 在编写场景内打开已关联回报组合详情，不打断当前表单。
+    openCombinationDetail(combination) {
+      const combinationId = combination && combination.combinationId;
+      if (combinationId === null || combinationId === undefined) {
+        return;
+      }
+      this.selectedCombination = { ...(combination || {}) };
+      this.selectedCombinationId = combinationId;
+      this.combinationDetailVisible = true;
+    },
+    // 在编写场景内打开派生比赛详情，便于核对球队与开赛时间。
+    openMatchDetail(match) {
+      const matchId = match && match.matchId;
+      if (matchId === null || matchId === undefined) {
+        return;
+      }
+      this.selectedMatch = { ...(match || {}) };
+      this.selectedMatchId = matchId;
+      this.matchDetailVisible = true;
     },
     // 返回总览（交由父页面切回列表场景并刷新）
     handleBackToList() {
@@ -508,9 +720,14 @@ export default {
     },
     // 比赛下拉展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
     formatMatchLabel(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
-      const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
+      const teams = [match.homeTeamName, match.awayTeamName].filter(Boolean).join(" vs ");
+      const vsText = teams || match.matchSummary || match.matchCode || `比赛 ${match.matchId}`;
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
+    },
+    // 表单预览空值判断：0是有效数值，仅 null、undefined 和空串视为未填写。
+    hasValue(value) {
+      return value !== null && value !== undefined && String(value).trim() !== "";
     },
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
@@ -522,11 +739,14 @@ export default {
           return;
         }
         const isAdd = this.editMode === "add";
-        const hasCombination = this.selectedCombinationCount > 0;
         const data = {
           planContent: trimText(this.editForm.planContent),
-          planRate: hasCombination ? trimText(this.editForm.planRate) : null,
-          planAmount: hasCombination ? trimText(this.editForm.planAmount) : null,
+          planExpectedPrincipal: trimText(this.editForm.planExpectedPrincipal),
+          planExpectedOdds: trimText(this.editForm.planExpectedOdds),
+          planExpectedReturn: trimText(this.editForm.planExpectedReturn),
+          planActualPrincipal: trimText(this.editForm.planActualPrincipal),
+          planActualOdds: trimText(this.editForm.planActualOdds),
+          planActualReturn: trimText(this.editForm.planActualReturn),
           planRemark: trimText(this.editForm.planRemark),
           combinationIds: this.editForm.combinationIds || [],
         };
@@ -621,6 +841,13 @@ export default {
   background: none;
   border-radius: 0;
   box-shadow: none;
+
+  /* 每个表单项按自身标签文字宽度自适应并左对齐，避免个别长标签同步撑宽整张表单。 */
+  ::v-deep .el-form-item__label {
+    padding-left: 0;
+    text-align: left;
+    white-space: nowrap;
+  }
 }
 
 /* 编写场景分区卡片 */
@@ -648,6 +875,18 @@ export default {
   margin-bottom: 14px;
 }
 
+.plan-edit-card-heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  small {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #8a9892;
+  }
+}
+
 .plan-edit-card-chip {
   display: flex;
   align-items: center;
@@ -667,6 +906,115 @@ export default {
   color: #2b3a36;
 }
 
+/* 预计/实际数据分区标题：沿用回报组合分析页的步骤徽标、标题说明和状态标签层级。 */
+.plan-finance-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 13px 14px;
+  margin-bottom: 16px;
+  background: #f2fbf6;
+  border: 1px solid #d8eee1;
+  border-radius: 12px;
+}
+
+.plan-finance-step {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1c9e55;
+  background: #e8f8ef;
+  border: 1px solid #d4efdf;
+  border-radius: 9px;
+}
+
+.plan-finance-copy {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-size: 13px;
+    color: #2b3a36;
+  }
+
+  small {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #8a9892;
+  }
+}
+
+.plan-finance-tag {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  &.is-optional {
+    color: #2f7d58;
+    background: #effaf4;
+    border-color: #cbeed9;
+  }
+
+  &.is-required {
+    color: #c45656;
+    background: #fef0f0;
+    border-color: #fbd9d9;
+  }
+}
+
+.plan-finance-card.is-actual {
+  .plan-finance-head {
+    background: #fffaf4;
+    border-color: #f4e3cd;
+  }
+
+  .plan-finance-step {
+    color: #b9791c;
+    background: #fdf3e6;
+    border-color: #f4dfc2;
+  }
+}
+
+/* 本金一行一输入一操作：输入框自适应，按钮固定宽度并始终紧随输入框。 */
+.plan-money-field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.plan-money-field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-money-action-button {
+  flex-shrink: 0;
+  min-width: 92px;
+  margin-left: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+  }
+}
+
 .plan-edit-card-count {
   margin-left: 10px;
   padding: 1px 8px;
@@ -679,10 +1027,6 @@ export default {
     color: #27ad60;
     background: #e7f8ee;
   }
-}
-
-.plan-combination-recalculate {
-  margin-left: auto;
 }
 
 .plan-summary-flag {
@@ -781,7 +1125,13 @@ export default {
   }
 }
 
+/* 可点击组合行：明确交互反馈，避免用户误以为只是静态文本。 */
+.plan-combination-item.is-clickable {
+  cursor: pointer;
+}
+
 .plan-combination-title {
+  flex: 1;
   overflow: hidden;
   font-size: 12px;
   font-weight: 600;
@@ -1044,6 +1394,20 @@ export default {
   justify-content: space-between;
   margin-bottom: 6px;
   font-size: 12px;
+}
+
+.plan-preview-match.is-clickable {
+  padding: 6px 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: transform 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+
+  &:hover {
+    background: #f2fbf6;
+    border-color: #d5f0e2;
+    transform: translateX(2px);
+  }
 }
 
 .plan-preview-match-vs {

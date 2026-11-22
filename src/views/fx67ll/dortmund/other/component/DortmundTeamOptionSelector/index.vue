@@ -1,7 +1,8 @@
 <template>
   <div class="team-option-selector" :class="selectorSizeClass" :style="selectorStyle">
-    <div class="team-option-trigger" :class="{ 'is-disabled': disabled, 'is-empty': !hasValue, 'is-active': drawerVisible }"
-      tabindex="0" role="button" :aria-disabled="disabled" @click="openDrawer" @keyup.enter.native="openDrawer">
+    <div class="team-option-trigger"
+      :class="{ 'is-disabled': disabled, 'is-empty': !hasValue, 'is-active': drawerVisible }" tabindex="0" role="button"
+      :aria-disabled="disabled" @click="openDrawer" @keyup.enter="openDrawer">
       <div class="team-option-trigger-value">
         <template v-if="hasValue">
           <el-tag v-if="multiple" v-for="item in selectedDisplayOptions" :key="item.value" size="small" closable
@@ -12,6 +13,9 @@
         </template>
         <span v-else class="team-option-placeholder">{{ placeholder }}</span>
       </div>
+      <span v-if="clearable && hasValue" class="team-option-clear" title="清除选择" @click.stop="clearValue">
+        <i class="el-icon-circle-close"></i>
+      </span>
       <i class="el-icon-arrow-down team-option-arrow"></i>
     </div>
 
@@ -30,8 +34,7 @@
 
         <div class="team-option-search-card">
           <el-input v-model="keyword" size="small" clearable prefix-icon="el-icon-search"
-            class="team-option-search-input" :placeholder="searchPlaceholder"
-            @keyup.enter.native="applySearch" />
+            class="team-option-search-input" :placeholder="searchPlaceholder" @keyup.enter.native="applySearch" />
           <div class="team-option-search-actions">
             <el-button size="small" type="primary" icon="el-icon-search" :loading="loading"
               @click="applySearch">搜索</el-button>
@@ -69,7 +72,7 @@
             <el-table-column v-else width="54" align="center">
               <template slot-scope="scope">
                 <el-radio :value="draftValues[0]" :label="scope.row.value" @click.native.stop
-                @change="toggleDraft(scope.row.value)"><span></span></el-radio>
+                  @change="toggleDraft(scope.row.value)"><span></span></el-radio>
               </template>
             </el-table-column>
             <el-table-column label="选项" min-width="220">
@@ -78,6 +81,14 @@
                   {{ scope.row.label }}
                 </el-tag>
                 <span v-else class="team-option-row-label">{{ scope.row.label }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="showTeamNames" label="关联球队" min-width="190" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span v-if="scope.row.teamNames.length" class="team-option-team-names">
+                  {{ scope.row.teamNames.join("、") }}
+                </span>
+                <span v-else class="team-option-team-empty">暂无关联球队</span>
               </template>
             </el-table-column>
             <template slot="empty">
@@ -91,16 +102,14 @@
 
         <div class="team-option-pagination">
           <el-pagination background small :layout="paginationLayout" :pager-count="paginationPagerCount"
-            :page-sizes="pageSizes" :page-size="pageSize" :total="filteredOptions.length"
-            :current-page.sync="pageNum" popper-class="dortmund-theme-popper"
-            @size-change="handlePageSizeChange" />
+            :page-sizes="pageSizes" :page-size="pageSize" :total="filteredOptions.length" :current-page.sync="pageNum"
+            popper-class="dortmund-theme-popper" @size-change="handlePageSizeChange" />
         </div>
 
         <div v-if="allowCreate" class="team-option-custom-row">
           <span><i class="el-icon-edit-outline"></i> 未找到时可直接录入</span>
-          <el-input v-model="customValue" size="small" clearable
-            :maxlength="customMaxlength"
-            :placeholder="optionType === 'tag' ? '输入自定义标签' : '输入自定义主场'" @keyup.enter.native="addCustomValue" />
+          <el-input v-model="customValue" size="small" clearable :maxlength="customMaxlength"
+            :placeholder="customPlaceholder" @keyup.enter.native="addCustomValue" />
           <el-button size="small" type="primary" plain :disabled="!customValue.trim()"
             @click="addCustomValue">加入候选</el-button>
         </div>
@@ -126,9 +135,15 @@ import {
   DORTMUND_LIMITS,
   DORTMUND_PAGINATION,
   DORTMUND_TAG_SPLIT_PATTERN,
+  TEAM_COUNTRY_OPTIONS,
   TEAM_TAG_FALLBACK_OPTIONS,
   TEAM_VENUE_FALLBACK_OPTIONS,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+
+function normalizeTeamNames(item) {
+  const raw = Array.isArray(item.teamNames) ? item.teamNames : (item.team ? [item.team] : []);
+  return [...new Set(raw.map((name) => String(name == null ? "" : name).trim()).filter(Boolean))];
+}
 
 function normalizeOption(item, fallbackType) {
   if (!item) return null;
@@ -138,19 +153,23 @@ function normalizeOption(item, fallbackType) {
     label: String(item.label == null ? value : item.label).trim() || value,
     value,
     type: item.type || fallbackType,
+    teamNames: normalizeTeamNames(item),
   };
 }
 
 function mergeOptions(localOptions, remoteOptions) {
-  const result = [];
-  const seen = new Set();
+  const result = new Map();
   [...(localOptions || []), ...(remoteOptions || [])].forEach((item) => {
     const option = normalizeOption(item, "info");
-    if (!option || seen.has(option.value)) return;
-    seen.add(option.value);
-    result.push(option);
+    if (!option) return;
+    const existing = result.get(option.value);
+    if (!existing) {
+      result.set(option.value, option);
+      return;
+    }
+    existing.teamNames = [...new Set([...(existing.teamNames || []), ...option.teamNames])];
   });
-  return result;
+  return Array.from(result.values());
 }
 
 export default {
@@ -163,7 +182,7 @@ export default {
     optionType: {
       type: String,
       required: true,
-      validator: (value) => ["venue", "tag"].includes(value),
+      validator: (value) => ["venue", "tag", "country"].includes(value),
     },
     multiple: {
       type: Boolean,
@@ -180,6 +199,10 @@ export default {
     allowCreate: {
       type: Boolean,
       default: true,
+    },
+    clearable: {
+      type: Boolean,
+      default: false,
     },
     size: {
       type: String,
@@ -210,7 +233,9 @@ export default {
   },
   computed: {
     fallbackOptions() {
-      return this.optionType === "tag" ? TEAM_TAG_FALLBACK_OPTIONS : TEAM_VENUE_FALLBACK_OPTIONS;
+      if (this.optionType === "tag") return TEAM_TAG_FALLBACK_OPTIONS;
+      if (this.optionType === "country") return TEAM_COUNTRY_OPTIONS;
+      return TEAM_VENUE_FALLBACK_OPTIONS;
     },
     options() {
       return mergeOptions([...this.fallbackOptions, ...this.localOptions], this.remoteOptions);
@@ -242,18 +267,24 @@ export default {
       return this.selectedDisplayOptions.length > 0;
     },
     optionLabel() {
-      return this.optionType === "tag" ? "球队标签" : "球队主场";
+      if (this.optionType === "tag") return "球队标签";
+      if (this.optionType === "country") return "地区/联赛";
+      return "球队主场";
+    },
+    showTeamNames() {
+      return this.optionType !== "tag";
     },
     guideTitle() {
       return this.multiple ? `可跨页选择多个${this.optionLabel}` : `请选择一个${this.optionLabel}`;
     },
     guideDescription() {
+      const teamSearchHint = this.showTeamNames ? "，也可输入关联球队名称反查" : "";
       return this.multiple
-        ? "勾选结果会在分页切换和筛选时保留"
-        : "单击行完成选中，双击行可直接确认";
+        ? `勾选结果会在分页切换和筛选时保留${teamSearchHint}`
+        : `单击行完成选中，双击行可直接确认${teamSearchHint}`;
     },
     searchPlaceholder() {
-      return `搜索${this.optionLabel}`;
+      return this.showTeamNames ? `搜索${this.optionLabel}或关联球队` : `搜索${this.optionLabel}`;
     },
     selectorSizeClass() {
       return `team-option-selector--${this.size}`;
@@ -267,8 +298,7 @@ export default {
     filteredOptions() {
       const keyword = this.appliedKeyword.trim().toLowerCase();
       return keyword
-        ? this.options.filter((item) => item.label.toLowerCase().includes(keyword)
-          || item.value.toLowerCase().includes(keyword))
+        ? this.options.filter((item) => this.matchesKeyword(item, keyword))
         : this.options;
     },
     pagedOptions() {
@@ -276,7 +306,9 @@ export default {
       return this.filteredOptions.slice(start, start + this.pageSize);
     },
     drawerTitle() {
-      return this.optionType === "tag" ? "选择球队标签" : "选择球队主场";
+      if (this.optionType === "tag") return "选择球队标签";
+      if (this.optionType === "country") return "选择地区/联赛";
+      return "选择球队主场";
     },
     drawerSize() {
       return this.viewportWidth < 768 ? "100%" : "560px";
@@ -290,7 +322,14 @@ export default {
       return this.viewportWidth < 768 ? 5 : 7;
     },
     customMaxlength() {
-      return this.optionType === "tag" ? DORTMUND_LIMITS.teamTag : DORTMUND_LIMITS.teamVenue;
+      if (this.optionType === "tag") return DORTMUND_LIMITS.teamTag;
+      if (this.optionType === "country") return DORTMUND_LIMITS.teamCountry;
+      return DORTMUND_LIMITS.teamVenue;
+    },
+    customPlaceholder() {
+      if (this.optionType === "tag") return "输入自定义标签";
+      if (this.optionType === "country") return "输入自定义地区/联赛";
+      return "输入自定义主场";
     },
   },
   mounted() {
@@ -314,9 +353,13 @@ export default {
       getTeamOptions()
         .then((response) => {
           const data = (response && response.data) || {};
-          this.remoteOptions = this.optionType === "tag"
-            ? data.teamTagOptions || []
-            : data.teamVenueOptions || [];
+          if (this.optionType === "tag") {
+            this.remoteOptions = data.teamTagOptions || [];
+          } else if (this.optionType === "country") {
+            this.remoteOptions = data.teamCountryOptions || [];
+          } else {
+            this.remoteOptions = data.teamVenueOptions || [];
+          }
           // 空响应也视为合法结果；内置目录仍在 options 中兜底。
           this.remoteLoaded = true;
         })
@@ -351,6 +394,12 @@ export default {
       this.keyword = "";
       this.appliedKeyword = "";
       this.pageNum = 1;
+    },
+    matchesKeyword(option, keyword) {
+      if (option.label.toLowerCase().includes(keyword) || option.value.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      return (option.teamNames || []).some((name) => String(name).toLowerCase().includes(keyword));
     },
     toggleDraft(value) {
       if (!this.multiple) {
@@ -409,6 +458,13 @@ export default {
       const next = this.selectedValues.filter((item) => item !== value);
       this.$emit("input", this.multiple ? next : next[0] || null);
       this.$emit("change", this.multiple ? next : next[0] || null);
+    },
+    clearValue() {
+      if (this.disabled || !this.clearable) return;
+      const value = this.multiple ? [] : null;
+      this.$emit("input", value);
+      this.$emit("change", value);
+      this.$emit("clear");
     },
   },
 };
@@ -510,6 +566,30 @@ export default {
   color: #a8b5af;
 }
 
+.team-option-clear {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: auto;
+  color: #a8b5af;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.team-option-clear:hover {
+  color: var(--team-option-theme);
+}
+
+.team-option-team-names {
+  color: #52615a;
+  line-height: 1.5;
+}
+
+.team-option-team-empty {
+  font-size: 12px;
+  color: #a8b5af;
+}
+
 .team-option-drawer-shell {
   --team-option-theme: var(--current-color, #2ecc71);
   display: flex;
@@ -592,7 +672,7 @@ export default {
   align-items: center;
 }
 
-.team-option-search-actions ::v-deep .el-button + .el-button {
+.team-option-search-actions ::v-deep .el-button+.el-button {
   margin-left: 0;
 }
 
@@ -716,11 +796,11 @@ export default {
   cursor: pointer;
 }
 
-.team-option-table ::v-deep .el-table__body tr:hover > td.el-table__cell {
+.team-option-table ::v-deep .el-table__body tr:hover>td.el-table__cell {
   background: #f1fbf5;
 }
 
-.team-option-table ::v-deep .el-table__body tr.is-draft-selected > td.el-table__cell {
+.team-option-table ::v-deep .el-table__body tr.is-draft-selected>td.el-table__cell {
   background: #edf8f2;
 }
 
@@ -765,7 +845,7 @@ export default {
   white-space: normal;
 }
 
-.team-option-pagination ::v-deep .el-pagination > * {
+.team-option-pagination ::v-deep .el-pagination>* {
   margin-left: 0;
 }
 
@@ -888,7 +968,7 @@ export default {
   gap: 8px;
 }
 
-.team-option-footer-actions ::v-deep .el-button + .el-button {
+.team-option-footer-actions ::v-deep .el-button+.el-button {
   margin-left: 0;
 }
 
@@ -928,7 +1008,7 @@ export default {
     grid-template-columns: 1fr auto;
   }
 
-  .team-option-custom-row > span {
+  .team-option-custom-row>span {
     grid-column: 1 / -1;
   }
 
@@ -948,7 +1028,7 @@ export default {
     padding: 12px;
   }
 
-  .team-option-footer > span {
+  .team-option-footer>span {
     display: none;
   }
 
@@ -981,6 +1061,7 @@ export default {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .team-option-trigger,
   .team-option-preview-enter-active,
   .team-option-preview-leave-active {

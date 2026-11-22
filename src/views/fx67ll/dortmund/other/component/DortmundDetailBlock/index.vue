@@ -1,7 +1,9 @@
 <template>
   <div class='dortmund-detail-block' :data-variant='variant' :data-tone='tone'>
     <div v-if='variant === "metric"' class='metric-grid'>
-      <div v-for='(item, index) in items' :key='index' class='metric-item' :data-state='item.state'>
+      <div v-for='(item, index) in items' :key='index' class='metric-item' :data-state='item.state'
+        :class='{ "is-clickable": item.clickable }' :role='item.clickable ? "button" : null'
+        :tabindex='item.clickable ? 0 : null' @click='handleItemClick(item)' @keyup.enter='handleItemClick(item)'>
         <span class='metric-label'><i v-if='item.icon' :class='item.icon'></i>{{ item.label }}</span>
         <strong class='metric-value'>{{ displayValue(item.value, item.emptyText || '-') }}</strong>
         <span v-if='item.hint' class='metric-hint'>{{ item.hint }}</span>
@@ -131,6 +133,12 @@ export default {
     },
   },
   methods: {
+    // 指标项可由业务页面标记为可点击，统一向宿主抛出事件，避免组件耦合具体业务动作。
+    handleItemClick(item) {
+      if (item && item.clickable) {
+        this.$emit('item-click', item);
+      }
+    },
     displayValue(value, fallback = '-') {
       if (value === null || value === undefined) {
         return fallback;
@@ -211,6 +219,17 @@ export default {
   border: 0;
   border-left: 2px solid var(--block-accent);
   border-radius: 0;
+}
+
+.metric-item.is-clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.metric-item.is-clickable:hover,
+.metric-item.is-clickable:focus-visible {
+  background: var(--block-accent-soft);
+  transform: translateX(2px);
 }
 
 .metric-label,

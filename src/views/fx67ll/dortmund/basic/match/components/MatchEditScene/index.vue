@@ -33,7 +33,8 @@
               </template>
               <div class="match-edit-item">
                 <dortmund-season-select ref="editSeasonSelect" v-model="editForm.seasonId"
-                  :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange" />
+                  :disabled="newSeasonVisible || editMode !== 'add'" @change="handleEditSeasonChange"
+                  @loaded="handleSeasonLoaded" />
                 <el-button type="text" class="dortmund-theme-text match-edit-inline-btn"
                   icon="el-icon-circle-plus-outline" v-if="editMode === 'add'" @click="toggleNewSeasonPanel">
                   {{ newSeasonVisible ? "收起当场新增" : "当场新增赛季" }}
@@ -47,9 +48,7 @@
               <template slot="label">
                 <dortmund-form-label label="比赛时间" tip="必填；格式yyyy-MM-dd HH:mm:ss，需填写开赛时间" />
               </template>
-              <el-date-picker clearable v-model="editForm.matchTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                popper-class="dortmund-theme-popper" style="width: 100%" placeholder="请选择比赛时间">
-              </el-date-picker>
+              <dortmund-kickoff-time-picker v-model="editForm.matchTime" />
             </el-form-item>
           </el-col>
 
@@ -100,7 +99,7 @@
           <!-- 当场新增主队面板 -->
           <el-col :span="24" v-if="newHomeTeamVisible">
             <transition name="slide-panel">
-              <match-new-team-panel ref="newHomeTeamPanel" side="home" />
+              <match-new-team-panel ref="newHomeTeamPanel" side="home" @venue-change="handleNewHomeTeamVenueChange" />
             </transition>
           </el-col>
 
@@ -125,7 +124,8 @@
               <template slot="label">
                 <dortmund-form-label label="球队主场" tip="选填；最多233个字符，可从已有球队主场中选择或直接输入" />
               </template>
-              <dortmund-option-select v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入球队主场" />
+              <dortmund-team-option-selector v-model="editForm.matchVenue" option-type="venue" placeholder="请选择或输入球队主场"
+                clearable />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
@@ -135,15 +135,15 @@
               </template>
               <el-select v-model="editForm.matchStatus" style="width: 100%" placeholder="请选择比赛状态"
                 popper-class="dortmund-theme-popper">
-                <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
+                <el-option v-for="item in matchStatusOptions" :key="item.value" :label="item.label"
+                  :value="item.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :md="12">
             <el-form-item prop="matchResult">
               <template slot="label">
-                <dortmund-form-label label="比赛结果" tip="选填；仅可为空或0/1/2，含义以比赛结果字典为准" />
+                <dortmund-form-label label="比赛结果" tip="选填；可为空或0/1/2/3/4/5，0至2为常规胜平负，3至5为让球胜平负，含义以字典为准" />
               </template>
               <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable
                 popper-class="dortmund-theme-popper">
@@ -249,7 +249,8 @@
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
+import DortmundKickoffTimePicker from "@/views/fx67ll/dortmund/other/component/DortmundKickoffTimePicker/index";
 import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 import MatchNewSeasonPanel from "../MatchNewSeasonPanel/index";
 import MatchNewTeamPanel from "../MatchNewTeamPanel/index";
@@ -260,6 +261,7 @@ import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundF
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import { buildEmptyOdds, buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/other/utils/odds";
+import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
 import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
@@ -277,7 +279,7 @@ export default {
   components: {
     MatchNewSeasonPanel, MatchNewTeamPanel, DortmundTeamSelectorModal, DortmundBindingControl,
     DortmundFormLabel, DortmundInfoPointFormDialog, DortmundOddsForm, DortmundOddsInlineEditor, DortmundCodeInput,
-    DortmundOptionSelect, DortmundSeasonSelect, DortmundActionButton
+    DortmundTeamOptionSelector, DortmundKickoffTimePicker, DortmundSeasonSelect, DortmundActionButton
   },
   props: {
     // 编排场景模式（add新增 update修改）
@@ -304,6 +306,12 @@ export default {
   computed: {
     limits() {
       return DORTMUND_LIMITS;
+    },
+    matchStatusOptions() {
+      const options = (this.dict && this.dict.type && this.dict.type.sys_notice_status) || [];
+      return this.editMode === "add"
+        ? options.filter((item) => String(item.value) === "0")
+        : options;
     },
   },
   data() {
@@ -378,13 +386,13 @@ export default {
       const initial = this.initialForm || {};
       return {
         matchId: initial.matchId || null,
-        matchCode: initial.matchCode || null,
+        matchCode: initial.matchCode || (this.editMode === "add" ? generateBusinessCode("match", initial.matchTime) : null),
         seasonId: initial.seasonId || null,
         homeTeamId: initial.homeTeamId || null,
         awayTeamId: initial.awayTeamId || null,
         matchTime: initial.matchTime || null,
         matchVenue: initial.matchVenue || null,
-        matchStatus: initial.matchStatus || null,
+        matchStatus: initial.matchStatus || (this.editMode === "add" ? "0" : null),
         matchResult: initial.matchResult || null,
         matchRemark: initial.matchRemark || null,
         newOdds: buildEmptyOdds(),
@@ -467,6 +475,19 @@ export default {
         this.newSeasonVisible = false;
       }
     },
+    // 新增比赛默认选中赛季下拉首项；修改比赛及已手动选择时不覆盖现有值。
+    handleSeasonLoaded(options) {
+      if (this.editMode !== "add" || this.newSeasonVisible) return;
+      if (this.editForm.seasonId != null && this.editForm.seasonId !== "") return;
+      const first = Array.isArray(options)
+        ? options.find((item) => item && item.seasonId != null && item.seasonId !== "")
+        : null;
+      if (!first) return;
+      this.editForm.seasonId = first.seasonId;
+      this.$nextTick(() => {
+        this.$refs["editForm"] && this.$refs["editForm"].clearValidate("seasonId");
+      });
+    },
     buildSelectedTeam(initial, side) {
       const source = initial || {};
       if (side === "home" && source.homeTeamId != null) {
@@ -487,6 +508,7 @@ export default {
         this.editForm.homeTeamId = team ? team.teamId : null;
         if (team) {
           this.newHomeTeamVisible = false;
+          this.editForm.matchVenue = team.teamVenue || null;
         }
       } else {
         this.selectedAwayTeam = team || null;
@@ -495,6 +517,11 @@ export default {
           this.newAwayTeamVisible = false;
         }
       }
+    },
+    // 当场新建主队的主场变化时联动比赛主场；用户后续仍可在比赛表单中手动调整。
+    handleNewHomeTeamVenueChange(value) {
+      if (this.editMode !== "add" || !this.newHomeTeamVisible) return;
+      this.editForm.matchVenue = value || null;
     },
     // 返回总览（交由父页面切回列表场景并刷新）
     handleBackToList() {

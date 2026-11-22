@@ -80,8 +80,8 @@
               <template slot="label">
                 <dortmund-form-label label="地区/联赛" tip="必填；1-23个字符，例如：德国、英格兰" />
               </template>
-              <dortmund-option-select v-model="editForm.teamCountry" option-type="country"
-                :maxlength="limits.teamCountry" placeholder="请选择地区/联赛（支持搜索）" />
+              <dortmund-team-option-selector v-model="editForm.teamCountry" option-type="country"
+                placeholder="请选择地区/联赛" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -185,7 +185,6 @@
 
 <script>
 import DortmundInfoPointFormDialog from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointFormDialog/index";
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
@@ -207,7 +206,6 @@ export default {
   components: {
     DortmundFormLabel,
     DortmundInfoPointFormDialog,
-    DortmundOptionSelect,
     DortmundCodeInput,
     DortmundActionButton,
     DortmundTeamOptionSelector,

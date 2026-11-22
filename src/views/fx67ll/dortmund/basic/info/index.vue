@@ -41,14 +41,14 @@
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -429,7 +429,7 @@ export default {
     },
     // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
     formatMatchVsTimeText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },

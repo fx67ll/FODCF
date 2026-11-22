@@ -10,7 +10,7 @@
           </el-form-item>
           <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
           <el-form-item label="搜索球队" prop="teamName" v-if="!isMoreQuery">
-            <el-input v-model="queryParams.teamName" placeholder="请输入球队全称/昵称/简称/英文" clearable
+            <el-input v-model="queryParams.teamName" placeholder="球队全称/昵称/简称/英文" clearable
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队全称" prop="teamName" v-if="isMoreQuery">
@@ -27,14 +27,15 @@
           </el-form-item>
           <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
             <dortmund-team-option-selector v-model="queryParams.teamVenue" option-type="venue" :multiple="false"
-              :allow-create="false" size="small" width="220px" placeholder="请选择球队主场" />
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场" />
           </el-form-item>
           <el-form-item label="地区/联赛" prop="teamCountry">
-            <dortmund-option-select v-model="queryParams.teamCountry" option-type="country" placeholder="请选择或输入地区/联赛" />
+            <dortmund-team-option-selector v-model="queryParams.teamCountry" option-type="country" :multiple="false"
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择地区/联赛" />
           </el-form-item>
           <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
             <dortmund-team-option-selector v-model="queryParams.teamTag" option-type="tag" :multiple="false"
-              :allow-create="false" size="small" width="220px" placeholder="请选择球队标签" />
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队标签" />
           </el-form-item>
           <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
             <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
@@ -44,14 +45,14 @@
             </el-select>
           </el-form-item>
           <el-form-item label="创建时间" v-if="isMoreQuery">
-            <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-              popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-              end-placeholder="结束日期" clearable></el-date-picker>
+            <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+              popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+              end-placeholder="结束时间" clearable></el-date-picker>
           </el-form-item>
           <el-form-item label="更新时间" v-if="isMoreQuery">
-            <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-              popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-              end-placeholder="结束日期" clearable></el-date-picker>
+            <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+              popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+              end-placeholder="结束时间" clearable></el-date-picker>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -112,13 +113,14 @@
           </el-table-column>
           <el-table-column label="球队主场" align="center" prop="teamVenue" min-width="150" :show-overflow-tooltip="true" />
           <el-table-column label="地区/联赛" align="center" prop="teamCountry" min-width="130" show-overflow-tooltip />
-          <el-table-column label="球队标签" align="center" prop="teamTag" min-width="200">
+          <el-table-column label="球队标签" align="center" prop="teamTag" min-width="190">
             <template slot-scope="scope">
-              <!-- 遍历拆分后的标签数组，匹配对应 type 渲染彩色标签 -->
-              <el-tag v-for="(tag, index) in scope.row.teamTag" :key="index" size="mini" :type="getTagType(tag.trim())"
-                style="margin-right: 4px; margin-bottom: 4px;">
-                {{ tag.trim() }}
-              </el-tag>
+              <div v-if="scope.row.teamTag && scope.row.teamTag.length" class="team-list-tag-cell">
+                <el-tag v-for="tag in scope.row.teamTag" :key="tag" size="mini" effect="plain" :type="getTagType(tag)">
+                  {{ tag }}
+                </el-tag>
+              </div>
+              <span v-else class="team-list-tag-empty">-</span>
             </template>
           </el-table-column>
           <el-table-column label="球队状态" align="center" prop="teamStatus" width="96">
@@ -254,7 +256,6 @@ import {
 
 import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 import TeamEditScene from "./components/TeamEditScene/index.vue";
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
 import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
 import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
@@ -264,7 +265,7 @@ import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/Dortmun
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
-  components: { TeamEditScene, DortmundOptionSelect, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  components: { TeamEditScene, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
   computed: {
     teamTagList() {
       return this.formatTeamTagList(this.detailData.teamTag);
@@ -349,6 +350,7 @@ export default {
         teamNameEn: null,
         teamVenue: null,
         teamCountry: null,
+        teamTag: null,
         teamStatus: null,
         beginCreateTime: null,
         endCreateTime: null,
@@ -628,6 +630,22 @@ export default {
     margin-right: 3px;
     font-size: 14px;
   }
+}
+
+/* 管理列表保留标签信息，多标签在单元格内换行居中，避免撑宽操作列。 */
+.team-list-tag-cell {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 6px;
+
+  ::v-deep .el-tag+.el-tag {
+    margin-left: 0;
+  }
+}
+
+.team-list-tag-empty {
+  color: #a8b5af;
 }
 
 /* 详情抽屉 Logo 与备注：限制预览尺寸，避免长图撑破抽屉 */

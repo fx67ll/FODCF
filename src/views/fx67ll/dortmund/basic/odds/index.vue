@@ -14,9 +14,9 @@
                 @click.native="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="来源时间" prop="sourceTime" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeSourceTime" style="width: 220px" type="daterange"
-                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
-                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
+              <el-date-picker v-model="daterangeSourceTime" style="width: 360px" type="datetimerange"
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
             </el-form-item>
             <el-form-item label="有效状态" prop="activeFlag" v-if="isMoreQuery">
               <el-select v-model="queryParams.activeFlag" placeholder="请选择有效状态" clearable
@@ -26,14 +26,14 @@
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeCreateTime" style="width: 220px" type="daterange"
-                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
-                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
+              <el-date-picker v-model="daterangeCreateTime" style="width: 360px" type="datetimerange"
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeUpdateTime" style="width: 220px" type="daterange"
-                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd" range-separator="-"
-                start-placeholder="开始日期" end-placeholder="结束日期" clearable />
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" type="datetimerange"
+                popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -67,7 +67,7 @@
             <el-table-column label="来源时间" align="center" prop="sourceTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
-                <span>{{ parseTime(scope.row.sourceTime, "{y}-{m}-{d} {h}:{i}") }}</span>
+                <span>{{ parseTime(scope.row.sourceTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
               </template>
             </el-table-column>
             <el-table-column label="让分值" align="center" prop="handicapValue" width="92" />
@@ -79,7 +79,7 @@
             <el-table-column label="更新时间" align="center" prop="updateTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
-                <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}") }}</span>
+                <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
               </template>
             </el-table-column>
             <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="186" fixed="right">
@@ -204,7 +204,7 @@ export default {
         { label: '倍率ID', value: this.displayValue(this.detail.oddsId), icon: 'el-icon-postcard' },
         { label: '倍率编码', value: this.displayValue(this.detail.oddsCode), icon: 'el-icon-collection-tag' },
         { label: '比赛编码', value: this.displayValue(this.detail.matchCode), icon: 'el-icon-football' },
-        { label: '来源时间', value: this.parseTime(this.detail.sourceTime, '{y}-{m}-{d} {h}:{i}'), icon: 'el-icon-time' },
+        { label: '来源时间', value: this.parseTime(this.detail.sourceTime, '{y}-{m}-{d} {h}:{i}:{s}'), icon: 'el-icon-time' },
         { label: '让分值', value: this.detail.handicapValue == null ? null : this.detail.handicapValue, icon: 'el-icon-sort' },
         { label: '有效状态', value: this.displayDict(this.dict.type.sys_yes_no, this.detail.activeFlag, '未设置'), icon: 'el-icon-connection' },
       ];

@@ -20,12 +20,13 @@
               team.teamId : '球队信息缺失') }}</el-tag>
           <span class="info-card-team-more" v-if="visibleTeamRels(point).length > 3">+{{ visibleTeamRels(point).length -
             3
-          }}支</span>
+            }}支</span>
         </div>
         <div class="info-card-meta">
           <span v-if="point.infoPointType === 'M' && formatMatchText(point)">比赛：{{ formatMatchText(point) }}</span>
           <span v-if="point.sourceName">来源：{{ point.sourceName }}</span>
-          <span v-if="point.sourcePublishTime">发布：{{ parseTime(point.sourcePublishTime, "{y}-{m}-{d}") }}</span>
+          <span v-if="point.sourcePublishTime">发布：{{ parseTime(point.sourcePublishTime, "{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
           <span class="info-card-public">可公开：
             <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="point.allowPublic" /></span>
         </div>

@@ -8,11 +8,15 @@
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
-            <el-form-item label="主队名称" prop="homeTeamName">
+            <el-form-item label="比赛球队" prop="teamName" v-if="!isMoreQuery">
+              <el-input v-model="queryParams.teamName" placeholder="请输入主队或客队名称" clearable
+                @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="主队名称" prop="homeTeamName" v-if="isMoreQuery">
               <el-input v-model="queryParams.homeTeamName" placeholder="请输入主队名称" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="客队名称" prop="awayTeamName">
+            <el-form-item label="客队名称" prop="awayTeamName" v-if="isMoreQuery">
               <el-input v-model="queryParams.awayTeamName" placeholder="请输入客队名称" clearable
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
@@ -24,13 +28,13 @@
               <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery" />
             </el-form-item>
             <el-form-item label="比赛时间" prop="matchTime">
-              <el-date-picker v-model="daterangeMatchTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeMatchTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="球队主场" prop="matchVenue" v-if="isMoreQuery">
               <dortmund-team-option-selector v-model="queryParams.matchVenue" option-type="venue" :multiple="false"
-                :allow-create="false" size="small" width="220px" placeholder="请选择球队主场" />
+                :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场" />
             </el-form-item>
             <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
@@ -40,14 +44,14 @@
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
-              <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd"
-                popper-class="dortmund-theme-popper" type="daterange" range-separator="-" start-placeholder="开始日期"
-                end-placeholder="结束日期" clearable></el-date-picker>
+              <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -72,7 +76,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -83,18 +87,18 @@
         <div class="dl-list-card">
           <el-table v-loading="loading" :data="matchList" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="46" align="center" />
-            <el-table-column label="比赛编号" align="center" prop="matchId" width="96" fixed="left" />
-            <el-table-column label="所属赛季" align="center" prop="seasonName" min-width="120" fixed="left"
+            <!-- <el-table-column label="比赛编号" align="center" prop="matchId" width="96" fixed="left" /> -->
+            <el-table-column label="所属赛季" align="center" prop="seasonName" min-width="80" fixed="left"
               show-overflow-tooltip />
-            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="140" fixed="left"
+            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="200" fixed="left"
               show-overflow-tooltip />
-            <el-table-column label="主队名称" align="center" prop="homeTeamName" min-width="150" fixed="left"
+            <el-table-column label="主队名称" align="center" prop="homeTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
                 <span class="match-team-name home">{{ scope.row.homeTeamName || "-" }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="客队名称" align="center" prop="awayTeamName" min-width="150" fixed="left"
+            <el-table-column label="客队名称" align="center" prop="awayTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
                 <span class="match-team-name away">{{ scope.row.awayTeamName || "-" }}</span>
@@ -184,7 +188,8 @@
       </dortmund-detail-card>
 
       <dortmund-detail-card v-if='hasMatchStats' title='业务统计' icon='el-icon-data-analysis' tone='green'>
-        <dortmund-detail-block variant='metric' tone='green' :items='matchMetricItems' />
+        <dortmund-detail-block variant='metric' tone='green' :items='matchMetricItems'
+          @item-click="handleMatchMetricClick" />
       </dortmund-detail-card>
 
       <dortmund-detail-card title='归属与关联' icon='el-icon-connection' tone='green'>
@@ -216,6 +221,9 @@
       </template>
     </dortmund-detail-drawer>
 
+    <dortmund-adopted-combinations-drawer :visible.sync="adoptedCombinationVisible"
+      :match-id="adoptedCombinationMatch.matchId" :match-label="adoptedCombinationLabel" />
+
     <match-odds-drawer :visible.sync="oddsDrawerVisible" :match="oddsDrawerMatch" @refresh="getList" />
     <match-info-drawer :visible.sync="infoDrawerVisible" :match="infoDrawerMatch" @refresh="getList" />
 
@@ -235,6 +243,7 @@ import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/Dortmund
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import DortmundAdoptedCombinationsDrawer from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
@@ -242,7 +251,8 @@ export default {
   dicts: ["sys_notice_status", "fx67ll_match_result"],
   components: {
     MatchEditScene, DortmundTeamOptionSelector, DortmundSeasonSelect, MatchOddsDrawer, MatchInfoDrawer,
-    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail
+    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail,
+    DortmundAdoptedCombinationsDrawer
   },
   computed: {
     matchVersusFields() {
@@ -264,7 +274,15 @@ export default {
       return [
         { label: '比赛结果', value: this.displayDict(this.dict.type.fx67ll_match_result, this.matchDetailData.matchResult, '未产生赛果'), emptyText: '未产生赛果', icon: 'el-icon-trophy' },
         { label: '分析次数', value: this.matchDetailData.analysisCount, emptyText: '暂无分析', icon: 'el-icon-search' },
-        { label: '已采用组合', value: this.matchDetailData.adoptedCombinationCount, emptyText: '暂无采用', icon: 'el-icon-collection-tag' },
+        {
+          label: '已采用组合',
+          value: this.matchDetailData.adoptedCombinationCount,
+          emptyText: '暂无采用',
+          icon: 'el-icon-collection-tag',
+          clickable: Number(this.matchDetailData.adoptedCombinationCount) > 0,
+          action: 'adopted',
+          hint: Number(this.matchDetailData.adoptedCombinationCount) > 0 ? '点击查看已采用回报组合' : '',
+        },
       ];
     },
     // 三个资料区只在详情数据确有内容时展示，避免接口缺字段时出现空白卡片
@@ -309,6 +327,11 @@ export default {
         { key: 'update', label: '最近更新', value: this.matchDetailData.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
+    // 已采用组合抽屉使用主客队名称作为上下文标题。
+    adoptedCombinationLabel() {
+      return [this.adoptedCombinationMatch.homeTeamName, this.adoptedCombinationMatch.awayTeamName]
+        .filter(Boolean).join(" vs ");
+    },
   },
   data() {
     return {
@@ -349,6 +372,7 @@ export default {
         matchId: null,
         matchCode: null,
         seasonId: null,
+        teamName: null,
         homeTeamName: null,
         awayTeamName: null,
         beginMatchTime: null,
@@ -374,6 +398,9 @@ export default {
       matchDetailVisible: false,
       matchDetailLoading: false,
       matchDetailData: {},
+      // 已采用组合抽屉：列表页与详情页共用同一个简化列表和组合详情入口。
+      adoptedCombinationVisible: false,
+      adoptedCombinationMatch: {},
     };
   },
   created() {
@@ -522,7 +549,14 @@ export default {
       if (!row.adoptedCombinationCount) {
         return;
       }
-      this.$router.push({ path: "/ai/solution/return", query: { matchId: row.matchId } });
+      this.adoptedCombinationMatch = { ...(row || {}) };
+      this.adoptedCombinationVisible = true;
+    },
+    // 详情统计中的“已采用组合”数值与列表使用同一交互，点击直接打开共享侧边抽屉。
+    handleMatchMetricClick(item) {
+      if (item && item.action === "adopted") {
+        this.handleAdoptedCombinations(this.matchDetailData);
+      }
     },
     // 空值处理：仅 null、undefined 和空白字符串视为缺失，保留数字 0
     displayValue(value, fallback = "-") {

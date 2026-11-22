@@ -15,7 +15,7 @@
           <template slot="label">
             <dortmund-form-label label="所属赛季" tip="必填；请选择已存在且未结束的赛季" />
           </template>
-          <dortmund-season-select v-model="form.seasonId" :disabled="disabled" />
+          <dortmund-season-select v-model="form.seasonId" :disabled="disabled" @loaded="handleSeasonLoaded" />
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">
@@ -23,8 +23,7 @@
           <template slot="label">
             <dortmund-form-label label="比赛时间" tip="必填；格式yyyy-MM-dd HH:mm:ss" />
           </template>
-          <el-date-picker v-model="form.matchTime" type="datetime" popper-class="dortmund-theme-popper"
-            value-format="yyyy-MM-dd HH:mm:ss" style="width: 100%" :disabled="disabled" placeholder="请选择比赛时间" />
+          <dortmund-kickoff-time-picker v-model="form.matchTime" :disabled="disabled" />
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">
@@ -41,8 +40,8 @@
           <template slot="label">
             <dortmund-form-label label="球队主场" tip="选填；最多233个字符，可从已有球队主场中选择或直接输入" />
           </template>
-          <dortmund-option-select v-model="form.matchVenue" option-type="venue" :disabled="disabled"
-            placeholder="请选择或输入球队主场" />
+          <dortmund-team-option-selector v-model="form.matchVenue" option-type="venue" :disabled="disabled"
+            placeholder="请选择或输入球队主场" clearable />
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">
@@ -70,15 +69,15 @@
           </template>
           <el-select v-model="form.matchStatus" :disabled="disabled" style="width: 100%" placeholder="请选择比赛状态"
             popper-class="dortmund-theme-popper">
-            <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
-              :value="dict.value"></el-option>
+            <el-option v-for="item in matchStatusOptions" :key="item.value" :label="item.label"
+              :value="item.value"></el-option>
           </el-select>
         </el-form-item>
       </el-col>
       <el-col :xs="24" :md="12">
         <el-form-item :prop="fieldProp('matchResult')" label-width="116px">
           <template slot="label">
-            <dortmund-form-label label="比赛结果" tip="选填；仅可为空或0/1/2，含义以比赛结果字典为准" />
+            <dortmund-form-label label="比赛结果" tip="选填；可为空或0/1/2/3/4/5，0至2为常规胜平负，3至5为让球胜平负，含义以字典为准" />
           </template>
           <el-select v-model="form.matchResult" :disabled="disabled" style="width: 100%" placeholder="请选择比赛结果（可空）"
             clearable popper-class="dortmund-theme-popper">
@@ -108,9 +107,11 @@ import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundF
 import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 import DortmundTeamSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
-import DortmundOptionSelect from "@/views/fx67ll/dortmund/other/component/DortmundOptionSelect/index";
+import DortmundTeamOptionSelector from "@/views/fx67ll/dortmund/other/component/DortmundTeamOptionSelector/index";
+import DortmundKickoffTimePicker from "@/views/fx67ll/dortmund/other/component/DortmundKickoffTimePicker/index";
 import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundCodeInput/index";
 import { DORTMUND_LIMITS } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
 
 export default {
   name: "DortmundInlineMatchCreate",
@@ -120,7 +121,8 @@ export default {
     DortmundSeasonSelect,
     DortmundBindingControl,
     DortmundTeamSelectorModal,
-    DortmundOptionSelect,
+    DortmundTeamOptionSelector,
+    DortmundKickoffTimePicker,
     DortmundCodeInput,
   },
   props: {
@@ -157,6 +159,10 @@ export default {
       }
       return this.selectedAwayTeam ? [this.selectedAwayTeam] : [];
     },
+    matchStatusOptions() {
+      const options = (this.dict && this.dict.type && this.dict.type.sys_notice_status) || [];
+      return options.filter((item) => String(item.value) === "0");
+    },
   },
   watch: {
     "form.homeTeamId"(value) {
@@ -170,7 +176,27 @@ export default {
       }
     },
   },
+  created() {
+    this.applyAddDefaults();
+  },
   methods: {
+    // 当场新建比赛仅允许正常状态；编码默认生成，赛季在选项加载后补首项。
+    applyAddDefaults() {
+      if (this.disabled) return;
+      if (!this.form.matchCode) {
+        this.$set(this.form, "matchCode", generateBusinessCode("match", this.form.matchTime));
+      }
+      if (this.form.matchStatus == null || this.form.matchStatus === "") {
+        this.$set(this.form, "matchStatus", "0");
+      }
+    },
+    handleSeasonLoaded(options) {
+      if (this.disabled || (this.form.seasonId != null && this.form.seasonId !== "")) return;
+      const first = Array.isArray(options)
+        ? options.find((item) => item && item.seasonId != null && item.seasonId !== "")
+        : null;
+      if (first) this.$set(this.form, "seasonId", first.seasonId);
+    },
     fieldProp(field) {
       return `${this.prefix}${field}`;
     },
@@ -202,6 +228,7 @@ export default {
       if (isHome) {
         this.selectedHomeTeam = team;
         this.form.homeTeamId = team.teamId;
+        this.form.matchVenue = team.teamVenue || null;
         this.$nextTick(() => this.$refs.homeTeamItem && this.$refs.homeTeamItem.clearValidate());
       } else {
         this.selectedAwayTeam = team;

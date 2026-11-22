@@ -29,14 +29,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="创建时间" v-if="isMoreQuery">
-          <el-date-picker v-model="daterangeCreateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-            clearable></el-date-picker>
+          <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+            type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
+            end-placeholder="结束时间" clearable></el-date-picker>
         </el-form-item>
         <el-form-item label="更新时间" v-if="isMoreQuery">
-          <el-date-picker v-model="daterangeUpdateTime" style="width: 240px" value-format="yyyy-MM-dd" type="daterange"
-            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-            clearable></el-date-picker>
+          <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+            type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
+            end-placeholder="结束时间" clearable></el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>

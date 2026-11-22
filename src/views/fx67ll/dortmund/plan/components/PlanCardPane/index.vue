@@ -6,10 +6,16 @@
         :style="{ animationDelay: (index % 12) * 0.04 + 's' }">
         <div class="plan-card-head" @click="$emit('review', plan)">
           <span class="plan-card-content" :title="plan.planContent || '-'">{{ plan.planContent || '-' }}</span>
-          <span class="plan-card-rate" v-if="plan.planRate">倍率 {{ plan.planRate }}</span>
+          <span class="plan-card-rate" v-if="hasValue(effectiveOdds(plan))">预计 {{ effectiveOdds(plan) }}</span>
         </div>
         <div class="plan-card-meta">
-          <span class="plan-card-amount" v-if="plan.planAmount">金额 {{ plan.planAmount }}</span>
+          <span class="plan-card-amount" v-if="hasValue(effectivePrincipal(plan))">预计本金 {{ effectivePrincipal(plan) }}</span>
+          <span class="plan-card-amount" v-if="hasValue(effectiveReturn(plan))">回报 {{ effectiveReturn(plan) }}</span>
+          <span class="plan-card-actual" v-if="hasValue(plan.planActualPrincipal) || hasValue(plan.planActualOdds) || hasValue(plan.planActualReturn)">
+            实际本金/倍率/回报 {{ displayValue(plan.planActualPrincipal) }} / {{ displayValue(plan.planActualOdds) }} / {{ displayValue(plan.planActualReturn) }}
+          </span>
+          <dortmund-verification-status-tag v-if="plan.combinationIds && plan.combinationIds.length"
+            :status="plan.combinationVerificationStatus" />
           <span class="plan-card-count" v-if="plan.matches && plan.matches.length">共{{ plan.matches.length }}场</span>
           <span class="plan-card-images">组合 {{ plan.matchCount || 0 }}场</span>
         </div>
@@ -19,7 +25,7 @@
           <span class="plan-card-match-more" v-if="plan.matches.length > 3">+{{ plan.matches.length - 3 }}场</span>
         </div>
         <div class="plan-card-footer">
-          <span class="plan-card-time">{{ plan.updateBy || '-' }} · {{ parseTime(plan.updateTime, "{y}-{m}-{d}")
+          <span class="plan-card-time">{{ plan.updateBy || '-' }} · {{ parseTime(plan.updateTime, "{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
           <span class="plan-card-actions">
             <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="$emit('review', plan)"
@@ -42,10 +48,12 @@
 
 <script>
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
+import DortmundVerificationStatusTag
+  from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 
 export default {
   name: "PlanCardPane",
-  components: { DortmundActionButton },
+  components: { DortmundActionButton, DortmundVerificationStatusTag },
   props: {
     // 方案计划列表数据（与列表视图同一份，父页面持有）
     rows: {
@@ -64,6 +72,22 @@ export default {
       const homeText = match.homeTeamName || "主队";
       const awayText = match.awayTeamName || "客队";
       return `${homeText} vs ${awayText}`;
+    },
+    hasValue(value) {
+      return value !== null && value !== undefined && String(value).trim() !== "";
+    },
+    // 有效值统一兜底：保留数字0，仅空值展示占位符。
+    displayValue(value) {
+      return this.hasValue(value) ? value : "-";
+    },
+    effectiveOdds(plan) {
+      return plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds ?? null;
+    },
+    effectivePrincipal(plan) {
+      return plan.effectiveExpectedPrincipal ?? plan.planExpectedPrincipal ?? plan.calculatedExpectedPrincipal ?? null;
+    },
+    effectiveReturn(plan) {
+      return plan.effectiveExpectedReturn ?? plan.planExpectedReturn ?? plan.calculatedExpectedReturn ?? null;
     },
   },
 };
@@ -146,6 +170,14 @@ export default {
 .plan-card-amount {
   font-weight: 600;
   color: #44604f;
+}
+
+.plan-card-actual {
+  padding: 1px 8px;
+  font-weight: 600;
+  color: #9a6a28;
+  background: #fdf6ec;
+  border-radius: 999px;
 }
 
 .plan-card-matches {

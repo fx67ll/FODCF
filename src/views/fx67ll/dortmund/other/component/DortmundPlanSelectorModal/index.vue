@@ -8,6 +8,7 @@
 <script>
 import { listPlan } from "@/api/fx67ll/dortmund/plan";
 import ListSelectorModal from "@/components/ListSelectorModal/index";
+import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 export default {
@@ -29,15 +30,49 @@ export default {
       pageSize: DORTMUND_PAGINATION.defaultPageSize,
       pageSizes: DORTMUND_PAGINATION.pageSizes,
       columns: [
-        { label: "方案正文", prop: "planContent", minWidth: 260 },
-        { label: "录入倍率", prop: "planRate", minWidth: 110 },
-        { label: "录入金额", prop: "planAmount", minWidth: 120 },
-        { label: "关联比赛", prop: "matchCount", minWidth: 90 },
+        { label: "方案正文", prop: "planContent", minWidth: 200 },
+        {
+          label: "预计本金",
+          prop: "effectiveExpectedPrincipal",
+          minWidth: 100,
+          formatter: (row) => this.formatMoney(this.effectiveExpectedPrincipal(row)),
+        },
+        {
+          label: "预计倍率",
+          prop: "effectiveExpectedOdds",
+          minWidth: 96,
+          formatter: (row) => this.effectiveExpectedOdds(row),
+        },
+        {
+          label: "预计回报",
+          prop: "effectiveExpectedReturn",
+          minWidth: 110,
+          formatter: (row) => this.formatMoney(this.effectiveExpectedReturn(row)),
+        },
+        {
+          label: "实际本金",
+          prop: "planActualPrincipal",
+          minWidth: 100,
+          formatter: (row) => this.formatMoney(row.planActualPrincipal),
+        },
+        {
+          label: "实际倍率",
+          prop: "planActualOdds",
+          minWidth: 96,
+          formatter: (row) => this.formatNumber(row.planActualOdds),
+        },
+        {
+          label: "实际回报",
+          prop: "planActualReturn",
+          minWidth: 110,
+          formatter: (row) => this.formatMoney(row.planActualReturn),
+        },
+        { label: "关联比赛", prop: "matchCount", minWidth: 80 },
         {
           label: "创建时间",
           prop: "createTime",
           minWidth: 150,
-          formatter: (row) => this.parseTime(row.createTime, "{y}-{m}-{d} {h}:{i}") || "-",
+          formatter: (row) => this.parseTime(row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-",
         },
       ],
       searchFields: [
@@ -56,6 +91,25 @@ export default {
     },
   },
   methods: {
+    formatMoney(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+      return formatMoneyDisplay(value);
+    },
+    effectiveExpectedOdds(row) {
+      const value = row.effectiveExpectedOdds ?? row.planExpectedOdds ?? row.calculatedExpectedOdds;
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    effectiveExpectedPrincipal(row) {
+      return row.effectiveExpectedPrincipal ?? row.planExpectedPrincipal ?? row.calculatedExpectedPrincipal;
+    },
+    effectiveExpectedReturn(row) {
+      return row.effectiveExpectedReturn ?? row.planExpectedReturn ?? row.calculatedExpectedReturn;
+    },
+    formatNumber(value) {
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
     formatPlanLabel(row) {
       const content = row.planContent || "未填写正文";
       const summary = content.length > 34 ? `${content.slice(0, 34)}…` : content;

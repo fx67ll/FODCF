@@ -341,7 +341,7 @@ export default {
     },
     // 比赛对阵展示文案：主队 vs 客队 + 开赛时间（时间为空时只展示对阵）
     formatMatchVsTimeText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const homeName = this.displayValue(match.homeTeamName, '主队待定');
       const awayName = this.displayValue(match.awayTeamName, '客队待定');
       const vsText = `${homeName} vs ${awayName}`;

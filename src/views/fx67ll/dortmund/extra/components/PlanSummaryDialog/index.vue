@@ -20,8 +20,12 @@
           :style="{ animationDelay: index * 0.05 + 's' }">
           <div class="plan-summary-item-header">
             <span class="plan-summary-item-content">{{ plan.planContent }}</span>
-            <span class="plan-summary-item-extra">倍率：{{ plan.planRate || '空' }} 金额：{{ plan.planAmount || '空'
-              }}</span>
+            <span class="plan-summary-item-extra">
+              预计本金：{{ formatMoneyDisplay(effectiveExpectedPrincipal(plan)) }} 预计倍率：{{ displayPlanOdds(plan) }} 预计回报：{{
+                formatMoneyDisplay(effectiveExpectedReturn(plan)) }} 实际本金：{{ formatMoneyDisplay(plan.planActualPrincipal)
+              }} 实际倍率：{{
+                displayNumber(plan.planActualOdds) }} 实际回报：{{ formatMoneyDisplay(plan.planActualReturn) }}
+            </span>
           </div>
           <div class="plan-summary-item-matches">
             <el-tag v-for="match in plan.matches || []" :key="match.matchId" size="mini" effect="plain"
@@ -42,7 +46,7 @@
 </template>
 
 <script>
-import { getDialogVerticalOffset } from "@/utils/fx67ll/utils";
+import { formatMoneyDisplay, getDialogVerticalOffset } from "@/utils/fx67ll/utils";
 
 export default {
   name: "PlanSummaryDialog",
@@ -90,11 +94,28 @@ export default {
     },
     // 摘要比赛标签文案：主队 vs 客队 + 开赛时间 + 当前赛果
     formatPlanMatchText(match) {
-      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}");
+      const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       const timeText = matchTime ? `（${matchTime}）` : "";
       const resultText = match.matchResult ? `，赛果：${match.matchResult}` : "";
       return `${vsText}${timeText}${resultText}`;
+    },
+    // 优先展示后端已解析的有效预计倍率，列表快照缺少该字段时回退到手工值或自动值。
+    displayPlanOdds(plan) {
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    effectiveExpectedReturn(plan) {
+      return plan.effectiveExpectedReturn ?? plan.planExpectedReturn ?? plan.calculatedExpectedReturn;
+    },
+    effectiveExpectedPrincipal(plan) {
+      return plan.effectiveExpectedPrincipal ?? plan.planExpectedPrincipal ?? plan.calculatedExpectedPrincipal;
+    },
+    displayNumber(value) {
+      return value === null || value === undefined || value === "" ? "-" : value;
+    },
+    formatMoneyDisplay(value) {
+      return formatMoneyDisplay(value);
     },
   },
 };
