@@ -1,7 +1,7 @@
 <template>
   <el-drawer :visible.sync="drawerVisible" :title="title" direction="rtl" :size="drawerSize" append-to-body
-    custom-class="list-selector-drawer" destroy-on-close :wrapper-closable="false" @open="handleOpen"
-    @opened="handleOpened" @closed="handleClosed">
+    :custom-class="drawerClass" destroy-on-close :wrapper-closable="false" @open="handleOpen" @opened="handleOpened"
+    @closed="handleClosed">
     <div class="list-selector-shell">
       <div class="list-selector-content">
         <div class="list-selector-guide">
@@ -180,6 +180,11 @@ export default {
       type: String,
       default: "",
     },
+    // 子详情侧弹层打开时，当前选择器向左错位，避免完全遮挡并体现层级。
+    shifted: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -199,6 +204,9 @@ export default {
     };
   },
   computed: {
+    drawerClass() {
+      return `list-selector-drawer${this.shifted ? " is-shifted" : ""}`;
+    },
     // type=slot 仍初始化 searchForm，但具体控件由业务侧 search 插槽渲染。
     visibleSearchFields() {
       return (this.searchFields || []).filter((field) => field.type !== "slot");
@@ -991,9 +999,14 @@ export default {
 </style>
 
 <style lang="scss">
-.list-selector-drawer {
+.list-selector-drawer.el-drawer {
   border-radius: 14px 0 0 14px;
   box-shadow: -12px 0 36px rgba(31, 61, 46, 0.16);
+  transition: right 0.22s ease;
+
+  &.is-shifted {
+    right: 18px;
+  }
 
   .el-drawer__header {
     padding: 18px 22px 15px;
@@ -1009,8 +1022,12 @@ export default {
 }
 
 @media (max-width: 767px) {
-  .list-selector-drawer {
+  .list-selector-drawer.el-drawer {
     border-radius: 0;
+
+    &.is-shifted {
+      right: 0;
+    }
 
     .el-drawer__header {
       padding: 16px 14px 13px;

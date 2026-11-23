@@ -1,7 +1,7 @@
 <template>
   <dortmund-detail-drawer :visible.sync="drawerVisible" title="比赛详情"
     :subtitle="detail.matchCode ? `比赛编码 · ${detail.matchCode}` : '查看对阵、状态与审计信息'" icon="el-icon-football" tone="green"
-    size="680px" feature="match" :loading="loading">
+    size="680px" feature="match" :loading="loading" :level="level" :shifted="adoptedVisible">
     <dortmund-detail-card v-if="hasStage" title="对阵舞台" icon="el-icon-football" tone="green">
       <dortmund-detail-block variant="versus" tone="green" :home="detail.homeTeamName" :away="detail.awayTeamName"
         :items="versusFields" />
@@ -16,6 +16,10 @@
         <div class="match-detail-metric">
           <span>比赛结果</span>
           <strong>{{ displayDict(dict.type.fx67ll_match_result, detail.matchResult, '未产生赛果') }}</strong>
+        </div>
+        <div class="match-detail-metric">
+          <span>倍率赛果</span>
+          <strong>{{ formatOddsResultLabels(detail.oddsResult) }}</strong>
         </div>
         <div class="match-detail-metric">
           <span>分析次数</span>
@@ -59,7 +63,7 @@
     </template>
 
     <dortmund-adopted-combinations-drawer :visible.sync="adoptedVisible" :match-id="detail.matchId"
-      :match-label="matchLabel" />
+      :match-label="matchLabel" :level="nestedDrawerLevel" />
   </dortmund-detail-drawer>
 </template>
 
@@ -71,10 +75,13 @@ import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/Dortmun
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 import DortmundAdoptedCombinationsDrawer
   from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
+import { DORTMUND_DRAWER_LAYOUT, splitDortmundOddsResult }
+  from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "DortmundMatchDetailDrawer",
-  dicts: ["sys_notice_status", "fx67ll_match_result"],
+  dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     DortmundDetailDrawer, DortmundDetailCard, DortmundDetailBlock, DortmundRecordTrail,
     DortmundAdoptedCombinationsDrawer
@@ -83,6 +90,8 @@ export default {
     visible: { type: Boolean, default: false },
     matchId: { type: [Number, String], default: null },
     snapshot: { type: Object, default: () => ({}) },
+    // 父级详情内打开时为 2；由比赛选择器或页面直接打开时保持 1。
+    level: { type: [Number, String], default: 1 },
   },
   data() {
     return {
@@ -103,6 +112,12 @@ export default {
     matchLabel() {
       const teams = [this.detail.homeTeamName, this.detail.awayTeamName].filter(Boolean).join(" vs ");
       return teams || this.detail.matchCode || "";
+    },
+    // 已采用组合抽屉始终位于当前比赛详情之上，最多使用受控的第三级层级。
+    nestedDrawerLevel() {
+      const currentLevel = Number.parseInt(this.level, 10);
+      const normalizedLevel = Number.isFinite(currentLevel) ? currentLevel : 1;
+      return Math.min(DORTMUND_DRAWER_LAYOUT.maxLevel, Math.max(1, normalizedLevel) + 1);
     },
     versusFields() {
       return [
@@ -128,7 +143,7 @@ export default {
       this.detail.matchStatus].some(this.hasDisplayValue);
     },
     hasStats() {
-      return [this.detail.matchResult, this.detail.analysisCount,
+      return [this.detail.matchResult, this.detail.oddsResult, this.detail.analysisCount,
       this.detail.adoptedCombinationCount].some(this.hasDisplayValue);
     },
     associationFields() {
@@ -145,11 +160,11 @@ export default {
       return [
         { key: "owner", label: "归属用户ID", value: this.detail.userId, icon: "el-icon-user" },
         {
-          key: "create", label: "创建记录", value: this.detail.createBy,
+          key: "create", label: "创建记录", value: formatAuditActor(this.detail.createBy),
           hint: createTime ? `创建时间 · ${createTime}` : "", icon: "el-icon-edit-outline", state: "success"
         },
         {
-          key: "update", label: "最近更新", value: this.detail.updateBy,
+          key: "update", label: "最近更新", value: formatAuditActor(this.detail.updateBy),
           hint: updateTime ? `更新时间 · ${updateTime}` : "", icon: "el-icon-refresh", state: "warning"
         },
       ];
@@ -195,6 +210,12 @@ export default {
         return fallback;
       }
       return this.selectDictLabel(options || [], value) || String(value);
+    },
+    formatOddsResultLabels(value) {
+      const options = (this.dict && this.dict.type && this.dict.type.fx67ll_dortmund_odds_type) || [];
+      const labels = splitDortmundOddsResult(value)
+        .map((token) => this.selectDictLabel(options, token) || token);
+      return labels.length ? labels.join("、") : "未登记";
     },
   },
 };

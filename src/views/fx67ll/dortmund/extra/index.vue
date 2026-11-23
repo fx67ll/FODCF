@@ -39,13 +39,13 @@
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-"
-          start-placeholder="开始时间" end-placeholder="结束时间" clearable></el-date-picker>
+          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
+          end-placeholder="结束时间" clearable></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-"
-          start-placeholder="开始时间" end-placeholder="结束时间" clearable></el-date-picker>
+          type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
+          end-placeholder="结束时间" clearable></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
@@ -138,13 +138,17 @@
           <span v-else>未关联</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+      </el-table-column>
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+      <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+      </el-table-column>
       <el-table-column label="记录创建时间" align="center" prop="createTime" fixed="right" width="150"
         class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
@@ -264,6 +268,7 @@ const EXTRA_EDIT_REFRESH_KEY = "dortmund-extra-edit-refresh-required";
 // 入口预置标记的本地缓存key（总览页/流程图页写入，与 overview/workflow 页保持一致）
 const PAGE_MODE_KEY = "dortmund-extra-page-mode";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "DortmundExtra",
   dicts: ["sys_yes_no"],
@@ -293,9 +298,9 @@ export default {
     extraAuditTimeline() {
       return [
         { label: '归属用户ID', value: this.detailData.userId || '-', icon: 'el-icon-user' },
-        { label: '记录创建者', value: this.detailData.createBy || '-', icon: 'el-icon-user' },
+        { label: '记录创建者', value: this.formatAuditActor(this.detailData.createBy), icon: 'el-icon-user' },
         { label: '记录创建时间', value: this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-time' },
-        { label: '记录更新者', value: this.detailData.updateBy || '-', icon: 'el-icon-user' },
+        { label: '记录更新者', value: this.formatAuditActor(this.detailData.updateBy), icon: 'el-icon-user' },
         { label: '记录更新时间', value: this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-refresh' },
       ];
     },
@@ -382,6 +387,10 @@ export default {
     }
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     // 消费二级录入页保存后的刷新标记（会话级，避免跨标签页误刷新）
     consumeEditRefreshFlag() {
       if (sessionStorage.getItem(EXTRA_EDIT_REFRESH_KEY) !== "1") {
@@ -433,7 +442,7 @@ export default {
       return value === null || value === undefined || value === "" ? "-" : value;
     },
     effectivePlanOdds(plan) {
-      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds;
       return value === null || value === undefined || value === "" ? "-" : value;
     },
     effectivePlanReturn(plan) {

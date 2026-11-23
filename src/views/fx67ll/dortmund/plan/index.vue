@@ -53,7 +53,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -69,7 +69,8 @@
             @review="handleReview" @update="handleUpdate" @delete="handleDelete" />
           <div v-else key="list" class="dl-list-card">
             <plan-list-pane :rows="planList" :loading="loading" @selection-change="handleSelectionChange"
-              @review="handleReview" @update="handleUpdate" @delete="handleDelete" />
+              @review="handleReview" @update="handleUpdate" @delete="handleDelete" @view-matches="handleViewPlanMatches"
+              @view-combinations="handleViewPlanCombinations" />
           </div>
         </transition>
 
@@ -92,6 +93,12 @@
       :selected-items="[selectedCombination]" @confirm="handleCombinationSelectorConfirm" />
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" :selected-items="[selectedMatch]"
       @confirm="handleMatchSelectorConfirm" />
+
+    <!-- 列表数量列复用方案详情中的比赛与回报组合下钻视图。 -->
+    <dortmund-plan-matches-drawer :visible.sync="planMatchesVisible" :matches="planMatches"
+      :plan-label="planDrawerLabel" />
+    <dortmund-adopted-combinations-drawer :visible.sync="planCombinationsVisible" :combination-ids="planCombinationIds"
+      :plan-label="planDrawerLabel" />
   </div>
 </template>
 
@@ -102,6 +109,9 @@ import { checkPermi } from "@/utils/common/permission";
 
 import DortmundCombinationSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundCombinationSelectorModal/index";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
+import DortmundPlanMatchesDrawer from "@/views/fx67ll/dortmund/other/component/DortmundPlanMatchesDrawer/index";
+import DortmundAdoptedCombinationsDrawer
+  from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
@@ -116,7 +126,7 @@ export default {
   name: "Plan",
   components: {
     ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanDetailDrawer, DortmundCombinationSelectorModal,
-    DortmundMatchSelectorModal
+    DortmundMatchSelectorModal, DortmundPlanMatchesDrawer, DortmundAdoptedCombinationsDrawer
   },
   data() {
     return {
@@ -156,6 +166,12 @@ export default {
       combinationSelectorVisible: false,
       selectedMatch: null,
       matchSelectorVisible: false,
+      // 列表数量列打开的下钻抽屉数据，直接采用后端列表批量回填结果。
+      planMatchesVisible: false,
+      planMatches: [],
+      planCombinationsVisible: false,
+      planCombinationIds: [],
+      planDrawerLabel: "",
       // 是否使用高级搜索
       isMoreQuery: false,
       // 查询参数
@@ -269,6 +285,18 @@ export default {
     handleMatchSelectorConfirm(match) {
       this.selectedMatch = match || null;
       this.queryParams.matchId = match ? match.matchId : null;
+    },
+    // 关联比赛数量列：复用方案详情的比赛列表抽屉，不重复请求详情。
+    handleViewPlanMatches(row) {
+      this.planMatches = (row && row.matches) || [];
+      this.planDrawerLabel = (row && row.planContent) || "";
+      this.planMatchesVisible = true;
+    },
+    // 关联组合数量列：复用比赛记录中的已采用组合抽屉的按主键查询模式。
+    handleViewPlanCombinations(row) {
+      this.planCombinationIds = (row && row.combinationIds) || [];
+      this.planDrawerLabel = (row && row.planContent) || "";
+      this.planCombinationsVisible = true;
     },
     // 多选框选中数据
     handleSelectionChange(selection) {

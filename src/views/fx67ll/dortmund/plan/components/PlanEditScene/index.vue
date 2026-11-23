@@ -39,8 +39,8 @@
                   <template slot="label">
                     <dortmund-form-label label="方案计划" tip="必填；1-1023个字符" />
                   </template>
-                  <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="limits.planContent" show-word-limit
-                    placeholder="请输入方案计划" />
+                  <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="limits.planContent"
+                    show-word-limit placeholder="请输入方案计划" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
@@ -48,8 +48,8 @@
                   <template slot="label">
                     <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
                   </template>
-                  <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="limits.planRemark" show-word-limit
-                    placeholder="请输入其他说明" />
+                  <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="limits.planRemark"
+                    show-word-limit placeholder="请输入其他说明" />
                 </el-form-item>
               </el-col>
               <el-col :span="24" v-if="editMode === 'update'">
@@ -74,7 +74,7 @@
               <span class="plan-finance-step">01</span>
               <div class="plan-finance-copy">
                 <strong>预计数据</strong>
-                <small>关联回报组合后自动计算，可逐项手动修正；留空时以后端自动值为准</small>
+                <small>预计本金、倍率与回报关联组合后自动带出，可逐项手动修正；本金和回报留空时以后端汇总值为准，倍率留空表示尚未填写</small>
               </div>
               <span class="plan-finance-tag is-optional">选填</span>
             </div>
@@ -89,9 +89,9 @@
                   <div class="plan-money-field-row">
                     <el-input v-model="editForm.planExpectedPrincipal" class="plan-money-field-input" clearable
                       placeholder="关联组合后自动带出，可手动修正" />
-                    <el-button type="success" plain size="small" class="plan-money-action-button plan-calculator-trigger"
-                      icon="el-icon-s-order" title="打开数值计算器，快速核算实际本金、实际回报与实际倍率"
-                      @click="calculatorVisible = true">计算器</el-button>
+                    <el-button type="success" plain size="small"
+                      class="plan-money-action-button plan-calculator-trigger" icon="el-icon-s-order"
+                      title="打开数值计算器，快速核算实际本金、实际回报与实际倍率" @click="calculatorVisible = true">计算器</el-button>
                   </div>
                 </el-form-item>
               </el-col>
@@ -99,10 +99,9 @@
                 <el-form-item prop="planExpectedOdds" label-width="auto">
                   <template slot="label">
                     <dortmund-form-label label="方案预计倍率"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空使用后端自动计算值`" />
+                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空表示尚未填写`" />
                   </template>
-                  <el-input v-model="editForm.planExpectedOdds" clearable
-                    placeholder="关联组合后自动带出，可手动修正" />
+                  <el-input v-model="editForm.planExpectedOdds" clearable placeholder="关联组合后自动带出，可手动修正" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
@@ -111,8 +110,7 @@
                     <dortmund-form-label label="方案预计回报"
                       :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
                   </template>
-                  <el-input v-model="editForm.planExpectedReturn" clearable
-                    placeholder="关联组合后自动带出，可手动修正" />
+                  <el-input v-model="editForm.planExpectedReturn" clearable placeholder="关联组合后自动带出，可手动修正" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -141,7 +139,8 @@
                       placeholder="请输入实际投入本金" />
                     <el-button type="warning" plain size="small"
                       class="plan-money-action-button plan-combination-recalculate" icon="el-icon-refresh"
-                      :loading="detailLoading" :disabled="!selectedCombinationCount" @click="handleRecalculate">重新计算</el-button>
+                      :loading="detailLoading" :disabled="!selectedCombinationCount"
+                      @click="handleRecalculate">重新计算</el-button>
                   </div>
                 </el-form-item>
               </el-col>
@@ -151,8 +150,7 @@
                     <dortmund-form-label label="方案实际倍率"
                       :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数`" />
                   </template>
-                  <el-input v-model="editForm.planActualOdds" clearable
-                    placeholder="赛事结算后登记实际倍率" />
+                  <el-input v-model="editForm.planActualOdds" clearable placeholder="赛事结算后登记实际倍率" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
@@ -161,8 +159,7 @@
                     <dortmund-form-label label="方案实际回报"
                       :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
                   </template>
-                  <el-input v-model="editForm.planActualReturn" clearable
-                    placeholder="赛事结算后登记实际回报" />
+                  <el-input v-model="editForm.planActualReturn" clearable placeholder="赛事结算后登记实际回报" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -201,8 +198,8 @@
             </div>
             <div class="plan-combination-list" v-if="selectedCombinationCount">
               <div class="plan-combination-item is-clickable" v-for="combination in selectedCombinationPreviewList"
-                :key="combination.combinationId" role="button" tabindex="0"
-                @click="openCombinationDetail(combination)" @keyup.enter="openCombinationDetail(combination)">
+                :key="combination.combinationId" role="button" tabindex="0" @click="openCombinationDetail(combination)"
+                @keyup.enter="openCombinationDetail(combination)">
                 <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode ||
                   `组合 ${combination.combinationId}` }}</span>
                 <dortmund-verification-status-tag :status="combination.verificationStatus" />
@@ -243,36 +240,40 @@
             <span class="plan-preview-value">{{ autoPreview.expectedPrincipal || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
-            <span class="plan-preview-label">自动预计倍率</span>
-            <span class="plan-preview-value">{{ autoPreview.expectedOdds || "按组合保存后生成" }}</span>
-          </div>
-          <div class="plan-preview-row">
             <span class="plan-preview-label">自动预计回报</span>
             <span class="plan-preview-value">{{ autoPreview.expectedReturn || "按组合保存后生成" }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">当前预计本金</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedPrincipal) ? editForm.planExpectedPrincipal : (autoPreview.expectedPrincipal || "使用自动值") }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedPrincipal) ?
+              editForm.planExpectedPrincipal :
+              (autoPreview.expectedPrincipal || "使用自动值") }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">当前预计倍率</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedOdds) ? editForm.planExpectedOdds : (autoPreview.expectedOdds || "使用自动值") }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedOdds) ? editForm.planExpectedOdds : "未填写"
+            }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">当前预计回报</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedReturn) ? editForm.planExpectedReturn : (autoPreview.expectedReturn || "使用自动值") }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planExpectedReturn) ? editForm.planExpectedReturn :
+              (autoPreview.expectedReturn || "使用自动值") }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">实际本金</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planActualPrincipal) ? editForm.planActualPrincipal : "等待手工填写" }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualPrincipal) ? editForm.planActualPrincipal :
+              "等待手工填写" }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">实际倍率</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planActualOdds) ? editForm.planActualOdds : "等待手工填写" }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualOdds) ? editForm.planActualOdds : "等待手工填写"
+            }}</span>
           </div>
           <div class="plan-preview-row">
             <span class="plan-preview-label">实际回报</span>
-            <span class="plan-preview-value">{{ hasValue(editForm.planActualReturn) ? editForm.planActualReturn : "等待手工填写" }}</span>
+            <span class="plan-preview-value">{{ hasValue(editForm.planActualReturn) ? editForm.planActualReturn :
+              "等待手工填写"
+            }}</span>
           </div>
           <div class="plan-preview-hint" :class="{ ok: selectedCombinationCount > 0 }">
             <i :class="selectedCombinationCount > 0 ? 'el-icon-success' : 'el-icon-info'"></i>
@@ -296,9 +297,8 @@
             <i class="el-icon-football"></i>
             <span>比赛清单</span>
           </div>
-          <div class="plan-preview-match is-clickable" v-for="(match, index) in derivedMatches"
-            :key="'p-open-' + index" role="button" tabindex="0" @click="openMatchDetail(match)"
-            @keyup.enter="openMatchDetail(match)">
+          <div class="plan-preview-match is-clickable" v-for="(match, index) in derivedMatches" :key="'p-open-' + index"
+            role="button" tabindex="0" @click="openMatchDetail(match)" @keyup.enter="openMatchDetail(match)">
             <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
           </div>
         </div>
@@ -653,7 +653,7 @@ export default {
         this.handleCombinationChange([...(this.editForm.combinationIds || [])]);
       }
     },
-    // 重新拉取关联组合快照、清空手工覆盖并刷新自动预览；最终值仍以后端保存结果为准
+    // 重新拉取关联组合快照、清空预计覆盖并刷新前端带出值；最终值仍以后端保存结果为准
     handleRecalculate() {
       if (!this.selectedCombinationCount || this.detailLoading) {
         return;
@@ -669,7 +669,7 @@ export default {
         this.$modal.msgWarning("重新计算未完成，请检查网络后重试；当前保留已有选择");
       });
     },
-    // 清空三条手工预计字段，恢复后端自动计算口径；实际字段是结算事实，不参与重置。
+    // 清空三条预计字段并重新带出建议值；预计倍率仅保存在可编辑字段，实际字段是结算事实，不参与重置。
     resetManualAdjustment() {
       this.editForm.planExpectedPrincipal = null;
       this.editForm.planExpectedOdds = null;
@@ -681,7 +681,7 @@ export default {
         this.fillExpectedFieldsFromPreview();
       });
     },
-    // 只为空白预计字段填入自动值，保留用户已经手动修正的数值。
+    // 只为空白预计字段填入组合推导的带出值，保留用户已经手动修正的数值。
     fillExpectedFieldsFromPreview() {
       const mapping = {
         planExpectedPrincipal: this.autoPreview.expectedPrincipal,

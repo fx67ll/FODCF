@@ -88,59 +88,74 @@
           <el-table v-loading="loading" :data="matchList" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="46" align="center" />
             <!-- <el-table-column label="比赛编号" align="center" prop="matchId" width="96" fixed="left" /> -->
-            <el-table-column label="所属赛季" align="center" prop="seasonName" min-width="80" fixed="left"
-              show-overflow-tooltip />
-            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="200" fixed="left"
-              show-overflow-tooltip />
+
+            <el-table-column label="比赛时间" align="center" prop="matchTime" width="150" fixed="left"
+              class-name="dortmund-nowrap-cell">
+              <template slot-scope="scope">
+                <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+              </template>
+            </el-table-column>
             <el-table-column label="主队名称" align="center" prop="homeTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
-                <span class="match-team-name home">{{ scope.row.homeTeamName || "-" }}</span>
+                <span class="match-team-name home" :class="teamLeagueClass(scope.row, 'home')">{{ scope.row.homeTeamName
+                  || "-" }}</span>
               </template>
             </el-table-column>
             <el-table-column label="客队名称" align="center" prop="awayTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
-                <span class="match-team-name away">{{ scope.row.awayTeamName || "-" }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="比赛时间" align="center" prop="matchTime" width="150" class-name="dortmund-nowrap-cell">
-              <template slot-scope="scope">
-                <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="球队主场" align="center" prop="matchVenue" min-width="150" show-overflow-tooltip />
-            <el-table-column label="比赛状态" align="center" prop="matchStatus" width="96">
-              <template slot-scope="scope">
-                <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchStatus" />
+                <span class="match-team-name away" :class="teamLeagueClass(scope.row, 'away')">{{ scope.row.awayTeamName
+                  || "-" }}</span>
               </template>
             </el-table-column>
             <!-- 分析次数为后台统计字段，本页只读展示，不接受录入 -->
-            <el-table-column label="分析次数" align="center" prop="analysisCount" width="100" />
-            <el-table-column label="比赛结果" align="center" prop="matchResult" width="96">
+            <el-table-column label="分析次数" align="center" prop="analysisCount" width="100">
               <template slot-scope="scope">
-                <dict-tag :options="dict.type.fx67ll_match_result" :value="scope.row.matchResult" />
+                <dortmund-usage-heat-badge :value="scope.row.analysisCount" label="分析次数" tone="red" />
               </template>
             </el-table-column>
             <el-table-column label="已采用组合" align="center" prop="adoptedCombinationCount" width="120">
               <template slot-scope="scope">
-                <el-button v-if="scope.row.adoptedCombinationCount > 0" type="text" class="dortmund-theme-text"
-                  @click="handleAdoptedCombinations(scope.row)">
-                  {{ scope.row.adoptedCombinationCount }}
-                </el-button>
-                <span v-else class="match-adopted-zero">0</span>
+                <dortmund-usage-heat-badge :value="scope.row.adoptedCombinationCount"
+                  :interactive="Number(scope.row.adoptedCombinationCount) > 0" label="已采用组合" tone="green"
+                  @click="handleAdoptedCombinations(scope.row)" />
+              </template>
+            </el-table-column>
+            <el-table-column label="比赛结果" align="center" prop="matchResult" width="96">
+              <template slot-scope="scope">
+                <dict-tag v-if="hasMatchResult(scope.row.matchResult)" :options="dict.type.fx67ll_match_result"
+                  :value="scope.row.matchResult" />
+                <dortmund-result-empty-tag v-else />
+              </template>
+            </el-table-column>
+            <el-table-column label="倍率赛果" align="center" prop="oddsResult" width="170">
+              <template slot-scope="scope">
+                <dortmund-odds-result-tags :value="scope.row.oddsResult" empty-text="未登记" />
+              </template>
+            </el-table-column>
+            <el-table-column label="所属赛季" align="center" prop="seasonName" min-width="80" show-overflow-tooltip />
+            <el-table-column label="球队主场" align="center" prop="matchVenue" min-width="150" show-overflow-tooltip />
+            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="190" show-overflow-tooltip />
+            <el-table-column label="比赛状态" align="center" prop="matchStatus" width="100">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchStatus" />
               </template>
             </el-table-column>
             <el-table-column label="比赛备注" align="center" prop="matchRemark" min-width="200"
               :show-overflow-tooltip="true" />
-            <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+            <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+              <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+            </el-table-column>
             <el-table-column label="记录创建时间" align="center" prop="createTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
                 <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+            <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+              <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+            </el-table-column>
             <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
@@ -175,7 +190,7 @@
         @saved="getList" />
     </transition>
 
-    <dortmund-detail-drawer :visible.sync="matchDetailVisible" title="比赛详情"
+    <dortmund-detail-drawer :visible.sync="matchDetailVisible" :shifted="adoptedCombinationVisible" title="比赛详情"
       :subtitle="matchDetailData.matchCode ? `比赛编码 · ${matchDetailData.matchCode}` : '查看对阵、状态与审计信息'"
       icon="el-icon-football" tone="green" size="680px" feature="match" :loading="matchDetailLoading">
       <dortmund-detail-card v-if='hasMatchStage' title='对阵舞台' icon='el-icon-football' tone='green'>
@@ -244,15 +259,23 @@ import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 import DortmundAdoptedCombinationsDrawer from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
-import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import DortmundOddsResultTags from "@/views/fx67ll/dortmund/other/component/DortmundOddsResultTags/index";
+import DortmundUsageHeatBadge from "@/views/fx67ll/dortmund/other/component/DortmundUsageHeatBadge/index";
+import DortmundResultEmptyTag from "@/views/fx67ll/dortmund/other/component/DortmundResultEmptyTag/index";
+import {
+  DORTMUND_PAGINATION,
+  resolveDortmundLeagueTheme,
+  splitDortmundOddsResult,
+} from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "Match",
-  dicts: ["sys_notice_status", "fx67ll_match_result"],
+  dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     MatchEditScene, DortmundTeamOptionSelector, DortmundSeasonSelect, MatchOddsDrawer, MatchInfoDrawer,
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail,
-    DortmundAdoptedCombinationsDrawer
+    DortmundAdoptedCombinationsDrawer, DortmundOddsResultTags, DortmundUsageHeatBadge, DortmundResultEmptyTag
   },
   computed: {
     matchVersusFields() {
@@ -273,10 +296,16 @@ export default {
     matchMetricItems() {
       return [
         { label: '比赛结果', value: this.displayDict(this.dict.type.fx67ll_match_result, this.matchDetailData.matchResult, '未产生赛果'), emptyText: '未产生赛果', icon: 'el-icon-trophy' },
-        { label: '分析次数', value: this.matchDetailData.analysisCount, emptyText: '暂无分析', icon: 'el-icon-search' },
+        { label: '倍率赛果', value: this.formatOddsResultLabels(this.matchDetailData.oddsResult), emptyText: '未登记', icon: 'el-icon-data-line' },
+        {
+          label: '分析次数',
+          value: Number(this.matchDetailData.analysisCount) || 0,
+          emptyText: '暂无分析',
+          icon: 'el-icon-search',
+        },
         {
           label: '已采用组合',
-          value: this.matchDetailData.adoptedCombinationCount,
+          value: Number(this.matchDetailData.adoptedCombinationCount) || 0,
           emptyText: '暂无采用',
           icon: 'el-icon-collection-tag',
           clickable: Number(this.matchDetailData.adoptedCombinationCount) > 0,
@@ -306,6 +335,7 @@ export default {
     hasMatchStats() {
       return [
         this.matchDetailData.matchResult,
+        this.matchDetailData.oddsResult,
         this.matchDetailData.analysisCount,
         this.matchDetailData.adoptedCombinationCount,
       ].some((value) => this.hasDisplayValue(value));
@@ -323,8 +353,8 @@ export default {
       const updateTime = this.parseTime(this.matchDetailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
         { key: 'owner', label: '归属用户ID', value: this.matchDetailData.userId, icon: 'el-icon-user' },
-        { key: 'create', label: '创建记录', value: this.matchDetailData.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
-        { key: 'update', label: '最近更新', value: this.matchDetailData.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+        { key: 'create', label: '创建记录', value: this.formatAuditActor(this.matchDetailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: this.formatAuditActor(this.matchDetailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
     // 已采用组合抽屉使用主客队名称作为上下文标题。
@@ -407,6 +437,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     // 重置时间段查询
     clearDateQueryParams() {
       this.queryParams.beginCreateTime = null;
@@ -489,6 +523,7 @@ export default {
           matchVenue: detail.matchVenue,
           matchStatus: detail.matchStatus,
           matchResult: detail.matchResult,
+          oddsResult: detail.oddsResult,
           matchRemark: detail.matchRemark,
         };
         this.pageScene = "edit";
@@ -509,6 +544,7 @@ export default {
         matchVenue: null,
         matchStatus: null,
         matchResult: null,
+        oddsResult: null,
         matchRemark: null,
       };
     },
@@ -572,6 +608,26 @@ export default {
         return fallback;
       }
       return this.selectDictLabel(options || [], value) || String(value);
+    },
+    // 倍率赛果以逗号串落库，详情页按字典逐项转成可读标签。
+    formatOddsResultLabels(value) {
+      const options = (this.dict && this.dict.type && this.dict.type.fx67ll_dortmund_odds_type) || [];
+      return splitDortmundOddsResult(value)
+        .map((token) => this.selectDictLabel(options, token) || token)
+        .join('、');
+    },
+    // 主客队按 SQL 球队资料中的七类联赛启用柔和主题；无法确认的球队沿用原配色。
+    teamLeagueClass(row, side) {
+      const prefix = side === 'away' ? 'away' : 'home';
+      const league = resolveDortmundLeagueTheme(row[`${prefix}TeamCountry`], row[`${prefix}TeamCode`]);
+      return league ? `league-${league}` : '';
+    },
+    // 历史导入数据可能以 "-" 表示未产生赛果，展示层与空值统一处理。
+    hasMatchResult(value) {
+      if (!this.hasDisplayValue(value)) {
+        return false;
+      }
+      return String(value).trim() !== "-";
     },
     // 统计值 0 属于有效数据，仅缺失值参与空值判断
     hasDisplayValue(value) {
@@ -638,9 +694,89 @@ export default {
   }
 }
 
-.match-adopted-zero {
-  font-size: 12px;
-  color: #9aa8a1;
+/* 七类联赛使用同一联赛内的柔和色系；主队偏实、客队偏轻，联赛外球队继续使用上面的原有配色。 */
+.match-team-name.home.league-bundesliga {
+  color: #2f7d5a;
+  background: #e9f8ef;
+  border: 1px solid #cfeedd;
+}
+
+.match-team-name.away.league-bundesliga {
+  color: #5d8f78;
+  background: #f5fbf7;
+  border: 1px dashed #dbece3;
+}
+
+.match-team-name.home.league-premier-league {
+  color: #346fa8;
+  background: #eaf4ff;
+  border: 1px solid #cfe4fa;
+}
+
+.match-team-name.away.league-premier-league {
+  color: #6389b0;
+  background: #f5f9ff;
+  border: 1px dashed #dce8f6;
+}
+
+.match-team-name.home.league-la-liga {
+  color: #a96535;
+  background: #fff3e8;
+  border: 1px solid #f4d9bf;
+}
+
+.match-team-name.away.league-la-liga {
+  color: #b98862;
+  background: #fff9f4;
+  border: 1px dashed #f0e2d5;
+}
+
+.match-team-name.home.league-serie-a {
+  color: #6e56a5;
+  background: #f3efff;
+  border: 1px solid #ded3fa;
+}
+
+.match-team-name.away.league-serie-a {
+  color: #9180b8;
+  background: #faf8ff;
+  border: 1px dashed #e7e0f5;
+}
+
+.match-team-name.home.league-ligue-1 {
+  color: #ad5876;
+  background: #fff0f5;
+  border: 1px solid #f4d3df;
+}
+
+.match-team-name.away.league-ligue-1 {
+  color: #c5869b;
+  background: #fff8fa;
+  border: 1px dashed #f1e0e6;
+}
+
+.match-team-name.home.league-j1 {
+  color: #2c8584;
+  background: #e9f9f8;
+  border: 1px solid #ccebea;
+}
+
+.match-team-name.away.league-j1 {
+  color: #689f9e;
+  background: #f4fcfc;
+  border: 1px dashed #dcefee;
+}
+
+.match-team-name.home.league-j2 {
+  color: #927534;
+  background: #fbf7e8;
+  border: 1px solid #ecdfb9;
+}
+
+.match-team-name.away.league-j2 {
+  color: #ab9665;
+  background: #fdfbf4;
+  border: 1px dashed #eee5d2;
 }
 
 .match-detail-home {

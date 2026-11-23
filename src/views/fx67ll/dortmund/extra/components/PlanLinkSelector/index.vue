@@ -540,7 +540,7 @@ export default {
     },
     // 组合关联摘要统一展示服务端有效预计值，空值明确显示占位符。
     displayPlanOdds(plan) {
-      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds;
       return value === null || value === undefined || value === "" ? "空" : value;
     },
     displayPlanExpectedReturn(plan) {

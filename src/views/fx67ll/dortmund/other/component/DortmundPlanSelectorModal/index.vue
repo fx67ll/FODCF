@@ -98,7 +98,7 @@ export default {
       return formatMoneyDisplay(value);
     },
     effectiveExpectedOdds(row) {
-      const value = row.effectiveExpectedOdds ?? row.planExpectedOdds ?? row.calculatedExpectedOdds;
+      const value = row.effectiveExpectedOdds ?? row.planExpectedOdds;
       return value === null || value === undefined || value === "" ? "-" : value;
     },
     effectiveExpectedPrincipal(row) {

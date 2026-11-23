@@ -5,7 +5,7 @@
         <div class="return-hero-icon"><i class="el-icon-magic-stick"></i></div>
         <div>
           <h2>回报组合工作区</h2>
-          <p>默认展示全部历史组合；按比赛、状态和批次条件筛选，或进入独立页面发起异步分析</p>
+          <p>默认展示已采用且未核验的有效组合；可查看全部筛选结果或进入独立页面发起异步分析</p>
         </div>
       </div>
       <div class="return-hero-actions">
@@ -55,13 +55,13 @@
         </el-form-item>
         <el-form-item label="创建时间" label-width="auto" v-if="isMoreCombinationQuery">
           <el-date-picker v-model="combinationDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
-            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
-            end-placeholder="结束时间" style="width: 360px" clearable />
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
+            style="width: 360px" clearable />
         </el-form-item>
         <el-form-item label="审核时间" label-width="auto" v-if="isMoreCombinationQuery">
           <el-date-picker v-model="combinationAuditDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
-            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
-            end-placeholder="结束时间" style="width: 360px" clearable />
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
+            style="width: 360px" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleCombinationQuery">搜索</el-button>
@@ -75,8 +75,8 @@
       </el-form>
     </transition>
 
-    <div ref="combinationCard" class="return-card combination-card">
-      <div class="combination-head">
+    <div ref="combinationCard" class="combination-card">
+      <div class="combination-head dl-toolbar">
         <div class="return-card-title">
           <i class="el-icon-collection"></i>回报组合列表
           <span class="return-card-count">{{ combinationTotal }} 条</span>
@@ -102,6 +102,9 @@
               <el-option label="升序" value="asc" />
             </el-select>
           </div>
+          <el-button type="success" plain size="mini" icon="el-icon-view" @click="handleViewValidData">
+            查看有效数据
+          </el-button>
           <div class="combination-batch-actions">
             <el-button type="success" plain size="mini" icon="el-icon-check" :loading="batchAdoptLoading"
               :disabled="!selectedCombinationIds.length" @click="handleBatchAdopt"
@@ -116,21 +119,38 @@
           </div>
         </div>
       </div>
-      <div class="history-table-wrap">
+      <div class="history-table-wrap combination-table-wrap">
         <el-table ref="combinationTable" v-loading="combinationListLoading" :data="combinationList"
-          row-key="combinationId" size="small" class="history-table combination-table"
+          row-key="combinationId" class="history-table combination-table"
           @selection-change="handleCombinationSelectionChange">
           <el-table-column type="selection" width="46" fixed="left" />
-          <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip fixed="left" />
-          <el-table-column label="组合标题" prop="combinationTitle" min-width="190" show-overflow-tooltip />
+          <el-table-column label="组合标题" prop="combinationTitle" min-width="230" show-overflow-tooltip fixed="left" />
+          <el-table-column label="场次" align="center" width="80" fixed="left">
+            <template slot-scope="scope">
+              <el-button v-if="scope.row.matchCount > 0" type="text" class="dortmund-theme-text combination-match-count"
+                :title="`查看组合内 ${scope.row.matchCount || 0} 场比赛`" @click="handleCombinationDetail(scope.row)"
+                v-hasPermi="['dortmund:return:query']">
+                {{ scope.row.matchCount }}
+              </el-button>
+              <span v-else class="combination-match-count is-empty">0</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="120" />
+          <el-table-column label="预计回报" align="center" width="120">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
+          </el-table-column>
+          <el-table-column label="偏差金额" align="center" width="120">
+            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
+          </el-table-column>
+          <el-table-column label="核验状态" align="center" width="100">
+            <template slot-scope="scope">
+              <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
+            </template>
+          </el-table-column>
           <el-table-column label="模式" align="center" width="108">
             <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
           </el-table-column>
-          <el-table-column label="批次状态" align="center" width="100">
-            <template slot-scope="scope">
-              <dict-tag :options="dict.type.fx67ll_ai_analysis_status || []" :value="scope.row.generationStatus" />
-            </template>
-          </el-table-column>
+          <el-table-column label="组合编码" prop="combinationCode" width="200" show-overflow-tooltip />
           <el-table-column label="采用状态" align="center" width="100">
             <template slot-scope="scope">
               <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
@@ -138,33 +158,28 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="核验状态" align="center" width="104">
+          <el-table-column label="批次状态" align="center" width="100">
             <template slot-scope="scope">
-              <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
-            </template>
-          </el-table-column>
-          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="100" />
-          <el-table-column label="预计回报" align="center" width="112">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
-          </el-table-column>
-          <el-table-column label="偏差金额" align="center" width="112">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
-          </el-table-column>
-          <el-table-column label="场次" align="center" width="80">
-            <template slot-scope="scope">
-              <el-button v-if="scope.row.matchCount > 0" type="text" class="dortmund-theme-text"
-                :title="`查看组合内 ${scope.row.matchCount || 0} 场比赛`" @click="handleCombinationDetail(scope.row)"
-                v-hasPermi="['dortmund:return:query']">
-                {{ scope.row.matchCount }}
-              </el-button>
-              <span v-else class="combination-match-zero">0</span>
+              <dict-tag :options="dict.type.fx67ll_ai_analysis_status || []" :value="scope.row.generationStatus" />
             </template>
           </el-table-column>
           <el-table-column label="审核时间" align="center" width="160" class-name="dortmund-nowrap-cell">
-            <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+            <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
+            }}</template>
+          </el-table-column>
+          <el-table-column label="记录创建者" align="center" prop="createBy" width="108" show-overflow-tooltip>
+            <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
           </el-table-column>
           <el-table-column label="创建时间" align="center" width="160" class-name="dortmund-nowrap-cell">
-            <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+            <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
+            }}</template>
+          </el-table-column>
+          <el-table-column label="记录更新者" align="center" prop="updateBy" width="108" show-overflow-tooltip>
+            <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+          </el-table-column>
+          <el-table-column label="更新时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+            <template slot-scope="scope">{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
+            }}</template>
           </el-table-column>
           <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="122" fixed="right">
             <template slot-scope="scope">
@@ -176,9 +191,9 @@
               <dortmund-action-button v-else label="不采用" icon="el-icon-close" action="reject"
                 :loading="reviewingId === scope.row.combinationId" @click="handleReview(scope.row, 'N')"
                 v-hasPermi="['dortmund:return:review']" />
-              <dortmund-action-button v-if="scope.row.adoptedFlag === 'Y'" label="核验赛果"
-                icon="el-icon-circle-check" action="verify" :loading="verifyingId === scope.row.combinationId"
-                @click="handleVerify(scope.row)" v-hasPermi="['dortmund:return:review']" />
+              <dortmund-action-button v-if="scope.row.adoptedFlag === 'Y'" label="核验倍率赛果" icon="el-icon-circle-check"
+                action="verify" :loading="verifyingId === scope.row.combinationId" @click="handleVerify(scope.row)"
+                v-hasPermi="['dortmund:return:review']" />
             </template>
           </el-table-column>
         </el-table>
@@ -254,7 +269,7 @@
     </dortmund-detail-drawer>
 
     <el-drawer :visible.sync="historyVisible" title="回报组合历史批次" size="1044px" append-to-body destroy-on-close
-      custom-class="return-drawer return-history-drawer" @opened="handleBatchQuery">
+      custom-class="return-drawer return-history-drawer" :wrapper-closable="false" @opened="handleBatchQuery">
       <div class="return-drawer-body dl-page">
         <div class="history-drawer-hero">
           <div class="history-drawer-hero-icon"><i class="el-icon-time"></i></div>
@@ -292,8 +307,8 @@
           </el-form-item>
           <el-form-item label="创建时间" label-width="auto">
             <el-date-picker v-model="batchDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
-              range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间"
-              end-placeholder="结束时间" style="width: 360px" clearable />
+              range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
+              style="width: 360px" clearable />
           </el-form-item>
           <el-form-item class="history-batch-actions">
             <el-button type="primary" icon="el-icon-search" size="mini" :loading="batchLoading"
@@ -362,7 +377,7 @@
     </el-drawer>
 
     <el-drawer :visible.sync="orphanImageVisible" title="孤儿图片清理" size="980px" append-to-body destroy-on-close
-      custom-class="return-drawer return-orphan-drawer" @opened="initializeOrphanQuery">
+      custom-class="return-drawer return-orphan-drawer" :wrapper-closable="false" @opened="initializeOrphanQuery">
       <div class="return-drawer-body">
         <div class="orphan-hero">
           <div class="orphan-hero-copy">
@@ -385,9 +400,9 @@
           <span><i class="el-icon-info"></i> 查询跨度最多 366 天，单次最多删除 100 张</span>
         </div>
         <div class="orphan-filter-card">
-          <el-date-picker v-model="orphanDateRange" size="small" type="datetimerange"
-            value-format="yyyy-MM-dd HH:mm:ss" popper-class="dortmund-theme-popper" range-separator="-"
-            start-placeholder="开始时间" end-placeholder="结束时间" style="width: 360px" clearable />
+          <el-date-picker v-model="orphanDateRange" size="small" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间"
+            style="width: 360px" clearable />
           <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
             @click="handleOrphanImageSearch">搜索孤儿图片</el-button>
           <el-button type="danger" plain size="mini" icon="el-icon-delete" :loading="orphanDeleteLoading"
@@ -508,6 +523,7 @@ import {
   getPreferenceLabel,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "DortmundReturnCombination",
   dicts: ["fx67ll_dortmund_odds_type", "fx67ll_ai_analysis_status"],
@@ -553,7 +569,8 @@ export default {
         pageSize: DORTMUND_PAGINATION.defaultPageSize,
         keyword: null,
         generationMode: null,
-        adoptedFlag: null,
+        adoptedFlag: "Y",
+        unverifiedOnly: true,
         generationStatus: null,
         matchId: null,
         sortField: "createTime",
@@ -671,6 +688,10 @@ export default {
     this.getCombinationList();
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
     },
@@ -807,7 +828,7 @@ export default {
         this.$modal.msgWarning("请选择已采用的回报组合进行赛果核验");
         return;
       }
-      this.$modal.confirm(`确认按人工登记的比赛结果核验当前选中的 ${combinationIds.length} 条回报组合？`)
+      this.$modal.confirm(`确认按人工登记的倍率赛果核验当前选中的 ${combinationIds.length} 条回报组合？`)
         .then(() => {
           this.batchVerifyLoading = true;
           return batchVerifyCombinations(combinationIds);
@@ -817,7 +838,7 @@ export default {
           const failedCount = Number(data.failedCount) || 0;
           const unverifiedCount = Number(data.unverifiedCount) || 0;
           const skippedCount = Number(data.skippedCount) || 0;
-          const message = `批量核验完成：成功 ${successCount} 条，失败 ${failedCount} 条，未核验 ${unverifiedCount} 条`
+          const message = `批量核验完成：已达成 ${successCount} 条，未达成 ${failedCount} 条，未核验 ${unverifiedCount} 条`
             + (skippedCount ? `，跳过未采用 ${skippedCount} 条` : "");
           if (failedCount || unverifiedCount || skippedCount) {
             this.$modal.msgWarning(message);
@@ -841,26 +862,26 @@ export default {
         this.$modal.msgWarning("该回报组合编号无效，请刷新列表后重试");
         return;
       }
-      this.$modal.confirm(`确认按人工登记的比赛结果核验组合「${combination.combinationTitle
+      this.$modal.confirm(`确认按人工登记的倍率赛果核验组合「${combination.combinationTitle
         || combination.combinationCode}」？`).then(() => {
-        this.verifyingId = combination.combinationId;
-        return verifyCombination(combination.combinationId);
-      }).then((response) => {
-        const status = (response && response.data && response.data.verificationStatus)
-          || DORTMUND_RETURN_VERIFICATION_STATUS.unverified;
-        const label = getReturnVerificationOption(status).label;
-        if (status === DORTMUND_RETURN_VERIFICATION_STATUS.success) {
-          this.$modal.msgSuccess(`赛果核验完成：${label}`);
-        } else if (status === DORTMUND_RETURN_VERIFICATION_STATUS.failed) {
-          this.$modal.msgError(`赛果核验完成：${label}`);
-        } else {
-          this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入赛果，状态保持${label}`);
-        }
-        return this.refreshAfterVerification(combination.combinationId);
-      }).catch(() => {
-      }).finally(() => {
-        this.verifyingId = null;
-      });
+          this.verifyingId = combination.combinationId;
+          return verifyCombination(combination.combinationId);
+        }).then((response) => {
+          const status = (response && response.data && response.data.verificationStatus)
+            || DORTMUND_RETURN_VERIFICATION_STATUS.unverified;
+          const label = getReturnVerificationOption(status).label;
+          if (status === DORTMUND_RETURN_VERIFICATION_STATUS.success) {
+            this.$modal.msgSuccess(`赛果核验完成：${label}`);
+          } else if (status === DORTMUND_RETURN_VERIFICATION_STATUS.failed) {
+            this.$modal.msgError(`赛果核验完成：${label}`);
+          } else {
+            this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入倍率赛果，状态保持${label}`);
+          }
+          return this.refreshAfterVerification(combination.combinationId);
+        }).catch(() => {
+        }).finally(() => {
+          this.verifyingId = null;
+        });
     },
     refreshAfterVerification(combinationId = null) {
       const refreshTasks = [this.getCombinationList()];
@@ -935,7 +956,8 @@ export default {
     resetCombinationQuery() {
       this.combinationQuery.keyword = null;
       this.combinationQuery.generationMode = null;
-      this.combinationQuery.adoptedFlag = null;
+      this.combinationQuery.adoptedFlag = "Y";
+      this.combinationQuery.unverifiedOnly = true;
       this.combinationQuery.generationStatus = null;
       this.combinationQuery.matchId = null;
       this.combinationQuery.sortField = "createTime";
@@ -946,6 +968,10 @@ export default {
       this.selectedCombinationIds = [];
       this.setCombinationMatchRoute(null);
       this.handleCombinationQuery();
+    },
+    // 工作台默认只保留“已采用且未核验”的有效数据；按钮用于从任意筛选状态快速恢复该口径。
+    handleViewValidData() {
+      this.resetCombinationQuery();
     },
     openCombinationMatchQuery() {
       this.closeReturnDrawers();
@@ -1107,8 +1133,6 @@ export default {
     },
     handleGenerationDetail(row, openImport = false) {
       const snapshot = { ...(row || {}) };
-      this.historyVisible = false;
-      this.combinationVisible = false;
       this.generationDetail = snapshot;
       this.generationVisible = true;
       this.generationLoading = true;
@@ -1162,10 +1186,10 @@ export default {
         this.$modal.msgWarning("该回报组合编号无效，请刷新列表后重试");
         return;
       }
-      this.historyVisible = false;
-      this.generationVisible = false;
-      // 直接打开全局组合列表时没有批次上下文，先清空旧批次，避免误用上一次批次的来源与证据状态
-      this.generationDetail = {};
+      // 保留已打开的上级抽屉；仅在没有批次上下文时清理旧快照，避免组合详情误用旧来源。
+      if (!this.generationVisible) {
+        this.generationDetail = {};
+      }
       this.combinationDetail = { ...(row || {}) };
       this.combinationVisible = true;
       this.refreshCombinationDetail(true, row.combinationId);
@@ -1229,6 +1253,7 @@ export default {
         keyword: this.combinationQuery.keyword,
         generationMode: this.combinationQuery.generationMode,
         adoptedFlag: this.combinationQuery.adoptedFlag,
+        unverifiedOnly: this.combinationQuery.unverifiedOnly,
         generationStatus: this.combinationQuery.generationStatus,
         matchId: this.combinationQuery.matchId,
         beginCreateTime: null,
@@ -1536,12 +1561,18 @@ export default {
   animation-delay: 0.1s;
 }
 
+/* 主列表沿用模块统一列表容器规格，避免叠加大卡片与紧凑行高造成视觉拥挤。 */
+.combination-card .combination-table-wrap {
+  border-color: #e3eee8;
+  border-radius: 14px;
+}
+
 .combination-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 
   .return-card-title {
     margin-bottom: 0;
@@ -1590,8 +1621,14 @@ export default {
   min-width: 1120px;
 }
 
-.combination-match-zero {
-  color: #98a6a0;
+.combination-match-count {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  &.is-empty {
+    color: #98a6a0;
+  }
 }
 
 .combination-empty {
@@ -1670,7 +1707,7 @@ export default {
   gap: 6px;
   margin-left: 0;
 
-  ::v-deep .el-button + .el-button {
+  ::v-deep .el-button+.el-button {
     margin-left: 0;
   }
 }

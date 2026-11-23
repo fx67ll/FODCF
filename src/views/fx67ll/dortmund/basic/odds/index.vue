@@ -60,26 +60,53 @@
 
         <div class="dl-list-card odds-list-card">
           <el-table v-loading="loading" :data="oddsList" row-key="oddsId">
-            <el-table-column label="倍率编码" align="center" prop="oddsCode" min-width="180" fixed="left"
-              show-overflow-tooltip />
-            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="150" show-overflow-tooltip />
-            <el-table-column label="比赛摘要" align="center" prop="matchSummary" min-width="220" show-overflow-tooltip />
+            <el-table-column label="比赛摘要" align="center" prop="matchSummary" min-width="440" fixed="left">
+              <template slot-scope="scope">
+                <button v-if="hasMatchId(scope.row)" type="button" class="odds-match-summary-link"
+                  :title="`查看 ${displayValue(scope.row.matchSummary, '比赛')} 的详情`"
+                  @click.stop="handleMatchDetail(scope.row)">
+                  <i class="el-icon-football"></i>
+                  <span>{{ displayValue(scope.row.matchSummary, '-') }}</span>
+                  <i class="el-icon-arrow-right odds-match-summary-arrow"></i>
+                </button>
+                <span v-else>{{ displayValue(scope.row.matchSummary, '-') }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="让分值" align="center" prop="handicapValue" width="80">
+              <template slot-scope="scope">
+                <span class="odds-handicap-value" :class="handicapToneClass(scope.row.handicapValue)">
+                  {{ displayValue(scope.row.handicapValue, '-') }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="倍率编码" align="center" prop="oddsCode" min-width="190" show-overflow-tooltip />
+            <el-table-column label="有效状态" align="center" prop="activeFlag" width="100">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.sys_yes_no || []" :value="scope.row.activeFlag" />
+              </template>
+            </el-table-column>
             <el-table-column label="来源时间" align="center" prop="sourceTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
                 <span>{{ parseTime(scope.row.sourceTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="让分值" align="center" prop="handicapValue" width="92" />
-            <el-table-column label="有效状态" align="center" prop="activeFlag" width="96">
-              <template slot-scope="scope">
-                <dict-tag :options="dict.type.sys_yes_no || []" :value="scope.row.activeFlag" />
-              </template>
+            <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+              <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
             </el-table-column>
-            <el-table-column label="更新时间" align="center" prop="updateTime" width="150"
+            <el-table-column label="记录创建时间" align="center" prop="createTime" width="150"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
-                <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+                <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+              <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+            </el-table-column>
+            <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150"
+              class-name="dortmund-nowrap-cell">
+              <template slot-scope="scope">
+                <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</span>
               </template>
             </el-table-column>
             <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="186" fixed="right">
@@ -174,6 +201,9 @@
       </template>
     </dortmund-detail-drawer>
 
+    <dortmund-match-detail-drawer :visible.sync="matchDetailVisible" :match-id="matchDetailId"
+      :snapshot="matchDetailSnapshot" />
+
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" :selected-items="[selectedMatch]"
       @confirm="handleMatchSelectorConfirm" />
 
@@ -189,15 +219,17 @@ import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/Dortmund
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import DortmundMatchDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundMatchDetailDrawer/index";
 import { getMatch } from "@/api/fx67ll/dortmund/match";
 import { formatOddsWeight, ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/other/utils/odds";
 import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "DortmundOdds",
   dicts: ["sys_yes_no", "fx67ll_dortmund_odds_type"],
-  components: { OddsEditScene, DortmundMatchSelectorModal, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail },
+  components: { OddsEditScene, DortmundMatchSelectorModal, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail, DortmundMatchDetailDrawer },
   computed: {
     oddsOverviewMetrics() {
       return [
@@ -235,8 +267,8 @@ export default {
       const updateTime = this.parseTime(this.detail.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
         { key: 'owner', label: '归属用户ID', value: this.detail.userId, icon: 'el-icon-user' },
-        { key: 'create', label: '创建记录', value: this.detail.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
-        { key: 'update', label: '最近更新', value: this.detail.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+        { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detail.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detail.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
     oddsActiveDescription() {
@@ -312,6 +344,9 @@ export default {
       detailVisible: false,
       detailLoading: false,
       detail: {},
+      matchDetailVisible: false,
+      matchDetailId: null,
+      matchDetailSnapshot: null,
       pageScene: "list",
       editLoading: false,
       editMode: "add",
@@ -338,6 +373,10 @@ export default {
     }
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     formatWeight(value, emptyText) {
       return formatOddsWeight(value, emptyText);
     },
@@ -483,6 +522,29 @@ export default {
         this.detailLoading = false;
       });
     },
+    hasMatchId(row) {
+      return Boolean(row && row.matchId !== null && row.matchId !== undefined && row.matchId !== '');
+    },
+    // 复用比赛记录页的详情抽屉，直接查看当前倍率对应比赛，不跳转页面。
+    handleMatchDetail(row) {
+      if (!this.hasMatchId(row)) {
+        return;
+      }
+      this.matchDetailSnapshot = { ...(row || {}) };
+      this.matchDetailId = row.matchId;
+      this.matchDetailVisible = true;
+    },
+    // 让分值保留数值语义：正值为绿、负值为红，零和空值保持中性。
+    handicapToneClass(value) {
+      if (value === null || value === undefined || String(value).trim() === '') {
+        return 'is-empty';
+      }
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue) || numericValue === 0) {
+        return 'is-neutral';
+      }
+      return numericValue > 0 ? 'is-positive' : 'is-negative';
+    },
     detailWeightPercent(value) {
       const weight = Number(value);
       const normalized = Number.isFinite(weight) ? weight : 1;
@@ -563,6 +625,91 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.odds-match-summary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 9px;
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  color: #27ad60;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  outline: none;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+
+  >span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  >i:first-child {
+    flex: 0 0 auto;
+    font-size: 13px;
+  }
+
+  .odds-match-summary-arrow {
+    flex: 0 0 auto;
+    font-size: 12px;
+    opacity: .45;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #1f8d50;
+    background: #effaf3;
+    border-color: #d7eddf;
+
+    .odds-match-summary-arrow {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+  }
+
+  &:active {
+    transform: scale(.985);
+  }
+}
+
+.odds-handicap-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  &.is-positive {
+    color: #238a53;
+    background: #eaf8f0;
+    border-color: #d6eddf;
+  }
+
+  &.is-negative {
+    color: #d84a4a;
+    background: #fef1f1;
+    border-color: #f5d3d3;
+  }
+
+  &.is-neutral,
+  &.is-empty {
+    color: #7d8b84;
+    background: #f5f7f6;
+    border-color: #e7ece9;
+  }
+}
+
 .odds-filter ::v-deep .el-select,
 .odds-filter ::v-deep .el-date-editor {
   width: 220px;
@@ -748,6 +895,12 @@ export default {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
+  .odds-match-summary-link,
+  .odds-match-summary-link .odds-match-summary-arrow {
+    transition: none;
+  }
+
   .odds-weight-track i {
     transition: none;
   }

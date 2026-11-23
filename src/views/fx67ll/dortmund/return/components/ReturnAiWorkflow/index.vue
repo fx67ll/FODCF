@@ -320,7 +320,7 @@ export default {
       return [
         {
           title: "任务受理与快照冻结",
-          description: "校验业务条件并冻结比赛、赔率、目标和信息点，后续调用只使用该快照。",
+          description: "校验业务条件并冻结比赛、倍率、目标和信息点，后续调用只使用该快照。",
           state: this.generation.generationId ? "success" : "pending",
           icon: "el-icon-document-checked",
           meta: `${this.generation.generationCode || "-"} · ${this.generationStatusLabel}`,

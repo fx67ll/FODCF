@@ -238,7 +238,8 @@ export default {
       return TEAM_VENUE_FALLBACK_OPTIONS;
     },
     options() {
-      return mergeOptions([...this.fallbackOptions, ...this.localOptions], this.remoteOptions);
+      // 后端已按“球队数据在前、内置目录补齐在后”返回；远程项必须优先占据位置。
+      return mergeOptions(this.remoteOptions, [...this.localOptions, ...this.fallbackOptions]);
     },
     selectedValues() {
       if (this.multiple) {

@@ -219,11 +219,14 @@ import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/
 import DortmundBindingControl from "@/views/fx67ll/dortmund/other/component/DortmundBindingControl/index";
 import DortmundInlineMatchCreate from "@/views/fx67ll/dortmund/other/component/DortmundInlineMatchCreate/index";
 import DortmundFormLabel from "@/views/fx67ll/dortmund/other/component/DortmundFormLabel/index";
+import { joinDortmundOddsResult } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_ODDS_RESULT_OPTIONS,
   DORTMUND_STATUS_OPTIONS,
   dateRangeRule,
+  enumListRule,
   enumRule,
   optionalTextRule,
   requiredTextRule,
@@ -298,6 +301,7 @@ export default {
         "newMatch.matchStatus": [enumRule("新比赛状态", DORTMUND_STATUS_OPTIONS, true)],
         "newMatch.matchVenue": [optionalTextRule("新球队主场", DORTMUND_LIMITS.matchVenue)],
         "newMatch.matchResult": [enumRule("新比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
+        "newMatch.oddsResult": [enumListRule("新比赛倍率赛果", DORTMUND_ODDS_RESULT_OPTIONS)],
         "newMatch.matchRemark": [optionalTextRule("新比赛备注", DORTMUND_LIMITS.matchRemark)],
       },
       // M类型新增时所选比赛的完整行（VS横幅展示用，仅编辑场景展示不进入提交数据）
@@ -376,6 +380,7 @@ export default {
           matchVenue: null,
           matchStatus: "0",
           matchResult: null,
+          oddsResult: [],
           matchRemark: null,
         },
       };
@@ -444,6 +449,7 @@ export default {
             matchVenue: trimText(this.editForm.newMatch.matchVenue),
             matchStatus: this.editForm.newMatch.matchStatus,
             matchResult: trimText(this.editForm.newMatch.matchResult),
+            oddsResult: joinDortmundOddsResult(this.editForm.newMatch.oddsResult),
             matchRemark: trimText(this.editForm.newMatch.matchRemark),
           };
         } else {

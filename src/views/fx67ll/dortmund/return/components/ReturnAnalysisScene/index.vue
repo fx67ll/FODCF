@@ -85,6 +85,14 @@
                 <i class="el-icon-success mode-card-check" v-if="generateForm.generationMode === 'A'"></i>
               </button>
             </div>
+            <div class="odds-visibility-panel">
+              <div class="odds-visibility-copy">
+                <strong><i class="el-icon-view"></i>倍率数据可见性</strong>
+                <small>默认隐藏真实倍率，AI 仅收到固定占位文本；关闭后仅在需要真实倍率参照的特殊场景下发送数值。无论是否隐藏，金额与回报均由后端按冻结快照复算。</small>
+              </div>
+              <el-switch v-model="generateForm.hideOdds" active-color="#2ecc71" inactive-color="#b9c9c1"
+                active-text="隐藏真实倍率" inactive-text="发送真实倍率" />
+            </div>
             <div class="preference-block">
               <div class="preference-head">
                 <strong>组合偏好</strong>
@@ -453,6 +461,7 @@ import ReturnManualResult from "../ReturnManualResult/index";
 import {
   DORTMUND_DEFAULT_ANALYSIS_PATH,
   DORTMUND_DEFAULT_GENERATION_MODE,
+  DORTMUND_DEFAULT_MASK_ODDS,
   DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS,
   DORTMUND_DEFAULT_PREFERENCE_CODE,
   DORTMUND_OBJECTIVE_LIMITS,
@@ -548,6 +557,7 @@ export default {
       predefinedBusinessObjectives: [...DORTMUND_PREDEFINED_BUSINESS_OBJECTIVES],
       generateForm: {
         generationMode: DORTMUND_DEFAULT_GENERATION_MODE,
+        hideOdds: DORTMUND_DEFAULT_MASK_ODDS,
         preferenceCode: DORTMUND_DEFAULT_PREFERENCE_CODE,
         preferenceDimensions: { ...DORTMUND_DEFAULT_PREFERENCE_DIMENSIONS },
         inputAmount: null,
@@ -679,7 +689,7 @@ export default {
     },
     modeHint() {
       return this.generateForm.generationMode === "S"
-        ? "固定使用当前有效 odds 的手工权重，不执行平台检索；AI仍须结合标签、信息点与赔率论证"
+        ? "固定使用当前有效 odds 的手工权重，不执行平台检索；AI仍须结合标签、信息点与倍率论证"
         : "AI先规划并受控检索补充信息，再自主评估权重；权重不参与金额计算";
     },
     hasRemarkQueryPermission() {
@@ -913,6 +923,7 @@ export default {
       return JSON.stringify({
         workflow: workflow,
         generationMode: this.generateForm.generationMode,
+        hideOdds: this.generateForm.hideOdds,
         preferenceCode: this.generateForm.preferenceCode,
         preferenceDimensions: { ...this.generateForm.preferenceDimensions },
         inputAmount: this.generateForm.inputAmount,
@@ -924,6 +935,7 @@ export default {
     buildGeneratePayload(workflow) {
       return {
         generationMode: this.generateForm.generationMode,
+        hideOdds: this.generateForm.hideOdds,
         preferenceCode: this.generateForm.preferenceCode,
         preferenceDimensions: { ...this.generateForm.preferenceDimensions },
         inputAmount: this.generateForm.inputAmount,
@@ -1691,6 +1703,50 @@ export default {
   right: 8px;
   font-size: 13px;
   color: #2ecc71;
+}
+
+/* 倍率可见性开关：与模式卡片共用浅绿底色，强调这是AI输入口径而非金额参数。 */
+.odds-visibility-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px;
+  margin-top: 10px;
+  background: #f7fbf9;
+  border: 1px solid #dcebe2;
+  border-left: 3px solid #2ecc71;
+  border-radius: 10px;
+}
+
+.odds-visibility-copy {
+  display: grid;
+  flex: 1 1 320px;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    font-size: 12px;
+    color: #2b3a36;
+
+    i {
+      color: #1c9e55;
+    }
+  }
+
+  small {
+    font-size: 11px;
+    line-height: 1.55;
+    color: #7c8b84;
+  }
+}
+
+.odds-visibility-panel ::v-deep .el-switch {
+  flex-shrink: 0;
 }
 
 .preference-block {

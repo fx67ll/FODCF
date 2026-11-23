@@ -72,23 +72,22 @@
     <div class="dl-list-card">
       <el-table v-loading="loading" :data="seasonList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="46" align="center" />
-        <el-table-column label="赛季编码" align="center" prop="seasonCode" min-width="130" fixed="left"
+        <el-table-column label="赛季名称" align="center" prop="seasonName" min-width="80" fixed="left"
           show-overflow-tooltip />
-        <el-table-column label="赛季名称" align="center" prop="seasonName" min-width="160" fixed="left"
-          show-overflow-tooltip />
-        <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="118"
+        <el-table-column label="赛季开始日期" align="center" prop="seasonStartDate" width="118" fixed="left"
           class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.seasonStartDate, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="118"
+        <el-table-column label="赛季结束日期" align="center" prop="seasonEndDate" width="118" fixed="left"
           class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.seasonEndDate, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="96">
+        <el-table-column label="赛季编码" align="center" prop="seasonCode" min-width="190" show-overflow-tooltip />
+        <el-table-column label="赛季状态" align="center" prop="seasonStatus" width="100">
           <template slot-scope="scope">
             <dict-tag :options="dict.type.fx67ll_dortmund_status" :value="scope.row.seasonStatus" />
           </template>
@@ -97,13 +96,17 @@
           :sort-orders="['descending', 'ascending']" />
         <el-table-column label="赛季备注" align="center" prop="seasonRemark" min-width="200"
           :show-overflow-tooltip="true" />
-        <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+        <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+          <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+        </el-table-column>
         <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+        <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+          <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+        </el-table-column>
         <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
           <template slot-scope="scope">
             <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
@@ -299,6 +302,7 @@ import {
   DORTMUND_SEASON_SORT_RANGE,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "Season",
   dicts: ["fx67ll_dortmund_status"],
@@ -323,8 +327,8 @@ export default {
       const updateTime = this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
         { key: 'owner', label: '归属用户ID', value: this.detailData.userId, icon: 'el-icon-user' },
-        { key: 'create', label: '创建记录', value: this.detailData.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
-        { key: 'update', label: '最近更新', value: this.detailData.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+        { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
   },
@@ -400,6 +404,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     // 字典值转标签；字典尚未加载时回退到原始值，避免误显示为未设置
     displayDict(options, value, fallback = '-') {
       if (value === null || value === undefined || value === '') {

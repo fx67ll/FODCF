@@ -77,11 +77,23 @@
       <el-col :xs="24" :md="12">
         <el-form-item :prop="fieldProp('matchResult')" label-width="116px">
           <template slot="label">
-            <dortmund-form-label label="比赛结果" tip="选填；可为空或0/1/2/3/4/5，0至2为常规胜平负，3至5为让球胜平负，含义以字典为准" />
+            <dortmund-form-label label="比赛结果" tip="选填；按比赛胜平负登记，取值为0/1/2，含义以字典为准" />
           </template>
           <el-select v-model="form.matchResult" :disabled="disabled" style="width: 100%" placeholder="请选择比赛结果（可空）"
             clearable popper-class="dortmund-theme-popper">
             <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+              :value="dict.value"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-col>
+      <el-col :xs="24" :md="12">
+        <el-form-item :prop="fieldProp('oddsResult')" label-width="116px">
+          <template slot="label">
+            <dortmund-form-label label="倍率赛果" tip="选填；可多选实际命中的倍率类型，回报组合核验以该字段为准" />
+          </template>
+          <el-select v-model="form.oddsResult" :disabled="disabled" multiple collapse-tags clearable style="width: 100%"
+            placeholder="请选择倍率赛果（可多选）" popper-class="dortmund-theme-popper">
+            <el-option v-for="dict in dict.type.fx67ll_dortmund_odds_type" :key="dict.value" :label="dict.label"
               :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
@@ -115,7 +127,7 @@ import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGe
 
 export default {
   name: "DortmundInlineMatchCreate",
-  dicts: ["sys_notice_status", "fx67ll_match_result"],
+  dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
   components: {
     DortmundFormLabel,
     DortmundSeasonSelect,

@@ -205,7 +205,7 @@ export default {
     metrics() {
       const deviation = Number(this.combination.deviationAmount);
       return [
-        { label: "组合倍率", value: this.combination.combinedOdds || "-", hint: "冻结赔率快照乘积", state: "" },
+        { label: "组合倍率", value: this.combination.combinedOdds || "-", hint: "冻结倍率快照乘积", state: "" },
         { label: "预计回报", value: formatMoneyDisplay(this.combination.estimatedReturn), hint: "后端按倍率复算", state: "" },
         {
           label: "目标偏差",

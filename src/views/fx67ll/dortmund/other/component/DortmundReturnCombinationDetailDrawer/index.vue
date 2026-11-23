@@ -1,18 +1,15 @@
 <template>
-  <dortmund-detail-drawer :visible.sync="drawerVisible" title="回报组合详情"
-    :subtitle="subtitle" icon="el-icon-connection" tone="green" size="780px" :loading="loading"
-    feature="return">
+  <dortmund-detail-drawer :visible.sync="drawerVisible" title="回报组合详情" :subtitle="subtitle" icon="el-icon-connection"
+    tone="green" size="780px" :loading="loading" feature="return" :level="level">
     <return-manual-result v-if="isManual" :combination="detail" :batch="batchContext"
       :can-view-reason="hasRemarkQueryPermission" />
     <return-analysis-result v-else :combination="detail" :batch="batchContext"
       :can-view-reason="hasRemarkQueryPermission" />
 
-    <dortmund-detail-card v-if="hasImageQueryPermission" title="组合图片" icon="el-icon-picture-outline"
-      tone="amber">
-      <return-image-upload :combination-id="detail.combinationId || null"
-        :images="detail.images || []" :adopted-flag="detail.adoptedFlag || ''"
-        :plan-linked="Boolean(detail.planLinked)" :can-upload="hasImageUploadPermission"
-        @changed="refreshDetail(false)" />
+    <dortmund-detail-card v-if="hasImageQueryPermission" title="组合图片" icon="el-icon-picture-outline" tone="amber">
+      <return-image-upload :combination-id="detail.combinationId || null" :images="detail.images || []"
+        :adopted-flag="detail.adoptedFlag || ''" :plan-linked="Boolean(detail.planLinked)"
+        :can-upload="hasImageUploadPermission" @changed="refreshDetail(false)" />
     </dortmund-detail-card>
 
     <template slot="footer">
@@ -32,12 +29,16 @@ import ReturnImageUpload from "@/views/fx67ll/dortmund/return/components/ReturnI
 
 export default {
   name: "DortmundReturnCombinationDetailDrawer",
-  components: { DortmundDetailDrawer, DortmundDetailCard, ReturnManualResult, ReturnAnalysisResult,
-    ReturnImageUpload },
+  components: {
+    DortmundDetailDrawer, DortmundDetailCard, ReturnManualResult, ReturnAnalysisResult,
+    ReturnImageUpload
+  },
   props: {
     visible: { type: Boolean, default: false },
     combinationId: { type: [Number, String], default: null },
     snapshot: { type: Object, default: () => ({}) },
+    // 由列表直接打开时为 1，由方案或已采用组合抽屉继续下钻时为 2 或 3。
+    level: { type: [Number, String], default: 1 },
   },
   data() {
     return {

@@ -7,6 +7,7 @@ import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
   DORTMUND_NUMERIC,
+  DORTMUND_ODDS_RESULT_OPTIONS,
   DORTMUND_SEASON_STATUS_OPTIONS,
   DORTMUND_SIM_MODE_OPTIONS,
   DORTMUND_STATUS_OPTIONS,
@@ -16,6 +17,7 @@ import {
 export {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_ODDS_RESULT_OPTIONS,
   DORTMUND_SEASON_STATUS_OPTIONS,
   DORTMUND_SIM_MODE_OPTIONS,
   DORTMUND_STATUS_OPTIONS,
@@ -226,7 +228,9 @@ export function decimalTextRule(label, required) {
       }
       if (textLength(text) > DORTMUND_NUMERIC.maxExtraTextLength) {
         callback(
-          new Error(`${label}总长度不能超过${DORTMUND_NUMERIC.maxExtraTextLength}个字符`)
+          new Error(
+            `${label}总长度不能超过${DORTMUND_NUMERIC.maxExtraTextLength}个字符`
+          )
         );
         return;
       }
@@ -245,6 +249,27 @@ export function enumRule(label, options, required) {
         return;
       }
       if (!options.includes(String(value))) {
+        callback(new Error(`${label}取值不正确`));
+        return;
+      }
+      callback();
+    },
+    trigger: "change",
+  };
+}
+
+/** 多选枚举规则：空值可选；选中值必须全部属于允许集合，提交前由页面转为逗号串。 */
+export function enumListRule(label, options) {
+  return {
+    validator: (rule, value, callback) => {
+      if (isBlank(value) || (Array.isArray(value) && value.length === 0)) {
+        callback();
+        return;
+      }
+      if (
+        !Array.isArray(value) ||
+        value.some((item) => !options.includes(String(item)))
+      ) {
         callback(new Error(`${label}取值不正确`));
         return;
       }

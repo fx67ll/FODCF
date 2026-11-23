@@ -64,7 +64,7 @@
       </div>
       <el-table :data="versions" size="small" row-key="oddsId" empty-text="暂无倍率版本">
         <el-table-column label="倍率编码" prop="oddsCode" min-width="150" show-overflow-tooltip />
-        <el-table-column label="状态" align="center" width="96">
+        <el-table-column label="状态" align="center" width="100">
           <template slot-scope="scope">
             <el-tag :type="scope.row.activeFlag === 'Y' ? 'success' : 'info'" size="mini">
               {{ scope.row.activeFlag === "Y" ? "有效" : "历史" }}

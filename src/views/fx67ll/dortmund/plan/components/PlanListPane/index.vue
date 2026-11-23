@@ -3,50 +3,78 @@
   <div class="plan-list-pane">
     <el-table v-loading="loading" :data="rows" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="46" align="center" />
-      <el-table-column label="方案计划" align="center" prop="planContent" min-width="260" fixed="left"
+      <el-table-column label="方案计划" align="center" prop="planContent" min-width="230" fixed="left"
         :show-overflow-tooltip="true" />
-      <el-table-column label="组合核验" align="center" width="104">
+      <el-table-column label="关联比赛" align="center" width="106" fixed="left">
         <template slot-scope="scope">
-          <dortmund-verification-status-tag v-if="scope.row.combinationIds && scope.row.combinationIds.length"
+          <button v-if="matchCount(scope.row) > 0" type="button" class="plan-count-link"
+            :title="`查看关联的 ${matchCount(scope.row)} 场比赛`" @click.stop="$emit('view-matches', scope.row)">
+            {{ matchCount(scope.row) }}
+          </button>
+          <span v-else class="plan-count-zero">0</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="关联组合" align="center" width="106" fixed="left">
+        <template slot-scope="scope">
+          <button v-if="combinationCount(scope.row) > 0" type="button" class="plan-count-link"
+            :title="`查看关联的 ${combinationCount(scope.row)} 条回报组合`" @click.stop="$emit('view-combinations', scope.row)">
+            {{ combinationCount(scope.row) }}
+          </button>
+          <span v-else class="plan-count-zero">0</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="组合核验" align="center" width="112">
+        <template slot-scope="scope">
+          <dortmund-verification-status-tag v-if="combinationCount(scope.row) > 0"
             :status="scope.row.combinationVerificationStatus" />
-          <span v-else class="plan-empty-status">-</span>
+          <dortmund-verification-status-tag v-else no-combination />
         </template>
       </el-table-column>
       <el-table-column label="预计本金" align="center" prop="effectiveExpectedPrincipal" width="118">
         <template slot-scope="scope">
-          <span class="plan-amount-text">{{ formatMoneyDisplay(effectivePrincipal(scope.row)) }}</span>
+          <span class="plan-amount-text">{{ formatAmount(effectivePrincipal(scope.row)) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="预计倍率" align="center" prop="effectiveExpectedOdds" width="100">
         <template slot-scope="scope">
-          <span class="plan-rate-tag">{{ effectiveOdds(scope.row) }}</span>
+          <span class="plan-rate-tag">{{ displayNumber(effectiveOdds(scope.row)) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="预计回报" align="center" prop="effectiveExpectedReturn" width="118">
         <template slot-scope="scope">
-          <span class="plan-amount-text">{{ formatMoneyDisplay(effectiveReturn(scope.row)) }}</span>
+          <span class="plan-amount-text">{{ formatAmount(effectiveReturn(scope.row)) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="实际本金" align="center" prop="planActualPrincipal" width="118">
         <template slot-scope="scope">
-          <span class="plan-amount-text">{{ formatMoneyDisplay(scope.row.planActualPrincipal) }}</span>
+          <span class="plan-amount-text">{{ formatAmount(scope.row.planActualPrincipal) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="实际倍率" align="center" prop="planActualOdds" width="100" />
-      <el-table-column label="实际回报" align="center" prop="planActualReturn" width="118">
-        <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.planActualReturn) }}</template>
-      </el-table-column>
-      <el-table-column label="关联比赛" align="center" prop="matchSummary" min-width="260" :show-overflow-tooltip="true">
+      <el-table-column label="实际倍率" align="center" prop="planActualOdds" width="100">
         <template slot-scope="scope">
-          <span>{{ formatMatchSummary(scope.row) }}</span>
+          <span class="plan-rate-tag is-actual">{{ displayNumber(scope.row.planActualOdds) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="自动预计倍率" align="center" prop="calculatedExpectedOdds" width="110" />
+      <el-table-column label="实际回报" align="center" prop="planActualReturn" width="118">
+        <template slot-scope="scope">
+          <span class="plan-amount-text">{{ formatAmount(scope.row.planActualReturn) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="其他说明" align="center" prop="planRemark" min-width="180" :show-overflow-tooltip="true" />
-      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+      <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+      </el-table-column>
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+      </el-table-column>
       <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+          <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
@@ -70,6 +98,26 @@ import DortmundVerificationStatusTag
   from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
 
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+
+// 列表数值空值判定：null、空白字符串及后端历史占位符 "-" 均按未填写处理。
+function isEmptyNumericValue(value) {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  const text = String(value).trim();
+  return text === "" || text === "-";
+}
+
+// 按优先级取首个有效数值，跳过空值与占位符，保证预计字段可回退到手工值或计算值。
+function firstFilledValue(...values) {
+  for (const value of values) {
+    if (!isEmptyNumericValue(value)) {
+      return value;
+    }
+  }
+  return null;
+}
 
 export default {
   name: "PlanListPane",
@@ -91,42 +139,52 @@ export default {
     handleSelectionChange(selection) {
       this.$emit("selection-change", selection);
     },
-    // 列表关联比赛摘要：场次 + 对阵
-    formatMatchSummary(row) {
-      const matches = row.matches || [];
-      if (!matches.length) {
-        return "";
+    // 关联比赛数量以后端批量派生值为准，旧快照回退到比赛数组长度。
+    matchCount(row) {
+      const count = Number(row.matchCount);
+      if (Number.isFinite(count) && count >= 0) {
+        return count;
       }
-      const vsText = matches.map(item => `${item.homeTeamName || ""}vs${item.awayTeamName || ""}`).join("、");
-      return `共${matches.length}场：${vsText}`;
+      return (row.matches || []).length;
     },
-    // 代理金额展示工具（空值/非法值返回占位符，数值原样展示）
-    formatMoneyDisplay(value) {
-      return formatMoneyDisplay(value);
+    // 关联组合数量统一按组合主键集合计算，避免列表局部刷新时不同字段不同步。
+    combinationCount(row) {
+      return (row.combinationIds || []).length;
     },
-    // 预计本金优先取服务端有效值；旧快照或局部刷新时回退到手工值和自动值。
+    // 预计本金为空时展示 0，避免列表出现空白金额格。
     effectivePrincipal(row) {
-      const value = row.effectiveExpectedPrincipal !== null && row.effectiveExpectedPrincipal !== undefined
-        ? row.effectiveExpectedPrincipal : (row.planExpectedPrincipal ?? row.calculatedExpectedPrincipal);
-      return value === null || value === undefined || value === "" ? "" : value;
+      return firstFilledValue(row.effectiveExpectedPrincipal, row.planExpectedPrincipal,
+        row.calculatedExpectedPrincipal);
     },
-    // 预计值优先取后端计算的有效值；旧数据或局部刷新时回退到手工值/自动值。
+    // 预计倍率只取有效手工值；后端已统一回填，旧快照再回退到手工字段。
     effectiveOdds(row) {
-      const value = row.effectiveExpectedOdds !== null && row.effectiveExpectedOdds !== undefined
-        ? row.effectiveExpectedOdds : (row.planExpectedOdds ?? row.calculatedExpectedOdds);
-      return value === null || value === undefined || value === "" ? "-" : value;
+      return firstFilledValue(row.effectiveExpectedOdds, row.planExpectedOdds);
     },
     effectiveReturn(row) {
-      const value = row.effectiveExpectedReturn !== null && row.effectiveExpectedReturn !== undefined
-        ? row.effectiveExpectedReturn : (row.planExpectedReturn ?? row.calculatedExpectedReturn);
-      return value === null || value === undefined || value === "" ? "-" : value;
+      return firstFilledValue(row.effectiveExpectedReturn, row.planExpectedReturn,
+        row.calculatedExpectedReturn);
+    },
+    // 金额字段空值统一展示 0；空白字符串由本列表直接兜底，避免通用金额工具返回占位符。
+    formatAmount(value) {
+      if (isEmptyNumericValue(value)) {
+        return "0";
+      }
+      const displayValue = formatMoneyDisplay(value);
+      return displayValue === "-" ? "0" : displayValue;
+    },
+    // 倍率字段空值统一展示 0，空白字符串同样按未填写处理，并保留有效数值原样精度。
+    displayNumber(value) {
+      return isEmptyNumericValue(value) ? 0 : value;
+    },
+    formatAuditActor(value) {
+      return formatAuditActor(value);
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-/* 列表录入倍率/金额列：胶囊与金额展示 */
+/* 列表录入倍率/金额列：保留轻量胶囊以区分预计与实际口径 */
 .plan-rate-tag {
   display: inline-block;
   min-width: 40px;
@@ -136,6 +194,11 @@ export default {
   color: #27ad60;
   background: #e7f8ee;
   border-radius: 999px;
+
+  &.is-actual {
+    color: #f56c6c;
+    background: #fef0f0;
+  }
 }
 
 .plan-amount-text {
@@ -144,7 +207,33 @@ export default {
   color: #2b3a36;
 }
 
-.plan-empty-status {
+/* 关联数量保留为纯数字交互，不使用圆形底色。 */
+.plan-count-link {
+  padding: 2px 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2ecc71;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  transition: color .18s ease, background-color .18s ease, transform .18s ease;
+
+  &:hover {
+    color: #23995a;
+    background: #e9f9f0;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(46, 204, 113, .28);
+    outline-offset: 1px;
+  }
+}
+
+.plan-count-zero {
+  font-size: 14px;
+  font-weight: 700;
   color: #a8b3ad;
 }
 </style>

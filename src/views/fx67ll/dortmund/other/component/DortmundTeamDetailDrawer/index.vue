@@ -1,7 +1,6 @@
 <template>
-  <dortmund-detail-drawer :visible.sync="drawerVisible" title="球队详情"
-    :subtitle="detail.teamName || '查看球队资料、归属标签与审计信息'" icon="el-icon-s-custom"
-    tone="green" size="680px" feature="team" :loading="loading">
+  <dortmund-detail-drawer :visible.sync="drawerVisible" title="球队详情" :subtitle="detail.teamName || '查看球队资料、归属标签与审计信息'"
+    icon="el-icon-s-custom" tone="green" size="680px" feature="team" :loading="loading" :level="level">
     <section class="team-detail-hero">
       <div class="team-detail-crest">
         <el-image v-if="detail.teamLogoUrl" :src="detail.teamLogoUrl" fit="cover"
@@ -16,8 +15,8 @@
             :value="detail.teamStatus" />
           <span v-else class="team-detail-status-empty">状态未设置</span>
         </div>
-        <p>{{ displayValue(detail.teamNameShort, '未填写昵称') }}<template
-            v-if="displayValue(detail.teamNameEn, '')"> · {{ detail.teamNameEn }}</template></p>
+        <p>{{ displayValue(detail.teamNameShort, '未填写昵称') }}<template v-if="displayValue(detail.teamNameEn, '')"> · {{
+          detail.teamNameEn }}</template></p>
         <span class="team-detail-code"><i class="el-icon-collection-tag"></i>{{
           displayValue(detail.teamCode, '未填写编码') }}</span>
       </div>
@@ -83,6 +82,7 @@ import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "DortmundTeamDetailDrawer",
   dicts: ["sys_normal_disable"],
@@ -91,6 +91,8 @@ export default {
     visible: { type: Boolean, default: false },
     teamId: { type: [Number, String], default: null },
     snapshot: { type: Object, default: () => ({}) },
+    // 从球队列表直接打开时为 1，从球队选择器继续下钻时为 2。
+    level: { type: [Number, String], default: 1 },
   },
   data() {
     return {
@@ -145,10 +147,14 @@ export default {
       const updateTime = this.parseTime(this.detail.updateTime, "{y}-{m}-{d} {h}:{i}:{s}");
       return [
         { key: "owner", label: "归属用户ID", value: this.detail.userId, icon: "el-icon-user" },
-        { key: "create", label: "创建记录", value: this.detail.createBy,
-          hint: createTime ? `创建时间 · ${createTime}` : "", icon: "el-icon-edit-outline", state: "success" },
-        { key: "update", label: "最近更新", value: this.detail.updateBy,
-          hint: updateTime ? `更新时间 · ${updateTime}` : "", icon: "el-icon-refresh", state: "warning" },
+        {
+          key: "create", label: "创建记录", value: formatAuditActor(this.detail.createBy),
+          hint: createTime ? `创建时间 · ${createTime}` : "", icon: "el-icon-edit-outline", state: "success"
+        },
+        {
+          key: "update", label: "最近更新", value: formatAuditActor(this.detail.updateBy),
+          hint: updateTime ? `更新时间 · ${updateTime}` : "", icon: "el-icon-refresh", state: "warning"
+        },
       ];
     },
   },
@@ -362,6 +368,7 @@ export default {
 }
 
 @media screen and (max-width: 640px) {
+
   .team-detail-summary,
   .team-detail-field-grid {
     grid-template-columns: 1fr;

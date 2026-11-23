@@ -1,7 +1,7 @@
 <template>
   <!-- 数值模拟抽屉：作为外快盈亏记录页的扩展功能，从右侧滑入，内容首次打开时才加载并在关闭后保留状态 -->
   <el-drawer :visible.sync="drawerVisible" direction="rtl" size="86%" append-to-body :with-header="true"
-    :wrapper-closable="true" custom-class="sim-drawer">
+    :wrapper-closable="false" custom-class="sim-drawer">
     <template slot="title">
       <div class="sim-drawer-header">
         <div class="sim-drawer-header-icon">

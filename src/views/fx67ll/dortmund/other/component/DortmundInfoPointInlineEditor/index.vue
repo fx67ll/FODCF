@@ -15,9 +15,9 @@
       <el-table-column label="来源" prop="sourceName" min-width="130" show-overflow-tooltip />
       <el-table-column label="生效时间" align="center" width="150" class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">{{ parseTime(scope.row.effectiveStartTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
-        }}</template>
+          }}</template>
       </el-table-column>
-      <el-table-column label="状态" align="center" width="96">
+      <el-table-column label="状态" align="center" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable || []" :value="scope.row.pointStatus" />
         </template>

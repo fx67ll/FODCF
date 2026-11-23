@@ -228,7 +228,7 @@ export default {
         { text: "维护赛季", tip: "录入赛季编码与起止日期", type: "jump", componentPath: PAGE_COMPONENTS.season },
         { text: "维护球队", tip: "录入球队资料与标签", type: "jump", componentPath: PAGE_COMPONENTS.team },
         { text: "编排比赛", tip: "建立对阵与开赛时间", type: "jump", componentPath: PAGE_COMPONENTS.match },
-        { text: "维护有效倍率", tip: "按比赛冻结六类赔率与权重", type: "jump", componentPath: PAGE_COMPONENTS.odds },
+        { text: "维护有效倍率", tip: "按比赛冻结六类倍率与权重", type: "jump", componentPath: PAGE_COMPONENTS.odds },
         { text: "生成回报组合", tip: "可选择自动AI异步分析，或创建人工AI任务导出并回填", type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
         { text: "采用回报组合", tip: "采用后方可进入方案计划与图片管理", type: "jump", componentPath: PAGE_COMPONENTS.returnCombination },
         { text: "编写方案计划", tip: "围绕比赛沉淀方案并关联", type: "jump", componentPath: PAGE_COMPONENTS.plan },

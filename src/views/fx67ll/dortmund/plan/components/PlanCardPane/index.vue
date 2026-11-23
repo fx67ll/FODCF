@@ -81,7 +81,7 @@ export default {
       return this.hasValue(value) ? value : "-";
     },
     effectiveOdds(plan) {
-      return plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds ?? null;
+      return plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? null;
     },
     effectivePrincipal(plan) {
       return plan.effectiveExpectedPrincipal ?? plan.planExpectedPrincipal ?? plan.calculatedExpectedPrincipal ?? null;

@@ -55,6 +55,18 @@
           <dict-tag :options="dict.type.fx67ll_dortmund_allow_public" :value="scope.row.allowPublic" />
         </template>
       </el-table-column>
+      <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+      </el-table-column>
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
+        <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+      </el-table-column>
+      <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+      </el-table-column>
+      <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150" class-name="dortmund-nowrap-cell">
+        <template slot-scope="scope">{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
         fixed="right" width="122">
         <template slot-scope="scope">
@@ -75,6 +87,7 @@
 <script>
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "InfoListPane",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
@@ -92,6 +105,10 @@ export default {
     },
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     // 多选框选中数据（透传给父页面维护选中数组）
     handleSelectionChange(selection) {
       this.$emit("selection-change", selection);

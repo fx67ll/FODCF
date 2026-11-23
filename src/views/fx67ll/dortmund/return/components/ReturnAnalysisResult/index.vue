@@ -249,7 +249,7 @@ export default {
         {
           label: "组合倍率",
           value: this.combination.combinedOdds || "-",
-          hint: "赔率快照乘积",
+          hint: "倍率快照乘积",
           state: "",
         },
         {

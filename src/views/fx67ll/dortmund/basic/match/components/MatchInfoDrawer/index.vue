@@ -116,7 +116,7 @@
           <el-table-column label="采集时间" align="center" width="150" class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">{{ formatDateTime(scope.row.collectTime) }}</template>
           </el-table-column>
-          <el-table-column label="状态" align="center" width="96">
+          <el-table-column label="状态" align="center" width="100">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.sys_normal_disable || []" :value="scope.row.pointStatus" />
             </template>

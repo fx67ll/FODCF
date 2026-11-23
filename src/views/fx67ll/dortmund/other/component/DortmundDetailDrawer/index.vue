@@ -1,6 +1,6 @@
 <template>
-  <el-drawer :visible.sync='drawerVisible' :size='size' :with-header='false' append-to-body destroy-on-close
-    custom-class='dortmund-detail-drawer' @opened='handleOpened' @closed='handleClosed'>
+  <el-drawer :visible.sync='drawerVisible' :size='drawerSize' :with-header='false' append-to-body destroy-on-close
+    :wrapper-closable='false' :custom-class='drawerClass' @opened='handleOpened' @closed='handleClosed'>
     <div class='dortmund-detail-shell' :data-tone='tone' :data-feature='feature'>
       <span class='dortmund-detail-accent'></span>
       <header class='dortmund-detail-hero'>
@@ -28,6 +28,8 @@
 </template>
 
 <script>
+import { DORTMUND_DRAWER_LAYOUT } from '@/views/fx67ll/dortmund/other/config/moduleConfig';
+
 const featureLabels = {
   season: '赛季',
   team: '球队',
@@ -74,6 +76,16 @@ export default {
       type: String,
       default: '',
     },
+    /** 当前抽屉层级：1 为页面直接打开，2、3 为详情抽屉内的嵌套层。 */
+    level: {
+      type: [Number, String],
+      default: 1,
+    },
+    /** 子抽屉打开时由父级置为 true，使父抽屉向左错位显示层级。 */
+    shifted: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     drawerVisible: {
@@ -86,6 +98,27 @@ export default {
     },
     featureLabel() {
       return featureLabels[this.feature] || '详情';
+    },
+    normalizedLevel() {
+      const numericLevel = Number.parseInt(this.level, 10);
+      if (!Number.isFinite(numericLevel)) {
+        return 1;
+      }
+      return Math.min(DORTMUND_DRAWER_LAYOUT.maxLevel, Math.max(1, numericLevel));
+    },
+    // 仅对像素宽度做逐级扩展；百分比等响应式宽度继续沿用调用方配置。
+    drawerSize() {
+      const sizeText = String(this.size || '').trim();
+      const pixelMatch = sizeText.match(/^(\d+(?:\.\d+)?)px$/i);
+      if (!pixelMatch) {
+        return sizeText;
+      }
+      const extraWidth = (this.normalizedLevel - 1) * DORTMUND_DRAWER_LAYOUT.levelWidthStep;
+      return `${Number(pixelMatch[1]) + extraWidth}px`;
+    },
+    drawerClass() {
+      const levelClass = `dortmund-detail-level-${this.normalizedLevel}`;
+      return `dortmund-detail-drawer ${levelClass}${this.shifted ? ' is-shifted' : ''}`;
     },
   },
   methods: {

@@ -143,11 +143,23 @@
           <el-col :xs="24" :md="12">
             <el-form-item prop="matchResult">
               <template slot="label">
-                <dortmund-form-label label="比赛结果" tip="选填；可为空或0/1/2/3/4/5，0至2为常规胜平负，3至5为让球胜平负，含义以字典为准" />
+                <dortmund-form-label label="比赛结果" tip="选填；按比赛胜平负登记，取值为0/1/2，含义以字典为准" />
               </template>
               <el-select v-model="editForm.matchResult" style="width: 100%" placeholder="请选择比赛结果（可空）" clearable
                 popper-class="dortmund-theme-popper">
                 <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :md="12">
+            <el-form-item prop="oddsResult">
+              <template slot="label">
+                <dortmund-form-label label="倍率赛果" tip="选填；可多选实际命中的倍率类型，多个值按英文逗号落库；回报组合核验以此字段为准" />
+              </template>
+              <el-select v-model="editForm.oddsResult" multiple collapse-tags clearable style="width: 100%"
+                placeholder="请选择倍率赛果（可多选）" popper-class="dortmund-theme-popper">
+                <el-option v-for="dict in dict.type.fx67ll_dortmund_odds_type" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
@@ -262,10 +274,13 @@ import DortmundCodeInput from "@/views/fx67ll/dortmund/other/component/DortmundC
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import { buildEmptyOdds, buildOddsRules, trimOddsFields } from "@/views/fx67ll/dortmund/other/utils/odds";
 import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
+import { joinDortmundOddsResult, splitDortmundOddsResult } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import {
   DORTMUND_LIMITS,
   DORTMUND_MATCH_RESULT_OPTIONS,
+  DORTMUND_ODDS_RESULT_OPTIONS,
   DORTMUND_STATUS_OPTIONS,
+  enumListRule,
   enumRule,
   optionalTextRule,
   requiredTextRule,
@@ -358,6 +373,7 @@ export default {
         matchCode: [requiredTextRule("比赛编码", DORTMUND_LIMITS.matchCode)],
         matchVenue: [optionalTextRule("球队主场", DORTMUND_LIMITS.matchVenue)],
         matchResult: [enumRule("比赛结果", DORTMUND_MATCH_RESULT_OPTIONS, false)],
+        oddsResult: [enumListRule("倍率赛果", DORTMUND_ODDS_RESULT_OPTIONS)],
         matchRemark: [optionalTextRule("比赛备注", DORTMUND_LIMITS.matchRemark)],
         ...buildOddsRules("newOdds."),
       },
@@ -394,6 +410,7 @@ export default {
         matchVenue: initial.matchVenue || null,
         matchStatus: initial.matchStatus || (this.editMode === "add" ? "0" : null),
         matchResult: initial.matchResult || null,
+        oddsResult: splitDortmundOddsResult(initial.oddsResult),
         matchRemark: initial.matchRemark || null,
         newOdds: buildEmptyOdds(),
       };
@@ -432,6 +449,14 @@ export default {
     // 展开/收起同步 odds 表单；收起时清空草稿，保证关闭后请求不带 newOdds
     toggleNewOdds() {
       this.newOddsVisible = !this.newOddsVisible;
+      // 展开时立即带入当前来源时间和对应业务编码，减少重复录入并保持编码语义一致。
+      if (this.newOddsVisible) {
+        const sourceTime = this.parseTime(new Date(), "{y}-{m}-{d} {h}:{i}:{s}");
+        const newOdds = buildEmptyOdds();
+        newOdds.sourceTime = sourceTime;
+        newOdds.oddsCode = generateBusinessCode("odds", sourceTime);
+        this.editForm.newOdds = newOdds;
+      }
       if (!this.newOddsVisible) {
         this.editForm.newOdds = buildEmptyOdds();
       }
@@ -540,6 +565,7 @@ export default {
         matchVenue: trimText(this.editForm.matchVenue),
         matchStatus: this.editForm.matchStatus,
         matchResult: trimText(this.editForm.matchResult),
+        oddsResult: joinDortmundOddsResult(this.editForm.oddsResult),
         matchRemark: trimText(this.editForm.matchRemark),
       };
       if (isAdd) {

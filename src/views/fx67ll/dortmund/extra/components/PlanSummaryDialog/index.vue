@@ -100,9 +100,9 @@ export default {
       const resultText = match.matchResult ? `，赛果：${match.matchResult}` : "";
       return `${vsText}${timeText}${resultText}`;
     },
-    // 优先展示后端已解析的有效预计倍率，列表快照缺少该字段时回退到手工值或自动值。
+    // 优先展示后端已解析的有效预计倍率，列表快照缺少该字段时回退到手工值。
     displayPlanOdds(plan) {
-      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds ?? plan.calculatedExpectedOdds;
+      const value = plan.effectiveExpectedOdds ?? plan.planExpectedOdds;
       return value === null || value === undefined || value === "" ? "-" : value;
     },
     effectiveExpectedReturn(plan) {

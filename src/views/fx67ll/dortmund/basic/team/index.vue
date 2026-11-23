@@ -88,13 +88,11 @@
       <div class="dl-list-card">
         <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="46" align="center" />
-          <el-table-column label="球队编码" align="center" prop="teamCode" min-width="90" :show-overflow-tooltip="true"
+          <el-table-column label="球队全称" align="center" prop="teamName" min-width="200" :show-overflow-tooltip="true"
             fixed="left" />
-          <el-table-column label="球队全称" align="center" prop="teamName" min-width="180" :show-overflow-tooltip="true"
-            fixed="left" />
-          <el-table-column label="球队昵称" align="center" prop="teamNameShort" min-width="110"
+          <el-table-column label="球队昵称" align="center" prop="teamNameShort" min-width="120"
             :show-overflow-tooltip="true" />
-          <el-table-column label="球队英文" align="center" prop="teamNameEn" min-width="140"
+          <el-table-column label="球队英文" align="center" prop="teamNameEn" min-width="200"
             :show-overflow-tooltip="true" />
           <el-table-column label="球队Logo" align="center" prop="teamLogoUrl" width="88">
             <template slot-scope="scope">
@@ -123,7 +121,8 @@
               <span v-else class="team-list-tag-empty">-</span>
             </template>
           </el-table-column>
-          <el-table-column label="球队状态" align="center" prop="teamStatus" width="96">
+          <el-table-column label="球队编码" align="center" prop="teamCode" min-width="200" :show-overflow-tooltip="true" />
+          <el-table-column label="球队状态" align="center" prop="teamStatus" width="100">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.teamStatus" />
             </template>
@@ -132,14 +131,18 @@
             :sort-orders="['descending', 'ascending']" />
           <el-table-column label="球队备注" align="center" prop="teamRemark" min-width="200"
             :show-overflow-tooltip="true" />
-          <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip />
+          <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
+            <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
+          </el-table-column>
           <el-table-column label="记录创建时间" align="center" prop="createTime" width="150"
             class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip />
+          <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>
+            <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
+          </el-table-column>
           <el-table-column label="记录更新时间" align="center" prop="updateTime" width="150"
             class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">
@@ -232,7 +235,7 @@
 
       <dortmund-detail-card title='球队备注' icon='el-icon-document' tone='green'>
         <div class='dortmund-detail-text-block team-detail-remark'>{{ displayValue(detailData.teamRemark, '暂无备注')
-          }}</div>
+        }}</div>
       </dortmund-detail-card>
 
       <dortmund-detail-card title='记录轨迹' subtitle='归属、创建与最近更新' icon='el-icon-time' tone='green'>
@@ -262,6 +265,7 @@ import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/Dortmund
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
@@ -301,8 +305,8 @@ export default {
       const updateTime = this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
         { key: 'owner', label: '归属用户ID', value: this.detailData.userId, icon: 'el-icon-user' },
-        { key: 'create', label: '创建记录', value: this.detailData.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
-        { key: 'update', label: '最近更新', value: this.detailData.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+        { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
   },
@@ -395,6 +399,10 @@ export default {
     this.getList();
   },
   methods: {
+    // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
+    formatAuditActor(value) {
+      return formatAuditActor(value);
+    },
     // 代理工具函数
     getDialogVerticalOffset(offset) {
       return getDialogVerticalOffset(offset);

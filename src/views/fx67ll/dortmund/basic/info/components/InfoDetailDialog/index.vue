@@ -96,6 +96,7 @@ import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/Dortmund
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 export default {
   name: "InfoDetailDialog",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
@@ -207,8 +208,8 @@ export default {
       const updateTime = this.formatTime(this.detailModel.updateTime, '');
       return [
         { key: 'owner', label: '归属用户ID', value: this.detailModel.userId, icon: 'el-icon-user' },
-        { key: 'create', label: '创建记录', value: this.detailModel.createBy, hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
-        { key: 'update', label: '最近更新', value: this.detailModel.updateBy, hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
+        { key: 'create', label: '创建记录', value: formatAuditActor(this.detailModel.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
+        { key: 'update', label: '最近更新', value: formatAuditActor(this.detailModel.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
     },
     sourceUrlValid() {
@@ -328,8 +329,8 @@ export default {
       }
       const createTime = this.formatTime(rel.createTime, '');
       const updateTime = this.formatTime(rel.updateTime, '');
-      const createActor = this.displayValue(rel.createBy, '');
-      const updateActor = this.displayValue(rel.updateBy, '');
+      const createActor = formatAuditActor(rel.createBy);
+      const updateActor = formatAuditActor(rel.updateBy);
       const parts = [];
       if (createActor || createTime) {
         parts.push(`建立${createActor ? ` · ${createActor}` : ''}${createTime ? ` · ${createTime}` : ''}`);
