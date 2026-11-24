@@ -1,6 +1,6 @@
 <template>
   <dortmund-detail-drawer :visible.sync="drawerVisible" title="球队详情" :subtitle="detail.teamName || '查看球队资料、归属标签与审计信息'"
-    icon="el-icon-s-custom" tone="green" size="680px" feature="team" :loading="loading" :level="level">
+    icon="el-icon-s-custom" tone="green" size="840px" feature="team" :loading="loading" :level="level">
     <section class="team-detail-hero">
       <div class="team-detail-crest">
         <el-image v-if="detail.teamLogoUrl" :src="detail.teamLogoUrl" fit="cover"
@@ -33,7 +33,7 @@
     </div>
 
     <dortmund-detail-card title="身份与编码" icon="el-icon-postcard" tone="green">
-      <div class="team-detail-field-grid">
+      <div class="team-detail-field-grid team-detail-field-grid--quad">
         <div v-for="item in identityFields" :key="item.label" class="team-detail-field">
           <span>{{ item.label }}</span>
           <strong>{{ displayValue(item.value, item.emptyText || '-') }}</strong>
@@ -42,7 +42,7 @@
     </dortmund-detail-card>
 
     <dortmund-detail-card title="主场与归属" icon="el-icon-office-building" tone="green">
-      <div class="team-detail-field-grid">
+      <div class="team-detail-field-grid team-detail-field-grid--quad">
         <div v-for="item in ownershipFields" :key="item.label" class="team-detail-field">
           <span>{{ item.label }}</span>
           <strong>{{ displayValue(item.value, item.emptyText || '-') }}</strong>
@@ -126,7 +126,6 @@ export default {
     },
     identityFields() {
       return [
-        { label: "球队ID", value: this.detail.teamId },
         { label: "球队编码", value: this.detail.teamCode },
         { label: "球队全称", value: this.detail.teamName },
         { label: "球队昵称", value: this.detail.teamNameShort },
@@ -139,14 +138,12 @@ export default {
         { label: "地区/联赛", value: this.detail.teamCountry },
         { label: "球队状态", value: this.displayDict(this.dict.type.sys_normal_disable, this.detail.teamStatus, "未设置") },
         { label: "展示排序", value: this.detail.teamSort == null ? null : this.detail.teamSort, emptyText: "未设置" },
-        { label: "归属用户ID", value: this.detail.userId },
       ];
     },
     recordTrail() {
       const createTime = this.parseTime(this.detail.createTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const updateTime = this.parseTime(this.detail.updateTime, "{y}-{m}-{d} {h}:{i}:{s}");
       return [
-        { key: "owner", label: "归属用户ID", value: this.detail.userId, icon: "el-icon-user" },
         {
           key: "create", label: "创建记录", value: formatAuditActor(this.detail.createBy),
           hint: createTime ? `创建时间 · ${createTime}` : "", icon: "el-icon-edit-outline", state: "success"
@@ -325,6 +322,10 @@ export default {
   gap: 10px;
 }
 
+.team-detail-field-grid--quad {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .team-detail-field {
   padding: 10px 12px;
   background: #f7fbf8;
@@ -364,6 +365,12 @@ export default {
 
   i {
     margin-right: 5px;
+  }
+}
+
+@media screen and (max-width: 980px) {
+  .team-detail-field-grid--quad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

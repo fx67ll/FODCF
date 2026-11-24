@@ -6,7 +6,7 @@
           <el-form class="dl-filter odds-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
             <el-form-item label="倍率编码" prop="oddsCode" v-if="isMoreQuery">
-              <el-input v-model="queryParams.oddsCode" placeholder="推荐格式：体彩比赛日期+期号" clearable
+              <el-input v-model="queryParams.oddsCode" placeholder="请输入倍率编码" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="所属比赛" prop="matchCode">
@@ -16,11 +16,11 @@
             <el-form-item label="来源时间" prop="sourceTime" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeSourceTime" style="width: 360px" type="datetimerange"
                 popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
-                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable @change="handleFilterChange" />
             </el-form-item>
             <el-form-item label="有效状态" prop="activeFlag" v-if="isMoreQuery">
               <el-select v-model="queryParams.activeFlag" placeholder="请选择有效状态" clearable
-                popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
+                popper-class="dortmund-theme-popper" @change="handleFilterChange" @keyup.enter.native="handleQuery">
                 <el-option v-for="item in dict.type.sys_yes_no || []" :key="item.value" :label="item.label"
                   :value="item.value" />
               </el-select>
@@ -28,12 +28,12 @@
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" type="datetimerange"
                 popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
-                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable @change="handleFilterChange" />
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" type="datetimerange"
                 popper-class="dortmund-theme-popper" value-format="yyyy-MM-dd HH:mm:ss" range-separator="-"
-                start-placeholder="开始时间" end-placeholder="结束时间" clearable />
+                start-placeholder="开始时间" end-placeholder="结束时间" clearable @change="handleFilterChange" />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -49,7 +49,7 @@
         <div class="dl-toolbar">
           <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-              v-hasPermi="['dortmund:odds:add']">新增</el-button>
+              v-hasPermi="['dortmund:odds:add']">补充录入</el-button>
             <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
               v-hasPermi="['dortmund:odds:export']">导出</el-button> -->
           </div>
@@ -85,7 +85,7 @@
                 <dict-tag :options="dict.type.sys_yes_no || []" :value="scope.row.activeFlag" />
               </template>
             </el-table-column>
-            <el-table-column label="来源时间" align="center" prop="sourceTime" width="150"
+            <el-table-column label="来源时间" align="center" prop="sourceTime" width="150" fixed="right"
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
                 <span>{{ parseTime(scope.row.sourceTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
@@ -136,7 +136,7 @@
         :edit-loading="editLoading" :submitting="submitting" @back="handleSceneBack" @save="handleSceneSave" />
     </transition>
 
-    <dortmund-detail-drawer :visible.sync="detailVisible" title="倍率记录详情"
+    <dortmund-detail-drawer :visible.sync="detailVisible" title="倍率详情"
       :subtitle="detail.matchSummary || '查看版本信息与六类倍率权重'" icon="el-icon-data-line" tone="amber" size="640px"
       :loading="detailLoading" feature="odds">
       <dortmund-detail-card title='版本画像' icon='el-icon-document' tone='amber'>
@@ -226,14 +226,15 @@ import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGe
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "DortmundOdds",
   dicts: ["sys_yes_no", "fx67ll_dortmund_odds_type"],
   components: { OddsEditScene, DortmundMatchSelectorModal, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail, DortmundMatchDetailDrawer },
+  mixins: [filterAutoQuery],
   computed: {
     oddsOverviewMetrics() {
       return [
-        { label: '倍率ID', value: this.displayValue(this.detail.oddsId), icon: 'el-icon-postcard' },
         { label: '倍率编码', value: this.displayValue(this.detail.oddsCode), icon: 'el-icon-collection-tag' },
         { label: '比赛编码', value: this.displayValue(this.detail.matchCode), icon: 'el-icon-football' },
         { label: '来源时间', value: this.parseTime(this.detail.sourceTime, '{y}-{m}-{d} {h}:{i}:{s}'), icon: 'el-icon-time' },
@@ -244,7 +245,6 @@ export default {
     // 版本画像仅在任一基础字段有值时展示，避免接口返回空对象时留下空白模块
     hasOddsOverview() {
       return [
-        this.detail.oddsId,
         this.detail.oddsCode,
         this.detail.matchCode,
         this.detail.sourceTime,
@@ -254,19 +254,16 @@ export default {
     },
     oddsSourceFields() {
       return [
-        { label: '比赛ID', value: this.detail.matchId },
         { label: '比赛编码', value: this.detail.matchCode },
         { label: '比赛摘要', value: this.detail.matchSummary },
         { label: '来源时间', value: this.parseTime(this.detail.sourceTime, '{y}-{m}-{d} {h}:{i}:{s}') },
         { label: '让分值', value: this.detail.handicapValue == null ? null : this.detail.handicapValue },
-        { label: '归属用户ID', value: this.detail.userId },
       ];
     },
     oddsRecordTrail() {
       const createTime = this.parseTime(this.detail.createTime, '{y}-{m}-{d} {h}:{i}:{s}');
       const updateTime = this.parseTime(this.detail.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
-        { key: 'owner', label: '归属用户ID', value: this.detail.userId, icon: 'el-icon-user' },
         { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detail.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
         { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detail.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
@@ -454,6 +451,7 @@ export default {
     handleMatchSelectorConfirm(match) {
       this.selectedMatch = match || null;
       this.queryParams.matchCode = match ? match.matchCode : null;
+      this.handleQuery();
     },
     handleAdd() {
       this.editMode = "add";
@@ -728,7 +726,7 @@ export default {
 
 .odds-detail-field-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px 24px;
   padding: 2px 0;
 }

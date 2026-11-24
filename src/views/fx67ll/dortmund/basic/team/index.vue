@@ -5,41 +5,44 @@
         <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
           label-width="72px">
           <el-form-item label="球队编码" prop="teamCode" v-if="isMoreQuery">
-            <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable
+            <el-input v-model="queryParams.teamCode" placeholder="请输入球队编码" clearable @input="handleFilterInput"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <!-- 这下面个参数都可以用这个参数来模糊搜索 -->
           <el-form-item label="搜索球队" prop="teamName" v-if="!isMoreQuery">
-            <el-input v-model="queryParams.teamName" placeholder="球队全称/昵称/简称/英文" clearable
+            <el-input v-model="queryParams.teamName" placeholder="球队全称/昵称/简称/英文" clearable @input="handleFilterInput"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队全称" prop="teamName" v-if="isMoreQuery">
-            <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable
+            <el-input v-model="queryParams.teamName" placeholder="请输入球队全称" clearable @input="handleFilterInput"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队昵称" prop="teamNameShort" v-if="isMoreQuery">
-            <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称/简称" clearable
+            <el-input v-model="queryParams.teamNameShort" placeholder="请输入球队昵称/简称" clearable @input="handleFilterInput"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队英文" prop="teamNameEn" v-if="isMoreQuery">
-            <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable
+            <el-input v-model="queryParams.teamNameEn" placeholder="请输入球队英文" clearable @input="handleFilterInput"
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item label="球队主场" prop="teamVenue" v-if="isMoreQuery">
             <dortmund-team-option-selector v-model="queryParams.teamVenue" option-type="venue" :multiple="false"
-              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场" />
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场"
+              @change="handleFilterChange" />
           </el-form-item>
           <el-form-item label="地区/联赛" prop="teamCountry">
             <dortmund-team-option-selector v-model="queryParams.teamCountry" option-type="country" :multiple="false"
-              :allow-create="false" clearable size="small" width="220px" placeholder="请选择地区/联赛" />
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择地区/联赛"
+              @change="handleFilterChange" />
           </el-form-item>
           <el-form-item label="球队标签" prop="teamTag" v-if="isMoreQuery">
             <dortmund-team-option-selector v-model="queryParams.teamTag" option-type="tag" :multiple="false"
-              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队标签" />
+              :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队标签"
+              @change="handleFilterChange" />
           </el-form-item>
           <el-form-item label="球队状态" prop="teamStatus" v-if="isMoreQuery">
             <el-select v-model="queryParams.teamStatus" style="width: 100%" placeholder="请选择球队状态" clearable
-              popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
+              popper-class="dortmund-theme-popper" @change="handleFilterChange" @keyup.enter.native="handleQuery">
               <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                 :value="dict.value"></el-option>
             </el-select>
@@ -47,12 +50,12 @@
           <el-form-item label="创建时间" v-if="isMoreQuery">
             <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
               popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-              end-placeholder="结束时间" clearable></el-date-picker>
+              end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
           </el-form-item>
           <el-form-item label="更新时间" v-if="isMoreQuery">
             <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
               popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-              end-placeholder="结束时间" clearable></el-date-picker>
+              end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -172,7 +175,7 @@
       @back="cancel" @save="submitForm" />
 
     <dortmund-detail-drawer :visible.sync="detailVisible" title="球队详情"
-      :subtitle="detailData.teamName || '查看球队资料、归属标签与审计信息'" icon="el-icon-s-custom" tone="green" size="680px"
+      :subtitle="detailData.teamName || '查看球队资料、归属标签与审计信息'" icon="el-icon-s-custom" tone="green" size="840px"
       feature="team" :loading="detailLoading">
       <section class='team-detail-hero'>
         <div class='team-detail-crest'>
@@ -207,7 +210,7 @@
       </div>
 
       <dortmund-detail-card title='身份与编码' icon='el-icon-postcard' tone='green'>
-        <div class='team-detail-field-grid'>
+        <div class='team-detail-field-grid team-detail-field-grid--quad'>
           <div v-for='item in teamIdentityFields' :key='item.label' class='team-detail-field'>
             <span>{{ item.label }}</span>
             <strong>{{ displayValue(item.value, item.emptyText || '-') }}</strong>
@@ -216,7 +219,7 @@
       </dortmund-detail-card>
 
       <dortmund-detail-card title='主场与归属' icon='el-icon-office-building' tone='green'>
-        <div class='team-detail-field-grid'>
+        <div class='team-detail-field-grid team-detail-field-grid--quad'>
           <div v-for='item in teamOwnershipFields' :key='item.label' class='team-detail-field'>
             <span>{{ item.label }}</span>
             <strong>{{ displayValue(item.value, item.emptyText || '-') }}</strong>
@@ -235,7 +238,7 @@
 
       <dortmund-detail-card title='球队备注' icon='el-icon-document' tone='green'>
         <div class='dortmund-detail-text-block team-detail-remark'>{{ displayValue(detailData.teamRemark, '暂无备注')
-        }}</div>
+          }}</div>
       </dortmund-detail-card>
 
       <dortmund-detail-card title='记录轨迹' subtitle='归属、创建与最近更新' icon='el-icon-time' tone='green'>
@@ -266,10 +269,12 @@ import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
   components: { TeamEditScene, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  mixins: [filterAutoQuery],
   computed: {
     teamTagList() {
       return this.formatTeamTagList(this.detailData.teamTag);
@@ -284,7 +289,6 @@ export default {
     },
     teamIdentityFields() {
       return [
-        { label: '球队ID', value: this.detailData.teamId },
         { label: '球队编码', value: this.detailData.teamCode },
         { label: '球队全称', value: this.detailData.teamName },
         { label: '球队昵称', value: this.detailData.teamNameShort },
@@ -297,14 +301,12 @@ export default {
         { label: '地区/联赛', value: this.detailData.teamCountry },
         { label: '球队状态', value: this.displayDict(this.dict.type.sys_normal_disable, this.detailData.teamStatus, '未设置') },
         { label: '展示排序', value: this.detailData.teamSort == null ? null : this.detailData.teamSort, emptyText: '未设置' },
-        { label: '归属用户ID', value: this.detailData.userId },
       ];
     },
     teamRecordTrail() {
       const createTime = this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}');
       const updateTime = this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
-        { key: 'owner', label: '归属用户ID', value: this.detailData.userId, icon: 'el-icon-user' },
         { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
         { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
@@ -857,6 +859,10 @@ export default {
   padding: 2px 0;
 }
 
+.team-detail-field-grid--quad {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .team-detail-field {
   min-width: 0;
 
@@ -960,7 +966,17 @@ export default {
   }
 }
 
+@media (max-width: 980px) {
+  .team-detail-field-grid--quad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 620px) {
+  .team-detail-field-grid--quad {
+    grid-template-columns: 1fr;
+  }
+
   .team-detail-hero {
     flex-wrap: wrap;
     padding: 2px 0 16px;

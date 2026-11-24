@@ -83,16 +83,34 @@ export default {
 }
 
 button.dortmund-usage-heat {
+  min-width: 34px;
+  min-height: 28px;
+  padding: 4px 9px;
   cursor: pointer;
+  border-radius: 8px;
   outline: none;
+  transition: color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-1px);
-    opacity: .82;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, .14);
+  }
+
+  &.is-green:hover:not(:disabled) {
+    background: rgba(46, 204, 113, .11);
+  }
+
+  &.is-red:hover:not(:disabled) {
+    background: rgba(245, 108, 108, .11);
+    box-shadow: 0 4px 10px rgba(245, 108, 108, .13);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(.94);
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, .08);
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, .22);
   }
 }
 

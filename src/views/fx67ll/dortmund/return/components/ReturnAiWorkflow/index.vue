@@ -446,7 +446,7 @@ export default {
         if (!rows.has(key)) {
           rows.set(key, {
             matchId,
-            matchLabel: matchId == null ? "-" : `比赛 #${matchId}`,
+            matchLabel: "比赛信息待补充",
             teamTags: "-",
             plannedQueries: 0,
             suppliedEvidence: 0,
@@ -533,10 +533,10 @@ export default {
       return Boolean(this.generation.aiAnalysisInputSnapshot && this.generation.aiResultSnapshot);
     },
     matchLabel(match) {
-      if (!match) return "-";
+      if (!match) return "比赛信息待补充";
       const home = match.homeTeam && match.homeTeam.teamName ? match.homeTeam.teamName : "主队";
       const away = match.awayTeam && match.awayTeam.teamName ? match.awayTeam.teamName : "客队";
-      return `${home} vs ${away} · #${match.matchId}`;
+      return `${home} vs ${away}`;
     },
     formatDuration(value) {
       const millis = Number(value);

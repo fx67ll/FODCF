@@ -4,8 +4,9 @@
       :query-params="selectorQueryParams" :columns="columns" :search-fields="searchFields" :max-count="maxCount"
       :selected-items="selectedItems" value-key="matchId" label-key="matchCode" :label-formatter="formatMatchLabel"
       :multiple="multiple" :page-size="pageSize" :page-sizes="pageSizes" :show-detail="true"
-      :shifted="matchDetailVisible" @detail="openMatchDetail" :row-selectable="isMatchSelectable"
-      row-selectable-message="该比赛已开赛或开赛时间无效，不能用于回报组合分析" @confirm="$emit('confirm', $event)" />
+      :shifted="matchDetailVisible" drawer-width="1120px" auto-query @detail="openMatchDetail"
+      :row-selectable="isMatchSelectable" row-selectable-message="该比赛已开赛或开赛时间无效，不能用于回报组合分析"
+      @confirm="$emit('confirm', $event)" />
     <dortmund-match-detail-drawer :visible.sync="matchDetailVisible" :match-id="selectedDetailMatchId"
       :snapshot="selectedDetailSnapshot" :level="2" />
   </div>

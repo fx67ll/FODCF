@@ -3,8 +3,8 @@
     <list-selector-modal :visible.sync="dialogVisible" :title="multiple ? '选择球队' : '选择球队'" :api-func="listTeam"
       :query-params="{ teamStatus: '0', ...queryParams }" :columns="columns" :search-fields="searchFields"
       :selected-items="selectedItems" value-key="teamId" label-key="teamName" :multiple="multiple" :page-size="pageSize"
-      :page-sizes="pageSizes" :show-detail="true" :shifted="teamDetailVisible" @detail="openTeamDetail"
-      @confirm="$emit('confirm', $event)">
+      :page-sizes="pageSizes" :show-detail="true" :shifted="teamDetailVisible" drawer-width="1120px" auto-query
+      @detail="openTeamDetail" @confirm="$emit('confirm', $event)">
       <template v-slot:search="{ searchForm }">
         <el-form-item label="地区/联赛">
           <dortmund-team-option-selector v-model="searchForm.teamCountry" option-type="country" :multiple="false"

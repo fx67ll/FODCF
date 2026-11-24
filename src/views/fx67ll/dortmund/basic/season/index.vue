@@ -4,26 +4,26 @@
       <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
         label-width="68px">
         <el-form-item label="赛季编码" prop="seasonCode" v-if="isMoreQuery">
-          <el-input v-model="queryParams.seasonCode" placeholder="请输入赛季编码" clearable
+          <el-input v-model="queryParams.seasonCode" placeholder="请输入赛季编码" clearable @input="handleFilterInput"
             @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="赛季名称" prop="seasonName">
-          <el-input v-model="queryParams.seasonName" placeholder="请输入赛季名称" clearable
+          <el-input v-model="queryParams.seasonName" placeholder="请输入赛季名称" clearable @input="handleFilterInput"
             @keyup.enter.native="handleQuery" />
         </el-form-item>
         <el-form-item label="开始日期" prop="seasonStartDate" v-if="isMoreQuery">
           <el-date-picker clearable v-model="queryParams.seasonStartDate" type="date" value-format="yyyy-MM-dd"
-            popper-class="dortmund-theme-popper" placeholder="请选择赛季开始日期">
+            popper-class="dortmund-theme-popper" placeholder="请选择赛季开始日期" @change="handleFilterChange">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="结束日期" prop="seasonEndDate" v-if="isMoreQuery">
           <el-date-picker clearable v-model="queryParams.seasonEndDate" type="date" value-format="yyyy-MM-dd"
-            popper-class="dortmund-theme-popper" placeholder="请选择赛季结束日期">
+            popper-class="dortmund-theme-popper" placeholder="请选择赛季结束日期" @change="handleFilterChange">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="赛季状态" prop="seasonStatus" v-if="isMoreQuery">
           <el-select v-model="queryParams.seasonStatus" style="width: 100%" placeholder="请选择赛季状态" clearable
-            popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
+            popper-class="dortmund-theme-popper" @change="handleFilterChange" @keyup.enter.native="handleQuery">
             <el-option v-for="dict in dict.type.fx67ll_dortmund_status" :key="dict.value" :label="dict.label"
               :value="dict.value"></el-option>
           </el-select>
@@ -31,12 +31,12 @@
         <el-form-item label="创建时间" v-if="isMoreQuery">
           <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
             type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
-            end-placeholder="结束时间" clearable></el-date-picker>
+            end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
         </el-form-item>
         <el-form-item label="更新时间" v-if="isMoreQuery">
           <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
             type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
-            end-placeholder="结束时间" clearable></el-date-picker>
+            end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -303,10 +303,12 @@ import {
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "Season",
   dicts: ["fx67ll_dortmund_status"],
   components: { DortmundFormLabel, DortmundCodeInput, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  mixins: [filterAutoQuery],
   computed: {
     limits() {
       return DORTMUND_LIMITS;
@@ -317,7 +319,6 @@ export default {
     seasonMetrics() {
       return [
         { label: '赛季编码', value: this.detailData.seasonCode, icon: 'el-icon-collection-tag' },
-        { label: '赛季ID', value: this.detailData.seasonId, icon: 'el-icon-postcard' },
         { label: '赛季状态', value: this.displayDict(this.dict.type.fx67ll_dortmund_status, this.detailData.seasonStatus, '未设置'), icon: 'el-icon-data-analysis' },
         { label: '赛季排序', value: this.detailData.seasonSort == null ? '-' : this.detailData.seasonSort, icon: 'el-icon-sort' },
       ];
@@ -326,7 +327,6 @@ export default {
       const createTime = this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}');
       const updateTime = this.parseTime(this.detailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
-        { key: 'owner', label: '归属用户ID', value: this.detailData.userId, icon: 'el-icon-user' },
         { key: 'create', label: '创建记录', value: this.formatAuditActor(this.detailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
         { key: 'update', label: '最近更新', value: this.formatAuditActor(this.detailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
@@ -767,7 +767,7 @@ export default {
 
 .season-detail-stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   padding: 8px 0 16px;
   margin-bottom: 0;

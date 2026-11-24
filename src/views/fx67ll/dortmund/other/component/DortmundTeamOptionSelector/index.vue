@@ -75,7 +75,7 @@
                   @change="toggleDraft(scope.row.value)"><span></span></el-radio>
               </template>
             </el-table-column>
-            <el-table-column label="选项" min-width="220">
+            <el-table-column label="选项" :min-width="optionType === 'country' ? 80 : 150">
               <template slot-scope="scope">
                 <el-tag v-if="optionType === 'tag'" :type="scope.row.type || 'info'" size="small">
                   {{ scope.row.label }}
@@ -83,7 +83,7 @@
                 <span v-else class="team-option-row-label">{{ scope.row.label }}</span>
               </template>
             </el-table-column>
-            <el-table-column v-if="showTeamNames" label="关联球队" min-width="190" show-overflow-tooltip>
+            <el-table-column v-if="showTeamNames" label="关联球队" min-width="230" show-overflow-tooltip>
               <template slot-scope="scope">
                 <span v-if="scope.row.teamNames.length" class="team-option-team-names">
                   {{ scope.row.teamNames.join("、") }}
@@ -223,6 +223,7 @@ export default {
       pageNum: 1,
       pageSize: DORTMUND_PAGINATION.selectorPageSize,
       pageSizes: DORTMUND_PAGINATION.pageSizes,
+      keywordTimer: null,
       remoteOptions: [],
       localOptions: [],
       remoteLoaded: false,
@@ -339,7 +340,23 @@ export default {
     }
     this.loadOptions();
   },
+  watch: {
+    // 选项列表为本地过滤，输入后自动应用关键字；搜索按钮保留用于手动刷新与立即确认。
+    keyword() {
+      if (this.keywordTimer) {
+        clearTimeout(this.keywordTimer);
+      }
+      this.keywordTimer = setTimeout(() => {
+        this.keywordTimer = null;
+        this.applySearch();
+      }, 180);
+    },
+  },
   beforeDestroy() {
+    if (this.keywordTimer) {
+      clearTimeout(this.keywordTimer);
+      this.keywordTimer = null;
+    }
     if (typeof window !== "undefined") {
       window.removeEventListener("resize", this.handleResize);
     }

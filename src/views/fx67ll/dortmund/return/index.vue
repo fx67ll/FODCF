@@ -23,49 +23,64 @@
 
     <transition name="dl-filter">
       <el-form ref="combinationQueryForm" :model="combinationQuery" class="dl-filter" size="small" :inline="true">
-        <el-form-item label="搜索组合" prop="keyword" label-width="auto">
+        <el-form-item label="搜索组合" prop="keyword" label-width="auto" v-if="isMoreCombinationQuery">
           <el-input v-model="combinationQuery.keyword" placeholder="请输入组合编码或标题" clearable style="width: 220px"
-            @keyup.enter.native="handleCombinationQuery" />
+            @input="handleCombinationFilterInput" @keyup.enter.native="handleCombinationQuery" />
         </el-form-item>
-        <el-form-item label="关联比赛" prop="matchId" label-width="auto">
+        <el-form-item label="关联比赛" prop="matchId" label-width="auto" v-if="isMoreCombinationQuery">
           <el-input :value="combinationMatchLabel" readonly clearable placeholder="请选择关联比赛"
             prefix-icon="el-icon-football" style="width: 220px" @click.native="openCombinationMatchQuery"
             @clear="clearCombinationMatch" />
         </el-form-item>
+        <el-form-item label="核验状态" prop="verificationStatus" label-width="auto">
+          <el-select v-model="combinationQuery.verificationStatus" placeholder="请选择核验状态" clearable style="width: 220px"
+            popper-class="dortmund-theme-popper" @change="handleCombinationQuery">
+            <el-option label="已达成" value="Y" />
+            <el-option label="未达成" value="N" />
+            <el-option label="未核验" value="U" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="采用状态" prop="adoptedFlag" label-width="auto">
           <el-select v-model="combinationQuery.adoptedFlag" placeholder="请选择采用状态" clearable style="width: 220px"
-            popper-class="dortmund-theme-popper">
+            popper-class="dortmund-theme-popper" @change="handleCombinationQuery">
             <el-option label="未采用" value="N" />
             <el-option label="已采用" value="Y" />
           </el-select>
         </el-form-item>
         <el-form-item label="生成模式" prop="generationMode" label-width="auto" v-if="isMoreCombinationQuery">
           <el-select v-model="combinationQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 220px"
-            popper-class="dortmund-theme-popper">
+            popper-class="dortmund-theme-popper" @change="handleCombinationQuery">
             <el-option label="主观模式" value="S" />
             <el-option label="AI 模式" value="A" />
           </el-select>
         </el-form-item>
         <el-form-item label="批次状态" prop="generationStatus" label-width="auto" v-if="isMoreCombinationQuery">
           <el-select v-model="combinationQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 220px"
-            popper-class="dortmund-theme-popper">
+            popper-class="dortmund-theme-popper" @change="handleCombinationQuery">
             <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
               :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="创建时间" label-width="auto" v-if="isMoreCombinationQuery">
-          <el-date-picker v-model="combinationDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
-            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
-            style="width: 360px" clearable />
-        </el-form-item>
         <el-form-item label="审核时间" label-width="auto" v-if="isMoreCombinationQuery">
           <el-date-picker v-model="combinationAuditDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
             range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
-            style="width: 360px" clearable />
+            style="width: 360px" clearable @change="handleCombinationQuery" />
+        </el-form-item>
+        <el-form-item label="创建时间" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-date-picker v-model="combinationDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
+            style="width: 360px" clearable @change="handleCombinationQuery" />
+        </el-form-item>
+        <el-form-item label="更新时间" label-width="auto" v-if="isMoreCombinationQuery">
+          <el-date-picker v-model="combinationUpdateDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
+            range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
+            style="width: 360px" clearable @change="handleCombinationQuery" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" size="mini" @click="handleCombinationQuery">搜索</el-button>
           <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetCombinationQuery">重置</el-button>
+          <el-button v-if="isResetStatus" type="warning" icon="el-icon-scissors" size="mini"
+            @click="handleViewValidData">只看有效数据</el-button>
           <el-button type="success" class="dl-more-btn"
             :icon="isMoreCombinationQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
             @click="handleMoreCombinationQuery">
@@ -102,9 +117,6 @@
               <el-option label="升序" value="asc" />
             </el-select>
           </div>
-          <el-button type="success" plain size="mini" icon="el-icon-view" @click="handleViewValidData">
-            查看有效数据
-          </el-button>
           <div class="combination-batch-actions">
             <el-button type="success" plain size="mini" icon="el-icon-check" :loading="batchAdoptLoading"
               :disabled="!selectedCombinationIds.length" @click="handleBatchAdopt"
@@ -124,7 +136,8 @@
           row-key="combinationId" class="history-table combination-table"
           @selection-change="handleCombinationSelectionChange">
           <el-table-column type="selection" width="46" fixed="left" />
-          <el-table-column label="组合标题" prop="combinationTitle" min-width="230" show-overflow-tooltip fixed="left" />
+          <el-table-column label="回报组合标题" prop="combinationTitle" align="center" width="300"
+            show-overflow-tooltip fixed="left" />
           <el-table-column label="场次" align="center" width="80" fixed="left">
             <template slot-scope="scope">
               <el-button v-if="scope.row.matchCount > 0" type="text" class="dortmund-theme-text combination-match-count"
@@ -147,16 +160,16 @@
               <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
             </template>
           </el-table-column>
-          <el-table-column label="模式" align="center" width="108">
-            <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
-          </el-table-column>
-          <el-table-column label="组合编码" prop="combinationCode" width="200" show-overflow-tooltip />
           <el-table-column label="采用状态" align="center" width="100">
             <template slot-scope="scope">
               <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
                 {{ scope.row.adoptedFlag === "Y" ? "已采用" : "未采用" }}
               </el-tag>
             </template>
+          </el-table-column>
+          <el-table-column label="组合编码" prop="combinationCode" align="center" width="200" show-overflow-tooltip />
+          <el-table-column label="模式" align="center" width="100">
+            <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
           </el-table-column>
           <el-table-column label="批次状态" align="center" width="100">
             <template slot-scope="scope">
@@ -167,17 +180,17 @@
             <template slot-scope="scope">{{ parseTime(scope.row.reviewTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
             }}</template>
           </el-table-column>
-          <el-table-column label="记录创建者" align="center" prop="createBy" width="108" show-overflow-tooltip>
+          <el-table-column label="记录创建者" align="center" prop="createBy" width="100" show-overflow-tooltip>
             <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
           </el-table-column>
-          <el-table-column label="创建时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+          <el-table-column label="记录创建时间" align="center" width="150" fixed="right" class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
             }}</template>
           </el-table-column>
-          <el-table-column label="记录更新者" align="center" prop="updateBy" width="108" show-overflow-tooltip>
+          <el-table-column label="记录更新者" align="center" prop="updateBy" width="100" show-overflow-tooltip>
             <template slot-scope="scope">{{ formatAuditActor(scope.row.updateBy) }}</template>
           </el-table-column>
-          <el-table-column label="更新时间" align="center" width="160" class-name="dortmund-nowrap-cell">
+          <el-table-column label="记录更新时间" align="center" width="150" class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
             }}</template>
           </el-table-column>
@@ -283,38 +296,44 @@
               @click="handleBatchExport" v-hasPermi="['dortmund:return:export']">导出批次</el-button>
           </div>
         </div>
-        <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter" size="small" :inline="true">
+        <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter dl-filter" size="small"
+          :inline="true">
           <el-form-item label="批次状态" prop="generationStatus" label-width="auto">
             <el-select v-model="batchQuery.generationStatus" placeholder="请选择批次状态" clearable style="width: 140px"
-              popper-class="dortmund-theme-popper">
+              popper-class="dortmund-theme-popper" @change="handleBatchQuery">
               <el-option v-for="item in dict.type.fx67ll_ai_analysis_status || []" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="生成模式" prop="generationMode" label-width="auto">
             <el-select v-model="batchQuery.generationMode" placeholder="请选择生成模式" clearable style="width: 160px"
-              popper-class="dortmund-theme-popper">
+              popper-class="dortmund-theme-popper" @change="handleBatchQuery">
               <el-option label="主观模式" value="S" />
               <el-option label="AI 模式" value="A" />
             </el-select>
           </el-form-item>
-          <el-form-item label="任务来源" prop="resultSource" label-width="auto">
+          <el-form-item label="任务来源" prop="resultSource" label-width="auto" v-if="isMoreBatchQuery">
             <el-select v-model="batchQuery.resultSource" placeholder="请选择任务来源" clearable style="width: 150px"
-              popper-class="dortmund-theme-popper">
+              popper-class="dortmund-theme-popper" @change="handleBatchQuery">
               <el-option label="自动AI批次" value="A" />
               <el-option label="人工AI批次" value="M" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间" label-width="auto">
+          <el-form-item label="创建时间" label-width="auto" v-if="isMoreBatchQuery">
             <el-date-picker v-model="batchDateRange" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
               range-separator="-" popper-class="dortmund-theme-popper" start-placeholder="开始时间" end-placeholder="结束时间"
-              style="width: 360px" clearable />
+              style="width: 360px" clearable @change="handleBatchQuery" />
           </el-form-item>
           <el-form-item class="history-batch-actions">
             <el-button type="primary" icon="el-icon-search" size="mini" :loading="batchLoading"
               @click="handleBatchQuery">搜索</el-button>
             <el-button icon="el-icon-refresh" size="mini" :disabled="batchLoading"
               @click="resetBatchQuery">重置</el-button>
+            <el-button type="success" class="dl-more-btn"
+              :icon="isMoreBatchQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'" size="mini"
+              @click="handleMoreBatchQuery">
+              {{ isMoreBatchQuery ? "关闭高级搜索" : "使用高级搜索" }}
+            </el-button>
           </el-form-item>
         </el-form>
         <div class="history-table-card">
@@ -378,7 +397,7 @@
 
     <el-drawer :visible.sync="orphanImageVisible" title="孤儿图片清理" size="980px" append-to-body destroy-on-close
       custom-class="return-drawer return-orphan-drawer" :wrapper-closable="false" @opened="initializeOrphanQuery">
-      <div class="return-drawer-body">
+      <div class="return-drawer-body dl-page">
         <div class="orphan-hero">
           <div class="orphan-hero-copy">
             <div class="history-drawer-hero-icon"><i class="el-icon-delete"></i></div>
@@ -399,16 +418,21 @@
           <el-tag size="mini" type="warning">Q 已隔离</el-tag>
           <span><i class="el-icon-info"></i> 查询跨度最多 366 天，单次最多删除 100 张</span>
         </div>
-        <div class="orphan-filter-card">
-          <el-date-picker v-model="orphanDateRange" size="small" type="datetimerange" value-format="yyyy-MM-dd HH:mm:ss"
-            popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间"
-            style="width: 360px" clearable />
-          <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
-            @click="handleOrphanImageSearch">搜索孤儿图片</el-button>
-          <el-button type="danger" plain size="mini" icon="el-icon-delete" :loading="orphanDeleteLoading"
-            :disabled="!selectedOrphanIds.length" @click="handleDeleteSelectedOrphans"
-            v-hasPermi="['dortmund:return:image:remove']">删除选中图片</el-button>
-        </div>
+        <el-form class="orphan-filter-card dl-filter" size="small" :inline="true"
+          @submit.native.prevent>
+          <el-form-item label="上传日期" label-width="auto">
+            <el-date-picker v-model="orphanDateRange" size="small" type="daterange" value-format="yyyy-MM-dd"
+              popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期"
+              end-placeholder="结束日期" clearable @change="handleOrphanDateChange" />
+          </el-form-item>
+          <el-form-item class="orphan-filter-actions">
+            <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
+              @click="handleOrphanImageSearch">搜索孤儿图片</el-button>
+            <el-button type="danger" plain size="mini" icon="el-icon-delete" :loading="orphanDeleteLoading"
+              :disabled="!selectedOrphanIds.length" @click="handleDeleteSelectedOrphans"
+              v-hasPermi="['dortmund:return:image:remove']">删除选中图片</el-button>
+          </el-form-item>
+        </el-form>
         <div class="orphan-result" v-if="orphanCleanupResult">
           <i class="el-icon-circle-check"></i>
           <span>本次请求 {{ orphanCleanupResult.requestedCount }} 张，成功 {{ orphanCleanupResult.deletedCount }} 张，
@@ -540,6 +564,7 @@ export default {
       batchLoading: false,
       batchExporting: false,
       historyVisible: false,
+      isMoreBatchQuery: false,
       batchDateRange: [],
       batchQuery: {
         pageNum: 1,
@@ -561,7 +586,10 @@ export default {
       combinationListLoading: false,
       combinationDateRange: [],
       combinationAuditDateRange: [],
+      combinationUpdateDateRange: [],
       isMoreCombinationQuery: false,
+      isResetStatus: false,
+      combinationFilterTimer: null,
       combinationMatch: null,
       combinationMatchSelectorVisible: false,
       combinationQuery: {
@@ -570,7 +598,7 @@ export default {
         keyword: null,
         generationMode: null,
         adoptedFlag: "Y",
-        unverifiedOnly: true,
+        verificationStatus: "U",
         generationStatus: null,
         matchId: null,
         sortField: "createTime",
@@ -579,6 +607,8 @@ export default {
         endCreateTime: null,
         beginReviewTime: null,
         endReviewTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
       },
       pageSizes: DORTMUND_PAGINATION.pageSizes,
       selectedCombinationIds: [],
@@ -665,14 +695,14 @@ export default {
         const dimensionSummary = formatPreferenceDimensionSummary(value.preferenceDimensions);
         return `模式：${this.formatGenerationMode(value.generationMode)}\n偏好：${getPreferenceLabel(value.preferenceCode)}`
           + `${dimensionSummary ? `\n组合维度：${dimensionSummary}` : ""}`
-          + `\n基础金额：${value.inputAmount}\n目标金额：${value.targetAmount}\n比赛：${(value.matchIds || []).join("、")}`;
+          + `\n基础金额：${value.inputAmount}\n目标金额：${value.targetAmount}\n比赛：已选 ${(value.matchIds || []).length} 场`;
       } catch (error) {
         return snapshot;
       }
     },
     combinationMatchLabel() {
       if (!this.combinationMatch) {
-        return this.combinationQuery.matchId ? `比赛 #${this.combinationQuery.matchId}` : "";
+        return this.combinationQuery.matchId ? "已选择关联比赛" : "";
       }
       return this.formatMatchLabel(this.combinationMatch);
     },
@@ -686,6 +716,12 @@ export default {
   created() {
     this.initializeCombinationMatchFromRoute();
     this.getCombinationList();
+  },
+  beforeDestroy() {
+    if (this.combinationFilterTimer) {
+      clearTimeout(this.combinationFilterTimer);
+      this.combinationFilterTimer = null;
+    }
   },
   methods: {
     // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
@@ -704,7 +740,7 @@ export default {
         return "";
       }
       if (!match.homeTeamName && !match.awayTeamName) {
-        return `比赛 #${match.matchId || "-"}`;
+        return "比赛信息待补充";
       }
       const time = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vs = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
@@ -767,6 +803,9 @@ export default {
       this.batchQuery.pageNum = 1;
       this.getBatchList();
     },
+    handleMoreBatchQuery() {
+      this.isMoreBatchQuery = !this.isMoreBatchQuery;
+    },
     resetBatchQuery() {
       this.batchQuery.generationStatus = null;
       this.batchQuery.generationMode = null;
@@ -821,14 +860,23 @@ export default {
       });
     },
     handleBatchVerify() {
-      const combinationIds = this.combinationList
-        .filter((row) => this.selectedCombinationIds.includes(row.combinationId) && row.adoptedFlag === "Y")
-        .map((row) => row.combinationId);
-      if (!combinationIds.length) {
+      const selectedRows = this.combinationList.filter((row) =>
+        this.selectedCombinationIds.includes(row.combinationId) && row.adoptedFlag === "Y");
+      if (!selectedRows.length) {
         this.$modal.msgWarning("请选择已采用的回报组合进行赛果核验");
         return;
       }
-      this.$modal.confirm(`确认按人工登记的倍率赛果核验当前选中的 ${combinationIds.length} 条回报组合？`)
+      const combinationIds = selectedRows.map((row) => row.combinationId);
+      const verifiedRows = selectedRows.filter((row) => this.isCombinationVerified(row));
+      const unverifiedRows = selectedRows.filter((row) => !this.isCombinationVerified(row));
+      let confirmMessage = `确认按人工登记的倍率赛果核验当前选中的 ${combinationIds.length} 条回报组合？`;
+      if (verifiedRows.length) {
+        confirmMessage = `当前选中 ${selectedRows.length} 条回报组合。`
+          + `未核验（${unverifiedRows.length} 条）：${this.formatCombinationPromptLabels(unverifiedRows)}；`
+          + `已核验（${verifiedRows.length} 条）：${this.formatCombinationPromptLabels(verifiedRows)}。`
+          + "是否重新核验以上已核验记录，并继续核验未核验记录？";
+      }
+      this.$modal.confirm(confirmMessage)
         .then(() => {
           this.batchVerifyLoading = true;
           return batchVerifyCombinations(combinationIds);
@@ -851,7 +899,8 @@ export default {
               this.$refs.combinationTable.clearSelection();
             }
           });
-          return this.refreshAfterVerification();
+          return this.fetchVerificationStatuses(combinationIds).then((updates) =>
+            this.refreshAfterVerification(updates));
         }).catch(() => {
         }).finally(() => {
           this.batchVerifyLoading = false;
@@ -862,8 +911,11 @@ export default {
         this.$modal.msgWarning("该回报组合编号无效，请刷新列表后重试");
         return;
       }
-      this.$modal.confirm(`确认按人工登记的倍率赛果核验组合「${combination.combinationTitle
-        || combination.combinationCode}」？`).then(() => {
+      const confirmMessage = this.isCombinationVerified(combination)
+        ? "该记录已经核验过，是否重新核验？"
+        : `确认按人工登记的倍率赛果核验组合「${combination.combinationTitle
+          || combination.combinationCode}」？`;
+      this.$modal.confirm(confirmMessage).then(() => {
           this.verifyingId = combination.combinationId;
           return verifyCombination(combination.combinationId);
         }).then((response) => {
@@ -877,14 +929,51 @@ export default {
           } else {
             this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入倍率赛果，状态保持${label}`);
           }
-          return this.refreshAfterVerification(combination.combinationId);
+          return this.refreshAfterVerification([{
+            combinationId: combination.combinationId,
+            verificationStatus: status,
+          }]);
         }).catch(() => {
         }).finally(() => {
           this.verifyingId = null;
         });
     },
-    refreshAfterVerification(combinationId = null) {
-      const refreshTasks = [this.getCombinationList()];
+    // 仅 Y/N 属于已形成核验结论；null 或未知值均按未核验处理。
+    isCombinationVerified(combination) {
+      return [DORTMUND_RETURN_VERIFICATION_STATUS.success,
+        DORTMUND_RETURN_VERIFICATION_STATUS.failed].includes(combination && combination.verificationStatus);
+    },
+    // 批量确认文案使用业务标题，不展示主键；所有选中项都会被明确列出。
+    formatCombinationPromptLabels(rows) {
+      if (!rows || !rows.length) {
+        return "无";
+      }
+      return rows.map((row) => row.combinationTitle || row.combinationCode || "未命名组合").join("、");
+    },
+    fetchVerificationStatuses(combinationIds) {
+      const requests = (combinationIds || []).map((combinationId) => getCombination(combinationId)
+        .then((response) => ({
+          combinationId,
+          verificationStatus: ((response && response.data) || {}).verificationStatus,
+        }))
+        .catch(() => null));
+      return Promise.all(requests).then((results) => results.filter(Boolean));
+    },
+    /**
+     * 核验完成后只合并核验字段，不重新套用“未核验”筛选，避免记录从当前视图突然消失而被误判为取消采用。
+     * 采用状态始终沿用列表原值；列表的筛选刷新仍由搜索、重置或只看有效数据按钮触发。
+     */
+    refreshAfterVerification(updates = []) {
+      const statusMap = new Map((updates || []).map((item) => [
+        item.combinationId,
+        item.verificationStatus,
+      ]));
+      if (statusMap.size) {
+        this.combinationList = this.combinationList.map((row) => statusMap.has(row.combinationId)
+          ? { ...row, verificationStatus: statusMap.get(row.combinationId) }
+          : row);
+      }
+      const refreshTasks = [];
       if (this.generationVisible && this.generationDetail.generationId) {
         refreshTasks.push(getGeneration(this.generationDetail.generationId).then((response) => {
           this.generationDetail = (response && response.data) || {};
@@ -892,7 +981,7 @@ export default {
         }));
       }
       if (this.combinationVisible && this.combinationDetail.combinationId
-        && (!combinationId || this.combinationDetail.combinationId === combinationId)) {
+        && (!statusMap.size || statusMap.has(this.combinationDetail.combinationId))) {
         refreshTasks.push(getCombination(this.combinationDetail.combinationId).then((response) => {
           this.combinationDetail = { ...this.combinationDetail, ...((response && response.data) || {}) };
         }).catch(() => {
@@ -922,6 +1011,8 @@ export default {
       this.combinationQuery.endCreateTime = null;
       this.combinationQuery.beginReviewTime = null;
       this.combinationQuery.endReviewTime = null;
+      this.combinationQuery.beginUpdateTime = null;
+      this.combinationQuery.endUpdateTime = null;
       if (this.combinationDateRange && this.combinationDateRange.length === 2) {
         this.combinationQuery.beginCreateTime = this.combinationDateRange[0];
         this.combinationQuery.endCreateTime = this.combinationDateRange[1];
@@ -929,6 +1020,10 @@ export default {
       if (this.combinationAuditDateRange && this.combinationAuditDateRange.length === 2) {
         this.combinationQuery.beginReviewTime = this.combinationAuditDateRange[0];
         this.combinationQuery.endReviewTime = this.combinationAuditDateRange[1];
+      }
+      if (this.combinationUpdateDateRange && this.combinationUpdateDateRange.length === 2) {
+        this.combinationQuery.beginUpdateTime = this.combinationUpdateDateRange[0];
+        this.combinationQuery.endUpdateTime = this.combinationUpdateDateRange[1];
       }
       listCombination(this.combinationQuery).then((response) => {
         this.combinationList = response.rows || [];
@@ -953,25 +1048,49 @@ export default {
     handleMoreCombinationQuery() {
       this.isMoreCombinationQuery = !this.isMoreCombinationQuery;
     },
+    handleCombinationFilterInput() {
+      if (this.combinationFilterTimer) clearTimeout(this.combinationFilterTimer);
+      this.combinationFilterTimer = setTimeout(() => {
+        this.combinationFilterTimer = null;
+        this.handleCombinationQuery();
+      }, 320);
+    },
     resetCombinationQuery() {
       this.combinationQuery.keyword = null;
       this.combinationQuery.generationMode = null;
-      this.combinationQuery.adoptedFlag = "Y";
-      this.combinationQuery.unverifiedOnly = true;
+      this.combinationQuery.adoptedFlag = null;
+      this.combinationQuery.verificationStatus = null;
       this.combinationQuery.generationStatus = null;
       this.combinationQuery.matchId = null;
       this.combinationQuery.sortField = "createTime";
       this.combinationQuery.sortOrder = "desc";
       this.combinationDateRange = [];
       this.combinationAuditDateRange = [];
+      this.combinationUpdateDateRange = [];
+      this.combinationMatch = null;
+      this.selectedCombinationIds = [];
+      this.isResetStatus = true;
+      this.setCombinationMatchRoute(null);
+      this.handleCombinationQuery();
+    },
+    // 参考号码历史记录页的“查未开奖”交互：重置后显示剪刀按钮，点击恢复有效数据口径并隐藏按钮。
+    handleViewValidData() {
+      this.isResetStatus = false;
+      this.combinationQuery.keyword = null;
+      this.combinationQuery.generationMode = null;
+      this.combinationQuery.adoptedFlag = "Y";
+      this.combinationQuery.verificationStatus = "U";
+      this.combinationQuery.generationStatus = null;
+      this.combinationQuery.matchId = null;
+      this.combinationQuery.sortField = "createTime";
+      this.combinationQuery.sortOrder = "desc";
+      this.combinationDateRange = [];
+      this.combinationAuditDateRange = [];
+      this.combinationUpdateDateRange = [];
       this.combinationMatch = null;
       this.selectedCombinationIds = [];
       this.setCombinationMatchRoute(null);
       this.handleCombinationQuery();
-    },
-    // 工作台默认只保留“已采用且未核验”的有效数据；按钮用于从任意筛选状态快速恢复该口径。
-    handleViewValidData() {
-      this.resetCombinationQuery();
     },
     openCombinationMatchQuery() {
       this.closeReturnDrawers();
@@ -1046,10 +1165,8 @@ export default {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      // 孤儿图片查询在后端按自然日解析并补齐起止时刻，前端只提交 yyyy-MM-dd。
+      return `${year}-${month}-${day}`;
     },
     handleOrphanImageQuery() {
       if (!this.orphanDateRange || this.orphanDateRange.length !== 2) {
@@ -1077,6 +1194,12 @@ export default {
     handleOrphanImageSearch() {
       this.orphanCleanupResult = null;
       this.handleOrphanImageQuery();
+    },
+    // 时间范围完整时立即查询；清空范围不触发查询，保留搜索按钮用于手动重试。
+    handleOrphanDateChange(value) {
+      if (Array.isArray(value) && value.length === 2) {
+        this.handleOrphanImageSearch();
+      }
     },
     handleOrphanSelectionChange(selection) {
       this.selectedOrphanIds = (selection || []).map((item) => item.imageId);
@@ -1253,13 +1376,15 @@ export default {
         keyword: this.combinationQuery.keyword,
         generationMode: this.combinationQuery.generationMode,
         adoptedFlag: this.combinationQuery.adoptedFlag,
-        unverifiedOnly: this.combinationQuery.unverifiedOnly,
+        verificationStatus: this.combinationQuery.verificationStatus,
         generationStatus: this.combinationQuery.generationStatus,
         matchId: this.combinationQuery.matchId,
         beginCreateTime: null,
         endCreateTime: null,
         beginReviewTime: null,
         endReviewTime: null,
+        beginUpdateTime: null,
+        endUpdateTime: null,
       };
       if (this.combinationDateRange && this.combinationDateRange.length === 2) {
         params.beginCreateTime = this.combinationDateRange[0];
@@ -1268,6 +1393,10 @@ export default {
       if (this.combinationAuditDateRange && this.combinationAuditDateRange.length === 2) {
         params.beginReviewTime = this.combinationAuditDateRange[0];
         params.endReviewTime = this.combinationAuditDateRange[1];
+      }
+      if (this.combinationUpdateDateRange && this.combinationUpdateDateRange.length === 2) {
+        params.beginUpdateTime = this.combinationUpdateDateRange[0];
+        params.endUpdateTime = this.combinationUpdateDateRange[1];
       }
       this.download("/dortmund/return/export", {
         ...params,
@@ -1622,12 +1751,31 @@ export default {
 }
 
 .combination-match-count {
+  min-width: 34px;
+  min-height: 28px;
+  padding: 4px 10px;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
+  border-radius: 8px;
+  transition: color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+
+  &:hover {
+    background: #e9f9f0;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, .14);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(.94);
+  }
 
   &.is-empty {
     color: #98a6a0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
   }
 }
 
@@ -1713,25 +1861,8 @@ export default {
 }
 
 .history-batch-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  padding: 13px 14px 1px;
-  margin-bottom: 12px;
-  background: #fff;
-  border: 1px solid #e5ebe7;
-  border-radius: 12px;
-
   ::v-deep .el-form-item {
-    margin-right: 10px;
-    margin-bottom: 12px;
-  }
-
-  ::v-deep .el-form-item__label {
-    padding-left: 0;
-    font-weight: 500;
-    color: #5b6b64;
-    text-align: left;
+    margin-right: 12px;
   }
 
   ::v-deep .el-form-item__content {
@@ -1743,7 +1874,7 @@ export default {
   }
 
   ::v-deep .el-date-editor {
-    width: 240px !important;
+    width: 300px !important;
   }
 
   .history-batch-actions {
@@ -1764,8 +1895,6 @@ export default {
 
 @media (max-width: 767px) {
   .history-batch-filter {
-    padding: 12px 10px 0;
-
     ::v-deep .el-form-item {
       width: 100%;
       margin-right: 0;
@@ -1861,15 +1990,32 @@ export default {
   }
 
   .orphan-filter-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    background: #fff;
-    border: 1px solid #e3eee8;
-    border-radius: 14px;
+    ::v-deep .el-form-item {
+      margin-right: 12px;
+    }
+
+    ::v-deep .el-form-item__content {
+      min-width: 0;
+    }
+
+    ::v-deep .el-date-editor {
+      width: 260px !important;
+    }
+
+    .orphan-filter-actions {
+      margin-right: 0;
+      margin-left: auto;
+
+      ::v-deep .el-form-item__content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      ::v-deep .el-button+.el-button {
+        margin-left: 0;
+      }
+    }
   }
 
   .orphan-result {
@@ -2194,6 +2340,44 @@ export default {
 
   .history-drawer-count {
     display: none;
+  }
+
+  .orphan-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .orphan-hero-stats {
+    flex-wrap: wrap;
+  }
+
+  .orphan-filter-card {
+    ::v-deep .el-form-item {
+      width: 100%;
+      margin-right: 0;
+    }
+
+    ::v-deep .el-form-item__content {
+      width: calc(100% - 76px);
+    }
+
+    ::v-deep .el-date-editor {
+      width: 100% !important;
+    }
+
+    .orphan-filter-actions {
+      margin-left: 0;
+
+      ::v-deep .el-form-item__content {
+        width: 100%;
+        padding-left: 76px;
+        flex-wrap: wrap;
+      }
+
+      ::v-deep .el-button {
+        flex: 1;
+      }
+    }
   }
 
 }

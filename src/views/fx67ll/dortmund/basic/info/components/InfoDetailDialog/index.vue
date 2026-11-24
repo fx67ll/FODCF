@@ -21,7 +21,7 @@
         <div class="info-affiliation-main">
           <span class="info-affiliation-label">业务归属</span>
           <strong>{{ businessScopeText() }}</strong>
-          <span class="info-affiliation-hint">{{ businessScopeHint() || '未记录底层关联标识' }}</span>
+          <span class="info-affiliation-hint">{{ businessScopeHint() || '未关联业务主体' }}</span>
         </div>
         <div v-if="businessScopeFacts.length" class="info-affiliation-facts">
           <div v-for="fact in businessScopeFacts" :key="fact.label" class="info-affiliation-fact">
@@ -169,7 +169,6 @@ export default {
             value: Array.isArray(this.detailModel.teamRels) ? `${this.detailModel.teamRels.length} 支` : null,
             emptyText: '未加载',
           },
-          { label: '赛季 ID', value: this.detailModel.seasonId, emptyText: '未记录' },
         ];
       }
       if (this.infoPointType === 'M') {
@@ -181,7 +180,6 @@ export default {
             value: this.formatTime(this.detailModel.matchTime, '未记录'),
             emptyText: '未记录',
           },
-          { label: '比赛 ID', value: this.detailModel.matchId, emptyText: '未记录' },
         ];
       }
       return [];
@@ -207,7 +205,6 @@ export default {
       const createTime = this.formatTime(this.detailModel.createTime, '');
       const updateTime = this.formatTime(this.detailModel.updateTime, '');
       return [
-        { key: 'owner', label: '归属用户ID', value: this.detailModel.userId, icon: 'el-icon-user' },
         { key: 'create', label: '创建记录', value: formatAuditActor(this.detailModel.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
         { key: 'update', label: '最近更新', value: formatAuditActor(this.detailModel.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
@@ -278,49 +275,38 @@ export default {
         if (this.hasDisplayValue(this.detailModel.seasonName)) {
           return this.detailModel.seasonName;
         }
-        return this.hasDisplayValue(this.detailModel.seasonId)
-          ? `赛季 #${this.detailModel.seasonId}`
-          : '未关联赛季';
+        return '未关联赛季';
       }
       if (this.detailModel.infoPointType === 'M') {
         return this.formatMatchColumnText(this.detailModel)
-          || (this.hasDisplayValue(this.detailModel.matchId) ? `比赛 #${this.detailModel.matchId}` : '未关联比赛');
+          || '未关联比赛';
       }
       return '未识别归属';
     },
-    // 业务归属辅助说明：补充底层关联 ID，便于排查归属异常
+    // 业务归属辅助说明：只表达归属来源，不展示底层主键。
     businessScopeHint() {
-      if (this.detailModel.infoPointType === 'T' && this.detailModel.seasonId !== null && this.detailModel.seasonId !== undefined) {
-        return `赛季ID · ${this.detailModel.seasonId}`;
+      if (this.detailModel.infoPointType === 'T') {
+        return '按赛季资料归属';
       }
-      if (this.detailModel.infoPointType === 'M' && this.detailModel.matchId !== null && this.detailModel.matchId !== undefined) {
-        return `比赛ID · ${this.detailModel.matchId}`;
+      if (this.detailModel.infoPointType === 'M') {
+        return '按比赛资料归属';
       }
       return '';
     },
-    // 球队关系名称兜底，避免出现球队ID缺失时的空文案
+    // 球队关系名称兜底，不暴露球队主键。
     formatTeamRelationName(rel) {
       if (rel && rel.teamName) {
         return rel.teamName;
       }
-      if (rel && rel.teamId !== null && rel.teamId !== undefined) {
-        return `球队 #${rel.teamId}`;
-      }
       return '球队信息缺失';
     },
-    // 球队关系底层标识，便于核对关系记录与球队主体
+    // 球队关系仅展示关系状态，不再展示关系和球队主键。
     formatTeamRelationMeta(rel) {
       if (!rel) {
         return '关系信息缺失';
       }
-      const parts = [];
-      if (rel.teamId !== null && rel.teamId !== undefined) {
-        parts.push(`球队ID · ${rel.teamId}`);
-      }
-      if (rel.relationId !== null && rel.relationId !== undefined) {
-        parts.push(`关系ID · ${rel.relationId}`);
-      }
-      return parts.length ? parts.join(' · ') : '关系标识未记录';
+      const relationStatus = this.selectDictLabel(this.dict.type.sys_normal_disable, rel.relationStatus);
+      return relationStatus ? `关系状态 · ${relationStatus}` : '球队关联信息';
     },
     // 球队关系审计时间：建立与最近更新均来自关系表，不使用信息点主记录时间冒充
     formatTeamRelationAudit(rel) {

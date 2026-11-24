@@ -1,14 +1,16 @@
 <template>
   <dortmund-detail-drawer :visible.sync="drawerVisible" title="比赛详情"
     :subtitle="detail.matchCode ? `比赛编码 · ${detail.matchCode}` : '查看对阵、状态与审计信息'" icon="el-icon-football" tone="green"
-    size="680px" feature="match" :loading="loading" :level="level" :shifted="adoptedVisible">
+    size="840px" feature="match" :loading="loading" :level="level" :shifted="adoptedVisible">
     <dortmund-detail-card v-if="hasStage" title="对阵舞台" icon="el-icon-football" tone="green">
       <dortmund-detail-block variant="versus" tone="green" :home="detail.homeTeamName" :away="detail.awayTeamName"
         :items="versusFields" />
     </dortmund-detail-card>
 
     <dortmund-detail-card v-if="hasSchedule" title="赛程资料" icon="el-icon-date" tone="green">
-      <dortmund-detail-block variant="metric" tone="green" :items="scheduleItems" />
+      <div class="match-detail-schedule">
+        <dortmund-detail-block variant="metric" tone="green" :items="scheduleItems" />
+      </div>
     </dortmund-detail-card>
 
     <dortmund-detail-card v-if="hasStats" title="业务统计" icon="el-icon-data-analysis" tone="green">
@@ -36,10 +38,6 @@
 
     <dortmund-detail-card title="归属与关联" icon="el-icon-connection" tone="green">
       <div class="match-detail-field-grid">
-        <div class="match-detail-field">
-          <span>比赛ID</span>
-          <strong>{{ displayValue(detail.matchId) }}</strong>
-        </div>
         <div class="match-detail-field">
           <span>比赛编码</span>
           <strong>{{ displayValue(detail.matchCode) }}</strong>
@@ -128,7 +126,7 @@ export default {
     },
     scheduleItems() {
       return [
-        { label: "所属赛季ID", value: this.detail.seasonId, emptyText: "未记录", icon: "el-icon-collection-tag" },
+        { label: "所属赛季", value: this.detail.seasonName, emptyText: "未关联赛季", icon: "el-icon-collection-tag" },
         { label: "比赛时间", value: this.parseTime(this.detail.matchTime, "{y}-{m}-{d} {h}:{i}:{s}"), emptyText: "未记录", icon: "el-icon-time" },
         { label: "球队主场", value: this.detail.matchVenue, emptyText: "未记录", icon: "el-icon-location-outline" },
         { label: "资料状态", value: this.displayDict(this.dict.type.sys_notice_status, this.detail.matchStatus, "未设置"), emptyText: "未设置", icon: "el-icon-data-analysis" },
@@ -139,7 +137,7 @@ export default {
       this.detail.matchTime, this.detail.matchVenue].some(this.hasDisplayValue);
     },
     hasSchedule() {
-      return [this.detail.seasonId, this.detail.matchTime, this.detail.matchVenue,
+      return [this.detail.seasonName, this.detail.matchTime, this.detail.matchVenue,
       this.detail.matchStatus].some(this.hasDisplayValue);
     },
     hasStats() {
@@ -147,18 +145,17 @@ export default {
       this.detail.adoptedCombinationCount].some(this.hasDisplayValue);
     },
     associationFields() {
+      // 详情只展示业务名称，不直接暴露赛季、球队和归属用户主键。
       return [
-        { label: "所属赛季ID", value: this.detail.seasonId },
-        { label: "主队球队ID", value: this.detail.homeTeamId },
-        { label: "客队球队ID", value: this.detail.awayTeamId },
-        { label: "归属用户ID", value: this.detail.userId },
+        { label: "所属赛季", value: this.detail.seasonName },
+        { label: "主队", value: this.detail.homeTeamName },
+        { label: "客队", value: this.detail.awayTeamName },
       ];
     },
     recordTrail() {
       const createTime = this.parseTime(this.detail.createTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const updateTime = this.parseTime(this.detail.updateTime, "{y}-{m}-{d} {h}:{i}:{s}");
       return [
-        { key: "owner", label: "归属用户ID", value: this.detail.userId, icon: "el-icon-user" },
         {
           key: "create", label: "创建记录", value: formatAuditActor(this.detail.createBy),
           hint: createTime ? `创建时间 · ${createTime}` : "", icon: "el-icon-edit-outline", state: "success"
@@ -225,8 +222,13 @@ export default {
 .match-detail-metric-grid,
 .match-detail-field-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+}
+
+.match-detail-schedule ::v-deep .metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .match-detail-metric,
@@ -251,10 +253,19 @@ export default {
   }
 }
 
+@media screen and (max-width: 980px) {
+  .match-detail-metric-grid,
+  .match-detail-field-grid,
+  .match-detail-schedule ::v-deep .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media screen and (max-width: 640px) {
 
   .match-detail-metric-grid,
-  .match-detail-field-grid {
+  .match-detail-field-grid,
+  .match-detail-schedule ::v-deep .metric-grid {
     grid-template-columns: 1fr;
   }
 }

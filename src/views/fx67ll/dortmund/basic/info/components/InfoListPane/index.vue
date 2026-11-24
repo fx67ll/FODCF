@@ -58,7 +58,8 @@
       <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
         <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
       </el-table-column>
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" fixed="right"
+        class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</template>
       </el-table-column>
       <el-table-column label="记录更新者" align="center" prop="updateBy" min-width="100" show-overflow-tooltip>

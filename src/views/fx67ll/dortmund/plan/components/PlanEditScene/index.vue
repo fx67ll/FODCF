@@ -201,7 +201,7 @@
                 :key="combination.combinationId" role="button" tabindex="0" @click="openCombinationDetail(combination)"
                 @keyup.enter="openCombinationDetail(combination)">
                 <span class="plan-combination-title">{{ combination.combinationTitle || combination.combinationCode ||
-                  `组合 ${combination.combinationId}` }}</span>
+                  '未命名组合' }}</span>
                 <dortmund-verification-status-tag :status="combination.verificationStatus" />
                 <span class="plan-combination-metrics is-error" v-if="combination._detailLoadFailed">
                   明细加载失败
@@ -643,7 +643,7 @@ export default {
       return {
         ...source,
         combinationId,
-        combinationTitle: source.combinationTitle || source.combinationCode || `组合 ${combinationId}`,
+        combinationTitle: source.combinationTitle || source.combinationCode || "未命名组合",
         _detailLoaded: false,
         _detailLoadFailed: loadFailed,
       };
@@ -722,7 +722,7 @@ export default {
     formatMatchLabel(match) {
       const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const teams = [match.homeTeamName, match.awayTeamName].filter(Boolean).join(" vs ");
-      const vsText = teams || match.matchSummary || match.matchCode || `比赛 ${match.matchId}`;
+      const vsText = teams || match.matchSummary || match.matchCode || "比赛信息待补充";
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
     },
     // 表单预览空值判断：0是有效数值，仅 null、undefined 和空串视为未填写。
@@ -1065,10 +1065,12 @@ export default {
 
 .plan-edit-tip {
   margin: 4px 0 8px;
-  padding-left: 106px;
   font-size: 12px;
   line-height: 1.5;
   color: #909399;
+  position: relative;
+  top: -12px;
+  left: 68px;
 }
 
 .plan-combination-empty {

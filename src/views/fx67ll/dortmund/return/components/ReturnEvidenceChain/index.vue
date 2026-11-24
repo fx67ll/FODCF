@@ -127,10 +127,10 @@ export default {
   },
   methods: {
     matchLabel(matchId) {
-      if (matchId == null) return "-";
+      if (matchId == null) return "比赛信息待补充";
       const match = (this.matches || []).find((item) => String(item.matchId) === String(matchId));
-      if (!match) return `#${matchId}`;
-      return match.matchSummary || `#${matchId}`;
+      // 证据链只展示可读对阵摘要；缺少业务名称时使用统一占位，不暴露比赛主键。
+      return (match && match.matchSummary) || "比赛信息待补充";
     },
     formatSourceType(value) {
       const labels = {

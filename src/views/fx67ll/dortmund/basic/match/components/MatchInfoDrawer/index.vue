@@ -8,7 +8,6 @@
         <div class="match-info-summary-copy">
           <div class="match-info-summary-title">
             <strong>{{ matchSummary }}</strong>
-            <el-tag size="mini" effect="plain" type="success">比赛 #{{ match.matchId }}</el-tag>
           </div>
           <div class="match-info-summary-meta">
             <span v-if="match.matchCode"><i class="el-icon-tickets"></i>{{ match.matchCode }}</span>
@@ -37,7 +36,7 @@
 
       <div v-if="loadError" class="match-info-error" role="alert">
         <i class="el-icon-warning-outline"></i>
-        <span>关联信息点加载失败，请检查网络后重试；若持续失败，请联系管理员并提供比赛编号 #{{ currentMatchId || "-" }}。</span>
+        <span>关联信息点加载失败，请检查网络后重试；若持续失败，请联系管理员并提供比赛编码。</span>
         <el-button type="text" icon="el-icon-refresh" @click="load">重新加载</el-button>
       </div>
 
@@ -452,7 +451,7 @@ export default {
           this.editorVisible = false;
           this.actionError = this.describeError(
             error,
-            `信息点 #${row.infoPointId || "-"} 详情加载失败，请刷新列表后重试`
+            "该信息点详情加载失败，请刷新列表后重试"
           );
         }
       }).finally(() => {

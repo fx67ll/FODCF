@@ -75,10 +75,14 @@
               :min-width="column.minWidth || 120" align="center" show-overflow-tooltip>
               <template slot-scope="scope">{{ formatColumn(column, scope.row) }}</template>
             </el-table-column>
-            <el-table-column v-if="showDetail" label="操作" width="82" align="center" fixed="right">
+            <el-table-column v-if="showDetail" label="操作" width="68" align="center" fixed="right">
               <template slot-scope="scope">
-                <el-button type="text" class="list-selector-detail" icon="el-icon-document"
-                  @click.stop="$emit('detail', scope.row)">详情</el-button>
+                <el-tooltip content="查看详情" placement="top" popper-class="dortmund-theme-popper">
+                  <button type="button" class="list-selector-detail" aria-label="查看详情"
+                    @click.stop="$emit('detail', scope.row)">
+                    <i class="el-icon-document"></i>
+                  </button>
+                </el-tooltip>
               </template>
             </el-table-column>
             <template slot="empty">
@@ -168,6 +172,11 @@ export default {
       type: Array,
       default: () => [10, 20, 50, 100],
     },
+    // 业务页面可按列表字段密度覆盖标准抽屉宽度；移动端仍自动使用全屏/自适应宽度。
+    drawerWidth: {
+      type: String,
+      default: "1040px",
+    },
     showDetail: {
       type: Boolean,
       default: false,
@@ -182,6 +191,11 @@ export default {
     },
     // 子详情侧弹层打开时，当前选择器向左错位，避免完全遮挡并体现层级。
     shifted: {
+      type: Boolean,
+      default: false,
+    },
+    // 业务选择器开启后，筛选值变化自动刷新候选；搜索按钮仍保留用于手动刷新。
+    autoQuery: {
       type: Boolean,
       default: false,
     },
@@ -201,6 +215,8 @@ export default {
       viewportWidth: typeof window !== "undefined" ? window.innerWidth : 1440,
       tableHeight: 320,
       tableResizeObserver: null,
+      autoSearchTimer: null,
+      autoSearchSuppressed: false,
     };
   },
   computed: {
@@ -226,7 +242,7 @@ export default {
       if (this.viewportWidth < 1200) {
         return "92%";
       }
-      return "960px";
+      return this.drawerWidth || "1040px";
     },
     paginationLayout() {
       return this.viewportWidth < 768
@@ -242,6 +258,12 @@ export default {
     },
   },
   watch: {
+    searchForm: {
+      deep: true,
+      handler() {
+        this.scheduleAutoSearch();
+      },
+    },
     "selectedRows.length"() {
       this.scheduleTableMeasure();
     },
@@ -255,6 +277,7 @@ export default {
     }
   },
   beforeDestroy() {
+    this.clearAutoSearchTimer();
     this.disconnectTableResizeObserver();
     if (typeof window !== "undefined") {
       window.removeEventListener("resize", this.handleViewportResize);
@@ -270,6 +293,7 @@ export default {
       }, {});
     },
     handleOpen() {
+      this.suppressAutoSearchOnce();
       this.handleViewportResize();
       this.pageNum = 1;
       this.internalPageSize = this.pageSize;
@@ -293,6 +317,8 @@ export default {
     handleClosed() {
       this.requestSerial += 1;
       this.loading = false;
+      this.clearAutoSearchTimer();
+      this.autoSearchSuppressed = false;
       this.disconnectTableResizeObserver();
     },
     handleOpened() {
@@ -397,6 +423,34 @@ export default {
       this.pageNum = 1;
       this.loadRows();
     },
+    scheduleAutoSearch() {
+      if (!this.autoQuery || !this.visible || this.autoSearchSuppressed) {
+        return;
+      }
+      this.clearAutoSearchTimer();
+      this.autoSearchTimer = setTimeout(() => {
+        this.autoSearchTimer = null;
+        if (!this.autoSearchSuppressed) {
+          this.handleSearch();
+        }
+      }, 180);
+    },
+    clearAutoSearchTimer() {
+      if (this.autoSearchTimer) {
+        clearTimeout(this.autoSearchTimer);
+        this.autoSearchTimer = null;
+      }
+    },
+    // 打开与重置会程序化替换筛选对象，跳过该次深度监听，避免和显式加载重复请求。
+    suppressAutoSearchOnce() {
+      this.autoSearchSuppressed = true;
+      this.clearAutoSearchTimer();
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.autoSearchSuppressed = false;
+        }, 0);
+      });
+    },
     buildQuerySearch() {
       const result = { ...this.searchForm };
       (this.searchFields || []).forEach((field) => {
@@ -414,6 +468,7 @@ export default {
       return result;
     },
     handleReset() {
+      this.suppressAutoSearchOnce();
       this.searchForm = this.buildSearchForm();
       this.handleSearch();
     },
@@ -637,7 +692,44 @@ export default {
 }
 
 .list-selector-detail {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   padding: 0;
+  color: #347f62;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #e4ebe7;
+  border-radius: 8px;
+  outline: none;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
+
+  i {
+    font-size: 14px;
+    transition: transform .22s cubic-bezier(.34, 1.4, .64, 1);
+  }
+
+  &:hover {
+    color: #2f7459;
+    background: #edf9f2;
+    border-color: #bfe2cd;
+    box-shadow: 0 4px 10px rgba(47, 132, 96, .12);
+  }
+
+  &:hover i {
+    transform: scale(1.16);
+  }
+
+  &:active {
+    transform: scale(.94);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(72, 127, 115, .42);
+    outline-offset: 2px;
+  }
 }
 
 .list-selector-search-actions {

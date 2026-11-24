@@ -41,6 +41,7 @@
         <div class="manual-contract">
           <span><label>契约版本</label><b>v1.0</b></span>
           <span><label>任务批次</label><b>{{ generationCode || "-" }}</b></span>
+          <span><label>来源模型</label><b>{{ previewAiSource || "-" }}</b></span>
           <span><label>预检候选</label><b>{{ candidateCount }} 条</b></span>
           <span><label>批次现有</label><b>{{ existingCount }} 条</b></span>
           <span><label>正文上限</label><b>{{ maxResponseSizeText }}</b></span>
@@ -70,7 +71,9 @@
         <div class="manual-guidance">
           <i class="el-icon-info"></i>
           <span>只粘贴 responseContract 定义的单个 JSON 对象；同一批次可反复覆盖重导或追加多份AI结论。系统不接受模型自行计算的倍率、
-            回报或金额，最终数据以后端复算为准；confidence 和 riskNotes 用于复核。</span>
+            回报或金额，最终数据以后端复算为准；顶层 aiSource 必须填写实际来源模型，DEEPSEEK 或 DOUBAO 仅为示例、不得照抄；
+            每条 candidate.title 必须以“【实际aiSource】”开头，括号内必须与顶层 aiSource 完全一致；
+            confidence 和 riskNotes 用于复核。</span>
         </div>
         <div class="manual-upload-row">
           <el-upload action="#" accept=".json,.txt" :auto-upload="false" :show-file-list="false"
@@ -89,7 +92,7 @@
         </div>
         <div class="manual-preview" v-else-if="previewReady">
           <i class="el-icon-circle-check"></i>
-          <span>契约预检通过：{{ candidateCount }} 条候选，taskId={{ previewTaskId }}</span>
+          <span>契约预检通过：{{ candidateCount }} 条候选，来源={{ previewAiSource }}，taskId={{ previewTaskId }}</span>
         </div>
         <div v-if="previewReady && previewCandidates.length" class="manual-preview-list">
           <div v-for="(candidate, index) in previewCandidates" :key="index" class="manual-preview-item">
@@ -228,6 +231,7 @@ const MAX_CANDIDATES = DORTMUND_MANUAL_AI_CONFIG.maxCandidates;
 const MAX_TOTAL_CANDIDATES = DORTMUND_MANUAL_AI_CONFIG.maxTotalCandidates;
 const MAX_SELECTIONS = DORTMUND_MANUAL_AI_CONFIG.maxSelections;
 const SELECTION_TYPES = DORTMUND_MANUAL_AI_CONFIG.selectionTypes;
+const AI_SOURCE_PATTERN = new RegExp(DORTMUND_MANUAL_AI_CONFIG.aiSourcePattern);
 const STEP_TITLES = ["导出任务", "外部AI处理", "导入结果"];
 const DEFAULT_STEPS = [
   "导出当前批次处理任务；业务快照已冻结，页面刷新后仍可重新导出。",
@@ -241,6 +245,14 @@ function isBlank(value) {
 
 function normalizeText(value) {
   return isBlank(value) ? "" : String(value).trim();
+}
+
+function normalizeAiSource(value) {
+  let source = normalizeText(value);
+  if (source.startsWith("【") && source.endsWith("】") && source.length > 2) {
+    source = source.substring(1, source.length - 1);
+  }
+  return source.replace(/\s+/g, "-").toUpperCase();
 }
 
 export default {
@@ -277,6 +289,7 @@ export default {
       importError: "",
       previewReady: false,
       previewTaskId: "",
+      previewAiSource: "",
       candidateCount: 0,
       previewCandidates: [],
       templateVisible: false,
@@ -361,6 +374,7 @@ export default {
       this.importError = "";
       this.previewReady = false;
       this.previewCandidates = [];
+      this.previewAiSource = "";
     },
     openTemplateTab(tab) {
       this.templateVisible = true;
@@ -467,6 +481,7 @@ export default {
         this.importError = `文件超过 ${this.maxResponseSizeText} 上限，请压缩后重新选择`;
         this.previewReady = false;
         this.previewCandidates = [];
+        this.previewAiSource = "";
         return;
       }
       const reader = new FileReader();
@@ -478,6 +493,7 @@ export default {
         this.importError = "文件读取失败，请重新选择";
         this.previewReady = false;
         this.previewCandidates = [];
+        this.previewAiSource = "";
       };
       reader.readAsText(rawFile, "UTF-8");
     },
@@ -489,6 +505,7 @@ export default {
       this.importError = "";
       this.previewReady = false;
       this.previewTaskId = "";
+      this.previewAiSource = "";
       this.candidateCount = 0;
       this.previewCandidates = [];
     },
@@ -497,6 +514,7 @@ export default {
       this.importError = "";
       this.candidateCount = 0;
       this.previewTaskId = "";
+      this.previewAiSource = "";
       this.previewCandidates = [];
       const content = String(this.responseContent || "");
       const raw = content.trim();
@@ -519,6 +537,7 @@ export default {
       }
       this.candidateCount = payload.candidates.length;
       this.previewTaskId = payload.taskId;
+      this.previewAiSource = normalizeAiSource(payload.aiSource);
       this.previewCandidates = payload.candidates.map((candidate) => ({
         title: normalizeText(candidate.title),
         selectionCount: candidate.selections.length,
@@ -542,6 +561,13 @@ export default {
       }
       if (this.generationCode && payload.taskId !== this.generationCode) {
         return "taskId 与当前人工处理批次不一致";
+      }
+      const aiSource = normalizeAiSource(payload.aiSource);
+      if (!aiSource) {
+        return "缺少 aiSource 来源模型标识";
+      }
+      if (aiSource === "AI" || !AI_SOURCE_PATTERN.test(aiSource)) {
+        return "aiSource 必须填写实际来源模型短标识，如 DEEPSEEK 或 DOUBAO";
       }
       if (isBlank(payload.analysisContent)) {
         return "缺少 analysisContent";

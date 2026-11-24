@@ -9,7 +9,7 @@
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="84px">
             <el-form-item label="方案计划" prop="planContent">
-              <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable
+              <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="回报组合" prop="combinationId">
@@ -23,12 +23,12 @@
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -118,6 +118,7 @@ import PlanListPane from "./components/PlanListPane/index.vue";
 import PlanEditScene from "./components/PlanEditScene/index.vue";
 import PlanDetailDrawer from "./components/PlanDetailDrawer/index.vue";
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 
 // 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
 const VIEW_MODE_KEY = "dortmund-plan-view-mode";
@@ -128,6 +129,7 @@ export default {
     ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanDetailDrawer, DortmundCombinationSelectorModal,
     DortmundMatchSelectorModal, DortmundPlanMatchesDrawer, DortmundAdoptedCombinationsDrawer
   },
+  mixins: [filterAutoQuery],
   data() {
     return {
       // 页面场景（list总览列表 edit编写；详情改为侧边抽屉）
@@ -269,13 +271,14 @@ export default {
     },
     formatSelectedCombination(combination) {
       if (!combination) return "";
-      return combination.combinationTitle || combination.combinationCode || `组合 ${combination.combinationId}`;
+      return combination.combinationTitle || combination.combinationCode || "未命名组合";
     },
     handleCombinationSelectorConfirm(combinationList) {
       // 兼容单选组件直接回传对象和回传数组两种事件形态。
       const combination = Array.isArray(combinationList) ? combinationList[0] || null : combinationList || null;
       this.selectedCombination = combination;
       this.queryParams.combinationId = combination ? combination.combinationId : null;
+      this.handleQuery();
     },
     formatSelectedMatch(match) {
       const matchTime = this.parseTime(match?.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
@@ -285,6 +288,7 @@ export default {
     handleMatchSelectorConfirm(match) {
       this.selectedMatch = match || null;
       this.queryParams.matchId = match ? match.matchId : null;
+      this.handleQuery();
     },
     // 关联比赛数量列：复用方案详情的比赛列表抽屉，不重复请求详情。
     handleViewPlanMatches(row) {

@@ -5,7 +5,7 @@
       <el-table-column type="selection" width="46" align="center" />
       <el-table-column label="方案计划" align="center" prop="planContent" min-width="230" fixed="left"
         :show-overflow-tooltip="true" />
-      <el-table-column label="关联比赛" align="center" width="106" fixed="left">
+      <el-table-column label="关联比赛" align="center" width="80" fixed="left">
         <template slot-scope="scope">
           <button v-if="matchCount(scope.row) > 0" type="button" class="plan-count-link"
             :title="`查看关联的 ${matchCount(scope.row)} 场比赛`" @click.stop="$emit('view-matches', scope.row)">
@@ -14,7 +14,7 @@
           <span v-else class="plan-count-zero">0</span>
         </template>
       </el-table-column>
-      <el-table-column label="关联组合" align="center" width="106" fixed="left">
+      <el-table-column label="关联组合" align="center" width="80" fixed="left">
         <template slot-scope="scope">
           <button v-if="combinationCount(scope.row) > 0" type="button" class="plan-count-link"
             :title="`查看关联的 ${combinationCount(scope.row)} 条回报组合`" @click.stop="$emit('view-combinations', scope.row)">
@@ -23,48 +23,49 @@
           <span v-else class="plan-count-zero">0</span>
         </template>
       </el-table-column>
-      <el-table-column label="组合核验" align="center" width="112">
+      <el-table-column label="组合核验" align="center" width="110">
         <template slot-scope="scope">
           <dortmund-verification-status-tag v-if="combinationCount(scope.row) > 0"
             :status="scope.row.combinationVerificationStatus" />
           <dortmund-verification-status-tag v-else no-combination />
         </template>
       </el-table-column>
-      <el-table-column label="预计本金" align="center" prop="effectiveExpectedPrincipal" width="118">
+      <el-table-column label="预计本金" align="center" prop="effectiveExpectedPrincipal" width="120">
         <template slot-scope="scope">
           <span class="plan-amount-text">{{ formatAmount(effectivePrincipal(scope.row)) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预计倍率" align="center" prop="effectiveExpectedOdds" width="100">
+      <el-table-column label="预计倍率" align="center" prop="effectiveExpectedOdds" width="120">
         <template slot-scope="scope">
           <span class="plan-rate-tag">{{ displayNumber(effectiveOdds(scope.row)) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="预计回报" align="center" prop="effectiveExpectedReturn" width="118">
+      <el-table-column label="预计回报" align="center" prop="effectiveExpectedReturn" width="120">
         <template slot-scope="scope">
           <span class="plan-amount-text">{{ formatAmount(effectiveReturn(scope.row)) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="实际本金" align="center" prop="planActualPrincipal" width="118">
+      <el-table-column label="实际本金" align="center" prop="planActualPrincipal" width="120">
         <template slot-scope="scope">
           <span class="plan-amount-text">{{ formatAmount(scope.row.planActualPrincipal) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="实际倍率" align="center" prop="planActualOdds" width="100">
+      <el-table-column label="实际倍率" align="center" prop="planActualOdds" width="120">
         <template slot-scope="scope">
           <span class="plan-rate-tag is-actual">{{ displayNumber(scope.row.planActualOdds) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="实际回报" align="center" prop="planActualReturn" width="118">
+      <el-table-column label="实际回报" align="center" prop="planActualReturn" width="120">
         <template slot-scope="scope">
           <span class="plan-amount-text">{{ formatAmount(scope.row.planActualReturn) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="其他说明" align="center" prop="planRemark" min-width="180" :show-overflow-tooltip="true" />
+      <el-table-column label="其他说明" align="center" prop="planRemark" min-width="230" :show-overflow-tooltip="true" />
       <el-table-column label="记录创建者" align="center" prop="createBy" min-width="100" show-overflow-tooltip>
         <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
       </el-table-column>
-      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" class-name="dortmund-nowrap-cell">
+      <el-table-column label="记录创建时间" align="center" prop="createTime" width="150" fixed="right"
+        class-name="dortmund-nowrap-cell">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-" }}</span>
         </template>
@@ -209,7 +210,9 @@ export default {
 
 /* 关联数量保留为纯数字交互，不使用圆形底色。 */
 .plan-count-link {
-  padding: 2px 6px;
+  min-width: 34px;
+  min-height: 28px;
+  padding: 4px 10px;
   font-size: 14px;
   font-weight: 700;
   color: #2ecc71;
@@ -217,12 +220,17 @@ export default {
   background: transparent;
   border: 0;
   border-radius: 6px;
-  transition: color .18s ease, background-color .18s ease, transform .18s ease;
+  transition: color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 
   &:hover {
     color: #23995a;
     background: #e9f9f0;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, .14);
     transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(.94);
   }
 
   &:focus-visible {

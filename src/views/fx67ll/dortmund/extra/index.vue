@@ -2,50 +2,56 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="总金额" prop="extraMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.extraMoney" placeholder="请输入当前外快总金额" clearable
+        <el-input v-model="queryParams.extraMoney" placeholder="请输入当前外快总金额" clearable @input="handleFilterInput"
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="是否盈利" prop="isWin">
-        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable popper-class="dortmund-theme-popper">
+        <el-select v-model="queryParams.isWin" placeholder="请选择是否盈利" clearable popper-class="dortmund-theme-popper"
+          @change="handleFilterChange">
           <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="盈亏金额" prop="winMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.winMoney" placeholder="请输入外快盈亏金额" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.winMoney" placeholder="请输入外快盈亏金额" clearable @input="handleFilterInput"
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="当前本金" prop="seedMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.seedMoney" placeholder="请输入当前投入本金" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.seedMoney" placeholder="请输入当前投入本金" clearable @input="handleFilterInput"
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="落袋金额" prop="saveMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.saveMoney" placeholder="请输入已经落袋为安的盈利金额" clearable
+        <el-input v-model="queryParams.saveMoney" placeholder="请输入已经落袋为安的盈利金额" clearable @input="handleFilterInput"
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="目标金额" prop="targetMoney" v-if="isMoreQuery">
-        <el-input v-model="queryParams.targetMoney" placeholder="请输入目标金额" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.targetMoney" placeholder="请输入目标金额" clearable @input="handleFilterInput"
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="是否关联" prop="hasPlan" v-if="isMoreQuery">
         <el-select v-model="queryParams.hasPlan" placeholder="请选择是否关联方案计划" clearable style="width: 160px"
-          popper-class="dortmund-theme-popper">
+          popper-class="dortmund-theme-popper" @change="handleFilterChange">
           <el-option label="已关联" value="1" />
           <el-option label="未关联" value="0" />
         </el-select>
       </el-form-item>
       <el-form-item label="方案计划" prop="planId" v-if="isMoreQuery">
         <common-enhanced-select ref="planIdSelect" v-model="queryParams.planId" valueKey="planId" labelKey="planContent"
-          :api-func="listPlan" placeholder="请选择方案计划" :enter-callback="handleQuery" width="240px" />
+          :api-func="listPlan" placeholder="请选择方案计划" :enter-callback="handleQuery" width="240px"
+          @change="handleFilterChange" />
       </el-form-item>
       <el-form-item label="创建者" prop="createBy" v-if="isMoreQuery">
-        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.createBy" placeholder="请输入记录创建者" clearable @input="handleFilterInput"
+          @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="创建时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
           type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
-          end-placeholder="结束时间" clearable></el-date-picker>
+          end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
       </el-form-item>
       <el-form-item label="更新时间" v-if="isMoreQuery">
         <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
           type="datetimerange" popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始时间"
-          end-placeholder="结束时间" clearable></el-date-picker>
+          end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">
@@ -172,9 +178,8 @@
       :page-sizes="pageSizes" @pagination="getList" />
 
     <!-- 外快盈亏只读详情抽屉：金额构成、关联方案与审计信息统一在侧边展示 -->
-    <dortmund-detail-drawer :visible.sync="detailVisible" title="外快盈亏详情"
-      :subtitle="detailData.extraId ? `记录编号 · ${detailData.extraId}` : '查看金额构成、关联方案与审计信息'" icon="el-icon-wallet"
-      tone="amber" size="680px" :loading="detailLoading" feature="extra">
+    <dortmund-detail-drawer :visible.sync="detailVisible" title="外快盈亏详情" subtitle="查看金额构成、关联方案与审计信息"
+      icon="el-icon-wallet" tone="amber" size="680px" :loading="detailLoading" feature="extra">
       <dortmund-detail-card title="金额与状态" icon="el-icon-money" tone="amber">
         <dortmund-detail-block variant='ledger' tone='amber' :items='extraLedgerItems' />
       </dortmund-detail-card>
@@ -269,6 +274,7 @@ const EXTRA_EDIT_REFRESH_KEY = "dortmund-extra-edit-refresh-required";
 const PAGE_MODE_KEY = "dortmund-extra-page-mode";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "DortmundExtra",
   dicts: ["sys_yes_no"],
@@ -276,6 +282,7 @@ export default {
     CommonEnhancedSelect, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer,
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
   },
+  mixins: [filterAutoQuery],
   computed: {
     mergeMinimum() {
       return DORTMUND_BUSINESS_MINIMUMS.extraMergeRowCount;
@@ -284,7 +291,6 @@ export default {
       const target = parseFloat(this.detailData.targetMoney) || 0;
       const saved = parseFloat(this.detailData.saveMoney) || 0;
       return [
-        { label: '记录编号', value: this.detailData.extraId, icon: 'el-icon-postcard' },
         { label: '本次是否盈利', value: this.detailData.isWin === 'Y' ? '盈利' : '亏损', icon: 'el-icon-top', state: this.detailData.isWin === 'Y' ? 'success' : 'danger' },
         { label: '外快总金额', value: this.formatMoneyDisplay(this.detailData.extraMoney), icon: 'el-icon-wallet' },
         { label: '本次盈亏金额', value: this.formatMoneyDisplay(this.detailData.winMoney), icon: 'el-icon-trend-charts', state: this.detailData.isWin === 'Y' ? 'success' : 'danger' },
@@ -297,7 +303,6 @@ export default {
     },
     extraAuditTimeline() {
       return [
-        { label: '归属用户ID', value: this.detailData.userId || '-', icon: 'el-icon-user' },
         { label: '记录创建者', value: this.formatAuditActor(this.detailData.createBy), icon: 'el-icon-user' },
         { label: '记录创建时间', value: this.parseTime(this.detailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-time' },
         { label: '记录更新者', value: this.formatAuditActor(this.detailData.updateBy), icon: 'el-icon-user' },
@@ -658,7 +663,25 @@ export default {
 }
 
 .plan-link-column-tag {
+  height: auto;
+  min-height: 28px;
+  padding: 5px 10px;
   cursor: pointer;
+  border-radius: 8px;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
+
+  &:hover {
+    color: #1f9b56;
+    background: #eaf8f0;
+    border-color: #b9e4ca;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, .14);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(.94);
+  }
 }
 
 .extra-detail-hidden-tip {

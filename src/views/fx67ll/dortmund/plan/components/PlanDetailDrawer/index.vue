@@ -4,12 +4,42 @@
     icon="el-icon-notebook-2" tone="green" size="780px" :loading="reviewLoading" feature="plan"
     :shifted="combinationDetailVisible || matchDetailVisible">
     <dortmund-detail-card title="方案内容" icon="el-icon-document" tone="green">
-      <dortmund-detail-block variant='metric' tone='green' :items='planOverviewMetrics' />
-      <div class="dortmund-detail-subheading">方案正文</div>
-      <div class="dortmund-detail-text-block plan-detail-content">{{ detailModel.planContent || '暂无方案正文'
-        }}</div>
-      <div class="dortmund-detail-subheading">其他说明</div>
-      <div class="dortmund-detail-text-block">{{ detailModel.planRemark || '暂无其他说明' }}</div>
+      <div class="plan-detail-metric-groups">
+        <section v-for="group in planMetricGroups" :key="group.key" class="plan-detail-metric-group"
+          :data-kind="group.key">
+          <header class="plan-detail-group-head">
+            <span class="plan-detail-group-title"><i :class="group.icon"></i>{{ group.title }}</span>
+            <span class="plan-detail-group-note">{{ group.note }}</span>
+          </header>
+          <div class="plan-detail-metric-grid">
+            <article v-for="item in group.items" :key="item.label" class="plan-detail-metric">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          </div>
+        </section>
+      </div>
+      <div class="plan-detail-context-row">
+        <span v-for="item in planContextItems" :key="item.label" class="plan-detail-context-item">
+          <i :class="item.icon"></i>
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </span>
+      </div>
+      <section class="plan-detail-copy plan-detail-copy--main">
+        <header class="plan-detail-copy-head">
+          <span><i class="el-icon-document"></i>方案正文</span>
+          <small>计划策略与执行说明</small>
+        </header>
+        <div class="plan-detail-content">{{ detailModel.planContent || '暂无方案正文' }}</div>
+      </section>
+      <section class="plan-detail-copy plan-detail-copy--remark">
+        <header class="plan-detail-copy-head">
+          <span><i class="el-icon-chat-line-square"></i>其他说明</span>
+          <small>补充备注</small>
+        </header>
+        <div class="plan-detail-remark">{{ detailModel.planRemark || '暂无其他说明' }}</div>
+      </section>
     </dortmund-detail-card>
 
     <dortmund-detail-card title="关联比赛" icon="el-icon-football" tone="green"
@@ -58,7 +88,6 @@
 <script>
 import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundDetailDrawer/index";
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
-import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundPlanLinkedMatchesTable
   from "@/views/fx67ll/dortmund/other/component/DortmundPlanLinkedMatchesTable/index";
 import DortmundReturnCombinationDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundReturnCombinationDetailDrawer/index";
@@ -67,6 +96,7 @@ import DortmundVerificationStatusTag
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import { getCombination } from "@/api/fx67ll/dortmund/returnCombination";
 import { formatMoneyDisplay } from "@/utils/fx67ll/utils";
+import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 
 export default {
   name: "PlanDetailDrawer",
@@ -74,7 +104,6 @@ export default {
   components: {
     DortmundDetailDrawer,
     DortmundDetailCard,
-    DortmundDetailBlock,
     DortmundPlanLinkedMatchesTable,
     DortmundReturnCombinationDetailDrawer,
     DortmundVerificationStatusTag,
@@ -92,19 +121,35 @@ export default {
     };
   },
   computed: {
-    planOverviewMetrics() {
+    planExpectedMetrics() {
       return [
-        { label: '方案ID', value: this.detailModel.planId, icon: 'el-icon-postcard' },
-        { label: '预计本金', value: this.formatMoneyDisplay(this.detailModel.effectiveExpectedPrincipal ?? this.detailModel.planExpectedPrincipal ?? this.detailModel.calculatedExpectedPrincipal), icon: 'el-icon-wallet' },
-        { label: '预计倍率', value: this.displayNumber(this.detailModel.effectiveExpectedOdds ?? this.detailModel.planExpectedOdds), icon: 'el-icon-data-line' },
-        { label: '预计回报', value: this.formatMoneyDisplay(this.detailModel.effectiveExpectedReturn ?? this.detailModel.planExpectedReturn ?? this.detailModel.calculatedExpectedReturn), icon: 'el-icon-money' },
-        { label: '实际本金', value: this.formatMoneyDisplay(this.detailModel.planActualPrincipal), icon: 'el-icon-bank-card' },
-        { label: '实际倍率', value: this.displayNumber(this.detailModel.planActualOdds), icon: 'el-icon-aim' },
-        { label: '实际回报', value: this.formatMoneyDisplay(this.detailModel.planActualReturn), icon: 'el-icon-sold-out' },
-        { label: '自动预计本金', value: this.formatMoneyDisplay(this.detailModel.calculatedExpectedPrincipal), icon: 'el-icon-connection' },
-        { label: '自动预计回报', value: this.formatMoneyDisplay(this.detailModel.calculatedExpectedReturn), icon: 'el-icon-money' },
+        { label: '预计本金', value: this.formatAmountZero(this.detailModel.effectiveExpectedPrincipal ?? this.detailModel.planExpectedPrincipal ?? this.detailModel.calculatedExpectedPrincipal) },
+        { label: '预计倍率', value: this.displayNumber(this.detailModel.effectiveExpectedOdds ?? this.detailModel.planExpectedOdds) },
+        { label: '预计回报', value: this.formatAmountZero(this.detailModel.effectiveExpectedReturn ?? this.detailModel.planExpectedReturn ?? this.detailModel.calculatedExpectedReturn) },
+      ];
+    },
+    planActualMetrics() {
+      return [
+        { label: '实际本金', value: this.formatAmountZero(this.detailModel.planActualPrincipal) },
+        { label: '实际倍率', value: this.displayNumber(this.detailModel.planActualOdds) },
+        { label: '实际回报', value: this.formatAmountZero(this.detailModel.planActualReturn) },
+      ];
+    },
+    planMetricGroups() {
+      return [
+        { key: 'expected', title: '预计口径', note: '目标值与手工修正', icon: 'el-icon-data-line', items: this.planExpectedMetrics },
+        { key: 'actual', title: '实际口径', note: '结算后的真实数据', icon: 'el-icon-finished', items: this.planActualMetrics },
+      ];
+    },
+    planContextItems() {
+      // 关联比赛之后紧接着展示组合数量和记录更新人，便于从方案摘要直接核对关联规模与最近维护者。
+      const combinationCount = Array.isArray(this.detailModel.combinationIds)
+        ? this.detailModel.combinationIds.length : this.combinationRows.length;
+      return [
         { label: '关联比赛', value: (this.detailModel.matches || []).length + ' 场', icon: 'el-icon-football' },
-        { label: '更新时间', value: this.parseTime(this.detailModel.updateTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-refresh' },
+        { label: '关联回报组合', value: combinationCount + ' 条', icon: 'el-icon-connection' },
+        { label: '记录更新人', value: formatAuditActor(this.detailModel.updateBy), icon: 'el-icon-user' },
+        { label: '最近更新', value: this.parseTime(this.detailModel.updateTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-', icon: 'el-icon-refresh' },
       ];
     },
     // 将父页面开关代理到共享详情抽屉
@@ -163,8 +208,13 @@ export default {
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
     },
+    // 详情口径中的金额缺失时统一展示 0，不再使用短横线占位。
+    formatAmountZero(value) {
+      const displayValue = formatMoneyDisplay(value);
+      return !displayValue || displayValue === "-" ? "0" : displayValue;
+    },
     displayNumber(value) {
-      return value === null || value === undefined || value === "" ? "-" : value;
+      return value === null || value === undefined || value === "" || value === "-" ? 0 : value;
     },
     // 详情接口只返回组合主键；按主键补全标题和指标，供只读抽屉展示与打开详情。
     loadCombinationRows() {
@@ -178,7 +228,7 @@ export default {
       this.combinationLoading = true;
       return Promise.all(ids.map((combinationId) => getCombination(combinationId)
         .then((response) => ({ combinationId, ...((response && response.data) || {}) }))
-        .catch(() => ({ combinationId, combinationTitle: `组合 ${combinationId}` }))))
+        .catch(() => ({ combinationId, combinationTitle: "未命名组合" }))))
         .then((rows) => {
           if (loadSerial === this.combinationLoadSerial) {
             this.combinationRows = rows;
@@ -244,24 +294,215 @@ export default {
   }
 }
 
+.plan-detail-metric-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.plan-detail-metric-group {
+  padding: 14px;
+  background: #f7fbf8;
+  border: 1px solid #e3eee7;
+  border-radius: 12px;
+}
+
+.plan-detail-metric-group[data-kind='actual'] {
+  background: #fffbf5;
+  border-color: #f0e4d3;
+}
+
+.plan-detail-group-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.plan-detail-group-title {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 720;
+  color: #2f6350;
+}
+
+.plan-detail-group-title i {
+  font-size: 13px;
+}
+
+.plan-detail-metric-group[data-kind='actual'] .plan-detail-group-title {
+  color: #8b6240;
+}
+
+.plan-detail-group-note {
+  font-size: 10px;
+  color: #8a9791;
+}
+
+.plan-detail-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.plan-detail-metric {
+  min-width: 0;
+  padding: 10px 11px;
+  background: #fff;
+  border: 1px solid #e8f0eb;
+  border-radius: 9px;
+}
+
+.plan-detail-metric-group[data-kind='actual'] .plan-detail-metric {
+  border-color: #f1e8dc;
+}
+
+.plan-detail-metric span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #84928b;
+  letter-spacing: .04em;
+}
+
+.plan-detail-metric strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 720;
+  line-height: 1.4;
+  color: #263a30;
+  overflow-wrap: anywhere;
+}
+
+.plan-detail-metric-group[data-kind='actual'] .plan-detail-metric strong {
+  color: #8b5d36;
+}
+
+.plan-detail-context-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.plan-detail-context-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px;
+  background: #f7f9f8;
+  border: 1px solid #eef2ef;
+  border-radius: 9px;
+}
+
+.plan-detail-context-item i {
+  color: #3f9d72;
+  font-size: 12px;
+}
+
+.plan-detail-context-item span {
+  font-size: 10px;
+  color: #8a9791;
+}
+
+.plan-detail-context-item strong {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: #405248;
+  overflow-wrap: anywhere;
+}
+
+.plan-detail-copy {
+  padding: 14px 16px;
+  margin-top: 12px;
+  background: #f6fbf8;
+  border: 1px solid #e1eee7;
+  border-radius: 11px;
+}
+
+.plan-detail-copy--remark {
+  background: #fbfbfa;
+  border-color: #eef0ee;
+}
+
+.plan-detail-copy-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.plan-detail-copy-head span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 720;
+  color: #2f6350;
+}
+
+.plan-detail-copy--remark .plan-detail-copy-head span {
+  color: #5c6962;
+}
+
+.plan-detail-copy-head small {
+  font-size: 10px;
+  color: #8a9791;
+}
+
 .plan-detail-content {
-  min-height: 120px;
-  padding: 2px 0 2px 18px;
-  margin-top: 8px;
-  font-size: 14.5px;
-  line-height: 1.85;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
   color: #33453d;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   background: transparent;
   border: 0;
-  border-left: 2px solid #3f8f77;
   border-radius: 0;
 }
 
+.plan-detail-remark {
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #65736c;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .plan-detail-metric-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-detail-context-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 520px) {
-  .plan-detail-content {
-    padding: 14px 15px;
+  .plan-detail-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-detail-context-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-detail-copy {
+    padding: 13px 14px;
   }
 }
 </style>

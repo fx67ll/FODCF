@@ -16,26 +16,27 @@
               </el-select>
             </el-form-item>
             <el-form-item label="所属赛季" prop="seasonId" v-if="queryParams.infoPointType === 'T'">
-              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery" />
+              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery"
+                @change="handleFilterChange" />
             </el-form-item>
             <el-form-item label="所属比赛" prop="matchId" v-if="queryParams.infoPointType === 'M'">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择所属比赛"
                 @click.native="matchSelectorVisible = true" />
             </el-form-item>
             <el-form-item label="信息点标题" prop="pointTitle">
-              <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable
+              <el-input v-model="queryParams.pointTitle" placeholder="请输入信息点标题关键字" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="信息点状态" prop="pointStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.pointStatus" placeholder="请选择信息点状态" clearable
-                popper-class="dortmund-theme-popper">
+                popper-class="dortmund-theme-popper" @change="handleFilterChange">
                 <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="是否可公开" prop="allowPublic" v-if="isMoreQuery">
               <el-select v-model="queryParams.allowPublic" placeholder="请选择是否可公开" clearable
-                popper-class="dortmund-theme-popper">
+                popper-class="dortmund-theme-popper" @change="handleFilterChange">
                 <el-option v-for="dict in dict.type.fx67ll_dortmund_allow_public" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -43,12 +44,12 @@
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -137,6 +138,7 @@ import InfoEditTScene from "./components/InfoEditTScene/index.vue";
 import InfoEditMScene from "./components/InfoEditMScene/index.vue";
 import InfoValidScene from "./components/InfoValidScene/index.vue";
 import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 
 // 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
 const VIEW_MODE_KEY = "dortmund-info-view-mode";
@@ -145,6 +147,7 @@ export default {
   name: "Info",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
   components: { ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene, DortmundMatchSelectorModal, DortmundSeasonSelect },
+  mixins: [filterAutoQuery],
   data() {
     return {
       // 页面场景（list总览列表 editT赛季球队录入 editM比赛临时录入 valid有效性查询）
@@ -290,6 +293,7 @@ export default {
     handleMatchSelectorConfirm(match) {
       this.selectedMatch = match || null;
       this.queryParams.matchId = match ? match.matchId : null;
+      this.handleQuery();
     },
     // 多选框选中数据
     handleSelectionChange(selection) {

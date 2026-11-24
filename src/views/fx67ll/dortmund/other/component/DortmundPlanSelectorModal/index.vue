@@ -1,7 +1,7 @@
 <template>
   <list-selector-modal :visible.sync="dialogVisible" title="选择关联方案计划" :api-func="listPlan" :columns="columns"
     :search-fields="searchFields" :selected-items="selectedItems" value-key="planId" label-key="planContent"
-    :label-formatter="formatPlanLabel" multiple :page-size="pageSize" :page-sizes="pageSizes"
+    :label-formatter="formatPlanLabel" multiple :page-size="pageSize" :page-sizes="pageSizes" auto-query
     @confirm="$emit('confirm', $event)" />
 </template>
 

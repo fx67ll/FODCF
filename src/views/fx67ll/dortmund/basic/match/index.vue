@@ -9,36 +9,54 @@
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
             <el-form-item label="比赛球队" prop="teamName" v-if="!isMoreQuery">
-              <el-input v-model="queryParams.teamName" placeholder="请输入主队或客队名称" clearable
+              <el-input v-model="queryParams.teamName" placeholder="请输入主队或客队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="主队名称" prop="homeTeamName" v-if="isMoreQuery">
-              <el-input v-model="queryParams.homeTeamName" placeholder="请输入主队名称" clearable
+              <el-input v-model="queryParams.homeTeamName" placeholder="请输入主队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="客队名称" prop="awayTeamName" v-if="isMoreQuery">
-              <el-input v-model="queryParams.awayTeamName" placeholder="请输入客队名称" clearable
+              <el-input v-model="queryParams.awayTeamName" placeholder="请输入客队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
-              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable
-                @keyup.enter.native="handleQuery" />
+            <el-form-item label="比赛结果" prop="matchResult" v-if="isMoreQuery">
+              <el-select v-model="queryParams.matchResult" style="width: 100%" placeholder="请选择比赛结果" clearable
+                popper-class="dortmund-theme-popper" @change="handleFilterChange">
+                <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
+                <el-option label="未登记" :value="DORTMUND_FILTER_UNREGISTERED_VALUE" />
+              </el-select>
             </el-form-item>
-            <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
-              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery" />
+            <el-form-item label="倍率赛果" prop="oddsResultFilters" v-if="isMoreQuery">
+              <el-select v-model="queryParams.oddsResultFilters" multiple collapse-tags clearable style="width: 100%"
+                placeholder="请选择倍率赛果" popper-class="dortmund-theme-popper" @change="handleFilterChange">
+                <el-option v-for="dict in dict.type.fx67ll_dortmund_odds_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
+                <el-option label="未登记" :value="DORTMUND_FILTER_UNREGISTERED_VALUE" />
+              </el-select>
             </el-form-item>
             <el-form-item label="比赛时间" prop="matchTime">
               <el-date-picker v-model="daterangeMatchTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
+            </el-form-item>
+            <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
+              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery"
+                @change="handleFilterChange" />
             </el-form-item>
             <el-form-item label="球队主场" prop="matchVenue" v-if="isMoreQuery">
               <dortmund-team-option-selector v-model="queryParams.matchVenue" option-type="venue" :multiple="false"
-                :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场" />
+                :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场"
+                @change="handleFilterChange" />
+            </el-form-item>
+            <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
+              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable @input="handleFilterInput"
+                @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
-                popper-class="dortmund-theme-popper" @keyup.enter.native="handleQuery">
+                popper-class="dortmund-theme-popper" @change="handleFilterChange" @keyup.enter.native="handleQuery">
                 <el-option v-for="dict in dict.type.sys_notice_status" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -46,16 +64,18 @@
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable></el-date-picker>
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
               <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button v-if="isResetStatus" type="warning" icon="el-icon-scissors" size="mini"
+                @click="handleViewValidData">只看有效数据</el-button>
               <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
                 size="mini" @click="handleMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
@@ -76,7 +96,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -122,14 +142,14 @@
                   @click="handleAdoptedCombinations(scope.row)" />
               </template>
             </el-table-column>
-            <el-table-column label="比赛结果" align="center" prop="matchResult" width="96">
+            <el-table-column label="比赛结果" align="center" prop="matchResult" width="100">
               <template slot-scope="scope">
                 <dict-tag v-if="hasMatchResult(scope.row.matchResult)" :options="dict.type.fx67ll_match_result"
                   :value="scope.row.matchResult" />
                 <dortmund-result-empty-tag v-else />
               </template>
             </el-table-column>
-            <el-table-column label="倍率赛果" align="center" prop="oddsResult" width="170">
+            <el-table-column label="倍率赛果" align="center" prop="oddsResult" width="150">
               <template slot-scope="scope">
                 <dortmund-odds-result-tags :value="scope.row.oddsResult" empty-text="未登记" />
               </template>
@@ -192,27 +212,27 @@
 
     <dortmund-detail-drawer :visible.sync="matchDetailVisible" :shifted="adoptedCombinationVisible" title="比赛详情"
       :subtitle="matchDetailData.matchCode ? `比赛编码 · ${matchDetailData.matchCode}` : '查看对阵、状态与审计信息'"
-      icon="el-icon-football" tone="green" size="680px" feature="match" :loading="matchDetailLoading">
+      icon="el-icon-football" tone="green" size="840px" feature="match" :loading="matchDetailLoading">
       <dortmund-detail-card v-if='hasMatchStage' title='对阵舞台' icon='el-icon-football' tone='green'>
         <dortmund-detail-block variant='versus' tone='green' :home='matchDetailData.homeTeamName'
           :away='matchDetailData.awayTeamName' :items='matchVersusFields' />
       </dortmund-detail-card>
 
       <dortmund-detail-card v-if='hasMatchSchedule' title='赛程资料' icon='el-icon-date' tone='green'>
-        <dortmund-detail-block variant='metric' tone='green' :items='matchScheduleItems' />
+        <div class='match-detail-schedule'>
+          <dortmund-detail-block variant='metric' tone='green' :items='matchScheduleItems' />
+        </div>
       </dortmund-detail-card>
 
       <dortmund-detail-card v-if='hasMatchStats' title='业务统计' icon='el-icon-data-analysis' tone='green'>
-        <dortmund-detail-block variant='metric' tone='green' :items='matchMetricItems'
-          @item-click="handleMatchMetricClick" />
+        <div class='match-detail-stats'>
+          <dortmund-detail-block variant='metric' tone='green' :items='matchMetricItems'
+            @item-click="handleMatchMetricClick" />
+        </div>
       </dortmund-detail-card>
 
       <dortmund-detail-card title='归属与关联' icon='el-icon-connection' tone='green'>
-        <div class='match-detail-field-grid'>
-          <div class='match-detail-field'>
-            <span>比赛ID</span>
-            <strong>{{ displayValue(matchDetailData.matchId) }}</strong>
-          </div>
+        <div class='match-detail-field-grid match-detail-field-grid--quad'>
           <div class='match-detail-field'>
             <span>比赛编码</span>
             <strong>{{ displayValue(matchDetailData.matchCode) }}</strong>
@@ -264,11 +284,14 @@ import DortmundUsageHeatBadge from "@/views/fx67ll/dortmund/other/component/Dort
 import DortmundResultEmptyTag from "@/views/fx67ll/dortmund/other/component/DortmundResultEmptyTag/index";
 import {
   DORTMUND_PAGINATION,
+  DORTMUND_FILTER_UNREGISTERED_VALUE,
+  DORTMUND_RETURN_CONFIG,
   resolveDortmundLeagueTheme,
   splitDortmundOddsResult,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
+import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "Match",
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
@@ -277,6 +300,7 @@ export default {
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail,
     DortmundAdoptedCombinationsDrawer, DortmundOddsResultTags, DortmundUsageHeatBadge, DortmundResultEmptyTag
   },
+  mixins: [filterAutoQuery],
   computed: {
     matchVersusFields() {
       return [
@@ -287,7 +311,7 @@ export default {
     },
     matchScheduleItems() {
       return [
-        { label: '所属赛季ID', value: this.matchDetailData.seasonId, emptyText: '未记录', icon: 'el-icon-collection-tag' },
+        { label: '所属赛季', value: this.matchDetailData.seasonName, emptyText: '未关联赛季', icon: 'el-icon-collection-tag' },
         { label: '比赛时间', value: this.parseTime(this.matchDetailData.matchTime, '{y}-{m}-{d} {h}:{i}:{s}'), emptyText: '未记录', icon: 'el-icon-time' },
         { label: '球队主场', value: this.matchDetailData.matchVenue, emptyText: '未记录', icon: 'el-icon-location-outline' },
         { label: '资料状态', value: this.displayDict(this.dict.type.sys_notice_status, this.matchDetailData.matchStatus, '未设置'), emptyText: '未设置', icon: 'el-icon-data-analysis' },
@@ -326,7 +350,7 @@ export default {
     },
     hasMatchSchedule() {
       return [
-        this.matchDetailData.seasonId,
+        this.matchDetailData.seasonName,
         this.matchDetailData.matchTime,
         this.matchDetailData.matchVenue,
         this.matchDetailData.matchStatus,
@@ -341,18 +365,17 @@ export default {
       ].some((value) => this.hasDisplayValue(value));
     },
     matchAssociationFields() {
+      // 详情只返回可读业务主体，不暴露数据库主键和归属用户 ID。
       return [
-        { label: '所属赛季ID', value: this.matchDetailData.seasonId },
-        { label: '主队球队ID', value: this.matchDetailData.homeTeamId },
-        { label: '客队球队ID', value: this.matchDetailData.awayTeamId },
-        { label: '归属用户ID', value: this.matchDetailData.userId },
+        { label: '所属赛季', value: this.matchDetailData.seasonName },
+        { label: '主队', value: this.matchDetailData.homeTeamName },
+        { label: '客队', value: this.matchDetailData.awayTeamName },
       ];
     },
     matchRecordTrail() {
       const createTime = this.parseTime(this.matchDetailData.createTime, '{y}-{m}-{d} {h}:{i}:{s}');
       const updateTime = this.parseTime(this.matchDetailData.updateTime, '{y}-{m}-{d} {h}:{i}:{s}');
       return [
-        { key: 'owner', label: '归属用户ID', value: this.matchDetailData.userId, icon: 'el-icon-user' },
         { key: 'create', label: '创建记录', value: this.formatAuditActor(this.matchDetailData.createBy), hint: createTime ? `创建时间 · ${createTime}` : '', icon: 'el-icon-edit-outline', state: 'success' },
         { key: 'update', label: '最近更新', value: this.formatAuditActor(this.matchDetailData.updateBy), hint: updateTime ? `更新时间 · ${updateTime}` : '', icon: 'el-icon-refresh', state: 'warning' },
       ];
@@ -395,6 +418,10 @@ export default {
       daterangeMatchTime: [],
       // 是否使用高级搜索
       isMoreQuery: false,
+      // 重置后显示“只看有效数据”快捷入口；点击恢复默认未来赛程后隐藏。
+      isResetStatus: false,
+      // 高级搜索未登记筛选哨兵，供模板复用，避免散落魔法字符串。
+      DORTMUND_FILTER_UNREGISTERED_VALUE,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -410,6 +437,7 @@ export default {
         matchVenue: null,
         matchStatus: null,
         matchResult: null,
+        oddsResultFilters: [],
         beginCreateTime: null,
         endCreateTime: null,
         beginUpdateTime: null,
@@ -434,6 +462,8 @@ export default {
     };
   },
   created() {
+    // 初次进入即展示当前时刻至未来 23 天的有效赛程，与“只看有效数据”口径一致。
+    this.daterangeMatchTime = this.buildValidMatchTimeRange();
     this.getList();
   },
   methods: {
@@ -449,6 +479,37 @@ export default {
       this.queryParams.endUpdateTime = null;
       this.queryParams.beginMatchTime = null;
       this.queryParams.endMatchTime = null;
+    },
+    // 高级搜索字段使用 v-if 动态挂载，resetFields() 无法重置已卸载字段及内部选择器。
+    // 因此显式重置查询模型、时间范围和高级筛选项，保证搜索面板展开前后行为一致。
+    resetMatchQueryFilters() {
+      this.queryParams.matchId = null;
+      this.queryParams.matchCode = null;
+      this.queryParams.seasonId = null;
+      this.queryParams.teamName = null;
+      this.queryParams.homeTeamName = null;
+      this.queryParams.awayTeamName = null;
+      this.queryParams.matchVenue = null;
+      this.queryParams.matchStatus = null;
+      this.queryParams.matchResult = null;
+      this.queryParams.oddsResultFilters = [];
+      this.clearDateQueryParams();
+      this.daterangeCreateTime = [];
+      this.daterangeUpdateTime = [];
+      this.daterangeMatchTime = [];
+      if (this.$refs.queryForm) {
+        this.$refs.queryForm.clearValidate();
+      }
+    },
+    // 有效数据窗口沿用分析选场的 23 天前瞻区间，统一由模块公共配置维护。
+    buildValidMatchTimeRange() {
+      const start = new Date();
+      const end = new Date(start.getTime()
+        + DORTMUND_RETURN_CONFIG.matchSelectionWindowDays * 24 * 60 * 60 * 1000);
+      return [
+        this.parseTime(start, "{y}-{m}-{d} {h}:{i}:{s}"),
+        this.parseTime(end, "{y}-{m}-{d} {h}:{i}:{s}"),
+      ];
     },
     /** 查询比赛记录列表 */
     getList() {
@@ -487,10 +548,15 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
-      this.resetForm("queryForm");
-      this.daterangeCreateTime = [];
-      this.daterangeUpdateTime = [];
-      this.daterangeMatchTime = [];
+      this.resetMatchQueryFilters();
+      this.isResetStatus = true;
+      this.handleQuery();
+    },
+    // 重置会清空全部条件；点击剪刀后恢复未来 23 天有效窗口并隐藏快捷入口。
+    handleViewValidData() {
+      this.resetMatchQueryFilters();
+      this.daterangeMatchTime = this.buildValidMatchTimeRange();
+      this.isResetStatus = false;
       this.handleQuery();
     },
     // 多选框选中数据
@@ -813,6 +879,34 @@ export default {
     line-height: 1.55;
     color: #26362e;
     overflow-wrap: anywhere;
+  }
+}
+
+.match-detail-field-grid--quad {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.match-detail-schedule ::v-deep .metric-grid,
+.match-detail-stats ::v-deep .metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 980px) {
+
+  .match-detail-field-grid--quad,
+  .match-detail-schedule ::v-deep .metric-grid,
+  .match-detail-stats ::v-deep .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+
+  .match-detail-field-grid--quad,
+  .match-detail-schedule ::v-deep .metric-grid,
+  .match-detail-stats ::v-deep .metric-grid {
+    grid-template-columns: 1fr;
   }
 }
 

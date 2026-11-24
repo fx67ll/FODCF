@@ -378,6 +378,31 @@ export default {
   border-top: 1px solid var(--block-border);
 }
 
+/* 对阵资料字段：标签与值分层，避免赛季、时间、主场信息挤在一起。 */
+.versus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.versus-field > span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--block-secondary);
+  letter-spacing: .04em;
+}
+
+.versus-field > strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.55;
+  color: #1f2d28;
+  overflow-wrap: anywhere;
+}
+
 .profile {
   padding: 4px 0 0;
   background: transparent;

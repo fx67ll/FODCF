@@ -70,8 +70,8 @@
         <div v-for="(match, index) in matches" :key="match.itemId || `${match.matchId}-${index}`" class="decision-card">
           <div class="decision-head">
             <div class="decision-match">
-              <strong>{{ match.matchSummary || `比赛 #${match.matchId}` }}</strong>
-              <span>比赛 #{{ match.matchId }}</span>
+              <strong>{{ match.matchSummary || "比赛信息待补充" }}</strong>
+              <span>{{ match.matchCode || "比赛信息待补充" }}</span>
             </div>
             <div class="decision-tags">
               <el-tag :type="selectionTagType(match.selectionType)" size="mini">
@@ -101,7 +101,7 @@
                 <label>反向证据</label>
                 <div class="decision-ref-list">
                   <span v-for="ref in parseRefs(match.counterEvidenceRefs)" :key="ref" class="decision-ref">{{ ref
-                  }}</span>
+                    }}</span>
                 </div>
               </div>
             </div>

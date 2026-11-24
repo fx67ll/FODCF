@@ -190,7 +190,7 @@ export default {
       this.loading = true;
       Promise.all(ids.map((combinationId) => getCombination(combinationId)
         .then((response) => ({ combinationId, ...((response && response.data) || {}) }))
-        .catch(() => ({ combinationId, combinationTitle: `组合 ${combinationId}` }))))
+        .catch(() => ({ combinationId, combinationTitle: "未命名组合" }))))
         .then((allRows) => {
           this.total = allRows.length;
           const start = (this.pageNum - 1) * this.pageSize;

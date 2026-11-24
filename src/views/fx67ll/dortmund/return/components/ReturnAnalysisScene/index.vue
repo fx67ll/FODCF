@@ -315,14 +315,15 @@
           <span><i class="el-icon-trophy"></i>候选列表 <b>{{ candidateList.length }}</b></span>
           <div class="candidate-tools" v-if="candidateList.length">
             <el-select v-model="candidateSortField" size="mini" style="width: 112px"
-              popper-class="dortmund-theme-popper" @change="refreshCandidateSort">
+              popper-class="dortmund-theme-popper" @change="handleCandidateSortChange">
               <el-option label="预计回报" value="estimatedReturn" />
               <el-option label="偏差金额" value="deviationAmount" />
               <el-option label="组合倍率" value="combinedOdds" />
               <el-option label="场次" value="matchCount" />
+              <el-option v-if="isManualGeneration" label="导入顺序" value="combinationId" />
             </el-select>
             <el-select v-model="candidateSortOrder" size="mini" style="width: 76px" popper-class="dortmund-theme-popper"
-              @change="refreshCandidateSort">
+              @change="handleCandidateSortChange">
               <el-option label="降序" value="desc" />
               <el-option label="升序" value="asc" />
             </el-select>
@@ -373,6 +374,8 @@
             <div class="candidate-main">
               <div class="candidate-title-row">
                 <span class="candidate-title">{{ combination.combinationTitle || combination.combinationCode }}</span>
+                <el-tag v-if="isManualGeneration && readCandidateIds.includes(combination.combinationId)" size="mini"
+                  class="candidate-read-tag">已阅</el-tag>
                 <el-tag :type="combination.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
                   {{ combination.adoptedFlag === "Y" ? "已采用" : "未采用" }}
                 </el-tag>
@@ -584,6 +587,10 @@ export default {
       candidateList: [],
       candidateSortField: "estimatedReturn",
       candidateSortOrder: "desc",
+      // 用户主动调整候选排序后保留其选择；人工批次默认按入库顺序展示，保证追加导入位于列表末尾。
+      candidateSortTouched: false,
+      // 仅当前分析批次使用的前端已阅标记，不落库、不向其他页面传播。
+      readCandidateIds: [],
       selectedCandidateIds: [],
       reviewingId: null,
       batchAdoptLoading: false,
@@ -795,7 +802,7 @@ export default {
     formatMatchTeams(match) {
       if (!match) return "";
       const teams = [match.homeTeamName, match.awayTeamName].filter(Boolean).join(" vs ");
-      return teams || `比赛 #${match.matchId || "-"}`;
+      return teams || "比赛信息待补充";
     },
     formatMatchTime(match) {
       return this.parseTime(match && match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "";
@@ -812,6 +819,10 @@ export default {
         }).catch(() => {
         });
       }
+    },
+    handleCandidateSortChange() {
+      this.candidateSortTouched = true;
+      this.refreshCandidateSort();
     },
     handleMatchSelectorConfirm(matches) {
       this.selectedMatches = Array.isArray(matches) ? matches.filter(Boolean) : [];
@@ -1065,6 +1076,14 @@ export default {
         ? initialDetail.generationStatus : "0";
       this.generationDetail = initialDetail ? { ...initialDetail, generationId } : { generationId };
       this.candidateList = [];
+      this.candidateSortField = "estimatedReturn";
+      this.candidateSortOrder = "desc";
+      this.candidateSortTouched = false;
+      this.readCandidateIds = [];
+      if (String((initialDetail && initialDetail.resultSource) || "") === "M") {
+        this.candidateSortField = "combinationId";
+        this.candidateSortOrder = "asc";
+      }
       this.selectedCandidateIds = [];
       this.pollCount = 0;
       this.pollErrorCount = 0;
@@ -1086,7 +1105,13 @@ export default {
         this.generationDetail = detail;
         this.generationDetailLoaded = true;
         this.generationStatus = detail.generationStatus;
-        this.candidateList = detail.combinations || [];
+        const manualGeneration = String(detail.resultSource || "") === "M";
+        if (manualGeneration && !this.candidateSortTouched) {
+          // 人工批次默认按组合主键升序排列；追加导入使用自增主键，可稳定落在已有候选之后。
+          this.candidateSortField = "combinationId";
+          this.candidateSortOrder = "asc";
+        }
+        this.candidateList = this.sortManualCandidates(detail.combinations || [], manualGeneration);
         this.selectedCandidateIds = this.selectedCandidateIds.filter((id) =>
           this.candidateList.some((item) => item.combinationId === id && item.adoptedFlag !== "Y"));
         this.pollErrorCount = 0;
@@ -1130,6 +1155,7 @@ export default {
         this.generationDetailLoaded = false;
         this.generationDetail = {};
         this.candidateList = [];
+        this.readCandidateIds = [];
         this.selectedCandidateIds = [];
       }
     },
@@ -1187,6 +1213,9 @@ export default {
         this.$modal.msgWarning("该候选组合尚未生成有效编号，请等待批次完成或刷新后重试");
         return;
       }
+      if (this.isManualGeneration && !this.readCandidateIds.includes(row.combinationId)) {
+        this.readCandidateIds.push(row.combinationId);
+      }
       this.combinationVisible = true;
       this.combinationLoading = true;
       this.combinationDetail = {};
@@ -1201,6 +1230,12 @@ export default {
     isPositiveId(value) {
       const id = Number(value);
       return Number.isInteger(id) && id > 0;
+    },
+    sortManualCandidates(rows, manualGeneration) {
+      if (!manualGeneration || this.candidateSortTouched) {
+        return rows;
+      }
+      return [...rows].sort((left, right) => Number(left.combinationId) - Number(right.combinationId));
     },
     handleManualImported() {
       this.pollGeneration();
@@ -2568,6 +2603,13 @@ export default {
   color: #2b3a36;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.candidate-read-tag {
+  flex-shrink: 0;
+  color: #7c8b84;
+  background: #f4f7f5;
+  border-color: #dce7e1;
 }
 
 .candidate-metrics {

@@ -7,7 +7,6 @@
         <div class="match-odds-summary-copy">
           <div class="match-odds-summary-title">
             <strong>{{ matchSummary }}</strong>
-            <el-tag size="mini" effect="plain" type="success">比赛 #{{ match.matchId }}</el-tag>
           </div>
           <div class="match-odds-summary-meta">
             <span><i class="el-icon-tickets"></i>{{ match.matchCode || "-" }}</span>

@@ -66,8 +66,8 @@
           class="manual-decision-card">
           <div class="manual-decision-head">
             <div class="manual-decision-match">
-              <strong>{{ match.matchSummary || `比赛 #${match.matchId}` }}</strong>
-              <span>比赛 #{{ match.matchId }}</span>
+              <strong>{{ match.matchSummary || "比赛信息待补充" }}</strong>
+              <span>{{ match.matchCode || "比赛信息待补充" }}</span>
             </div>
             <div class="manual-decision-tags">
               <el-tag :type="selectionTagType(match.selectionType)" size="mini">
@@ -243,6 +243,7 @@ export default {
 .return-manual-result {
   width: 100%;
   min-width: 0;
+  margin-top: 10px;
 }
 
 .manual-result-hero {

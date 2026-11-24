@@ -196,6 +196,24 @@ export default {
 }
 
 .round-plan-count-tag {
+  height: auto;
+  min-height: 28px;
+  padding: 5px 10px;
   cursor: pointer;
+  border-radius: 8px;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
+
+  &:hover {
+    color: #1f9b56;
+    background: #eaf8f0;
+    border-color: #b9e4ca;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, .14);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(.94);
+  }
 }
 </style>

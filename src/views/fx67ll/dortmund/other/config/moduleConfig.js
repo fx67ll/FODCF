@@ -299,6 +299,8 @@ export const DORTMUND_RETURN_POLLING = Object.freeze({
 export const DORTMUND_MANUAL_AI_CONFIG = Object.freeze({
   schemaVersion: "1.0",
   taskType: "DORTMUND_RETURN_COMBINATION",
+  // 来源模型由第三方AI在响应顶层 aiSource 中自行声明，后端据此生成组合标题前缀。
+  aiSourcePattern: "^[A-Z0-9][A-Z0-9._+-]{0,31}$",
   maxResponseBytes: 8 * 1024 * 1024,
   maxCandidates: 10,
   maxTotalCandidates: 30,
@@ -739,29 +741,27 @@ export const DORTMUND_ODDS_RESULT_OPTIONS = Object.freeze([
   "HD",
   "HA",
 ]);
+/** 列表筛选中的“未登记”哨兵值，仅用于查询参数，不写入业务表。 */
+export const DORTMUND_FILTER_UNREGISTERED_VALUE = "U";
 /** 倍率赛果使用英文逗号落库，历史请求可能携带中文逗号，统一在读取时兼容。 */
 export const DORTMUND_ODDS_RESULT_SEPARATOR = ",";
 
-/** 将逗号分隔的倍率赛果拆成去重、去空白的令牌数组。 */
+/**
+ * 将逗号分隔的倍率赛果拆成去重、去空白的标准令牌数组。
+ * 第三方导入可能留下“-”“未登记”或未知占位内容，这类异常值不参与展示与回写，
+ * 避免列表把占位符误识别成有效赛果。
+ */
 export function splitDortmundOddsResult(value) {
-  if (Array.isArray(value)) {
-    return [
-      ...new Set(
-        value
-          .map((item) =>
-            String(item || "")
-              .trim()
-              .toUpperCase()
-          )
-          .filter(Boolean)
-      ),
-    ];
-  }
+  const allowedTokens = new Set(DORTMUND_ODDS_RESULT_OPTIONS);
+  const normalizeToken = (item) => {
+    const token = String(item == null ? "" : item).trim().toUpperCase();
+    return allowedTokens.has(token) ? token : "";
+  };
+  const values = Array.isArray(value) ? value : String(value || "").split(/[,，;；、]/);
   return [
     ...new Set(
-      String(value || "")
-        .split(/[,，]/)
-        .map((item) => item.trim().toUpperCase())
+      values
+        .map(normalizeToken)
         .filter(Boolean)
     ),
   ];
