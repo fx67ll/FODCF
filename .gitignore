@@ -26,3 +26,5 @@ yarn.lock
 
 /neverUploadToGithub.js
 /.codex-tmp
+/.codex-build-check
+/$null
