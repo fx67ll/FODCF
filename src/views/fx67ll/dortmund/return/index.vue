@@ -136,8 +136,8 @@
           row-key="combinationId" class="history-table combination-table"
           @selection-change="handleCombinationSelectionChange">
           <el-table-column type="selection" width="46" fixed="left" />
-          <el-table-column label="回报组合标题" prop="combinationTitle" align="center" width="300"
-            show-overflow-tooltip fixed="left" />
+          <el-table-column label="回报组合标题" prop="combinationTitle" align="center" width="330" show-overflow-tooltip
+            fixed="left" />
           <el-table-column label="场次" align="center" width="80" fixed="left">
             <template slot-scope="scope">
               <el-button v-if="scope.row.matchCount > 0" type="text" class="dortmund-theme-text combination-match-count"
@@ -148,19 +148,39 @@
               <span v-else class="combination-match-count is-empty">0</span>
             </template>
           </el-table-column>
-          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="120" />
-          <el-table-column label="预计回报" align="center" width="120">
+          <el-table-column label="组合倍率" align="center" prop="combinedOdds" width="100" />
+          <el-table-column label="预计回报" align="center" width="100">
             <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
           </el-table-column>
-          <el-table-column label="偏差金额" align="center" width="120">
-            <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.deviationAmount) }}</template>
+          <el-table-column label="偏差金额" align="center" width="100">
+            <template slot-scope="scope">
+              <span :class="['deviation-amount', deviationTone(scope.row.deviationAmount)]">
+                <i v-if="deviationIcon(scope.row.deviationAmount)"
+                  :class="deviationIcon(scope.row.deviationAmount)"></i>
+                {{ formatMoneyDisplay(scope.row.deviationAmount) }}
+              </span>
+            </template>
           </el-table-column>
-          <el-table-column label="核验状态" align="center" width="100">
+          <el-table-column label="AI置信度" align="center" width="100">
+            <template slot-scope="scope">
+              <span :class="['combination-confidence', { 'is-empty': scope.row.aiConfidence == null }]">
+                {{ formatConfidence(scope.row.aiConfidence) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="AI风险提示" align="center" prop="riskNotes" min-width="230" show-overflow-tooltip>
+            <template slot-scope="scope">
+              <span :class="['combination-risk-hint', { 'is-empty': !scope.row.riskNotes }]">
+                {{ scope.row.riskNotes || "-" }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="核验状态" align="center" width="100" fixed="right">
             <template slot-scope="scope">
               <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
             </template>
           </el-table-column>
-          <el-table-column label="采用状态" align="center" width="100">
+          <el-table-column label="采用状态" align="center" width="100" fixed="right">
             <template slot-scope="scope">
               <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
                 {{ scope.row.adoptedFlag === "Y" ? "已采用" : "未采用" }}
@@ -183,7 +203,7 @@
           <el-table-column label="记录创建者" align="center" prop="createBy" width="100" show-overflow-tooltip>
             <template slot-scope="scope">{{ formatAuditActor(scope.row.createBy) }}</template>
           </el-table-column>
-          <el-table-column label="记录创建时间" align="center" width="150" fixed="right" class-name="dortmund-nowrap-cell">
+          <el-table-column label="记录创建时间" align="center" width="150" class-name="dortmund-nowrap-cell">
             <template slot-scope="scope">{{ parseTime(scope.row.createTime, "{y}-{m}-{d} {h}:{i}:{s}") || "-"
             }}</template>
           </el-table-column>
@@ -211,8 +231,9 @@
           </el-table-column>
         </el-table>
       </div>
-      <pagination v-show="combinationTotal > 0" :total="combinationTotal" :page.sync="combinationQuery.pageNum"
-        :limit.sync="combinationQuery.pageSize" :page-sizes="pageSizes" @pagination="getCombinationList" />
+      <pagination v-show="combinationTotal > 0" :total="combinationTotal" popper-class="dortmund-theme-popper"
+        :page.sync="combinationQuery.pageNum" :limit.sync="combinationQuery.pageSize" :page-sizes="pageSizes"
+        @pagination="getCombinationList" />
       <div v-if="!combinationListLoading && !combinationList.length" class="history-empty combination-empty">
         <i class="el-icon-collection"></i>
         <span>暂无符合筛选条件的回报组合</span>
@@ -222,11 +243,13 @@
 
     <dortmund-detail-drawer :visible.sync="generationVisible" title="生成批次详情"
       :subtitle="generationDetail.generationCode ? `批次编码 · ${generationDetail.generationCode}` : '查看批次状态、业务输入与生成组合'"
-      icon="el-icon-time" tone="cyan" size="820px" :loading="generationLoading" feature="return">
-      <dortmund-detail-card title="批次概览" icon="el-icon-data-analysis" tone="cyan">
-        <dortmund-detail-block variant='metric' tone='cyan' :items='generationMetricItems' />
-        <div class='dortmund-detail-subheading'>批次生命周期</div>
-        <dortmund-detail-block variant='timeline' tone='cyan' :items='generationLifecycle' />
+      icon="el-icon-time" tone="green" size="820px" :loading="generationLoading" feature="return">
+      <dortmund-detail-card title="批次概览" icon="el-icon-data-analysis" tone="green">
+        <dortmund-detail-block variant='metric' tone='green' :items='generationMetricItems' />
+      </dortmund-detail-card>
+
+      <dortmund-detail-card title="批次生命周期" icon="el-icon-time" tone="green" subtitle="独立追踪任务创建、证据流程与批次完成节点">
+        <dortmund-detail-block variant='timeline' tone='green' :items='generationLifecycle' />
         <el-alert v-if="generationDetail.generationStatus === '2'" class="return-detail-alert-block" type="error"
           :closable="false" show-icon :title="generationDetail.generationRemark || '生成失败，没有产生可用的半截数据。'" />
         <el-alert v-if="generationDetail.generationStatus === '3'" class="return-detail-alert-block" type="warning"
@@ -253,22 +276,37 @@
       <dortmund-detail-card title="批次组合" icon="el-icon-collection-tag" tone="green"
         :subtitle="`共 ${(generationDetail.combinations || []).length} 条`">
         <el-table :data="generationDetail.combinations || []" size="small" empty-text="暂无组合">
-          <el-table-column label="组合编码" prop="combinationCode" min-width="160" show-overflow-tooltip />
-          <el-table-column label="预计回报" align="center" prop="estimatedReturn" width="108" />
-          <el-table-column label="偏差" align="center" prop="deviationAmount" width="96" />
-          <el-table-column label="AI置信度" align="center" width="100">
+          <el-table-column label="回报组合标题" prop="combinationTitle" header-align="center" width="260"
+            show-overflow-tooltip />
+          <el-table-column label="预计回报" header-align="center" align="center" prop="estimatedReturn" width="100" />
+          <el-table-column label="偏差金额" header-align="center" align="center" width="100">
+            <template slot-scope="scope">
+              <span :class="['deviation-amount', deviationTone(scope.row.deviationAmount)]">
+                <i v-if="deviationIcon(scope.row.deviationAmount)"
+                  :class="deviationIcon(scope.row.deviationAmount)"></i>
+                {{ formatMoneyDisplay(scope.row.deviationAmount) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="AI置信度" header-align="center" align="center" width="100">
             <template slot-scope="scope">{{ formatConfidence(scope.row.aiConfidence) }}</template>
           </el-table-column>
-          <el-table-column label="AI风险提示" prop="riskNotes" min-width="160" show-overflow-tooltip />
-          <el-table-column label="采用" align="center" prop="adoptedFlag" width="84">
-            <template slot-scope="scope">{{ scope.row.adoptedFlag === "Y" ? "是" : "否" }}</template>
+          <el-table-column label="AI风险提示" header-align="center" prop="riskNotes" min-width="160"
+            show-overflow-tooltip />
+          <el-table-column label="采用状态" header-align="center" align="center" width="104" fixed="right">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.adoptedFlag === 'Y' ? 'success' : 'info'" size="mini">
+                {{ scope.row.adoptedFlag === "Y" ? "已采用" : "未采用" }}
+              </el-tag>
+            </template>
           </el-table-column>
-          <el-table-column label="核验" align="center" width="104">
+          <el-table-column label="核验状态" header-align="center" align="center" width="110" fixed="right">
             <template slot-scope="scope">
               <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="68" fixed="right">
+          <el-table-column label="操作" header-align="center" align="center" class-name="dortmund-action-column"
+            width="68" fixed="right">
             <template slot-scope="scope">
               <dortmund-action-button label="查看" icon="el-icon-document" action="detail"
                 @click="handleCombinationDetail(scope.row)" />
@@ -283,19 +321,21 @@
 
     <el-drawer :visible.sync="historyVisible" title="回报组合历史批次" size="1044px" append-to-body destroy-on-close
       custom-class="return-drawer return-history-drawer" :wrapper-closable="false" @opened="handleBatchQuery">
-      <div class="return-drawer-body dl-page">
-        <div class="history-drawer-hero">
-          <div class="history-drawer-hero-icon"><i class="el-icon-time"></i></div>
-          <div class="history-drawer-hero-copy">
-            <strong>历史批次</strong>
+      <template slot="title">
+        <div class="return-drawer-heading">
+          <div class="return-drawer-heading-icon"><i class="el-icon-time"></i></div>
+          <div class="return-drawer-heading-copy">
+            <strong>回报组合历史批次</strong>
             <span>查看生成记录、处理状态与组合数量</span>
           </div>
-          <div class="history-drawer-tools">
-            <span class="history-drawer-count">共 {{ batchTotal }} 批</span>
+          <div class="return-drawer-heading-tools">
+            <span class="return-drawer-chip">共 {{ batchTotal }} 批</span>
             <el-button type="warning" plain size="mini" icon="el-icon-download" :loading="batchExporting"
               @click="handleBatchExport" v-hasPermi="['dortmund:return:export']">导出批次</el-button>
           </div>
         </div>
+      </template>
+      <div class="return-drawer-body dl-page">
         <el-form ref="batchQueryForm" :model="batchQuery" class="history-batch-filter dl-filter" size="small"
           :inline="true">
           <el-form-item label="批次状态" prop="generationStatus" label-width="auto">
@@ -384,8 +424,9 @@
               </el-table-column>
             </el-table>
           </div>
-          <pagination v-show="batchTotal > 0" :total="batchTotal" :page.sync="batchQuery.pageNum"
-            :limit.sync="batchQuery.pageSize" :page-sizes="pageSizes" @pagination="getBatchList" />
+          <pagination v-show="batchTotal > 0" :total="batchTotal" popper-class="dortmund-theme-popper"
+            :page.sync="batchQuery.pageNum" :limit.sync="batchQuery.pageSize" :page-sizes="pageSizes"
+            @pagination="getBatchList" />
           <div v-if="!batchLoading && !batchList.length" class="history-empty">
             <i class="el-icon-time"></i>
             <span>暂无符合条件的历史批次</span>
@@ -397,20 +438,20 @@
 
     <el-drawer :visible.sync="orphanImageVisible" title="孤儿图片清理" size="980px" append-to-body destroy-on-close
       custom-class="return-drawer return-orphan-drawer" :wrapper-closable="false" @opened="initializeOrphanQuery">
-      <div class="return-drawer-body dl-page">
-        <div class="orphan-hero">
-          <div class="orphan-hero-copy">
-            <div class="history-drawer-hero-icon"><i class="el-icon-delete"></i></div>
-            <div>
-              <strong>未有效关联图片回收</strong>
-              <span>处理过期临时、关联失效、待删除和隔离图片；有效已采用组合的图片不会被删除</span>
-            </div>
+      <template slot="title">
+        <div class="return-drawer-heading">
+          <div class="return-drawer-heading-icon is-amber"><i class="el-icon-delete"></i></div>
+          <div class="return-drawer-heading-copy">
+            <strong>孤儿图片清理</strong>
+            <span>回收过期、失效、待删除与隔离图片，已采用组合图片不受影响</span>
           </div>
-          <div class="orphan-hero-stats">
-            <span><b>{{ orphanImageList.length }}</b> 张匹配</span>
-            <span><b>{{ selectedOrphanIds.length }}</b> 张已选</span>
+          <div class="return-drawer-heading-tools">
+            <span class="return-drawer-chip"><b>{{ orphanImageList.length }}</b> 张匹配</span>
+            <span class="return-drawer-chip"><b>{{ selectedOrphanIds.length }}</b> 张已选</span>
           </div>
         </div>
+      </template>
+      <div class="return-drawer-body dl-page">
         <div class="orphan-legend">
           <el-tag size="mini" type="info">T 临时未提交</el-tag>
           <el-tag size="mini" type="warning">B 关联失效</el-tag>
@@ -418,12 +459,11 @@
           <el-tag size="mini" type="warning">Q 已隔离</el-tag>
           <span><i class="el-icon-info"></i> 查询跨度最多 366 天，单次最多删除 100 张</span>
         </div>
-        <el-form class="orphan-filter-card dl-filter" size="small" :inline="true"
-          @submit.native.prevent>
+        <el-form class="orphan-filter-card dl-filter" size="small" :inline="true" @submit.native.prevent>
           <el-form-item label="上传日期" label-width="auto">
             <el-date-picker v-model="orphanDateRange" size="small" type="daterange" value-format="yyyy-MM-dd"
-              popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期"
-              end-placeholder="结束日期" clearable @change="handleOrphanDateChange" />
+              popper-class="dortmund-theme-popper" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+              clearable @change="handleOrphanDateChange" />
           </el-form-item>
           <el-form-item class="orphan-filter-actions">
             <el-button type="primary" size="mini" icon="el-icon-search" :loading="orphanSearchLoading"
@@ -764,6 +804,18 @@ export default {
     formatConfidence(value) {
       return value == null ? "-" : `${value}%`;
     },
+    // 偏差金额仅表达相对目标的方向：超出目标为红色上箭头，低于目标为绿色下箭头，零值为灰色。
+    deviationTone(value) {
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue) || numericValue === 0) return "is-zero";
+      return numericValue > 0 ? "is-positive" : "is-negative";
+    },
+    deviationIcon(value) {
+      const tone = this.deviationTone(value);
+      if (tone === "is-positive") return "el-icon-top";
+      if (tone === "is-negative") return "el-icon-bottom";
+      return "";
+    },
     generationTaskType(row) {
       if (row && row.generationStatus === "2") {
         return { label: "自动失败可转人工", type: "danger" };
@@ -914,34 +966,34 @@ export default {
       const confirmMessage = this.isCombinationVerified(combination)
         ? "该记录已经核验过，是否重新核验？"
         : `确认按人工登记的倍率赛果核验组合「${combination.combinationTitle
-          || combination.combinationCode}」？`;
+        || combination.combinationCode}」？`;
       this.$modal.confirm(confirmMessage).then(() => {
-          this.verifyingId = combination.combinationId;
-          return verifyCombination(combination.combinationId);
-        }).then((response) => {
-          const status = (response && response.data && response.data.verificationStatus)
-            || DORTMUND_RETURN_VERIFICATION_STATUS.unverified;
-          const label = getReturnVerificationOption(status).label;
-          if (status === DORTMUND_RETURN_VERIFICATION_STATUS.success) {
-            this.$modal.msgSuccess(`赛果核验完成：${label}`);
-          } else if (status === DORTMUND_RETURN_VERIFICATION_STATUS.failed) {
-            this.$modal.msgError(`赛果核验完成：${label}`);
-          } else {
-            this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入倍率赛果，状态保持${label}`);
-          }
-          return this.refreshAfterVerification([{
-            combinationId: combination.combinationId,
-            verificationStatus: status,
-          }]);
-        }).catch(() => {
-        }).finally(() => {
-          this.verifyingId = null;
-        });
+        this.verifyingId = combination.combinationId;
+        return verifyCombination(combination.combinationId);
+      }).then((response) => {
+        const status = (response && response.data && response.data.verificationStatus)
+          || DORTMUND_RETURN_VERIFICATION_STATUS.unverified;
+        const label = getReturnVerificationOption(status).label;
+        if (status === DORTMUND_RETURN_VERIFICATION_STATUS.success) {
+          this.$modal.msgSuccess(`赛果核验完成：${label}`);
+        } else if (status === DORTMUND_RETURN_VERIFICATION_STATUS.failed) {
+          this.$modal.msgError(`赛果核验完成：${label}`);
+        } else {
+          this.$modal.msgWarning(`核验暂未形成结论：组合内仍有比赛未录入倍率赛果，状态保持${label}`);
+        }
+        return this.refreshAfterVerification([{
+          combinationId: combination.combinationId,
+          verificationStatus: status,
+        }]);
+      }).catch(() => {
+      }).finally(() => {
+        this.verifyingId = null;
+      });
     },
     // 仅 Y/N 属于已形成核验结论；null 或未知值均按未核验处理。
     isCombinationVerified(combination) {
       return [DORTMUND_RETURN_VERIFICATION_STATUS.success,
-        DORTMUND_RETURN_VERIFICATION_STATUS.failed].includes(combination && combination.verificationStatus);
+      DORTMUND_RETURN_VERIFICATION_STATUS.failed].includes(combination && combination.verificationStatus);
     },
     // 批量确认文案使用业务标题，不展示主键；所有选中项都会被明确列出。
     formatCombinationPromptLabels(rows) {
@@ -1750,6 +1802,52 @@ export default {
   min-width: 1120px;
 }
 
+/* 偏差金额按方向着色，两个组合表共用同一套展示口径。 */
+.deviation-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  i {
+    font-size: 12px;
+  }
+
+  &.is-positive {
+    color: #ff5a5f;
+  }
+
+  &.is-negative {
+    color: #2ecc71;
+  }
+
+  &.is-zero {
+    font-weight: 400;
+    color: #999999;
+  }
+}
+
+.combination-confidence {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #53635b;
+
+  &.is-empty {
+    font-weight: 400;
+    color: #a8b2ad;
+  }
+}
+
+.combination-risk-hint {
+  color: #67766f;
+
+  &.is-empty {
+    color: #a8b2ad;
+  }
+}
+
 .combination-match-count {
   min-width: 34px;
   min-height: 28px;
@@ -1782,71 +1880,6 @@ export default {
 .combination-empty {
   min-height: 160px;
   margin-top: 10px;
-}
-
-.history-drawer-hero {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-  background: linear-gradient(135deg, #f2fbf6 0%, #ffffff 100%);
-  border: 1px solid #dcebe3;
-  border-radius: 14px;
-  animation: returnRise 0.28s ease both;
-}
-
-.history-drawer-hero-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  color: #fff;
-  background: var(--current-color, #2ecc71);
-  border-radius: 11px;
-  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.22);
-}
-
-.history-drawer-hero-copy {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-
-  strong {
-    font-size: 14px;
-    color: #2b3a36;
-  }
-
-  span {
-    overflow: hidden;
-    font-size: 12px;
-    color: #7c8b84;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.history-drawer-count {
-  flex-shrink: 0;
-  padding: 4px 9px;
-  margin-left: auto;
-  font-size: 12px;
-  color: #27ad60;
-  background: #e7f8ee;
-  border-radius: 999px;
-}
-
-.history-drawer-tools {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  flex-shrink: 0;
-
-  .history-drawer-count {
-    margin-left: 0;
-  }
 }
 
 .combination-batch-actions {
@@ -1926,59 +1959,6 @@ export default {
 }
 
 @at-root {
-  .orphan-hero {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, #f2fbf6 0%, #ffffff 62%, #fff9f0 100%);
-    border: 1px solid #dcebe3;
-    border-radius: 14px;
-    animation: returnRise 0.28s ease both;
-  }
-
-  .orphan-hero-copy {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    >div:last-child {
-      display: grid;
-      gap: 4px;
-    }
-
-    strong {
-      font-size: 14px;
-      color: #2b3a36;
-    }
-
-    span {
-      font-size: 12px;
-      color: #7c8b84;
-    }
-  }
-
-  .orphan-hero-stats {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-
-    span {
-      padding: 6px 10px;
-      font-size: 12px;
-      color: #5f746b;
-      background: rgba(255, 255, 255, 0.82);
-      border: 1px solid #e2eee7;
-      border-radius: 10px;
-    }
-
-    b {
-      color: #27ad60;
-    }
-  }
-
   .orphan-legend {
     display: flex;
     align-items: center;
@@ -2220,6 +2200,7 @@ export default {
 }
 
 .return-input-summary {
+  padding: 14px 16px;
   margin: 0;
   font-size: 12px;
   line-height: 1.6;
@@ -2329,26 +2310,8 @@ export default {
     flex-wrap: wrap;
   }
 
-  .history-drawer-hero,
   .history-table-card {
     padding: 12px;
-  }
-
-  .history-drawer-hero {
-    align-items: flex-start;
-  }
-
-  .history-drawer-count {
-    display: none;
-  }
-
-  .orphan-hero {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .orphan-hero-stats {
-    flex-wrap: wrap;
   }
 
   .orphan-filter-card {
@@ -2380,5 +2343,180 @@ export default {
     }
   }
 
+}
+</style>
+
+<!-- 抽屉挂载到 body，标题栏样式不能 scoped；仅作用于两个 return 抽屉 -->
+<style lang="scss">
+.return-history-drawer.el-drawer,
+.return-orphan-drawer.el-drawer {
+  background: #f6faf8;
+
+  .el-drawer__header {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding: 16px 64px 16px 20px;
+    margin-bottom: 0;
+    color: #2b3a36;
+    background: #fff;
+    border-bottom: 1px solid #e3eee8;
+  }
+
+  .el-drawer__body {
+    padding: 16px 20px 24px;
+    overflow: auto;
+  }
+
+  .el-drawer__close-btn {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    color: #718078;
+    background: transparent;
+    border-radius: 10px;
+    transition: color 0.22s ease, background-color 0.22s ease,
+      box-shadow 0.22s ease, transform 0.28s cubic-bezier(0.22, 0.8, 0.32, 1.2);
+
+    &:hover,
+    &:focus-visible {
+      color: var(--current-color, #2ecc71);
+      background: rgba(46, 204, 113, 0.1);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.16);
+      transform: rotate(90deg) scale(1.04);
+    }
+
+    &:active {
+      transform: rotate(90deg) scale(0.92);
+    }
+  }
+
+}
+
+.return-drawer-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  animation: returnDrawerHeadingIn 0.3s ease both;
+}
+
+.return-drawer-heading-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--current-color, #2ecc71) 0%, #27ae60 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+
+  &.is-amber {
+    background: linear-gradient(135deg, #f5b85c 0%, #e69a2d 100%);
+    box-shadow: 0 4px 12px rgba(230, 154, 45, 0.28);
+  }
+}
+
+.return-drawer-heading-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2b3a36;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    overflow: hidden;
+    font-size: 12px;
+    color: #8a9a92;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.return-drawer-heading-tools {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.return-drawer-chip {
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #5f746b;
+  white-space: nowrap;
+  background: #f2fbf6;
+  border: 1px solid #e0eee6;
+  border-radius: 999px;
+
+  b {
+    color: var(--current-color, #2ecc71);
+  }
+}
+
+@keyframes returnDrawerHeadingIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .return-history-drawer.el-drawer,
+  .return-orphan-drawer.el-drawer {
+    .el-drawer__header {
+      padding-right: 56px;
+    }
+
+  }
+
+  .return-drawer-heading-tools {
+    .return-drawer-chip {
+      display: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .return-history-drawer.el-drawer,
+  .return-orphan-drawer.el-drawer {
+    .el-drawer__close-btn {
+      transition: none;
+
+      &:hover,
+      &:focus-visible,
+      &:active {
+        transform: none;
+      }
+    }
+  }
+
+  .return-drawer-heading {
+    animation: none;
+  }
 }
 </style>

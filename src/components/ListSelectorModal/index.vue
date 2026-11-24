@@ -95,7 +95,7 @@
         </div>
         <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="internalPageSize"
           :page-sizes="pageSizes" :layout="paginationLayout" :pager-count="paginationPagerCount" :auto-scroll="false"
-          class="list-selector-pagination" @pagination="loadRows" />
+          :popper-class="paginationPopperClass" class="list-selector-pagination" @pagination="loadRows" />
       </div>
 
       <div class="list-selector-footer">
@@ -171,6 +171,11 @@ export default {
     pageSizes: {
       type: Array,
       default: () => [10, 20, 50, 100],
+    },
+    // 分页每页条数下拉挂载到 body，由调用方传入主题弹层类名；保持通用组件不绑定具体业务主题。
+    paginationPopperClass: {
+      type: String,
+      default: "",
     },
     // 业务页面可按列表字段密度覆盖标准抽屉宽度；移动端仍自动使用全屏/自适应宽度。
     drawerWidth: {

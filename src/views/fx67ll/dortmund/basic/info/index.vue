@@ -101,8 +101,9 @@
           </div>
         </transition>
 
-        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
+        <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper"
+          :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" :page-sizes="pageSizes"
+          @pagination="getList" />
 
         <!-- 信息点详情对话框（只读） -->
         <info-detail-dialog :visible.sync="detailOpen" :detail-model="detailModel" :detail-loading="detailLoading" />

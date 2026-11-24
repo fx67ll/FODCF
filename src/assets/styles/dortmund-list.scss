@@ -128,6 +128,8 @@ $dl-theme: var(--current-color, #2ecc71);
     }
 
     .el-form-item {
+      /* 条件之间保留明显呼吸间距，避免多个筛选控件挤成一组 */
+      margin-right: 22px;
       margin-bottom: 14px;
       animation: dlItemIn 0.3s ease both;
 
@@ -136,9 +138,16 @@ $dl-theme: var(--current-color, #2ecc71);
           animation-delay: #{$i * 0.03}s;
         }
       }
+
+      &:last-child {
+        margin-right: 0;
+      }
     }
 
     .el-form-item__label {
+      /* 标签跟随文字自适应宽度，仅保留紧凑的标签与控件间距 */
+      width: auto !important;
+      padding-right: 6px;
       padding-left: 0;
       font-weight: 500;
       color: #5b6b64;
@@ -398,16 +407,43 @@ $dl-theme: var(--current-color, #2ecc71);
   .pagination-container {
     margin-top: 14px;
 
-    .el-pagination.is-background {
+    .el-pagination {
       .btn-prev,
       .btn-next,
       .el-pager li {
         border-radius: 8px;
-        transition: transform 0.2s ease, background-color 0.2s ease;
+        transition: color 0.2s ease, background-color 0.2s ease,
+          border-color 0.2s ease, transform 0.2s ease;
       }
 
       .el-pager li:not(.disabled):not(.active):hover {
+        color: $dl-theme;
         transform: translateY(-1px);
+        @include dl-tint(10%, #e7f8ee);
+      }
+
+      .el-pager li.active,
+      .el-pager li.active:hover {
+        color: #fff;
+        background-color: $dl-theme;
+        box-shadow: 0 4px 10px rgba(46, 204, 113, 0.2);
+      }
+
+      .btn-prev:not(:disabled):hover,
+      .btn-next:not(:disabled):hover {
+        color: $dl-theme;
+        @include dl-tint(10%, #e7f8ee);
+      }
+
+      .el-pagination__sizes .el-input .el-input__inner:focus,
+      .el-pagination__jump .el-input .el-input__inner:focus,
+      .el-pagination__sizes .el-input.is-focus .el-input__inner {
+        color: $dl-theme;
+        border-color: $dl-theme;
+      }
+
+      .el-select-dropdown__item.selected {
+        color: $dl-theme;
       }
     }
   }

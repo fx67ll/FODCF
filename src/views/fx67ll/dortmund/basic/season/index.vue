@@ -126,8 +126,8 @@
       </el-table>
     </div>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      :page-sizes="pageSizes" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
 
     <dortmund-detail-drawer :visible.sync="detailVisible" title="赛季详情"
       :subtitle="detailData.seasonCode ? `赛季编码 · ${detailData.seasonCode}` : '查看赛季完整资料与审计信息'" icon="el-icon-trophy"

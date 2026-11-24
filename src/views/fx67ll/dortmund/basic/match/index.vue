@@ -96,7 +96,7 @@
               v-hasPermi="['dortmund:match:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -200,8 +200,9 @@
           </el-table>
         </div>
 
-        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
+        <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper"
+          :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" :page-sizes="pageSizes"
+          @pagination="getList" />
       </div>
 
       <!-- 比赛编排场景：新增/修改共用整页，按填写顺序铺开 -->

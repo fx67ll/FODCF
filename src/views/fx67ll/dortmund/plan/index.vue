@@ -8,19 +8,19 @@
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="84px">
-            <el-form-item label="方案计划" prop="planContent">
+            <el-form-item v-if="isMoreQuery" label="方案计划" prop="planContent">
               <el-input v-model="queryParams.planContent" placeholder="请输入方案计划关键字" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
-            <el-form-item label="回报组合" prop="combinationId">
+            <el-form-item v-if="isMoreQuery" label="回报组合" prop="combinationId">
               <el-input :value="formatSelectedCombination(selectedCombination)" readonly placeholder="请选择关联回报组合"
                 @click.native="combinationSelectorVisible = true" />
             </el-form-item>
-            <el-form-item label="关联比赛" prop="matchId">
+            <el-form-item v-if="isMoreQuery" label="关联比赛" prop="matchId">
               <el-input :value="formatSelectedMatch(selectedMatch)" readonly placeholder="请选择关联比赛"
                 @click.native="matchSelectorVisible = true" />
             </el-form-item>
-            <el-form-item label="创建时间" v-if="isMoreQuery">
+            <el-form-item label="创建时间">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
                 end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
@@ -33,6 +33,8 @@
             <el-form-item>
               <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
               <el-button type="success" icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+              <el-button v-if="isResetStatus" type="warning" icon="el-icon-scissors" size="mini"
+                @click="handleViewValidData">只看有效数据</el-button>
               <el-button type="success" class="dl-more-btn" :icon="isMoreQuery ? 'el-icon-zoom-out' : 'el-icon-zoom-in'"
                 size="mini" @click="handleMoreQuery">
                 {{ isMoreQuery ? "关闭高级搜索" : "使用高级搜索" }}
@@ -53,7 +55,7 @@
               v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-                }} 项</span>
+              }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -74,8 +76,9 @@
           </div>
         </transition>
 
-        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum"
-          :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
+        <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper"
+          :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" :page-sizes="pageSizes"
+          @pagination="getList" />
       </div>
 
       <!-- 编写场景：创建/修改共用整页（组件内持有表单副本与当场新建面板） -->
@@ -117,7 +120,7 @@ import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
 import PlanEditScene from "./components/PlanEditScene/index.vue";
 import PlanDetailDrawer from "./components/PlanDetailDrawer/index.vue";
-import { DORTMUND_PAGINATION } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
+import { DORTMUND_PAGINATION, DORTMUND_PLAN_QUERY_CONFIG } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 
 // 总览列表展示视图偏好本地持久缓存的key（card卡片视图 list列表视图）
@@ -176,6 +179,8 @@ export default {
       planDrawerLabel: "",
       // 是否使用高级搜索
       isMoreQuery: false,
+      // 重置后显示“只看有效数据”快捷入口；点击恢复最近7天创建窗口后隐藏。
+      isResetStatus: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -207,6 +212,8 @@ export default {
   created() {
     // 读取本地缓存的展示视图偏好（非法值兜底为卡片视图）
     this.viewMode = localStorage.getItem(VIEW_MODE_KEY) === "list" ? "list" : "card";
+    // 初始口径与“只看有效数据”一致：展示最近7天创建的方案计划。
+    this.daterangeCreateTime = this.buildValidCreateTimeRange();
     this.getList();
   },
   activated() {
@@ -227,6 +234,16 @@ export default {
       this.queryParams.endCreateTime = null;
       this.queryParams.beginUpdateTime = null;
       this.queryParams.endUpdateTime = null;
+    },
+    // 有效数据窗口固定回看7天，天数集中维护在模块公共配置中。
+    buildValidCreateTimeRange() {
+      const end = new Date();
+      const start = new Date(end.getTime()
+        - DORTMUND_PLAN_QUERY_CONFIG.validDataWindowDays * 24 * 60 * 60 * 1000);
+      return [
+        this.parseTime(start, "{y}-{m}-{d} {h}:{i}:{s}"),
+        this.parseTime(end, "{y}-{m}-{d} {h}:{i}:{s}"),
+      ];
     },
     /** 查询方案计划列表 */
     getList() {
@@ -262,11 +279,29 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
-      this.resetForm("queryForm");
+      this.resetPlanQueryFilters();
+      this.isResetStatus = true;
+      this.handleQuery();
+    },
+    // 高级搜索字段可能已卸载，显式清空查询模型与选择器回显，确保重置始终完整生效。
+    resetPlanQueryFilters() {
+      this.queryParams.planContent = null;
+      this.queryParams.combinationId = null;
+      this.queryParams.matchId = null;
+      this.clearDateQueryParams();
       this.daterangeCreateTime = [];
       this.daterangeUpdateTime = [];
       this.selectedCombination = null;
       this.selectedMatch = null;
+      if (this.$refs.queryForm) {
+        this.$refs.queryForm.clearValidate();
+      }
+    },
+    // 重置后可通过剪刀快捷恢复初始有效窗口，并清空其他高级条件。
+    handleViewValidData() {
+      this.resetPlanQueryFilters();
+      this.daterangeCreateTime = this.buildValidCreateTimeRange();
+      this.isResetStatus = false;
       this.handleQuery();
     },
     formatSelectedCombination(combination) {

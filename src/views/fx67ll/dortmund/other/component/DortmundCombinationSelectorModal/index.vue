@@ -2,7 +2,8 @@
   <list-selector-modal :visible.sync="dialogVisible" title="选择关联回报组合" :api-func="loadCombinations"
     :query-params="queryParams" :columns="columns" :search-fields="searchFields" :selected-items="selectedItems"
     value-key="combinationId" label-key="combinationTitle" :label-formatter="formatCombinationLabel"
-    :multiple="multiple" :page-size="pageSize" :page-sizes="pageSizes" auto-query @confirm="$emit('confirm', $event)" />
+    :multiple="multiple" :page-size="pageSize" :page-sizes="pageSizes" auto-query
+    pagination-popper-class="dortmund-theme-popper" @confirm="$emit('confirm', $event)" />
 </template>
 
 <script>

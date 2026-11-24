@@ -156,8 +156,8 @@
           </template>
         </el-table>
       </div>
-      <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="pageSize" :page-sizes="pageSizes"
-        :auto-scroll="false" @pagination="load" />
+      <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="pageNum"
+        :limit.sync="pageSize" :page-sizes="pageSizes" :auto-scroll="false" @pagination="load" />
     </div>
   </el-drawer>
 </template>

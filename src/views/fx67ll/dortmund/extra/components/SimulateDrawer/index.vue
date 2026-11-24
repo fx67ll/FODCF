@@ -53,7 +53,8 @@ export default {
   background: #f6faf8;
 
   .el-drawer__header {
-    padding: 16px 20px;
+    position: relative;
+    padding: 16px 64px 16px 20px;
     margin-bottom: 0;
     background: #fff;
     border-bottom: 1px solid #e3eee8;
@@ -64,10 +65,30 @@ export default {
   }
 
   .el-drawer__close-btn {
-    transition: transform 0.3s ease;
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    color: #718078;
+    background: transparent;
+    border-radius: 10px;
+    transition: color 0.22s ease, background-color 0.22s ease,
+      box-shadow 0.22s ease, transform 0.28s cubic-bezier(0.22, 0.8, 0.32, 1.2);
 
-    &:hover {
-      transform: rotate(90deg);
+    &:hover,
+    &:focus-visible {
+      color: #2ecc71;
+      background: rgba(46, 204, 113, 0.1);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.16);
+      transform: rotate(90deg) scale(1.04);
+    }
+
+    &:active {
+      transform: rotate(90deg) scale(0.92);
     }
   }
 }
@@ -172,6 +193,16 @@ export default {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sim-drawer.el-drawer .el-drawer__close-btn {
+    transition: none;
+
+    &:hover,
+    &:focus-visible,
+    &:active {
+      transform: none;
+    }
+  }
+
   .sim-drawer-body .simulate-pane>* {
     animation: none;
   }

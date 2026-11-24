@@ -30,8 +30,8 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="pageNum" :limit.sync="pageSize" :page-sizes="pageSizes"
-      :auto-scroll="false" @pagination="loadRows" />
+    <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="pageNum"
+      :limit.sync="pageSize" :page-sizes="pageSizes" :auto-scroll="false" @pagination="loadRows" />
 
     <template slot="footer">
       <el-button class="dortmund-theme-cancel" icon="el-icon-close" @click="drawerVisible = false">关闭</el-button>

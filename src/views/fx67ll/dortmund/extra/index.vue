@@ -1,6 +1,7 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+  <div class="app-container dl-page">
+    <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
+      label-width="68px">
       <el-form-item label="总金额" prop="extraMoney" v-if="isMoreQuery">
         <el-input v-model="queryParams.extraMoney" placeholder="请输入当前外快总金额" clearable @input="handleFilterInput"
           @keyup.enter.native="handleQuery" />
@@ -174,8 +175,8 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      :page-sizes="pageSizes" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize" :page-sizes="pageSizes" @pagination="getList" />
 
     <!-- 外快盈亏只读详情抽屉：金额构成、关联方案与审计信息统一在侧边展示 -->
     <dortmund-detail-drawer :visible.sync="detailVisible" title="外快盈亏详情" subtitle="查看金额构成、关联方案与审计信息"

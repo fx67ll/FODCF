@@ -60,8 +60,8 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="pageNumValue" :limit.sync="pageSizeValue"
-      :page-sizes="pageSizes" @pagination="$emit('pagination')" />
+    <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="pageNumValue"
+      :limit.sync="pageSizeValue" :page-sizes="pageSizes" @pagination="$emit('pagination')" />
 
     <!-- 关联方案计划只读摘要弹窗（点击轮次关联列打开，已有轮次没有补关联入口） -->
     <plan-summary-dialog :visible.sync="roundPlansOpen" title="本轮关联方案计划" :loading="roundPlansLoading"
