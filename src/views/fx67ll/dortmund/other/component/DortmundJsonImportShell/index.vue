@@ -24,16 +24,16 @@
               <p>{{ introDescription }}</p>
             </div>
             <div class="json-import-intro-actions">
-              <el-button size="mini" class="json-import-tool-btn" icon="el-icon-download" :disabled="importing"
-                @click="$emit('download-template')">下载 JSON 模板</el-button>
-              <el-button v-if="hasPrompt" size="mini" class="json-import-tool-btn" icon="el-icon-view"
-                :disabled="importing" @click="$emit('show-prompt')">查看 AI 采集提示词</el-button>
-              <el-button size="mini" class="json-import-tool-btn" icon="el-icon-tickets" :disabled="importing"
-                @click="$emit('show-format')">字段格式说明</el-button>
+              <el-button size="mini" class="json-import-tool-btn is-template" type="primary" plain
+                icon="el-icon-download" :disabled="importing" @click="$emit('download-template')">下载 JSON 模板</el-button>
+              <el-button v-if="hasPrompt" size="mini" class="json-import-tool-btn is-prompt" type="success" plain
+                icon="el-icon-view" :disabled="importing" @click="$emit('show-prompt')">查看 AI 采集提示词</el-button>
+              <el-button size="mini" class="json-import-tool-btn is-format" type="warning" plain icon="el-icon-tickets"
+                :disabled="importing" @click="$emit('show-format')">字段格式说明</el-button>
             </div>
           </section>
 
-          <section class="json-import-card">
+          <section class="json-import-card" :class="{ 'is-input-expanded': !parsed && localSourceType === 'paste' }">
             <header class="json-import-card-head">
               <div class="json-import-card-title">
                 <span class="json-import-step">1</span>
@@ -138,10 +138,32 @@
           <el-button size="small" class="json-import-btn" type="success" plain icon="el-icon-magic-stick"
             :loading="parsing" :disabled="!rawJson.trim() || importing" @click="$emit('parse')">解析并校验</el-button>
           <el-button size="small" class="json-import-btn is-import" type="primary" icon="el-icon-upload2"
-            :loading="importing" :disabled="!selectedCount" @click="$emit('import')">导入选中 {{ selectedCount }}
+            :loading="importing" :disabled="!selectedCount" @click="openImportConfirm">确认导入 {{ selectedCount }}
             条</el-button>
         </div>
       </footer>
+
+      <!-- 勾选只改变本地预览状态；必须经过该确认步骤才会调用导入接口。 -->
+      <el-dialog title="确认导入" :visible.sync="confirmVisible" width="min(520px, 92vw)" append-to-body
+        custom-class="dortmund-json-import-confirm-dialog" :close-on-click-modal="false"
+        :close-on-press-escape="!importing">
+        <div class="json-import-confirm">
+          <span class="json-import-confirm-mark"><i class="el-icon-warning-outline"></i></span>
+          <div class="json-import-confirm-copy">
+            <strong>将写入 {{ selectedCount }} 条{{ entityLabel }}</strong>
+            <p>当前仅完成本地解析与勾选，数据库中尚未产生任何记录。确认后才会提交服务端校验并写入；任一条失败整批回滚。</p>
+            <div class="json-import-confirm-stats">
+              <span><b>{{ selectedCount }}</b> 条已选择</span>
+              <span><b>{{ validCount }}</b> 条通过前端预检</span>
+            </div>
+          </div>
+        </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button size="small" :disabled="importing" @click="confirmVisible = false">返回检查</el-button>
+          <el-button size="small" type="primary" icon="el-icon-upload2" :loading="importing" :disabled="!selectedCount"
+            @click="confirmImport">确认写入</el-button>
+        </span>
+      </el-dialog>
     </div>
   </el-drawer>
 </template>
@@ -178,7 +200,17 @@ export default {
   data() {
     return {
       viewportWidth: typeof window === "undefined" ? 1440 : window.innerWidth,
+      confirmVisible: false,
     };
+  },
+  watch: {
+    // 抽屉由宿主关闭时同步收起确认层，避免确认框脱离当前导入上下文。
+    visible(value) {
+      if (!value) this.confirmVisible = false;
+    },
+    selectedCount(value) {
+      if (!value) this.confirmVisible = false;
+    },
   },
   computed: {
     drawerVisible: {
@@ -223,6 +255,15 @@ export default {
     handleFileChange(file) {
       this.$emit("file-change", file);
     },
+    openImportConfirm() {
+      if (this.importing || !this.selectedCount) return;
+      this.confirmVisible = true;
+    },
+    confirmImport() {
+      if (this.importing || !this.selectedCount) return;
+      this.confirmVisible = false;
+      this.$emit("import");
+    },
     closeDrawer() {
       if (this.importing) return;
       this.drawerVisible = false;
@@ -246,7 +287,9 @@ export default {
   min-height: 0;
   flex-direction: column;
   color: #2b3a33;
-  background: #f7faf8;
+  background:
+    radial-gradient(circle at 100% 0, rgba(46, 204, 113, .06), transparent 34%),
+    #f7faf8;
 }
 
 .json-import-header {
@@ -363,8 +406,10 @@ export default {
 }
 
 .json-import-content {
+  display: flex;
   flex: 1;
   min-height: 0;
+  flex-direction: column;
   padding: 18px 24px 22px;
   overflow: auto;
   overscroll-behavior: contain;
@@ -385,9 +430,11 @@ export default {
 
 .json-import-content-inner {
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
   gap: 14px;
   width: 100%;
+  min-height: 0;
   max-width: 100%;
 }
 
@@ -450,17 +497,88 @@ export default {
 }
 
 .json-import-tool-btn {
-  color: #5b6f64;
-  background: #fff;
-  border-color: #dbe8e0;
-  transition: color .16s ease, border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 11px;
+  font-weight: 500;
+  border-radius: 8px;
+  box-shadow: none;
+  transition: color .18s ease, border-color .18s ease, background-color .18s ease,
+    box-shadow .18s ease, transform .18s ease;
 
-  &:hover,
-  &:focus {
-    color: #248a53;
-    background: #f7fcf9;
-    border-color: #a9d9bc;
-    box-shadow: 0 3px 8px rgba(47, 168, 102, .1);
+  ::v-deep span {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  ::v-deep i {
+    margin-right: 5px;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  &:hover:not(.is-disabled),
+  &:focus:not(.is-disabled) {
+    box-shadow: 0 5px 12px rgba(64, 158, 255, .12);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(.is-disabled) {
+    transform: translateY(0) scale(.98);
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: .62;
+    transform: none;
+  }
+
+  &.is-template {
+    color: #2f8be6;
+    background: #f5faff;
+    border-color: #cfe5fc;
+
+    &:hover:not(.is-disabled),
+    &:focus:not(.is-disabled) {
+      color: #1f7edb;
+      background: #edf6ff;
+      border-color: #9fcdf8;
+      box-shadow: 0 5px 12px rgba(64, 158, 255, .14);
+    }
+  }
+
+  &.is-prompt {
+    color: #2b9c61;
+    background: #f4fcf7;
+    border-color: #cfeedd;
+
+    &:hover:not(.is-disabled),
+    &:focus:not(.is-disabled) {
+      color: #218b52;
+      background: #ebf9f1;
+      border-color: #9ad8b5;
+      box-shadow: 0 5px 12px rgba(47, 168, 102, .13);
+    }
+  }
+
+  &.is-format {
+    color: #c78320;
+    background: #fffaf1;
+    border-color: #f3e0bd;
+
+    &:hover:not(.is-disabled),
+    &:focus:not(.is-disabled) {
+      color: #b47112;
+      background: #fff5e5;
+      border-color: #edc889;
+      box-shadow: 0 5px 12px rgba(230, 162, 60, .14);
+    }
   }
 }
 
@@ -540,38 +658,78 @@ export default {
 
 .json-import-switch {
   flex: 0 0 auto;
+  padding: 2px;
+  overflow: hidden;
+  background: #f2f8f5;
+  border: 1px solid #e0eee6;
+  border-radius: 10px;
 
   ::v-deep .el-radio-button__inner {
     display: inline-flex;
-    gap: 4px;
+    gap: 5px;
     align-items: center;
+    height: 26px;
+    padding: 0 12px;
     color: #5b7164;
-    background: #fff;
-    border-color: #d7e7dd;
-    transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    box-shadow: none;
+    transition: color .18s ease, background-color .18s ease, box-shadow .18s ease,
+      transform .18s ease;
   }
 
-  ::v-deep .el-radio-button:first-child .el-radio-button__inner {
-    border-left-color: #d7e7dd;
+  ::v-deep .el-radio-button__inner i {
+    margin-right: 0;
+    font-size: 13px;
+    line-height: 1;
   }
 
   ::v-deep .el-radio-button__inner:hover {
     color: #238a52;
+    background: #e8f6ee;
   }
 
   ::v-deep .el-radio-button__orig-radio:checked+.el-radio-button__inner {
     color: #fff;
     background: #2fa866;
-    border-color: #2fa866;
-    box-shadow: -1px 0 0 0 #2fa866;
+    border-color: transparent;
+    box-shadow: 0 3px 9px rgba(47, 168, 102, .22);
   }
 
   ::v-deep .el-radio-button__orig-radio:focus+.el-radio-button__inner {
-    box-shadow: -1px 0 0 0 #2fa866, 0 0 0 2px rgba(47, 168, 102, .16);
+    box-shadow: 0 0 0 2px rgba(47, 168, 102, .18);
+  }
+
+  ::v-deep .el-radio-button__orig-radio:checked:focus+.el-radio-button__inner {
+    box-shadow: 0 3px 9px rgba(47, 168, 102, .22), 0 0 0 2px rgba(47, 168, 102, .16);
   }
 }
 
+.json-import-card.is-input-expanded {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 296px;
+}
+
+.json-import-card.is-input-expanded .json-import-card-head {
+  flex: 0 0 auto;
+}
+
+.json-import-card.is-input-expanded .json-import-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.json-import-card.is-input-expanded .json-import-paste {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .json-import-card-body {
+  box-sizing: border-box;
   padding: 14px;
 }
 
@@ -579,6 +737,12 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.json-import-paste ::v-deep .el-textarea {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .json-import-paste ::v-deep .el-textarea__inner {
@@ -602,6 +766,10 @@ export default {
     border-color: #55bc80;
     box-shadow: 0 0 0 3px rgba(47, 168, 102, .1);
   }
+}
+
+.json-import-card.is-input-expanded .json-import-paste ::v-deep .el-textarea__inner {
+  height: 100% !important;
 }
 
 .json-import-meta {
@@ -831,9 +999,31 @@ export default {
   align-items: center;
 
   .el-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 14px;
     margin-left: 0;
+    font-weight: 500;
+    border-radius: 8px;
     white-space: nowrap;
-    transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease,
+      border-color .18s ease, color .18s ease;
+
+    ::v-deep span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 0;
+    }
+
+    ::v-deep i {
+      margin-right: 5px;
+      font-size: 13px;
+      line-height: 1;
+      transition: transform .18s ease;
+    }
   }
 
   .el-button:hover:not(.is-disabled) {
@@ -845,17 +1035,44 @@ export default {
   }
 
   .is-import {
+    position: relative;
+    overflow: hidden;
     color: #fff !important;
-    background: #409eff !important;
+    background: linear-gradient(135deg, #57a8ff 0%, #409eff 56%, #348ff0 100%) !important;
     border-color: #409eff !important;
-    box-shadow: 0 5px 12px rgba(64, 158, 255, .2);
+    box-shadow: 0 6px 15px rgba(64, 158, 255, .2);
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, .24) 48%,
+          transparent 72%);
+      transform: translateX(-120%);
+      transition: transform .48s ease;
+    }
+
+    ::v-deep .el-icon-upload2 {
+      transition: transform .18s ease;
+    }
 
     &:hover,
     &:focus {
       color: #fff !important;
-      background: #66b1ff !important;
+      background: linear-gradient(135deg, #68b2ff 0%, #4aa7ff 56%, #3b98f5 100%) !important;
       border-color: #66b1ff !important;
       box-shadow: 0 7px 16px rgba(64, 158, 255, .26);
+    }
+
+    &:hover:not(.is-disabled)::after,
+    &:focus:not(.is-disabled)::after {
+      transform: translateX(120%);
+    }
+
+    &:hover:not(.is-disabled) ::v-deep .el-icon-upload2,
+    &:focus:not(.is-disabled) ::v-deep .el-icon-upload2 {
+      transform: translateY(-1px);
     }
 
     &.is-disabled {
@@ -864,6 +1081,65 @@ export default {
       border-color: #a0cfff !important;
       box-shadow: none;
     }
+  }
+}
+
+.json-import-confirm {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 2px 2px 4px;
+}
+
+.json-import-confirm-mark {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  font-size: 21px;
+  color: #2d8752;
+  background: #ecf8f1;
+  border: 1px solid #d7eee1;
+  border-radius: 12px;
+}
+
+.json-import-confirm-copy {
+  min-width: 0;
+
+  strong {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 15px;
+    color: #2f493b;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f8377;
+  }
+}
+
+.json-import-confirm-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+
+  span {
+    padding: 5px 9px;
+    font-size: 11px;
+    color: #5d7568;
+    background: #f3f8f5;
+    border: 1px solid #e0ece5;
+    border-radius: 999px;
+  }
+
+  b {
+    color: #248a53;
   }
 }
 
@@ -972,6 +1248,10 @@ export default {
     width: 100%;
     justify-content: flex-end;
   }
+
+  .json-import-footer-actions .el-button {
+    padding: 0 10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -986,6 +1266,7 @@ export default {
   .json-import-close,
   .json-import-tool-btn,
   .json-import-footer-actions .el-button,
+  .json-import-footer-actions .el-button ::v-deep i,
   .json-import-drop-mark,
   .json-import-switch-enter-active,
   .json-import-switch-leave-active,

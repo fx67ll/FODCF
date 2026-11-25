@@ -2,12 +2,13 @@
   <div class="dortmund-match-import-entry">
     <dortmund-json-import-shell :visible.sync="drawerVisible" title="比赛记录 JSON 导入"
       subtitle="粘贴或选择第三方 AI 生成的比赛 JSON，预览校验后批量写入比赛记录。" icon="el-icon-football" entity-label="比赛记录"
-      intro-title="先解析校验，再选择需要写入的比赛" intro-description="支持粘贴标准 JSON 或选择 JSON 文件。只有勾选且通过服务端校验的条目才会写入，任一条失败整批回滚。"
-      source-hint="不接收 Excel；JSON 顶层可以是 matches 数组，也可以直接是数组。"
+      intro-title="先解析校验，再选择需要写入的比赛"
+      intro-description="支持粘贴标准 JSON 或选择 JSON 文件。解析后进入勾选步骤，确认写入前不会写入任何比赛；只有勾选且通过服务端校验的条目才会落库，任一条失败整批回滚。"
+      source-hint="JSON 顶层可以是 matches 数组，也可以直接是数组。"
       placeholder='请粘贴第三方 AI 输出的 JSON，例如：{"matches":[{ "seasonName": "...", "homeTeamName": "...", "matchTime": "2026-11-26 20:30:00" }]}'
-      idle-tip="解析只做前端结构校验，最终引用、唯一性和写入结果以后端为准。" parsed-tip="导入仅新增记录，不会覆盖已有比赛；未勾选的条目不会写入。" :raw-json.sync="rawJson"
-      :source-type.sync="sourceType" :file-name="fileName" :parsed="parsed" :parsing="parsing" :importing="importing"
-      :parse-message="parseMessage" :total-count="parsedRows.length" :valid-count="validCount"
+      idle-tip="解析只做前端结构校验，最终引用、唯一性和写入结果以后端为准。" parsed-tip="请在预览中勾选需要导入的比赛；点击底部按钮后还需在确认弹窗中确认写入，未勾选条目不会写入。"
+      :raw-json.sync="rawJson" :source-type.sync="sourceType" :file-name="fileName" :parsed="parsed" :parsing="parsing"
+      :importing="importing" :parse-message="parseMessage" :total-count="parsedRows.length" :valid-count="validCount"
       :invalid-count="invalidCount" :selected-count="selectedCount" has-prompt @raw-input="markDirty"
       @source-type-change="handleSourceTypeChange" @file-change="handleFileChange" @clear="clearSource"
       @parse="parseJson" @select-all="selectAllValid" @clear-selection="clearSelection" @import="submitImport"

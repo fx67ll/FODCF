@@ -686,6 +686,84 @@ export function buildDortmundInfoPointImportTemplate() {
   );
 }
 
+/**
+ * 生成信息点采集提示词。
+ * 信息点引用平台内部赛季、球队和比赛编码，第三方 AI 无法从公开资料可靠推断，因此提示词必须
+ * 明确要求使用用户提供的编码；提示词只允许整理可核验事实，不输出预测、推断或虚构来源。
+ */
+export function buildDortmundInfoPointImportPrompt(baseDate = new Date()) {
+  const currentDate = formatDortmundDate(baseDate);
+  return [
+    "你是一名严谨的足球资料整理助手。请根据用户在本次对话中指定的赛季、球队、比赛和信息点主题，独立检索公开且可核验的材料，整理成可直接导入 Dortmund 信息点模块的标准 JSON。",
+    "",
+    `当前日期：${currentDate}（Asia/Shanghai）。只整理已经发生、已经官宣或有明确公开来源支持的事实；不得把预测、传闻、推测或未来判断作为信息点。`,
+    "",
+    "使用前必须确认：",
+    "1. 用户已提供平台内部编码：T 类型需要完整的赛季名称和球队编码，M 类型需要比赛编码。平台内部编码无法从公开资料推断，禁止自行生成、猜测或用名称代替。",
+    "2. 若用户尚未提供上述编码或没有明确采集对象，请先列出缺少的赛季名称、球队编码或比赛编码，要求用户补充后再输出 JSON；不得先编造编码再交差。",
+    "3. 只处理用户指定范围内的信息点，不扩展无关球队、比赛、球员隐私或未公开内部信息。",
+    "",
+    "信息点定义：",
+    "- T 类型：赛季球队信息点，用于记录球队在指定赛季中可核验的主场、阵容、赛程、官方动态、伤停公告等长期或阶段性事实；必须填写 seasonName 和 teamCodes，matchCode 必须为空。",
+    "- M 类型：比赛临时信息点，用于记录指定比赛可核验的赛前公告、场地变更、裁判安排、天气影响、停赛或伤停等临时事实；必须填写 matchCode，seasonName 和 teamCodes 必须为空。",
+    "",
+    "执行规则：",
+    "1. 每条信息点只表达一个明确事实，标题简短可检索，内容写明主体、时间、事件和结果，避免把多个事实混在同一条中。",
+    "2. 只使用官方俱乐部、官方联赛/杯赛、赛事组织方或权威公开来源；来源冲突时以更高级别官方来源为准，仍无法确认则不输出该条。",
+    "3. 每条信息点必须填写 sourceName；能够取得来源链接和发布时间时填写 sourceUrl、sourcePublishTime，无法确认时留空，禁止伪造。",
+    "4. pointContent 必须保持客观、可核验，不写“可能”“预计”“大概率”等推断性结论，不写推荐、收益承诺、战术臆测或未经证实的内幕。",
+    "5. 同一事实只输出一次，不得用改写标题或拆分语句的方式重复；不得编造球队、赛季、比赛、来源、时间或编码。",
+    "6. 所有时间统一使用 yyyy-MM-dd HH:mm:ss 格式和 Asia/Shanghai 时区；collectTime 可填写当前采集时间，未知的可选时间字段使用空字符串。",
+    '7. pointStatus 固定填写字符串 "0"（启用），allowPublic 固定填写字符串 "0"（不可公开）；除非用户明确要求，否则不得改动。',
+    "8. 输出必须是一个 JSON 对象，顶层只包含 infoPoints 数组；不得输出 Markdown 代码块、解释文字、前后缀、注释或多个 JSON 片段。",
+    "9. infoPoints 中每个对象必须包含全部标准字段；未知字段使用空字符串，不得使用 null，不得省略字段。",
+    "",
+    "标准输出结构（仅说明字段与类型，严禁把示例内容当作真实业务数据）：",
+    JSON.stringify(
+      {
+        infoPoints: [
+          {
+            infoPointType: "T",
+            seasonName: "【用户提供的平台赛季完整名称】",
+            matchCode: "",
+            teamCodes: "【用户提供的平台球队编码，多个用英文逗号分隔】",
+            pointTitle: "示例标题，导入前必须替换为已核验事实",
+            pointContent: "示例客观事实，必须写明主体、时间和可核验结果",
+            sourceName: "示例官方来源",
+            sourceUrl: "",
+            sourcePublishTime: "",
+            collectTime: `${currentDate} 00:00:00`,
+            effectiveStartTime: "",
+            effectiveEndTime: "",
+            pointStatus: "0",
+            allowPublic: "0",
+            pointRemark: "示例数据，导入前请替换",
+          },
+          {
+            infoPointType: "M",
+            seasonName: "",
+            matchCode: "【用户提供的平台比赛编码】",
+            teamCodes: "",
+            pointTitle: "示例标题，导入前必须替换为已核验事实",
+            pointContent: "示例客观事实，必须写明比赛、时间和可核验结果",
+            sourceName: "示例官方来源",
+            sourceUrl: "",
+            sourcePublishTime: "",
+            collectTime: `${currentDate} 00:00:00`,
+            effectiveStartTime: "",
+            effectiveEndTime: "",
+            pointStatus: "0",
+            allowPublic: "0",
+            pointRemark: "示例数据，导入前请替换",
+          },
+        ],
+      },
+      null,
+      2
+    ),
+  ].join("\n");
+}
+
 /** 方案计划列表默认有效窗口：最近7天创建的数据，重置后可通过剪刀快捷入口恢复。 */
 export const DORTMUND_PLAN_QUERY_CONFIG = Object.freeze({
   validDataWindowDays: 7,

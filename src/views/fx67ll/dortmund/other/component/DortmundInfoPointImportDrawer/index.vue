@@ -2,16 +2,18 @@
   <div class="dortmund-info-import-entry">
     <dortmund-json-import-shell :visible.sync="drawerVisible" title="信息点 JSON 导入"
       subtitle="粘贴或选择第三方 AI 整理的信息点 JSON，预览校验后批量写入统一信息点。" icon="el-icon-notebook-2" entity-label="信息点"
-      intro-title="先解析校验，再选择需要写入的信息点" intro-description="支持粘贴标准 JSON 或选择 JSON 文件。只有勾选且通过服务端校验的条目才会写入，任一条失败整批回滚。"
-      source-hint="不接收 Excel；JSON 顶层可以是 infoPoints 数组，也可以直接是数组。"
+      intro-title="先解析校验，再选择需要写入的信息点"
+      intro-description="支持粘贴标准 JSON 或选择 JSON 文件。解析后进入勾选步骤，确认写入前不会写入任何信息点；只有勾选且通过服务端校验的条目才会落库，任一条失败整批回滚。"
+      source-hint="JSON 顶层可以是 infoPoints 数组，也可以直接是数组。"
       placeholder='请粘贴标准 JSON，例如：{"infoPoints":[{ "infoPointType": "T", "seasonName": "...", "teamCodes": "TEAM001,TEAM002", "pointTitle": "..." }]}'
-      idle-tip="解析只做前端结构校验，最终赛季、球队、比赛引用和写入结果以后端为准。" parsed-tip="导入仅新增信息点，不会覆盖已有记录；未勾选的条目不会写入。" :raw-json.sync="rawJson"
-      :source-type.sync="sourceType" :file-name="fileName" :parsed="parsed" :parsing="parsing" :importing="importing"
-      :parse-message="parseMessage" :total-count="parsedRows.length" :valid-count="validCount"
-      :invalid-count="invalidCount" :selected-count="selectedCount" @raw-input="markDirty"
+      idle-tip="解析只做前端结构校验，最终赛季、球队、比赛引用和写入结果以后端为准。" parsed-tip="请在预览中勾选需要导入的信息点；点击底部按钮后还需在确认弹窗中确认写入，未勾选条目不会写入。"
+      :raw-json.sync="rawJson" :source-type.sync="sourceType" :file-name="fileName" :parsed="parsed" :parsing="parsing"
+      :importing="importing" :parse-message="parseMessage" :total-count="parsedRows.length" :valid-count="validCount"
+      :invalid-count="invalidCount" :selected-count="selectedCount" has-prompt @raw-input="markDirty"
       @source-type-change="handleSourceTypeChange" @file-change="handleFileChange" @clear="clearSource"
       @parse="parseJson" @select-all="selectAllValid" @clear-selection="clearSelection" @import="submitImport"
-      @download-template="downloadTemplate" @show-format="formatVisible = true" @closed="resetDrawer">
+      @download-template="downloadTemplate" @show-prompt="promptVisible = true" @show-format="formatVisible = true"
+      @closed="resetDrawer">
       <template slot="preview">
         <el-table ref="previewTable" :data="parsedRows" size="mini" border max-height="430" row-key="rowKey"
           class="json-import-table json-import-info-table" :row-class-name="rowClassName"
@@ -49,6 +51,20 @@
       </template>
     </dortmund-json-import-shell>
 
+    <el-dialog title="AI 采集提示词" :visible.sync="promptVisible" width="min(860px, 92vw)" append-to-body
+      custom-class="dortmund-json-import-dialog dortmund-info-import-prompt-dialog" :close-on-click-modal="false">
+      <div class="json-import-dialog-intro">
+        <span class="json-import-dialog-intro-mark"><i class="el-icon-s-promotion"></i></span>
+        <p>将下方提示词完整交给具备公开足球资料检索能力的第三方 AI。T/M 类型引用的平台内部编码必须由你另行提供，AI 不得猜测。</p>
+      </div>
+      <pre class="json-import-code">{{ aiPrompt }}</pre>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="small" @click="promptVisible = false">关闭</el-button>
+        <el-button size="small" type="success" icon="el-icon-copy-document"
+          @click="copyText(aiPrompt, 'AI 采集提示词已复制')">复制提示词</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="信息点 JSON 字段格式说明" :visible.sync="formatVisible" width="min(820px, 92vw)" append-to-body
       custom-class="dortmund-json-import-dialog dortmund-info-import-format-dialog" :close-on-click-modal="false">
       <div class="json-import-dialog-intro">
@@ -78,6 +94,7 @@
 import { importInfoPointJson } from "@/api/fx67ll/dortmund/infoPoint";
 import {
   DORTMUND_INFO_POINT_IMPORT_FIELDS,
+  buildDortmundInfoPointImportPrompt,
   buildDortmundInfoPointImportTemplate,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import DortmundJsonImportShell from "@/views/fx67ll/dortmund/other/component/DortmundJsonImportShell/index";
@@ -134,8 +151,10 @@ export default {
       parseMessage: "",
       parsedRows: [],
       selectedRows: [],
+      promptVisible: false,
       formatVisible: false,
       fieldDescriptions: DORTMUND_INFO_POINT_IMPORT_FIELDS,
+      aiPrompt: buildDortmundInfoPointImportPrompt(),
     };
   },
   computed: {
@@ -409,6 +428,32 @@ export default {
       const blob = new Blob([content], { type: "application/json;charset=utf-8" });
       this.$download.saveAs(blob, "dortmund-info-point-import-template.json");
     },
+    copyText(content, successMessage) {
+      if (!content) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(content).then(() => {
+          this.$modal.msgSuccess(successMessage);
+        }).catch(() => this.fallbackCopyText(content, successMessage));
+        return;
+      }
+      this.fallbackCopyText(content, successMessage);
+    },
+    fallbackCopyText(content, successMessage) {
+      const textarea = document.createElement("textarea");
+      textarea.value = content;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        this.$modal.msgSuccess(successMessage);
+      } catch (error) {
+        this.$modal.msgError("复制失败，请手动选择文本");
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    },
     closeDrawer() {
       if (this.importing) return;
       this.drawerVisible = false;
@@ -421,9 +466,11 @@ export default {
       this.importing = false;
       this.parsedRows = [];
       this.selectedRows = [];
+      this.promptVisible = false;
       this.formatVisible = false;
       this.rawJson = "";
       this.fileName = "";
+      this.aiPrompt = buildDortmundInfoPointImportPrompt();
     },
   },
 };
@@ -446,5 +493,20 @@ export default {
 
 .json-import-info-table ::v-deep .el-table__body tr.is-invalid-row:hover>td {
   background: #fff4f0;
+}
+
+.json-import-code {
+  max-height: 52vh;
+  padding: 14px 16px;
+  margin: 0;
+  overflow: auto;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #d8eee1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #183226;
+  border-radius: 10px;
 }
 </style>
