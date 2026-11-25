@@ -51,11 +51,11 @@
               v-hasPermi="['dortmund:plan:edit']">修改</el-button>
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
               v-hasPermi="['dortmund:plan:remove']">删除</el-button>
-            <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['dortmund:plan:export']">导出</el-button> -->
+            <dortmund-export-menu title="方案计划" endpoint="/dortmund/plan/export" :params="queryParams"
+              permission="dortmund:plan:export" file-prefix="dortmund-plan" />
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
-              }} 项</span>
+                }} 项</span>
             </transition>
           </div>
           <div class="dl-toolbar-side">
@@ -115,6 +115,7 @@ import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/
 import DortmundPlanMatchesDrawer from "@/views/fx67ll/dortmund/other/component/DortmundPlanMatchesDrawer/index";
 import DortmundAdoptedCombinationsDrawer
   from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import PlanCardPane from "./components/PlanCardPane/index.vue";
 import PlanListPane from "./components/PlanListPane/index.vue";
@@ -130,7 +131,7 @@ export default {
   name: "Plan",
   components: {
     ViewSwitch, PlanCardPane, PlanListPane, PlanEditScene, PlanDetailDrawer, DortmundCombinationSelectorModal,
-    DortmundMatchSelectorModal, DortmundPlanMatchesDrawer, DortmundAdoptedCombinationsDrawer
+    DortmundMatchSelectorModal, DortmundPlanMatchesDrawer, DortmundAdoptedCombinationsDrawer, DortmundExportMenu
   },
   mixins: [filterAutoQuery],
   data() {
@@ -484,12 +485,6 @@ export default {
         this.getList();
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('dortmund/plan/export', {
-        ...this.queryParams
-      }, `plan_${new Date().getTime()}.xlsx`)
     }
   }
 };

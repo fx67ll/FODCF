@@ -65,7 +65,7 @@
             @click="openTemplateTab('result')">查看结果模板</el-button>
           <el-button type="text" class="dortmund-theme-text" icon="el-icon-copy-document"
             @click="copyPrompt('import')">复制修复提示词</el-button>
-          <el-button type="text" class="dortmund-theme-text" icon="el-icon-question"
+          <el-button type="text" class="dortmund-theme-text"
             @click="openTemplateTab('result-fields')">结果字段说明</el-button>
         </div>
         <div class="manual-guidance">

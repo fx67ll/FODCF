@@ -74,6 +74,10 @@
           v-hasPermi="['dortmund:extra:add']">记录外快盈亏</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
+        <el-button type="info" plain icon="el-icon-magic-stick" size="mini" :disabled="ids.length < mergeMinimum"
+          @click="handleMerge" v-hasPermi="['dortmund:extra:merge']">合并</el-button>
+      </el-col>
+      <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['dortmund:extra:edit']">修改</el-button>
       </el-col>
@@ -82,14 +86,9 @@
           v-hasPermi="['dortmund:extra:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="warning" plain icon="el-icon-magic-stick" size="mini" :disabled="ids.length < mergeMinimum"
-          @click="handleMerge" v-hasPermi="['dortmund:extra:merge']">合并</el-button>
+        <dortmund-export-menu title="盈亏外快" endpoint="/dortmund/extra/export" :params="queryParams"
+          permission="dortmund:extra:export" file-prefix="dortmund-extra" />
       </el-col>
-      <!-- <el-col :span="1.5" style="margin-bottom: 10px;">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:extra:export']">
-          导出</el-button>
-      </el-col> -->
       <el-col :span="1.5" style="margin-bottom: 10px;">
         <el-button type="info" plain icon="el-icon-data-line" size="mini"
           @click="handleOpenDataAnalysis">查看外快盈亏历史数据走势图</el-button>
@@ -253,6 +252,7 @@ import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 
 import ExtraHistoryChartDialog from "./components/ExtraHistoryChartDialog/index.vue";
 import ExtraMergeDialog from "./components/ExtraMergeDialog/index.vue";
@@ -281,7 +281,7 @@ export default {
   dicts: ["sys_yes_no"],
   components: {
     CommonEnhancedSelect, ExtraHistoryChartDialog, ExtraMergeDialog, PlanSummaryDialog, SimulateDrawer,
-    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock
+    DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundExportMenu
   },
   mixins: [filterAutoQuery],
   computed: {
@@ -622,16 +622,6 @@ export default {
       // 传入所选行数据快照供合并确认弹窗展示预览，弹窗内录入备注并确认后调用后台事务接口完成合并
       this.mergeRows = this.extraList.filter((item) => this.ids.indexOf(item.extraId) > -1);
       this.mergeOpen = true;
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download(
-        "dortmund/extra/export",
-        {
-          ...this.queryParams,
-        },
-        `extra_${new Date().getTime()}.xlsx`
-      );
     },
     // 打开外快盈亏历史数据走势图弹窗
     handleOpenDataAnalysis() {

@@ -56,8 +56,10 @@ export default {
       selectedDetailTeamId: null,
       selectedDetailSnapshot: {},
       columns: [
-        // 选择器只保留识别球队所需字段；昵称、英文名和标签由详情抽屉承接。
+        // 选择器补齐球队识别字段，标签等长文本仍由详情抽屉承接。
         { label: "球队全称", prop: "teamName", minWidth: 190 },
+        { label: "球队昵称", prop: "teamNameShort", minWidth: 130 },
+        { label: "球队英文", prop: "teamNameEn", minWidth: 200 },
         { label: "球队主场", prop: "teamVenue", minWidth: 170 },
         { label: "地区/联赛", prop: "teamCountry", minWidth: 150 },
       ],

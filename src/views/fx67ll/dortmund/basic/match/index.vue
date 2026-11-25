@@ -92,8 +92,11 @@
               v-hasPermi="['dortmund:match:edit']">修改</el-button>
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
               v-hasPermi="['dortmund:match:remove']">删除</el-button>
-            <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['dortmund:match:export']">导出</el-button> -->
+            <!-- 导出支持 Excel/JSON/插入 SQL；导入改为 JSON 预览勾选，模板与提示词共用模块配置。 -->
+            <dortmund-export-menu title="比赛记录" permission="dortmund:match:export" endpoint="/dortmund/match/export"
+              :params="queryParams" file-prefix="dortmund-match" />
+            <el-button type="primary" plain icon="el-icon-upload2" size="mini" @click="matchImportVisible = true"
+              v-hasPermi="['dortmund:match:add']">导入 JSON</el-button>
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
               }} 项</span>
@@ -108,25 +111,22 @@
           <el-table v-loading="loading" :data="matchList" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="46" align="center" />
             <!-- <el-table-column label="比赛编号" align="center" prop="matchId" width="96" fixed="left" /> -->
-
-            <el-table-column label="比赛时间" align="center" prop="matchTime" width="150" fixed="left"
-              class-name="dortmund-nowrap-cell">
-              <template slot-scope="scope">
-                <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
-              </template>
-            </el-table-column>
             <el-table-column label="主队名称" align="center" prop="homeTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
-                <span class="match-team-name home" :class="teamLeagueClass(scope.row, 'home')">{{ scope.row.homeTeamName
-                  || "-" }}</span>
+                <span class="match-team-name home is-clickable" :class="teamLeagueClass(scope.row, 'home')"
+                  role="button" tabindex="0" @click.stop="openTeamDetail(scope.row, 'home')"
+                  @keyup.enter.stop="openTeamDetail(scope.row, 'home')">{{ scope.row.homeTeamName
+                    || "-" }}</span>
               </template>
             </el-table-column>
             <el-table-column label="客队名称" align="center" prop="awayTeamName" min-width="180" fixed="left"
               show-overflow-tooltip>
               <template slot-scope="scope">
-                <span class="match-team-name away" :class="teamLeagueClass(scope.row, 'away')">{{ scope.row.awayTeamName
-                  || "-" }}</span>
+                <span class="match-team-name away is-clickable" :class="teamLeagueClass(scope.row, 'away')"
+                  role="button" tabindex="0" @click.stop="openTeamDetail(scope.row, 'away')"
+                  @keyup.enter.stop="openTeamDetail(scope.row, 'away')">{{ scope.row.awayTeamName
+                    || "-" }}</span>
               </template>
             </el-table-column>
             <!-- 分析次数为后台统计字段，本页只读展示，不接受录入 -->
@@ -155,8 +155,8 @@
               </template>
             </el-table-column>
             <el-table-column label="所属赛季" align="center" prop="seasonName" min-width="80" show-overflow-tooltip />
-            <el-table-column label="球队主场" align="center" prop="matchVenue" min-width="150" show-overflow-tooltip />
-            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="190" show-overflow-tooltip />
+            <el-table-column label="球队主场" align="center" prop="matchVenue" min-width="180" show-overflow-tooltip />
+            <el-table-column label="比赛编码" align="center" prop="matchCode" min-width="200" show-overflow-tooltip />
             <el-table-column label="比赛状态" align="center" prop="matchStatus" width="100">
               <template slot-scope="scope">
                 <dict-tag :options="dict.type.sys_notice_status" :value="scope.row.matchStatus" />
@@ -180,6 +180,12 @@
               class-name="dortmund-nowrap-cell">
               <template slot-scope="scope">
                 <span>{{ parseTime(scope.row.updateTime, "{y}-{m}-{d} {h}:{i}:{s}") }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="比赛时间" align="center" prop="matchTime" width="150" fixed="right"
+              class-name="dortmund-nowrap-cell">
+              <template slot-scope="scope">
+                <span>{{ parseTime(scope.row.matchTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
               </template>
             </el-table-column>
             <el-table-column label="操作" align="center" class-name="small-padding fixed-width dortmund-action-column"
@@ -260,8 +266,12 @@
     <dortmund-adopted-combinations-drawer :visible.sync="adoptedCombinationVisible"
       :match-id="adoptedCombinationMatch.matchId" :match-label="adoptedCombinationLabel" />
 
+    <dortmund-team-detail-drawer :visible.sync="teamDetailVisible" :team-id="teamDetailId"
+      :snapshot="teamDetailSnapshot" level="1" />
+
     <match-odds-drawer :visible.sync="oddsDrawerVisible" :match="oddsDrawerMatch" @refresh="getList" />
     <match-info-drawer :visible.sync="infoDrawerVisible" :match="infoDrawerMatch" @refresh="getList" />
+    <dortmund-match-import-drawer :visible.sync="matchImportVisible" @imported="handleMatchImported" />
 
   </div>
 </template>
@@ -280,9 +290,12 @@ import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 import DortmundAdoptedCombinationsDrawer from "@/views/fx67ll/dortmund/other/component/DortmundAdoptedCombinationsDrawer/index";
+import DortmundTeamDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundTeamDetailDrawer/index";
 import DortmundOddsResultTags from "@/views/fx67ll/dortmund/other/component/DortmundOddsResultTags/index";
 import DortmundUsageHeatBadge from "@/views/fx67ll/dortmund/other/component/DortmundUsageHeatBadge/index";
 import DortmundResultEmptyTag from "@/views/fx67ll/dortmund/other/component/DortmundResultEmptyTag/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
+import DortmundMatchImportDrawer from "@/views/fx67ll/dortmund/other/component/DortmundMatchImportDrawer/index";
 import {
   DORTMUND_PAGINATION,
   DORTMUND_FILTER_UNREGISTERED_VALUE,
@@ -299,7 +312,8 @@ export default {
   components: {
     MatchEditScene, DortmundTeamOptionSelector, DortmundSeasonSelect, MatchOddsDrawer, MatchInfoDrawer,
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail,
-    DortmundAdoptedCombinationsDrawer, DortmundOddsResultTags, DortmundUsageHeatBadge, DortmundResultEmptyTag
+    DortmundAdoptedCombinationsDrawer, DortmundTeamDetailDrawer, DortmundOddsResultTags, DortmundUsageHeatBadge,
+    DortmundResultEmptyTag, DortmundExportMenu, DortmundMatchImportDrawer
   },
   mixins: [filterAutoQuery],
   computed: {
@@ -460,6 +474,11 @@ export default {
       // 已采用组合抽屉：列表页与详情页共用同一个简化列表和组合详情入口。
       adoptedCombinationVisible: false,
       adoptedCombinationMatch: {},
+      teamDetailVisible: false,
+      teamDetailId: null,
+      teamDetailSnapshot: {},
+      // JSON 导入侧边抽屉：预览、勾选和后端整批校验均在共享组件内完成。
+      matchImportVisible: false,
     };
   },
   created() {
@@ -648,6 +667,22 @@ export default {
       this.infoDrawerMatch = row;
       this.infoDrawerVisible = true;
     },
+    // 主客队名称与球队列表保持同一交互：点击或键盘确认后打开共享球队详情。
+    openTeamDetail(row, side) {
+      const prefix = side === "away" ? "away" : "home";
+      const teamId = row ? row[prefix + "TeamId"] : null;
+      if ([null, undefined, ""].includes(teamId)) {
+        return;
+      }
+      this.teamDetailSnapshot = {
+        teamId,
+        teamName: row[prefix + "TeamName"],
+        teamCode: row[prefix + "TeamCode"],
+        teamCountry: row[prefix + "TeamCountry"],
+      };
+      this.teamDetailId = teamId;
+      this.teamDetailVisible = true;
+    },
     handleAdoptedCombinations(row) {
       if (!row.adoptedCombinationCount) {
         return;
@@ -728,12 +763,10 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
     },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('dortmund/match/export', {
-        ...this.queryParams
-      }, `match_${new Date().getTime()}.xlsx`)
-    }
+    /** JSON 导入完成后刷新当前筛选列表，保留分页与筛选条件。 */
+    handleMatchImported() {
+      this.getList();
+    },
   }
 };
 </script>
@@ -758,6 +791,36 @@ export default {
   &.away {
     color: #8a6b3d;
     background: #faf3e6;
+  }
+}
+
+.match-team-name.is-clickable {
+  position: relative;
+  cursor: pointer;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.match-team-name.is-clickable:hover,
+.match-team-name.is-clickable:focus-visible {
+  z-index: 1;
+  outline: none;
+  /* 使用外圈光晕强化可点击反馈，避免位移导致表格单元格上边框被裁切。 */
+  box-shadow: 0 0 0 2px rgba(39, 173, 96, .14), 0 3px 8px rgba(39, 173, 96, .12);
+}
+
+.match-team-name.is-clickable:active {
+  box-shadow: 0 0 0 2px rgba(39, 173, 96, .2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-team-name.is-clickable {
+    transition: none;
+  }
+
+  .match-team-name.is-clickable:hover,
+  .match-team-name.is-clickable:focus-visible,
+  .match-team-name.is-clickable:active {
+    box-shadow: none;
   }
 }
 

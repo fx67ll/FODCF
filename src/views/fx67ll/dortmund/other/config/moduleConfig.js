@@ -353,6 +353,339 @@ export const DORTMUND_IMAGE_LIMITS = Object.freeze({
   maxSizeMb: 4,
 });
 
+/**
+ * 比赛 JSON 导入的 AI 采集范围。
+ * 仅约束外部 AI 的采集来源；最终落库仍由比赛导入服务按当前用户可见赛季、球队和全局唯一性校验。
+ */
+export const DORTMUND_MATCH_IMPORT_COMPETITIONS = Object.freeze([
+  "英超",
+  "西甲",
+  "德甲",
+  "意甲",
+  "法甲",
+  "英格兰足总杯",
+  "西班牙国王杯",
+  "德国杯",
+  "意大利杯",
+  "法国杯",
+  "日职",
+  "日乙",
+  "欧冠",
+  "欧联杯",
+  "欧协联",
+]);
+
+/** 比赛 JSON 导入标准字段，模板、AI 提示词和前端格式说明共用同一来源。 */
+export const DORTMUND_MATCH_IMPORT_FIELDS = Object.freeze([
+  {
+    key: "matchCode",
+    label: "比赛编码",
+    required: false,
+    description: "留空后由系统按开赛时间自动生成",
+  },
+  {
+    key: "seasonName",
+    label: "赛季名称",
+    required: true,
+    description: "填写平台赛季管理中的完整名称",
+  },
+  {
+    key: "homeTeamCode",
+    label: "主队编码",
+    required: false,
+    description: "优先使用球队管理中的编码；名称二选一",
+  },
+  {
+    key: "homeTeamName",
+    label: "主队名称",
+    required: false,
+    description: "编码为空时按当前账号可见球队名称唯一匹配",
+  },
+  {
+    key: "awayTeamCode",
+    label: "客队编码",
+    required: false,
+    description: "优先使用球队管理中的编码；名称二选一",
+  },
+  {
+    key: "awayTeamName",
+    label: "客队名称",
+    required: false,
+    description: "编码为空时按当前账号可见球队名称唯一匹配",
+  },
+  {
+    key: "matchTime",
+    label: "比赛开球时间",
+    required: true,
+    description: "格式为 yyyy-MM-dd HH:mm:ss，时区为 Asia/Shanghai",
+  },
+  {
+    key: "matchVenue",
+    label: "球队主场",
+    required: false,
+    description: "留空时自动带出主队主场",
+  },
+  {
+    key: "matchStatus",
+    label: "比赛状态",
+    required: false,
+    description: "0=正常，1=关闭；留空默认正常",
+  },
+  {
+    key: "matchResult",
+    label: "比赛结果",
+    required: false,
+    description: "未来赛程留空；0=主队胜，1=平局，2=客队胜",
+  },
+  {
+    key: "oddsResult",
+    label: "倍率赛果",
+    required: false,
+    description: "未来赛程留空；多个值使用英文逗号分隔",
+  },
+  {
+    key: "matchRemark",
+    label: "比赛备注",
+    required: false,
+    description: "可记录来源、赛程变更或待核验事项",
+  },
+]);
+
+const DORTMUND_IMPORT_COMPETITION_TEXT =
+  DORTMUND_MATCH_IMPORT_COMPETITIONS.join("、");
+
+function padDortmundDatePart(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatDortmundDate(date) {
+  return `${date.getFullYear()}-${padDortmundDatePart(
+    date.getMonth() + 1
+  )}-${padDortmundDatePart(date.getDate())}`;
+}
+
+function formatDortmundDateTime(date, hour, minute, second) {
+  return `${formatDortmundDate(date)} ${padDortmundDatePart(
+    hour
+  )}:${padDortmundDatePart(minute)}:${padDortmundDatePart(second)}`;
+}
+
+/**
+ * 生成下一周比赛采集提示词。
+ * 提示词只定义采集范围与交换结构，不提供任何赛果预测或收益承诺。
+ */
+export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
+  const start = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate()
+  );
+  const end = new Date(start.getTime());
+  end.setDate(end.getDate() + 7);
+  return [
+    "你是一名严谨的足球赛事数据采集助手。请独立检索公开、可核验的赛程信息，将结果整理为可直接导入 Dortmund 比赛记录的标准 JSON。",
+    "",
+    `采集窗口：${formatDortmundDate(start)} 00:00:00 至 ${formatDortmundDate(
+      end
+    )} 23:59:59（Asia/Shanghai）。只采集该窗口内尚未开赛、且开赛时间已经确认的比赛。`,
+    `赛事范围：${DORTMUND_IMPORT_COMPETITION_TEXT}。只采集上述赛事，不扩展到其他联赛、青年队、预备队或女子赛事。`,
+    "",
+    "执行规则：",
+    "1. 独立核对官方赛程、俱乐部公告和权威赛事页面；比赛时间、主客队和主场信息存在冲突时，以官方来源为准，无法核实时不要输出该场。",
+    "2. 每场比赛只输出一次，不重复；不得编造比赛、球队、赛季、时间、主场、编码或备注。",
+    "3. 输出必须是一个 JSON 对象，顶层仅包含 matches 数组；不得输出 Markdown 代码块、解释文字、前后缀或注释。",
+    "4. matches 中每个对象必须包含全部标准字段；未知字段使用空字符串，不得使用 null，必填字段不得留空。",
+    "5. seasonName 使用“2026-2027赛季德甲联赛”这类完整中文命名；不确定具体赛季时，使用赛事通行名称并按采集窗口所在赛季补齐，不得虚构不存在的赛季。",
+    "6. homeTeamName、awayTeamName 使用通行中文球队名；homeTeamCode、awayTeamCode 仅在你确认平台编码时填写，否则留空，由导入校验按名称匹配。",
+    '7. matchCode 一律留空，由系统生成；matchStatus 固定为字符串 "0"。',
+    "8. matchTime 统一使用 yyyy-MM-dd HH:mm:ss 格式和 Asia/Shanghai 时区；跨时区比赛先换算后再输出。",
+    "9. 未来赛程的 matchResult、oddsResult 一律留空；matchVenue 仅在确认后填写。",
+    "10. matchRemark 只写客观来源或待核验事项，不写预测、推荐、收益承诺或无法证实的判断。",
+    "",
+    "标准输出结构：",
+    JSON.stringify(
+      {
+        matches: [
+          {
+            matchCode: "",
+            seasonName: "2026-2027赛季德甲联赛",
+            homeTeamCode: "",
+            homeTeamName: "示例主队",
+            awayTeamCode: "",
+            awayTeamName: "示例客队",
+            matchTime: formatDortmundDateTime(start, 20, 30, 0),
+            matchVenue: "示例主场",
+            matchStatus: "0",
+            matchResult: "",
+            oddsResult: "",
+            matchRemark: "示例数据，导入前请替换为已核验比赛",
+          },
+        ],
+      },
+      null,
+      2
+    ),
+  ].join("\n");
+}
+
+/**
+ * 生成可直接下载的 JSON 导入模板。示例值只用于说明字段类型，不宣称对应真实赛程。
+ */
+export function buildDortmundMatchImportTemplate(baseDate = new Date()) {
+  const start = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate() + 1
+  );
+  return JSON.stringify(
+    {
+      matches: [
+        {
+          matchCode: "",
+          seasonName: "2026-2027赛季德甲联赛",
+          homeTeamCode: "",
+          homeTeamName: "示例主队",
+          awayTeamCode: "",
+          awayTeamName: "示例客队",
+          matchTime: formatDortmundDateTime(start, 20, 30, 0),
+          matchVenue: "示例主场",
+          matchStatus: "0",
+          matchResult: "",
+          oddsResult: "",
+          matchRemark: "示例数据，导入前请替换为已核验比赛",
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
+/** 信息点 JSON 导入标准字段，模板、格式说明和前端预检共用同一来源。 */
+export const DORTMUND_INFO_POINT_IMPORT_FIELDS = Object.freeze([
+  {
+    key: "infoPointType",
+    label: "信息点类型",
+    required: true,
+    description: "T=赛季球队信息点，M=比赛临时信息点",
+  },
+  {
+    key: "seasonName",
+    label: "赛季名称",
+    required: false,
+    description: "T 类型必填；填写当前账号可见赛季的完整名称",
+  },
+  {
+    key: "matchCode",
+    label: "比赛编码",
+    required: false,
+    description: "M 类型必填；填写当前账号可见比赛的编码",
+  },
+  {
+    key: "teamCodes",
+    label: "关联球队编码",
+    required: false,
+    description: "T 类型必填；多个编码用英文逗号、中文逗号、分号或顿号分隔",
+  },
+  {
+    key: "pointTitle",
+    label: "信息点标题",
+    required: true,
+    description: "填写可检索、可理解的业务标题",
+  },
+  {
+    key: "pointContent",
+    label: "客观信息内容",
+    required: true,
+    description: "只填写可核验的客观事实，不写推断或未证实的结论",
+  },
+  {
+    key: "sourceName",
+    label: "信息来源名称",
+    required: true,
+    description: "填写来源机构、站点或资料名称",
+  },
+  {
+    key: "sourceUrl",
+    label: "来源地址",
+    required: false,
+    description: "可填写可访问的来源链接",
+  },
+  {
+    key: "sourcePublishTime",
+    label: "来源发布时间",
+    required: false,
+    description: "格式为 yyyy-MM-dd HH:mm:ss；未知时留空",
+  },
+  {
+    key: "collectTime",
+    label: "采集或录入时间",
+    required: false,
+    description: "格式为 yyyy-MM-dd HH:mm:ss；留空时使用导入时间",
+  },
+  {
+    key: "effectiveStartTime",
+    label: "生效时间",
+    required: false,
+    description: "格式为 yyyy-MM-dd HH:mm:ss；留空表示不限制起点",
+  },
+  {
+    key: "effectiveEndTime",
+    label: "失效时间",
+    required: false,
+    description: "格式为 yyyy-MM-dd HH:mm:ss；不能早于生效时间",
+  },
+  {
+    key: "pointStatus",
+    label: "信息点状态",
+    required: false,
+    description: "0=启用，1=停用；留空默认启用",
+  },
+  {
+    key: "allowPublic",
+    label: "是否可公开",
+    required: false,
+    description: "0=不可公开，1=可公开；留空默认不可公开",
+  },
+  {
+    key: "pointRemark",
+    label: "备注",
+    required: false,
+    description: "补充说明，可留空",
+  },
+]);
+
+/**
+ * 生成信息点 JSON 导入模板。示例只说明字段结构，不使用任何真实账号数据。
+ */
+export function buildDortmundInfoPointImportTemplate() {
+  return JSON.stringify(
+    {
+      infoPoints: [
+        {
+          infoPointType: "T",
+          seasonName: "2026-2027赛季德甲联赛",
+          matchCode: "",
+          teamCodes: "TEAM001,TEAM002",
+          pointTitle: "示例信息点标题",
+          pointContent: "示例客观信息内容，导入前请替换为已核验材料",
+          sourceName: "示例来源",
+          sourceUrl: "",
+          sourcePublishTime: "",
+          collectTime: "",
+          effectiveStartTime: "",
+          effectiveEndTime: "",
+          pointStatus: "0",
+          allowPublic: "0",
+          pointRemark: "示例数据，导入前请替换",
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
 /** 方案计划列表默认有效窗口：最近7天创建的数据，重置后可通过剪刀快捷入口恢复。 */
 export const DORTMUND_PLAN_QUERY_CONFIG = Object.freeze({
   validDataWindowDays: 7,

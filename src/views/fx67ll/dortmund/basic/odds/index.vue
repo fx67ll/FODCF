@@ -50,8 +50,8 @@
           <div class="dl-toolbar-actions">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
               v-hasPermi="['dortmund:odds:add']">补充录入</el-button>
-            <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['dortmund:odds:export']">导出</el-button> -->
+            <dortmund-export-menu title="倍率记录" endpoint="/dortmund/odds/export" :params="queryParams"
+              permission="dortmund:odds:export" file-prefix="dortmund-odds" />
           </div>
           <div class="dl-toolbar-side">
             <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -221,6 +221,7 @@ import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/DortmundDetailBlock/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
 import DortmundMatchDetailDrawer from "@/views/fx67ll/dortmund/other/component/DortmundMatchDetailDrawer/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 import { getMatch } from "@/api/fx67ll/dortmund/match";
 import { formatOddsWeight, ODDS_MATRIX_ROWS } from "@/views/fx67ll/dortmund/other/utils/odds";
 import { generateBusinessCode } from "@/views/fx67ll/dortmund/other/utils/codeGenerator";
@@ -231,7 +232,7 @@ import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery
 export default {
   name: "DortmundOdds",
   dicts: ["sys_yes_no", "fx67ll_dortmund_odds_type"],
-  components: { OddsEditScene, DortmundMatchSelectorModal, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail, DortmundMatchDetailDrawer },
+  components: { OddsEditScene, DortmundMatchSelectorModal, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock, DortmundRecordTrail, DortmundMatchDetailDrawer, DortmundExportMenu },
   mixins: [filterAutoQuery],
   computed: {
     oddsOverviewMetrics() {
@@ -581,10 +582,6 @@ export default {
         this.getList();
       }).catch(() => {
       });
-    },
-    handleExport() {
-      this.download("/dortmund/odds/export", { ...this.queryParams },
-        `odds_${new Date().getTime()}.xlsx`);
     },
     handleSceneBack() {
       this.pageScene = "list";

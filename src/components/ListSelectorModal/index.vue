@@ -72,8 +72,12 @@
               </template>
             </el-table-column>
             <el-table-column v-for="column in columns" :key="column.prop" :label="column.label" :prop="column.prop"
-              :min-width="column.minWidth || 120" align="center" show-overflow-tooltip>
-              <template slot-scope="scope">{{ formatColumn(column, scope.row) }}</template>
+              :min-width="column.minWidth || 120" align="center" :show-overflow-tooltip="!column.slot">
+              <template slot-scope="scope">
+                <!-- 状态、金额等业务单元格可注入具名插槽，通用选择器仍负责筛选、分页与选中逻辑。 -->
+                <slot v-if="column.slot" :name="column.slot" :row="scope.row" :value="scope.row[column.prop]" />
+                <template v-else>{{ formatColumn(column, scope.row) }}</template>
+              </template>
             </el-table-column>
             <el-table-column v-if="showDetail" label="操作" width="68" align="center" fixed="right">
               <template slot-scope="scope">

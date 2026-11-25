@@ -12,13 +12,14 @@ $dortmund-theme-page-scopes: ".dl-page", ".return-page",
 /* 弹窗/抽屉作用域：append-to-body 后脱离页面根，需要按 custom-class 回接主题 */
 $dortmund-theme-overlay-scopes: ".list-selector-drawer", ".team-option-drawer",
   ".season-edit-dialog", ".odds-detail-drawer", ".info-detail-dialog",
-  ".dortmund-detail-drawer", ".dortmund-info-point-form-dialog",
-  ".odds-inline-dialog", ".extra-merge-dialog", ".extra-history-chart-dialog",
-  ".plan-summary-dialog", ".sim-drawer", ".sim-record-dialog",
-  ".sim-version-create-dialog", ".sim-invalidate-confirm-dialog",
-  ".sim-invalidate-danger-dialog", ".sim-invalid-notice-dialog",
-  ".sim-version-manage-dialog", ".return-drawer", ".return-image-preview-dialog",
-  ".plan-image-preview-dialog", ".dortmund-theme-popper";
+  ".dortmund-detail-drawer", ".dortmund-json-import-drawer",
+  ".dortmund-info-point-form-dialog", ".odds-inline-dialog",
+  ".extra-merge-dialog", ".extra-history-chart-dialog", ".plan-summary-dialog",
+  ".sim-drawer", ".sim-record-dialog", ".sim-version-create-dialog",
+  ".sim-invalidate-confirm-dialog", ".sim-invalidate-danger-dialog",
+  ".sim-invalid-notice-dialog", ".sim-version-manage-dialog", ".return-drawer",
+  ".return-image-preview-dialog", ".plan-image-preview-dialog",
+  ".dortmund-theme-popper";
 
 @mixin dortmund-theme-tint($percent, $fallback) {
   background-color: $fallback;
@@ -270,6 +271,72 @@ $dortmund-theme-overlay-scopes: ".list-selector-drawer", ".team-option-drawer",
   }
 }
 
+/* dortmund pagination theme override */
+.dl-page,
+.return-page,
+.dortmund-secondary-page,
+#{$dortmund-theme-overlay-scopes} {
+  .el-pagination {
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      border-radius: 8px;
+      transition: color 0.2s ease, background-color 0.2s ease,
+        border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .el-pager li:not(.disabled):not(.active):hover,
+    .el-pager li:not(.disabled):not(.active):focus {
+      color: #2ecc71 !important;
+      background-color: rgba(46, 204, 113, 0.1) !important;
+      border-color: rgba(46, 204, 113, 0.24) !important;
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    &.is-background .el-pager li.active,
+    &.is-background .el-pager li.active:hover,
+    &.is-background .el-pager li.active:focus {
+      color: #fff !important;
+      background-color: #2ecc71 !important;
+      border-color: #2ecc71 !important;
+      box-shadow: 0 4px 10px rgba(46, 204, 113, 0.22);
+    }
+
+    &:not(.is-background) .el-pager li.active,
+    &:not(.is-background) .el-pager li.active:hover,
+    &:not(.is-background) .el-pager li.active:focus {
+      color: #2ecc71 !important;
+      background: transparent !important;
+      outline: none;
+    }
+
+    .btn-prev:not(:disabled):hover,
+    .btn-next:not(:disabled):hover,
+    .btn-prev:focus,
+    .btn-next:focus,
+    .btn-prev:focus-visible,
+    .btn-next:focus-visible {
+      color: #2ecc71 !important;
+      background-color: rgba(46, 204, 113, 0.1) !important;
+      border-color: rgba(46, 204, 113, 0.24) !important;
+      outline: none;
+    }
+
+    .el-pagination__sizes .el-input .el-input__inner:focus,
+    .el-pagination__jump .el-input .el-input__inner:focus,
+    .el-pagination__sizes .el-input.is-focus .el-input__inner,
+    .el-pagination__sizes .el-select .el-input.is-focus .el-input__inner {
+      color: #2ecc71 !important;
+      border-color: #2ecc71 !important;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.14);
+    }
+
+    .el-select-dropdown__item.selected {
+      color: #2ecc71 !important;
+    }
+  }
+}
 /* ---------- 列表操作列：保留呼吸间距，动作按钮样式由共享组件维护 ---------- */
 .dortmund-action-column .cell {
   display: flex;
@@ -504,5 +571,132 @@ $dortmund-theme-overlay-scopes: ".list-selector-drawer", ".team-option-drawer",
 @media (prefers-reduced-motion: reduce) {
   .dortmund-detail-drawer .el-table__body tr {
     animation: none;
+  }
+}
+
+/* ---------- JSON 导入抽屉：固定头部/底栏，仅内容区滚动 ---------- */
+.dortmund-json-import-drawer.el-drawer {
+  max-width: 94vw;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: -14px 0 36px rgba(33, 74, 54, 0.12);
+}
+
+.dortmund-json-import-drawer .el-drawer__body {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .dortmund-json-import-drawer.el-drawer {
+    width: 100% !important;
+    max-width: 100vw;
+  }
+}
+
+/* JSON 导入的提示词与字段说明弹窗，与详情抽屉的绿色细描边保持同一视觉语言。 */
+.dortmund-json-import-dialog.el-dialog {
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(31, 61, 44, 0.2);
+}
+
+.dortmund-json-import-dialog .el-dialog__header {
+  padding: 15px 20px 12px;
+  background: linear-gradient(135deg, #f4fbf7 0%, #fff 72%);
+  border-bottom: 1px solid #e5ece8;
+}
+
+.dortmund-json-import-dialog .el-dialog__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2d28;
+}
+
+.dortmund-json-import-dialog .el-dialog__headerbtn {
+  top: 15px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  transition: background-color 0.16s ease;
+
+  &:hover {
+    background: #eef5f1;
+  }
+}
+
+.dortmund-json-import-dialog .el-dialog__close {
+  color: #75817b;
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+
+.dortmund-json-import-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #384940;
+  transform: rotate(90deg);
+}
+
+.dortmund-json-import-dialog .el-dialog__body {
+  padding: 15px 20px;
+}
+
+.dortmund-json-import-dialog .el-dialog__footer {
+  padding: 10px 20px 14px;
+  border-top: 1px solid #e8efeb;
+}
+
+.dortmund-json-import-dialog .el-dialog__footer .el-button {
+  min-height: 32px;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.json-import-dialog-intro {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #61746a;
+  background: #f3faf6;
+  border: 1px solid #dceee3;
+  border-radius: 9px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.json-import-dialog-intro-mark {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  color: #2fa866;
+  background: #fff;
+  border: 1px solid #d6ecdf;
+  border-radius: 7px;
+  place-items: center;
+}
+
+.dortmund-json-import-dialog .json-import-field-table th {
+  font-weight: 600;
+  color: #405848;
+  background: #f3f9f5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dortmund-json-import-dialog .el-dialog__headerbtn,
+  .dortmund-json-import-dialog .el-dialog__close {
+    transition: none;
+  }
+
+  .dortmund-json-import-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+    transform: none;
   }
 }

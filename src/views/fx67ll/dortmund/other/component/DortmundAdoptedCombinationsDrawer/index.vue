@@ -1,6 +1,6 @@
 <template>
   <dortmund-detail-drawer :visible.sync="drawerVisible" :title="drawerTitle" :subtitle="subtitle"
-    icon="el-icon-collection-tag" tone="green" size="760px" :loading="loading" feature="return" :level="level"
+    icon="el-icon-collection-tag" tone="green" size="960px" :loading="loading" feature="return" :level="level"
     :shifted="combinationDetailVisible">
     <div class="adopted-combination-summary">
       <span class="adopted-combination-summary-icon"><i class="el-icon-finished"></i></span>
@@ -12,22 +12,37 @@
 
     <el-table :data="rows" size="small" class="adopted-combination-table" row-key="combinationId"
       :empty-text="emptyText">
-      <el-table-column label="组合标题" prop="combinationTitle" min-width="170" show-overflow-tooltip />
-      <el-table-column label="组合倍率" prop="combinedOdds" width="94" align="center" />
-      <el-table-column label="预计回报" width="110" align="center">
+      <el-table-column label="回报组合标题" prop="combinationTitle" minWidth="300" align="center" header-align="center"
+        show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span v-if="scope.row.combinationTitle" class="adopted-combination-title" role="button" tabindex="0"
+            :title="scope.row.combinationTitle" @click.stop="handleDetail(scope.row)"
+            @keyup.enter.stop="handleDetail(scope.row)">{{ scope.row.combinationTitle }}</span>
+          <span v-else class="adopted-combination-title is-empty">未命名组合</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="预计回报" minWidth="120" align="center" header-align="center">
         <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
       </el-table-column>
-      <el-table-column label="比赛数" prop="matchCount" width="78" align="center" />
-      <el-table-column label="核验状态" width="104" align="center">
+      <el-table-column label="偏差金额" minWidth="120" align="center" header-align="center">
+        <template slot-scope="scope">
+          <span :class="['adopted-combination-deviation', deviationTone(scope.row.deviationAmount)]">
+            <i v-if="deviationIcon(scope.row.deviationAmount)" :class="deviationIcon(scope.row.deviationAmount)"></i>
+            {{ formatMoneyDisplay(scope.row.deviationAmount) }}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="核验状态" minWidth="120" align="center" header-align="center">
         <template slot-scope="scope">
           <dortmund-verification-status-tag :status="scope.row.verificationStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="dortmund-action-column" width="76" fixed="right">
+      <el-table-column label="记录创建时间" minWidth="170" align="center" header-align="center">
         <template slot-scope="scope">
-          <dortmund-action-button label="详情" icon="el-icon-document" action="detail" @click="handleDetail(scope.row)" />
+          {{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-' }}
         </template>
       </el-table-column>
+      <el-table-column v-if="planMode" label="场次" prop="matchCount" width="90" align="center" header-align="center" />
     </el-table>
 
     <pagination v-show="total > 0" :total="total" popper-class="dortmund-theme-popper" :page.sync="pageNum"
@@ -52,13 +67,11 @@ import DortmundReturnCombinationDetailDrawer
   from "@/views/fx67ll/dortmund/other/component/DortmundReturnCombinationDetailDrawer/index";
 import DortmundVerificationStatusTag
   from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
-import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 
 export default {
   name: "DortmundAdoptedCombinationsDrawer",
   components: {
     DortmundDetailDrawer, DortmundReturnCombinationDetailDrawer, DortmundVerificationStatusTag,
-    DortmundActionButton,
   },
   props: {
     visible: { type: Boolean, default: false },
@@ -119,7 +132,7 @@ export default {
     },
     summaryDescription() {
       return this.planMode
-        ? "这里展示方案当前关联的回报组合；点击“详情”可查看完整组合分析、逐场选择与图片。"
+        ? "这里展示方案当前关联的回报组合；点击组合标题可查看完整组合分析、逐场选择与图片。"
         : "这里只展示已采用结果；点击“详情”可查看完整组合分析、逐场选择与图片。";
     },
     emptyText() {
@@ -204,6 +217,23 @@ export default {
           this.loading = false;
         });
     },
+    // 偏差金额与回报组合工作台共用方向语义：正数红色向上、负数绿色向下、零值灰色。
+    deviationTone(value) {
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue)) {
+        return "is-zero";
+      }
+      if (numericValue === 0) {
+        return "is-zero";
+      }
+      return numericValue > 0 ? "is-positive" : "is-negative";
+    },
+    deviationIcon(value) {
+      const tone = this.deviationTone(value);
+      if (tone === "is-positive") return "el-icon-top";
+      if (tone === "is-negative") return "el-icon-bottom";
+      return "";
+    },
     handleDetail(row) {
       this.selectedCombination = { ...(row || {}) };
       this.selectedCombinationId = row && row.combinationId;
@@ -252,6 +282,78 @@ export default {
   color: #27ad60;
   background: #e2f6eb;
   border-radius: 9px;
+}
+
+.adopted-combination-title {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 6px;
+  overflow: hidden;
+  color: #2ecc71;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.adopted-combination-title:hover,
+.adopted-combination-title:focus-visible {
+  color: #1f9e55;
+  background: #e9f9f0;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(46, 204, 113, .12);
+  transform: translateY(-1px);
+}
+
+.adopted-combination-title:active {
+  transform: translateY(0) scale(.98);
+}
+
+.adopted-combination-title.is-empty {
+  color: #9aa7a0;
+  font-weight: 400;
+  cursor: default;
+}
+
+.adopted-combination-deviation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.adopted-combination-deviation i {
+  font-size: 12px;
+}
+
+.adopted-combination-deviation.is-positive {
+  color: #ff5a5f;
+}
+
+.adopted-combination-deviation.is-negative {
+  color: #2ecc71;
+}
+
+.adopted-combination-deviation.is-zero {
+  color: #999;
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adopted-combination-title {
+    transition: none;
+  }
+
+  .adopted-combination-title:hover,
+  .adopted-combination-title:focus-visible,
+  .adopted-combination-title:active {
+    transform: none;
+  }
 }
 
 .adopted-combination-table {

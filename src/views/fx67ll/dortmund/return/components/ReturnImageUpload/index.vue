@@ -241,12 +241,27 @@ export default {
   min-width: 0;
 }
 
+/* 上传入口占满所在网格单元，并与图片缩略图保持一致的方形比例。 */
+.image-uploader {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
 .image-thumb,
 .image-upload-tile {
   width: 100%;
   height: 118px;
   overflow: hidden;
   border-radius: 12px;
+}
+
+.image-uploader .image-upload-tile {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-height: 112px;
+  padding: 16px 12px;
 }
 
 .image-thumb {

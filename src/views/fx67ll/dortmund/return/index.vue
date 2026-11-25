@@ -14,8 +14,8 @@
         <el-button type="success" plain icon="el-icon-time" size="mini" @click="openHistoryDrawer">
           查看历史记录
         </el-button>
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:return:export']">导出组合记录</el-button>
+        <dortmund-export-menu title="回报组合" endpoint="/dortmund/return/export" :params="buildCombinationExportParams"
+          permission="dortmund:return:export" file-prefix="dortmund-return-combination" button-label="导出组合记录" />
         <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="openOrphanImageDrawer"
           v-hasPermi="['dortmund:return:image:query']">孤儿图片清理</el-button>
       </div>
@@ -24,7 +24,7 @@
     <transition name="dl-filter">
       <el-form ref="combinationQueryForm" :model="combinationQuery" class="dl-filter" size="small" :inline="true">
         <el-form-item label="搜索组合" prop="keyword" label-width="auto" v-if="isMoreCombinationQuery">
-          <el-input v-model="combinationQuery.keyword" placeholder="请输入组合编码或标题" clearable style="width: 220px"
+          <el-input v-model="combinationQuery.keyword" placeholder="请输入组合标题或编码" clearable style="width: 220px"
             @input="handleCombinationFilterInput" @keyup.enter.native="handleCombinationQuery" />
         </el-form-item>
         <el-form-item label="关联比赛" prop="matchId" label-width="auto" v-if="isMoreCombinationQuery">
@@ -330,8 +330,9 @@
           </div>
           <div class="return-drawer-heading-tools">
             <span class="return-drawer-chip">共 {{ batchTotal }} 批</span>
-            <el-button type="warning" plain size="mini" icon="el-icon-download" :loading="batchExporting"
-              @click="handleBatchExport" v-hasPermi="['dortmund:return:export']">导出批次</el-button>
+            <dortmund-export-menu title="回报组合批次" endpoint="/dortmund/return/generation/export"
+              :params="buildBatchExportParams" permission="dortmund:return:export"
+              file-prefix="dortmund-return-generation" button-label="导出批次" />
           </div>
         </div>
       </template>
@@ -573,6 +574,7 @@ import DortmundDetailBlock from "@/views/fx67ll/dortmund/other/component/Dortmun
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundVerificationStatusTag
   from "@/views/fx67ll/dortmund/other/component/DortmundVerificationStatusTag/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 import ReturnImageUpload from "./components/ReturnImageUpload/index";
 import ManualAiTaskPanel from "./components/ManualAiTaskPanel/index";
 import ReturnAiWorkflow from "./components/ReturnAiWorkflow/index";
@@ -595,14 +597,13 @@ export default {
     DortmundMatchSelectorModal, ReturnImageUpload, ManualAiTaskPanel,
     ReturnAiWorkflow, ReturnAnalysisResult, ReturnManualResult,
     DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundDetailBlock,
-    DortmundVerificationStatusTag,
+    DortmundVerificationStatusTag, DortmundExportMenu,
   },
   data() {
     return {
       batchList: [],
       batchTotal: 0,
       batchLoading: false,
-      batchExporting: false,
       historyVisible: false,
       isMoreBatchQuery: false,
       batchDateRange: [],
@@ -865,7 +866,7 @@ export default {
       this.batchDateRange = [];
       this.handleBatchQuery();
     },
-    handleBatchExport() {
+    buildBatchExportParams() {
       const params = { ...this.batchQuery };
       delete params.pageNum;
       delete params.pageSize;
@@ -875,11 +876,7 @@ export default {
         params.beginCreateTime = this.batchDateRange[0];
         params.endCreateTime = this.batchDateRange[1];
       }
-      this.batchExporting = true;
-      this.download("/dortmund/return/generation/export", params,
-        `return_generation_${new Date().getTime()}.xlsx`).finally(() => {
-          this.batchExporting = false;
-        });
+      return params;
     },
     handleCombinationSelectionChange(selection) {
       this.selectedCombinationIds = (selection || []).map((item) => item.combinationId);
@@ -1423,7 +1420,7 @@ export default {
         this.reviewingId = null;
       });
     },
-    handleExport() {
+    buildCombinationExportParams() {
       const params = {
         keyword: this.combinationQuery.keyword,
         generationMode: this.combinationQuery.generationMode,
@@ -1450,11 +1447,11 @@ export default {
         params.beginUpdateTime = this.combinationUpdateDateRange[0];
         params.endUpdateTime = this.combinationUpdateDateRange[1];
       }
-      this.download("/dortmund/return/export", {
+      return {
         ...params,
         sortField: this.combinationQuery.sortField,
         sortOrder: this.combinationQuery.sortOrder,
-      }, `return_combination_${new Date().getTime()}.xlsx`);
+      };
     },
   },
 };

@@ -52,6 +52,17 @@ export function changeInfoPointStatus(data) {
   });
 }
 
+// 批量导入前端预览并确认的信息点 JSON；后端统一解析赛季、球队和比赛引用并整批事务写入。
+export function importInfoPointJson(infoPoints) {
+  return request({
+    url: "/dortmund/info/point/importJson",
+    method: "post",
+    data: infoPoints,
+    timeout: 120000,
+    repeatSubmit: false,
+  });
+}
+
 // 查询比赛的有效信息点（只读，按比赛分出将进入分析与被排除）
 export function listValidInfoPoint(matchId) {
   return request({

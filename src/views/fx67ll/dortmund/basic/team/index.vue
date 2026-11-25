@@ -76,8 +76,8 @@
             v-hasPermi="['dortmund:team:edit']">修改</el-button>
           <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
             v-hasPermi="['dortmund:team:remove']">删除</el-button>
-          <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:team:export']">导出</el-button> -->
+          <dortmund-export-menu title="球队" endpoint="/dortmund/team/export" :params="queryParams"
+            permission="dortmund:team:export" file-prefix="dortmund-team" />
           <transition name="dl-chip">
             <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length }}
               项</span>
@@ -268,13 +268,14 @@ import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
 export default {
   name: "Team",
   dicts: ["sys_normal_disable"],
-  components: { TeamEditScene, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  components: { TeamEditScene, DortmundTeamOptionSelector, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail, DortmundExportMenu },
   mixins: [filterAutoQuery],
   computed: {
     teamTagList() {
@@ -586,12 +587,6 @@ export default {
         this.getList();
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('dortmund/team/export', {
-        ...this.queryParams
-      }, `team_${new Date().getTime()}.xlsx`)
     }
   }
 };

@@ -79,6 +79,11 @@
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
               v-hasPermi="['dortmund:info:point:edit']">修改</el-button>
             <!-- 信息点没有删除动作，不渲染删除按钮 -->
+            <!-- 导出沿用当前筛选范围；导入改为 JSON 预览勾选，模板和字段说明由共享组件维护。 -->
+            <dortmund-export-menu title="信息点" endpoint="/dortmund/info/point/export" :params="queryParams"
+              permission="dortmund:info:point:list" file-prefix="dortmund-info-point" />
+            <el-button type="primary" plain icon="el-icon-upload2" size="mini" @click="infoImportVisible = true"
+              v-hasPermi="['dortmund:info:point:add']">导入 JSON</el-button>
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
               }} 项</span>
@@ -123,6 +128,7 @@
 
     <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" :selected-items="[selectedMatch]"
       @confirm="handleMatchSelectorConfirm" />
+    <dortmund-info-point-import-drawer :visible.sync="infoImportVisible" @imported="handleImportSuccess" />
   </div>
 </template>
 
@@ -132,6 +138,8 @@ import { addMatch } from "@/api/fx67ll/dortmund/match";
 import ViewSwitch from "@/components/ViewSwitch/index.vue";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
+import DortmundInfoPointImportDrawer from "@/views/fx67ll/dortmund/other/component/DortmundInfoPointImportDrawer/index";
 import InfoCardPane from "./components/InfoCardPane/index.vue";
 import InfoListPane from "./components/InfoListPane/index.vue";
 import InfoDetailDialog from "./components/InfoDetailDialog/index.vue";
@@ -147,7 +155,7 @@ const VIEW_MODE_KEY = "dortmund-info-view-mode";
 export default {
   name: "Info",
   dicts: ["sys_normal_disable", "fx67ll_dortmund_info_point_type", "fx67ll_dortmund_allow_public"],
-  components: { ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene, DortmundMatchSelectorModal, DortmundSeasonSelect },
+  components: { ViewSwitch, InfoCardPane, InfoListPane, InfoDetailDialog, InfoEditTScene, InfoEditMScene, InfoValidScene, DortmundMatchSelectorModal, DortmundSeasonSelect, DortmundExportMenu, DortmundInfoPointImportDrawer },
   mixins: [filterAutoQuery],
   data() {
     return {
@@ -185,6 +193,8 @@ export default {
       daterangeUpdateTime: [],
       selectedMatch: null,
       matchSelectorVisible: false,
+      // 信息点 JSON 导入侧边抽屉开关
+      infoImportVisible: false,
       // 是否使用高级搜索
       isMoreQuery: false,
       // 查询参数
@@ -437,6 +447,10 @@ export default {
       const matchTime = this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}");
       const vsText = `${match.homeTeamName || ""} vs ${match.awayTeamName || ""}`;
       return matchTime ? `${vsText}（${matchTime}）` : vsText;
+    },
+    /** 导入成功后刷新当前列表，保留筛选与分页上下文 */
+    handleImportSuccess() {
+      this.getList();
     },
   }
 };

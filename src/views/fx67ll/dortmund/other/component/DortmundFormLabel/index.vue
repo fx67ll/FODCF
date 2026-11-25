@@ -1,10 +1,10 @@
 <template>
   <span class="dortmund-form-label">
     <em v-if="required" class="dortmund-form-label-required" aria-hidden="true">*</em>
-    <span>{{ label }}</span>
     <el-tooltip v-if="tip" :content="tip" placement="top" popper-class="dortmund-theme-popper">
-      <i class="el-icon-question dortmund-form-label-tip" tabindex="0" :aria-label="`${label}填写说明`"></i>
+      <span class="dortmund-form-label-text is-help" tabindex="0" :aria-label="`${label}填写说明`">{{ label }}</span>
     </el-tooltip>
+    <span v-else>{{ label }}</span>
   </span>
 </template>
 
@@ -37,17 +37,15 @@ export default {
   white-space: nowrap;
 }
 
-.dortmund-form-label-tip {
-  flex-shrink: 0;
-  color: #8aa79a;
-  font-size: 13px;
+.dortmund-form-label-text.is-help {
   cursor: help;
+  transition: color .18s ease;
+}
 
-  &:hover,
-  &:focus {
-    color: #27ad60;
-    outline: none;
-  }
+.dortmund-form-label-text.is-help:hover,
+.dortmund-form-label-text.is-help:focus {
+  color: #27ad60;
+  outline: none;
 }
 
 .dortmund-form-label-required {

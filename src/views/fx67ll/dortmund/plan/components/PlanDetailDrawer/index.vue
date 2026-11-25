@@ -56,12 +56,12 @@
       </template>
       <el-table :data="combinationRows" v-loading="combinationLoading" size="small" empty-text="暂无关联回报组合"
         class="plan-linked-table">
-        <el-table-column label="组合标题" prop="combinationTitle" min-width="170" show-overflow-tooltip />
+        <el-table-column label="回报组合标题" prop="combinationTitle" min-width="170" show-overflow-tooltip />
         <el-table-column label="组合倍率" prop="combinedOdds" width="94" align="center" />
         <el-table-column label="预计回报" width="110" align="center">
           <template slot-scope="scope">{{ formatMoneyDisplay(scope.row.estimatedReturn) }}</template>
         </el-table-column>
-        <el-table-column label="比赛数" prop="matchCount" width="78" align="center" />
+        <el-table-column label="场次" prop="matchCount" width="78" align="center" />
         <el-table-column label="核验状态" width="104" align="center">
           <template slot-scope="scope">
             <dortmund-verification-status-tag :status="scope.row.verificationStatus" />

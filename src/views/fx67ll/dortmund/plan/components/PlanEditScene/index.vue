@@ -37,7 +37,7 @@
               <el-col :span="24">
                 <el-form-item prop="planContent" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案计划" tip="必填；1-1023个字符" />
+                    <dortmund-form-label label="方案计划" />
                   </template>
                   <el-input v-model="editForm.planContent" type="textarea" :rows="4" :maxlength="limits.planContent"
                     show-word-limit placeholder="请输入方案计划" />
@@ -46,7 +46,7 @@
               <el-col :span="24">
                 <el-form-item prop="planRemark" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="其他说明" tip="选填；最多1023个字符" />
+                    <dortmund-form-label label="其他说明" />
                   </template>
                   <el-input v-model="editForm.planRemark" type="textarea" :rows="2" :maxlength="limits.planRemark"
                     show-word-limit placeholder="请输入其他说明" />
@@ -68,27 +68,26 @@
             </el-row>
           </div>
 
-          <!-- 分区二：预计数据（选填，关联组合后自动派生，允许手工修正） -->
+          <!-- 分区二：实际数据（必填，仅登记结算事实，重新计算不会覆盖） -->
           <div class="plan-edit-card plan-finance-card">
             <div class="plan-finance-head">
               <span class="plan-finance-step">01</span>
               <div class="plan-finance-copy">
-                <strong>预计数据</strong>
-                <small>预计本金、倍率与回报关联组合后自动带出，可逐项手动修正；本金和回报留空时以后端汇总值为准，倍率留空表示尚未填写</small>
+                <strong>实际数据</strong>
+                <small>仅支持手工填写，不随关联回报组合自动计算；可使用计算器辅助核算，重新计算时保留已登记的实际值</small>
               </div>
-              <span class="plan-finance-tag is-optional">选填</span>
+              <span class="plan-finance-tag is-required">必填</span>
             </div>
             <el-row :gutter="20">
-              <!-- 预计本金独占一行，计算器紧随输入框，避免挤占首行主字段的阅读空间 -->
+              <!-- 实际本金独占一行，计算器紧随输入框，便于快速核算后登记结算事实 -->
               <el-col :span="24">
-                <el-form-item prop="planExpectedPrincipal" label-width="auto">
+                <el-form-item prop="planActualPrincipal" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案预计本金"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
+                    <dortmund-form-label label="方案实际本金" />
                   </template>
                   <div class="plan-money-field-row">
-                    <el-input v-model="editForm.planExpectedPrincipal" class="plan-money-field-input" clearable
-                      placeholder="关联组合后自动带出，可手动修正" />
+                    <el-input v-model="editForm.planActualPrincipal" class="plan-money-field-input" clearable
+                      placeholder="请输入实际投入本金" />
                     <el-button type="success" plain size="small"
                       class="plan-money-action-button plan-calculator-trigger" icon="el-icon-s-order"
                       title="打开数值计算器，快速核算实际本金、实际回报与实际倍率" @click="calculatorVisible = true">计算器</el-button>
@@ -96,47 +95,44 @@
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item prop="planExpectedOdds" label-width="auto">
+                <el-form-item prop="planActualOdds" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案预计倍率"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数；留空表示尚未填写`" />
+                    <dortmund-form-label label="方案实际倍率" />
                   </template>
-                  <el-input v-model="editForm.planExpectedOdds" clearable placeholder="关联组合后自动带出，可手动修正" />
+                  <el-input v-model="editForm.planActualOdds" clearable placeholder="赛事结算后登记实际倍率" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item prop="planExpectedReturn" label-width="auto">
+                <el-form-item prop="planActualReturn" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案预计回报"
-                      :tip="`选填；普通十进制数，不允许科学计数法；填写时须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数；留空使用后端自动计算值`" />
+                    <dortmund-form-label label="方案实际回报" />
                   </template>
-                  <el-input v-model="editForm.planExpectedReturn" clearable placeholder="关联组合后自动带出，可手动修正" />
+                  <el-input v-model="editForm.planActualReturn" clearable placeholder="赛事结算后登记实际回报" />
                 </el-form-item>
               </el-col>
             </el-row>
           </div>
 
-          <!-- 分区三：实际数据（必填，仅登记结算事实，重新计算不会覆盖） -->
-          <div class="plan-edit-card plan-finance-card is-actual">
-            <div class="plan-finance-head is-actual">
+          <!-- 分区三：预计数据（选填，关联组合后自动派生，允许手工修正） -->
+          <div class="plan-edit-card plan-finance-card is-expected">
+            <div class="plan-finance-head">
               <span class="plan-finance-step">02</span>
               <div class="plan-finance-copy">
-                <strong>实际数据</strong>
-                <small>仅支持手工填写，不随关联回报组合自动计算；重新计算时保留已登记的实际值</small>
+                <strong>预计数据</strong>
+                <small>预计本金、倍率与回报关联组合后自动带出，可逐项手动修正；重新计算会刷新未被手工覆盖的预计值，实际值保持不变</small>
               </div>
-              <span class="plan-finance-tag is-required">必填</span>
+              <span class="plan-finance-tag is-optional">选填</span>
             </div>
             <el-row :gutter="20">
-              <!-- 实际本金独占一行，重新计算紧随输入框，便于人工修正后立即刷新预计值 -->
+              <!-- 预计本金独占一行，重新计算紧随输入框，便于修正后立即刷新预计值 -->
               <el-col :span="24">
-                <el-form-item prop="planActualPrincipal" label-width="auto">
+                <el-form-item prop="planExpectedPrincipal" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案实际本金"
-                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；须大于等于0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                    <dortmund-form-label label="方案预计本金" />
                   </template>
                   <div class="plan-money-field-row">
-                    <el-input v-model="editForm.planActualPrincipal" class="plan-money-field-input" clearable
-                      placeholder="请输入实际投入本金" />
+                    <el-input v-model="editForm.planExpectedPrincipal" class="plan-money-field-input" clearable
+                      placeholder="关联组合后自动带出，可手动修正" />
                     <el-button type="warning" plain size="small"
                       class="plan-money-action-button plan-combination-recalculate" icon="el-icon-refresh"
                       :loading="detailLoading" :disabled="!selectedCombinationCount"
@@ -145,21 +141,19 @@
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item prop="planActualOdds" label-width="auto">
+                <el-form-item prop="planExpectedOdds" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案实际倍率"
-                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanRateIntegerDigits}位整数和${numeric.maxPlanRateFractionDigits}位小数`" />
+                    <dortmund-form-label label="方案预计倍率" />
                   </template>
-                  <el-input v-model="editForm.planActualOdds" clearable placeholder="赛事结算后登记实际倍率" />
+                  <el-input v-model="editForm.planExpectedOdds" clearable placeholder="关联组合后自动带出，可手动修正" />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item prop="planActualReturn" label-width="auto">
+                <el-form-item prop="planExpectedReturn" label-width="auto">
                   <template slot="label">
-                    <dortmund-form-label label="方案实际回报"
-                      :tip="`必填；仅手工填写，普通十进制数，不允许科学计数法；赛事结算后登记，允许为0，最多${numeric.maxPlanAmountIntegerDigits}位整数和${numeric.maxPlanAmountFractionDigits}位小数`" />
+                    <dortmund-form-label label="方案预计回报" />
                   </template>
-                  <el-input v-model="editForm.planActualReturn" clearable placeholder="赛事结算后登记实际回报" />
+                  <el-input v-model="editForm.planExpectedReturn" clearable placeholder="关联组合后自动带出，可手动修正" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -297,10 +291,13 @@
             <i class="el-icon-football"></i>
             <span>比赛清单</span>
           </div>
-          <div class="plan-preview-match is-clickable" v-for="(match, index) in derivedMatches" :key="'p-open-' + index"
-            role="button" tabindex="0" @click="openMatchDetail(match)" @keyup.enter="openMatchDetail(match)">
-            <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
-          </div>
+          <el-tooltip v-for="(match, index) in derivedMatches" :key="'p-open-' + index" placement="left"
+            :content="formatMatchLabel(match)" popper-class="dortmund-theme-popper plan-preview-match-tooltip">
+            <div class="plan-preview-match is-clickable" role="button" tabindex="0" @click="openMatchDetail(match)"
+              @keyup.enter="openMatchDetail(match)">
+              <span class="plan-preview-match-vs">{{ formatMatchLabel(match) }}</span>
+            </div>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -973,7 +970,7 @@ export default {
   }
 }
 
-.plan-finance-card.is-actual {
+.plan-finance-card.is-expected {
   .plan-finance-head {
     background: #fffaf4;
     border-color: #f4e3cd;
@@ -1399,20 +1396,24 @@ export default {
 }
 
 .plan-preview-match.is-clickable {
+  gap: 8px;
   padding: 6px 8px;
   cursor: pointer;
   border: 1px solid transparent;
   border-radius: 8px;
-  transition: transform 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.22s ease, background-color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
 
   &:hover {
     background: #f2fbf6;
     border-color: #d5f0e2;
+    box-shadow: 0 6px 14px rgba(46, 204, 113, 0.12);
     transform: translateX(2px);
   }
 }
 
 .plan-preview-match-vs {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: #44604f;
   text-overflow: ellipsis;
@@ -1526,5 +1527,14 @@ export default {
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(46, 204, 113, 0.09);
   animation: planEditFadeUp 0.3s ease 0.15s both;
+}
+</style>
+
+<style lang="scss">
+/* 比赛清单窄栏默认省略长标题，悬浮提示完整展示对阵与开赛时间。 */
+.plan-preview-match-tooltip.el-tooltip__popper {
+  max-width: 360px;
+  line-height: 1.6;
+  word-break: break-word;
 }
 </style>

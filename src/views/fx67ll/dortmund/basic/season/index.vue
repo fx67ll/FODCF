@@ -57,8 +57,8 @@
           v-hasPermi="['dortmund:season:edit']">修改</el-button>
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['dortmund:season:remove']">删除</el-button>
-        <!-- <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['dortmund:season:export']">导出</el-button> -->
+        <dortmund-export-menu title="赛季" endpoint="/dortmund/season/export" :params="queryParams"
+          permission="dortmund:season:export" file-prefix="dortmund-season" />
         <transition name="dl-chip">
           <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length }}
             项</span>
@@ -287,6 +287,7 @@ import DortmundDetailDrawer from "@/views/fx67ll/dortmund/other/component/Dortmu
 import DortmundDetailCard from "@/views/fx67ll/dortmund/other/component/DortmundDetailCard/index";
 import DortmundActionButton from "@/views/fx67ll/dortmund/other/component/DortmundActionButton/index";
 import DortmundRecordTrail from "@/views/fx67ll/dortmund/other/component/DortmundRecordTrail/index";
+import DortmundExportMenu from "@/views/fx67ll/dortmund/other/component/DortmundExportMenu/index";
 import {
   DORTMUND_LIMITS,
   DORTMUND_SEASON_STATUS_OPTIONS,
@@ -307,7 +308,7 @@ import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery
 export default {
   name: "Season",
   dicts: ["fx67ll_dortmund_status"],
-  components: { DortmundFormLabel, DortmundCodeInput, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail },
+  components: { DortmundFormLabel, DortmundCodeInput, DortmundDetailDrawer, DortmundDetailCard, DortmundActionButton, DortmundRecordTrail, DortmundExportMenu },
   mixins: [filterAutoQuery],
   computed: {
     limits() {
@@ -566,12 +567,6 @@ export default {
         this.getList();
         this.$modal.msgSuccess("删除成功");
       }).catch(() => { });
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('dortmund/season/export', {
-        ...this.queryParams
-      }, `season_${new Date().getTime()}.xlsx`)
     }
   }
 };
