@@ -440,6 +440,7 @@ export default {
 
 .json-import-intro {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
   padding: 12px 14px;
@@ -464,7 +465,7 @@ export default {
 }
 
 .json-import-intro-copy {
-  flex: 1;
+  flex: 1 1 420px;
   min-width: 0;
 
   strong {
@@ -485,11 +486,13 @@ export default {
 
 .json-import-intro-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 1 1 100%;
   flex-wrap: wrap;
   gap: 6px;
-  justify-content: flex-end;
-  padding-top: 1px;
+  justify-content: flex-start;
+  padding: 0 0 0 44px;
+  position: relative;
+  left: -3px;
 
   .el-button {
     margin-left: 0;
@@ -840,9 +843,12 @@ export default {
 }
 
 .json-import-drop-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
+  display: flex !important;
+  justify-content: center;
+  align-items: center !important;
+  // display: grid;
+  width: 80px;
+  height: 60px;
   font-size: 20px;
   color: #2fa866;
   background: #e9f9f0;
@@ -850,6 +856,11 @@ export default {
   place-items: center;
   transition: transform .2s ease;
 }
+
+.json-import-drop-mark>.el-icon-upload {
+  margin-top: 16px !important;
+}
+
 
 .json-import-uploader:hover .json-import-drop-mark {
   transform: translateY(-2px);
@@ -1198,20 +1209,6 @@ export default {
 }
 
 @media (max-width: 1280px) {
-  .json-import-intro {
-    flex-wrap: wrap;
-  }
-
-  .json-import-intro-copy {
-    flex: 1 1 420px;
-  }
-
-  .json-import-intro-actions {
-    flex: 1 1 100%;
-    justify-content: flex-start;
-    padding-left: 44px;
-  }
-
   .json-import-card-head {
     flex-wrap: wrap;
   }
