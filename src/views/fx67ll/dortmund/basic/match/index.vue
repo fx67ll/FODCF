@@ -8,7 +8,7 @@
         <transition name="dl-filter">
           <el-form class="dl-filter" :model="queryParams" ref="queryForm" size="small" :inline="true"
             v-show="showSearch" label-width="68px">
-            <el-form-item label="比赛球队" prop="teamName" v-if="!isMoreQuery">
+            <el-form-item label="比赛球队" prop="teamName" v-if="isMoreQuery">
               <el-input v-model="queryParams.teamName" placeholder="请输入主队或客队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
@@ -16,13 +16,29 @@
               <el-input v-model="queryParams.homeTeamName" placeholder="请输入主队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
+            <el-form-item label="球队主场" prop="matchVenue" v-if="isMoreQuery">
+              <dortmund-team-option-selector v-model="queryParams.matchVenue" option-type="venue" :multiple="false"
+                :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场"
+                @change="handleFilterChange" />
+            </el-form-item>
             <el-form-item label="客队名称" prop="awayTeamName" v-if="isMoreQuery">
               <el-input v-model="queryParams.awayTeamName" placeholder="请输入客队名称" clearable @input="handleFilterInput"
                 @keyup.enter.native="handleQuery" />
             </el-form-item>
+            <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
+              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable @input="handleFilterInput"
+                @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="赛果范围" prop="resultScope" v-if="!isMoreQuery">
+              <el-select v-model="resultScope" class="match-result-scope-select" placeholder="请选择赛果范围" clearable
+                popper-class="dortmund-theme-popper" @change="handleResultScopeChange">
+                <el-option v-for="option in resultScopeOptions" :key="option.value" :label="option.label"
+                  :value="option.value" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="比赛结果" prop="matchResult" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchResult" style="width: 100%" placeholder="请选择比赛结果" clearable
-                popper-class="dortmund-theme-popper" @change="handleFilterChange">
+                popper-class="dortmund-theme-popper" @change="handleAdvancedResultFilterChange">
                 <el-option v-for="dict in dict.type.fx67ll_match_result" :key="dict.value" :label="dict.label"
                   :value="dict.value" />
                 <el-option label="未登记" :value="DORTMUND_FILTER_UNREGISTERED_VALUE" />
@@ -30,29 +46,11 @@
             </el-form-item>
             <el-form-item label="倍率赛果" prop="oddsResultFilters" v-if="isMoreQuery">
               <el-select v-model="queryParams.oddsResultFilters" multiple collapse-tags clearable style="width: 100%"
-                placeholder="请选择倍率赛果" popper-class="dortmund-theme-popper" @change="handleFilterChange">
+                placeholder="请选择倍率赛果" popper-class="dortmund-theme-popper" @change="handleAdvancedResultFilterChange">
                 <el-option v-for="dict in dict.type.fx67ll_dortmund_odds_type" :key="dict.value" :label="dict.label"
                   :value="dict.value" />
                 <el-option label="未登记" :value="DORTMUND_FILTER_UNREGISTERED_VALUE" />
               </el-select>
-            </el-form-item>
-            <el-form-item label="比赛时间" prop="matchTime">
-              <el-date-picker v-model="daterangeMatchTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
-                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
-            </el-form-item>
-            <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
-              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery"
-                @change="handleFilterChange" />
-            </el-form-item>
-            <el-form-item label="球队主场" prop="matchVenue" v-if="isMoreQuery">
-              <dortmund-team-option-selector v-model="queryParams.matchVenue" option-type="venue" :multiple="false"
-                :allow-create="false" clearable size="small" width="220px" placeholder="请选择球队主场"
-                @change="handleFilterChange" />
-            </el-form-item>
-            <el-form-item label="比赛编码" prop="matchCode" v-if="isMoreQuery">
-              <el-input v-model="queryParams.matchCode" placeholder="请输入比赛编码" clearable @input="handleFilterInput"
-                @keyup.enter.native="handleQuery" />
             </el-form-item>
             <el-form-item label="比赛状态" prop="matchStatus" v-if="isMoreQuery">
               <el-select v-model="queryParams.matchStatus" style="width: 100%" placeholder="请选择比赛状态" clearable
@@ -61,6 +59,10 @@
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
+            <el-form-item label="所属赛季" prop="seasonId" v-if="isMoreQuery">
+              <dortmund-season-select ref="seasonSelect" v-model="queryParams.seasonId" :enter-callback="handleQuery"
+                @change="handleFilterChange" />
+            </el-form-item>
             <el-form-item label="创建时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeCreateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
@@ -68,6 +70,11 @@
             </el-form-item>
             <el-form-item label="更新时间" v-if="isMoreQuery">
               <el-date-picker v-model="daterangeUpdateTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
+                popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
+                end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
+            </el-form-item>
+            <el-form-item label="比赛时间" prop="matchTime">
+              <el-date-picker v-model="daterangeMatchTime" style="width: 360px" value-format="yyyy-MM-dd HH:mm:ss"
                 popper-class="dortmund-theme-popper" type="datetimerange" range-separator="-" start-placeholder="开始时间"
                 end-placeholder="结束时间" clearable @change="handleFilterChange"></el-date-picker>
             </el-form-item>
@@ -94,7 +101,7 @@
               v-hasPermi="['dortmund:match:remove']">删除</el-button>
             <!-- 导出支持 Excel/JSON/插入 SQL；导入改为 JSON 预览勾选，模板与提示词共用模块配置。 -->
             <dortmund-export-menu title="比赛记录" permission="dortmund:match:export" endpoint="/dortmund/match/export"
-              :params="queryParams" file-prefix="dortmund-match" />
+              :params="matchRequestParams" file-prefix="dortmund-match" />
             <el-button type="primary" plain icon="el-icon-upload2" size="mini" @click="matchImportVisible = true"
               v-hasPermi="['dortmund:match:add']">导入 JSON</el-button>
             <transition name="dl-chip">
@@ -400,6 +407,28 @@ export default {
       return [this.adoptedCombinationMatch.homeTeamName, this.adoptedCombinationMatch.awayTeamName]
         .filter(Boolean).join(" vs ");
     },
+    // 快捷赛果范围与高级赛果条件互斥；导出复用同一份请求参数，避免导出结果和列表口径不一致。
+    matchRequestParams() {
+      const params = {
+        ...this.queryParams,
+        oddsResultFilters: [...(this.queryParams.oddsResultFilters || [])],
+        pendingRegistration: null,
+      };
+      params.matchResult = null;
+      params.oddsResultFilters = [];
+      if (this.resultScope === "PENDING") {
+        params.pendingRegistration = true;
+      } else if (this.resultScope === "MATCH_U") {
+        params.matchResult = DORTMUND_FILTER_UNREGISTERED_VALUE;
+      } else if (this.resultScope === "ODDS_U") {
+        params.oddsResultFilters = [DORTMUND_FILTER_UNREGISTERED_VALUE];
+      } else {
+        // 空值表示不限赛果；只有高级搜索显式选择了赛果条件时才提交对应字段。
+        params.matchResult = this.queryParams.matchResult || null;
+        params.oddsResultFilters = [...(this.queryParams.oddsResultFilters || [])];
+      }
+      return params;
+    },
   },
   data() {
     return {
@@ -433,6 +462,13 @@ export default {
       daterangeMatchTime: [],
       // 是否使用高级搜索
       isMoreQuery: false,
+      // 基础搜索的快捷赛果范围，默认与移动端保持一致，只展示待补录记录。
+      resultScope: "PENDING",
+      resultScopeOptions: [
+        { label: "待补录", value: "PENDING" },
+        { label: "比赛结果未登记", value: "MATCH_U" },
+        { label: "倍率赛果未登记", value: "ODDS_U" },
+      ],
       // 重置后显示“只看有效数据”快捷入口；点击恢复默认未来赛程后隐藏。
       isResetStatus: false,
       // 高级搜索未登记筛选哨兵，供模板复用，避免散落魔法字符串。
@@ -482,7 +518,7 @@ export default {
     };
   },
   created() {
-    // 初次进入即展示当前时刻至未来 23 天的有效赛程，与“只看有效数据”口径一致。
+    // 初次进入展示前 7 天至未来 23 天的赛程，与“只看有效数据”口径一致。
     this.daterangeMatchTime = this.buildValidMatchTimeRange();
     this.getList();
   },
@@ -513,6 +549,8 @@ export default {
       this.queryParams.matchStatus = null;
       this.queryParams.matchResult = null;
       this.queryParams.oddsResultFilters = [];
+      // 清空赛果范围时使用空值，和查询参数“不限赛果”保持同一口径。
+      this.resultScope = "";
       this.clearDateQueryParams();
       this.daterangeCreateTime = [];
       this.daterangeUpdateTime = [];
@@ -521,10 +559,11 @@ export default {
         this.$refs.queryForm.clearValidate();
       }
     },
-    // 有效数据窗口沿用分析选场的 23 天前瞻区间，统一由模块公共配置维护。
+    // 有效数据窗口向前回看 7 天，并沿用分析选场的 23 天前瞻区间。
     buildValidMatchTimeRange() {
-      const start = new Date();
-      const end = new Date(start.getTime()
+      const now = new Date();
+      const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const end = new Date(now.getTime()
         + DORTMUND_RETURN_CONFIG.matchSelectionWindowDays * 24 * 60 * 60 * 1000);
       return [
         this.parseTime(start, "{y}-{m}-{d} {h}:{i}:{s}"),
@@ -547,7 +586,7 @@ export default {
         this.queryParams.beginMatchTime = this.daterangeMatchTime[0];
         this.queryParams.endMatchTime = this.daterangeMatchTime[1];
       }
-      listMatch(this.queryParams).then(response => {
+      listMatch(this.matchRequestParams).then(response => {
         this.matchList = this.formatObjectArrayNullProperty(response.rows);
         this.total = response.total;
       }).catch(() => {
@@ -560,6 +599,25 @@ export default {
     /** 高级搜索按钮操作 */
     handleMoreQuery() {
       this.isMoreQuery = !this.isMoreQuery;
+      if (this.isMoreQuery) {
+        // 进入高级搜索时保留比赛时间等表单，只清空快捷赛果范围，改由高级赛果条件控制。
+        this.resultScope = "";
+        this.handleQuery();
+      } else {
+        // 返回基础搜索即恢复“只看有效数据”口径，并关闭高级筛选面板。
+        this.applyValidDataState();
+      }
+    },
+    // 快捷范围代表完整赛果口径；清空快捷范围时同步清空高级赛果条件，回到不限赛果。
+    handleResultScopeChange() {
+      this.queryParams.matchResult = null;
+      this.queryParams.oddsResultFilters = [];
+      this.handleQuery();
+    },
+    // 具体高级赛果条件优先于快捷范围；全部清空后回到不限赛果。
+    handleAdvancedResultFilterChange() {
+      this.resultScope = "";
+      this.handleQuery();
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -572,12 +630,18 @@ export default {
       this.isResetStatus = true;
       this.handleQuery();
     },
-    // 重置会清空全部条件；点击剪刀后恢复未来 23 天有效窗口并隐藏快捷入口。
-    handleViewValidData() {
+    // 有效数据状态统一恢复默认赛果范围、前后时间窗口并关闭高级搜索。
+    applyValidDataState() {
       this.resetMatchQueryFilters();
+      this.isMoreQuery = false;
       this.daterangeMatchTime = this.buildValidMatchTimeRange();
+      this.resultScope = "PENDING";
       this.isResetStatus = false;
       this.handleQuery();
+    },
+    // 重置后点击剪刀恢复有效数据口径，同时收起高级搜索面板。
+    handleViewValidData() {
+      this.applyValidDataState();
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -796,20 +860,57 @@ export default {
 
 .match-team-name.is-clickable {
   position: relative;
+  isolation: isolate;
   cursor: pointer;
-  transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+  transition:
+    color .2s ease,
+    background-color .2s ease,
+    border-color .2s ease,
+    box-shadow .28s cubic-bezier(.22, .61, .36, 1),
+    filter .2s ease,
+    transform .12s ease;
+}
+
+/* 底部主题色短线在悬停时从中心展开，增强可点击反馈，同时不改动顶部边框。 */
+.match-team-name.is-clickable::after {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: calc(100% - 20px);
+  height: 2px;
+  content: "";
+  pointer-events: none;
+  background: currentColor;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateX(-50%) scaleX(.2);
+  transform-origin: center;
+  transition: opacity .2s ease, transform .28s cubic-bezier(.22, .61, .36, 1);
 }
 
 .match-team-name.is-clickable:hover,
 .match-team-name.is-clickable:focus-visible {
   z-index: 1;
   outline: none;
-  /* 使用外圈光晕强化可点击反馈，避免位移导致表格单元格上边框被裁切。 */
-  box-shadow: 0 0 0 2px rgba(39, 173, 96, .14), 0 3px 8px rgba(39, 173, 96, .12);
+  /* 双层光晕与轻微增饱和强化反馈，不使用向上位移，避免表格顶部边框被裁切。 */
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, .92),
+    0 0 0 4px rgba(39, 173, 96, .14),
+    0 7px 18px rgba(39, 173, 96, .18);
+  filter: saturate(1.14) brightness(1.03);
+}
+
+.match-team-name.is-clickable:hover::after,
+.match-team-name.is-clickable:focus-visible::after {
+  opacity: .72;
+  transform: translateX(-50%) scaleX(1);
 }
 
 .match-team-name.is-clickable:active {
-  box-shadow: 0 0 0 2px rgba(39, 173, 96, .2);
+  box-shadow: 0 0 0 2px rgba(39, 173, 96, .2), 0 2px 6px rgba(39, 173, 96, .12);
+  filter: saturate(1.08) brightness(.98);
+  transform: scale(.97);
+  transition-duration: .08s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -817,11 +918,21 @@ export default {
     transition: none;
   }
 
+  .match-team-name.is-clickable::after {
+    transition: none;
+  }
+
   .match-team-name.is-clickable:hover,
   .match-team-name.is-clickable:focus-visible,
   .match-team-name.is-clickable:active {
     box-shadow: none;
+    filter: none;
+    transform: none;
   }
+}
+
+.match-result-scope-select {
+  width: 220px;
 }
 
 /* 七类联赛使用同一联赛内的柔和色系；主队偏实、客队偏轻，联赛外球队继续使用上面的原有配色。 */
