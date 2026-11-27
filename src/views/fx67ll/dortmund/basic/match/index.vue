@@ -789,10 +789,10 @@ export default {
         .map((token) => this.selectDictLabel(options, token) || token)
         .join('、');
     },
-    // 主客队按 SQL 球队资料中的七类联赛启用柔和主题；无法确认的球队沿用原配色。
+    // 主客队按球队“地区/联赛”解析七类联赛主题；无法确认的球队沿用原配色。
     teamLeagueClass(row, side) {
       const prefix = side === 'away' ? 'away' : 'home';
-      const league = resolveDortmundLeagueTheme(row[`${prefix}TeamCountry`], row[`${prefix}TeamCode`]);
+      const league = resolveDortmundLeagueTheme(row[`${prefix}TeamCountry`]);
       return league ? `league-${league}` : '';
     },
     // 历史导入数据可能以 "-" 表示未产生赛果，展示层与空值统一处理。

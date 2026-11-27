@@ -158,16 +158,6 @@ const FIELD_ALIASES = Object.freeze({
   multiplierResult: ["multiplierResult", "倍率结果", "倍率赛果"],
   matchRemark: ["matchRemark", "比赛备注", "备注"],
 });
-const IMPORT_TYPE_ALIASES = Object.freeze({
-  match: ["match", "matchrecord", "record", "比赛记录"],
-  result: ["matchresult", "match-result", "result", "比赛结果"],
-});
-const MATCH_RECORD_MARKERS = Object.freeze([
-  "seasonName", "homeTeamName", "homeTeamCode", "awayTeamName", "awayTeamCode", "matchTime", "赛季名称", "主队名称", "客队名称",
-]);
-const MATCH_RESULT_MARKERS = Object.freeze([
-  "matchResult", "multiplierResult", "multipliers", "比赛结果", "倍率结果", "倍率记录",
-]);
 const MULTIPLIER_TEXT_FIELDS = Object.freeze([
   { key: "multiplierCode", aliases: ["multiplierCode", "倍率编码"] },
   { key: "sourceTime", aliases: ["sourceTime", "来源时间", "倍率来源时间"] },
@@ -276,7 +266,7 @@ export default {
           entityLabel: "比赛结果",
           introTitle: "先按比赛编码校验，再选择需要补录的赛果",
           introDescription: "支持粘贴标准 JSON 或选择 JSON 文件。比赛编码必须与当前账号可维护的既有比赛一致；确认写入前不会更新任何数据，只有勾选且服务端校验通过的条目才会落库，任一条失败整批回滚。",
-          sourceHint: 'JSON 顶层应包含 type: "matchResult" 与 matchResults 数组；兼容历史 matches / data 容器。',
+          sourceHint: 'JSON 顶层必须包含 type: "matchResult" 与 matchResults 数组。',
           placeholder: '请粘贴第三方 AI 输出的 JSON，例如：{"type":"matchResult","matchResults":[{ "matchCode": "...", "matchResult": "0", "multiplierResult": "HW", "multipliers": [] }]}',
           idleTip: "解析只做前端结构校验；比赛归属、赛果变化和倍率记录合法性以后端为准。",
           parsedTip: "请在预览中勾选需要补录的比赛结果；确认后才会提交服务端校验并整批写入。",
@@ -294,7 +284,7 @@ export default {
         entityLabel: "比赛记录",
         introTitle: "先解析校验，再选择需要写入的比赛",
         introDescription: "支持粘贴标准 JSON 或选择 JSON 文件。解析后进入勾选步骤，确认写入前不会写入任何比赛；只有勾选且通过服务端校验的条目才会落库，任一条失败整批回滚。",
-        sourceHint: 'JSON 顶层应包含 type: "match" 与 matches 数组；兼容历史 data 容器和纯数组。',
+        sourceHint: 'JSON 顶层必须包含 type: "match" 与 matches 数组。',
         placeholder: '请粘贴第三方 AI 输出的 JSON，例如：{"type":"match","matches":[{ "seasonName": "...", "homeTeamName": "...", "matchTime": "2026-11-26 20:30:00", "multipliers": [] }]}',
         idleTip: "解析只做前端结构校验，最终引用、唯一性和写入结果以后端为准。",
         parsedTip: "请在预览中勾选需要导入的比赛；点击底部按钮后还需在确认弹窗中确认写入，未勾选条目不会写入。",
@@ -452,26 +442,10 @@ export default {
       }
     },
     normalizeImportType(value) {
-      const normalized = textValue(value).toLowerCase();
-      if (!normalized) return "";
-      const matched = Object.keys(IMPORT_TYPE_ALIASES)
-        .find((type) => IMPORT_TYPE_ALIASES[type].includes(normalized));
-      if (!matched) {
-        throw new Error('JSON 根节点的 type 只能为 "match" 或 "matchResult"');
-      }
-      return matched;
-    },
-    inferImportType(rows, containerKey) {
-      if (containerKey === "matchResults") return "result";
-      const objectRows = rows.filter((row) => row && typeof row === "object" && !Array.isArray(row));
-      if (objectRows.length && objectRows.every((row) => {
-        const hasResultField = MATCH_RESULT_MARKERS.some((key) => Object.prototype.hasOwnProperty.call(row, key));
-        const hasRecordField = MATCH_RECORD_MARKERS.some((key) => Object.prototype.hasOwnProperty.call(row, key));
-        return hasResultField && !hasRecordField;
-      })) {
-        return "result";
-      }
-      return "match";
+      const normalized = textValue(value);
+      if (normalized === "match") return "match";
+      if (normalized === "matchResult") return "result";
+      throw new Error('JSON 根节点的 type 只能为 "match" 或 "matchResult"');
     },
     extractPayload(raw) {
       const cleaned = textValue(raw)
@@ -484,43 +458,17 @@ export default {
       } catch (error) {
         throw new Error("JSON 格式不合法，请检查括号、逗号和字符串引号");
       }
-      const explicitType = Array.isArray(parsed) ? "" : this.normalizeImportType(parsed && parsed.type);
-      const collectionKeys = explicitType === "match"
-        ? ["matches", "data"]
-        : ["matchResults", "matches", "data"];
-      let rows = Array.isArray(parsed) ? parsed : null;
-      let containerKey = Array.isArray(parsed) ? "" : "data";
-      for (const key of collectionKeys) {
-        if (rows) break;
-        if (parsed && Array.isArray(parsed[key])) {
-          rows = parsed[key];
-          containerKey = key;
-        }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error('JSON 顶层必须是包含 type 的对象，type 只能为 "match" 或 "matchResult"');
       }
-      if (!rows) {
-        throw new Error(`JSON 顶层必须是数组，或包含 ${collectionKeys.join(" / ")} 数组`);
+      const detectedType = this.normalizeImportType(parsed.type);
+      const collectionKey = detectedType === "match" ? "matches" : "matchResults";
+      const rows = parsed[collectionKey];
+      if (!Array.isArray(rows)) {
+        throw new Error(`type 为 "${collectionKey === "matches" ? "match" : "matchResult"}" 时必须提供 ${collectionKey} 数组`);
       }
       if (!rows.length) {
         throw new Error("JSON 中没有可处理的比赛条目");
-      }
-      const detectedType = explicitType || this.inferImportType(rows, containerKey);
-      if (explicitType === "match" && parsed && Array.isArray(parsed.matchResults)) {
-        throw new Error('type 为 "match" 时不能使用 matchResults 数组');
-      }
-      if (detectedType === "result") {
-        const looksLikeMatchRecord = rows.some((row) => row && typeof row === "object"
-          && MATCH_RECORD_MARKERS.some((key) => Object.prototype.hasOwnProperty.call(row, key)));
-        if (explicitType && looksLikeMatchRecord) {
-          throw new Error('type 为 "matchResult" 时只能提交比赛结果字段');
-        }
-      }
-      if (explicitType === "match") {
-        const looksLikeResultOnly = rows.length > 0 && rows.every((row) => row && typeof row === "object"
-          && MATCH_RESULT_MARKERS.some((key) => Object.prototype.hasOwnProperty.call(row, key))
-          && !MATCH_RECORD_MARKERS.some((key) => Object.prototype.hasOwnProperty.call(row, key)));
-        if (looksLikeResultOnly) {
-          throw new Error('type 为 "match" 时不能提交仅包含比赛结果字段的数据');
-        }
       }
       return { rows, type: detectedType };
     },

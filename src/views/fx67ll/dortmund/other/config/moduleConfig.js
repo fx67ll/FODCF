@@ -38,7 +38,7 @@ export const TEAM_COUNTRY_OPTIONS = [
   { label: "荷甲", value: "荷甲", matchImport: true },
   { label: "日职", value: "日职", matchImport: true },
   { label: "日乙", value: "日乙", matchImport: true },
-  { label: "韩职", value: "韩职", matchImport: true },
+  { label: "韩职", value: "韩职" },
   { label: "亚洲杯", value: "亚洲杯" },
 ];
 
@@ -146,89 +146,31 @@ export const teamCountryOptions = TEAM_COUNTRY_OPTIONS;
 export const teamTagOptions = TEAM_TAG_FALLBACK_OPTIONS;
 export const teamVenueOptions = TEAM_VENUE_FALLBACK_OPTIONS;
 
-/** 球队标签历史数据可能使用中文或英文逗号，前后端统一按该规则拆分。 */
+/** 球队标签使用中文或英文逗号分隔，前后端统一按该规则拆分。 */
 export const DORTMUND_TAG_SPLIT_PATTERN = /[,，]/;
 
 /** 列表使用次数超过该阈值时追加火苗提示；列颜色由调用方按业务语义固定指定。 */
 export const DORTMUND_USAGE_HOT_THRESHOLD = 23;
 
 /**
- * 球队联赛主题：只对 SQL 导入文件中的七类联赛球队启用，其他球队继续使用原有主客队配色。
- * 日本球队仅凭地区无法区分 J1/J2，因此用球队编码集合精确识别，避免把联赛外球队误着色。
+ * 球队联赛主题：只识别球队“地区/联赛”字段中的具体联赛标签。
+ * 国家/地区值不参与主题推导；同一国家存在多个级别时（如德国、英格兰、日本），
+ * 球队数据必须保存德甲、英超、日职等具体联赛标签，无法命中时沿用原有配色。
  */
-const DORTMUND_LEAGUE_COUNTRY_KEYS = Object.freeze({
-  摩纳哥: "ligue-1",
+const DORTMUND_LEAGUE_THEME_KEYS = Object.freeze({
   德甲: "bundesliga",
-  德国: "bundesliga",
   英超: "premier-league",
-  英格兰: "premier-league",
-  英国: "premier-league",
   西甲: "la-liga",
-  西班牙: "la-liga",
   意甲: "serie-a",
-  意大利: "serie-a",
   法甲: "ligue-1",
-  法国: "ligue-1",
+  日职: "j1",
+  日乙: "j2",
 });
 
-const DORTMUND_J1_TEAM_CODES = new Set([
-  "YOKOHAMA_FM",
-  "KAWASAKI_FRONTALE",
-  "KASHIMA_ANTLERS",
-  "URAWA_REDS",
-  "GAMBA_OSAKA",
-  "NAGOYA_GRAMPUS",
-  "VISSEL_KOBE",
-  "FC_TOKYO",
-  "CEREZO_OSAKA",
-  "SANFRECCE_HIROSHIMA",
-  "KASHIWA_REYSOL",
-  "KYOTO_SANGA",
-  "AVISPA_FUKUOKA",
-  "SHONAN_BELLMARE",
-  "SAGAN_TOSU",
-  "MACHIDA_ZELVIA",
-  "TOKYO_VERDY",
-  "MITO_HOLLYHOCK",
-  "JEF_CHIBA",
-  "FAGIANO_OKAYAMA",
-]);
-
-const DORTMUND_J2_TEAM_CODES = new Set([
-  "CONSADOLE_SAPPORO",
-  "VEGALTA_SENDAI",
-  "ALBIREX_NIIGATA",
-  "JUBILO_IWATA",
-  "YOKOHAMA_FC",
-  "OMIYA_ARDIJA",
-  "TOKUSHIMA_VORTIS",
-  "MONTEDIO_YAMAGATA",
-  "V_VAREN_NAGASAKI",
-  "VENTFORET_KOFU",
-  "BLAUBLITZ_AKITA",
-  "KATALLER_TOYAMA",
-  "TOCHIGI_CITY",
-  "FUJIEDA_MYFC",
-  "IWAKI_FC",
-  "VANRAURE_HACHINOHE",
-  "FC_IMABARI",
-  "RENOFA_YAMAGUCHI",
-  "KAGOSHIMA_UTD",
-  "FC_RYUKYU",
-]);
-
-/** 按球队地区与编码解析七类联赛主题，无法确认时返回空字符串并沿用原有配色。 */
-export function resolveDortmundLeagueTheme(teamCountry, teamCode) {
+/** 按球队地区/联赛解析七类联赛主题，无法确认时返回空字符串并沿用原有配色。 */
+export function resolveDortmundLeagueTheme(teamCountry) {
   const country = String(teamCountry || "").trim();
-  const code = String(teamCode || "")
-    .trim()
-    .toUpperCase();
-  if (["日本", "日职", "日乙"].includes(country)) {
-    if (DORTMUND_J1_TEAM_CODES.has(code)) return "j1";
-    if (DORTMUND_J2_TEAM_CODES.has(code)) return "j2";
-    return "";
-  }
-  return DORTMUND_LEAGUE_COUNTRY_KEYS[country] || "";
+  return DORTMUND_LEAGUE_THEME_KEYS[country] || "";
 }
 
 /**
@@ -1435,7 +1377,7 @@ export const DORTMUND_ODDS_RESULT_OPTIONS = Object.freeze([
 ]);
 /** 列表筛选中的“未登记”哨兵值，仅用于查询参数，不写入业务表。 */
 export const DORTMUND_FILTER_UNREGISTERED_VALUE = "U";
-/** 倍率赛果使用英文逗号落库，历史请求可能携带中文逗号，统一在读取时兼容。 */
+/** 倍率赛果使用英文逗号落库；读取和导入同时接受中文逗号分隔。 */
 export const DORTMUND_ODDS_RESULT_SEPARATOR = ",";
 
 /**
@@ -1477,7 +1419,7 @@ export const DORTMUND_SIM_MODE_OPTIONS = Object.freeze(["full", "half"]);
 
 /**
  * 读取组合核验状态的展示配置。
- * 空值、未知值及历史遗留 U 值统一按“未核验”展示兜底；U 仅用于兼容读取，不再写回数据库。
+ * 空值与未知值统一按“未核验”展示兜底；U 仅用于列表查询筛选，不写入业务表。
  */
 export function getReturnVerificationOption(status) {
   const normalized = status ? String(status).trim().toUpperCase() : "";

@@ -186,10 +186,10 @@ export default {
       this.selectedDetailMatchId = row && row.matchId;
       this.matchDetailVisible = Boolean(this.selectedDetailMatchId);
     },
-    // 主客队名称与比赛记录页保持一致，点击后打开对应球队详情，不中断当前比赛选择。
+    // 主客队名称与比赛记录页保持一致，按“地区/联赛”解析主题；点击后打开对应球队详情，不中断当前比赛选择。
     teamLeagueClass(row, side) {
       const prefix = side === "away" ? "away" : "home";
-      const league = resolveDortmundLeagueTheme(row[`${prefix}TeamCountry`], row[`${prefix}TeamCode`]);
+      const league = resolveDortmundLeagueTheme(row[`${prefix}TeamCountry`]);
       return league ? `league-${league}` : "";
     },
     openTeamDetail(row, side) {

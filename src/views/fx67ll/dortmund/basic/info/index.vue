@@ -463,64 +463,56 @@ export default {
   align-items: center;
   min-width: 178px;
   height: 30px;
-  padding: 0 10px;
+  padding: 0 12px;
   overflow: hidden;
   isolation: isolate;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
   white-space: nowrap;
   vertical-align: middle;
-  transition: background-color 0.24s ease, box-shadow 0.24s ease,
-    filter 0.24s ease;
+  transition: color 0.24s ease, background-color 0.24s ease,
+    border-color 0.24s ease, box-shadow 0.24s ease, transform 0.24s ease;
 
   &::after {
     position: absolute;
-    inset: 0;
+    inset: -40% -55%;
     z-index: 1;
     content: "";
     pointer-events: none;
-    border-radius: inherit;
-    opacity: 0.3;
-    animation: infoAddBreathing 6.2s ease-in-out infinite;
+    background: linear-gradient(105deg, transparent 36%,
+        rgba(255, 255, 255, 0.76) 49%, transparent 62%);
+    opacity: 0;
+    transform: translateX(-46%) rotate(8deg);
   }
 }
 
 .info-add-season-btn {
-  color: #fff;
-  background: #a10e22;
-  box-shadow: 0 2px 5px rgba(67, 4, 15, 0.18),
-    0 1px 2px rgba(67, 4, 15, 0.12);
-
-  &::after {
-    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.16),
-        transparent 64%);
-  }
+  color: #8d2237;
+  background: linear-gradient(135deg, #fff8f9 0%, #fffdfd 54%, #fff1f4 100%);
+  border-color: #efcbd2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(120, 19, 38, 0.08);
 
   .info-add-icon {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.12);
+    color: #a81731;
+    background: rgba(168, 23, 49, 0.08);
   }
 }
 
 .info-add-match-btn {
-  color: #161616;
-  background: #ffe45c;
-  box-shadow: 0 2px 5px rgba(44, 38, 5, 0.12),
-    0 1px 2px rgba(44, 38, 5, 0.08);
-
-  &::after {
-    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.2),
-        transparent 66%);
-    animation-delay: -1.9s;
-  }
+  color: #665314;
+  background: linear-gradient(135deg, #fffdf0 0%, #fff9d9 56%, #fff5c7 100%);
+  border-color: #eadb93;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 6px rgba(112, 91, 10, 0.08);
 
   .info-add-icon {
-    color: #111;
-    background: rgba(255, 255, 255, 0.32);
+    color: #846b00;
+    background: rgba(168, 138, 0, 0.1);
   }
 }
 
@@ -538,7 +530,8 @@ export default {
   line-height: 1;
   border: 0;
   border-radius: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    box-shadow 0.2s ease, transform 0.24s ease;
 }
 
 .info-add-label {
@@ -558,64 +551,72 @@ export default {
   padding-left: 7px;
   font-size: 11px;
   opacity: 0.6;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.24s ease, opacity 0.2s ease;
 }
 
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:hover,
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:focus-visible {
-  color: #fff;
-  background: #a81126;
-  transform: none;
-  box-shadow: inset 0 0 9px rgba(255, 104, 120, 0.14),
-    0 4px 9px rgba(67, 4, 15, 0.24), 0 2px 4px rgba(67, 4, 15, 0.14);
+  color: #761b30;
+  background: linear-gradient(135deg, #fff1f4 0%, #ffe8ed 54%, #ffe0e6 100%);
+  border-color: #dea2af;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 20px rgba(151, 28, 50, 0.14), 0 3px 7px rgba(151, 28, 50, 0.08);
 }
 
 .info-add-season-btn:hover .info-add-icon,
 .info-add-season-btn:focus-visible .info-add-icon {
-  background: rgba(255, 255, 255, 0.17);
+  color: #fff;
+  background: #aa1a35;
+  box-shadow: 0 4px 9px rgba(142, 22, 44, 0.22);
+  transform: rotate(-6deg) scale(1.08);
 }
 
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:hover,
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:focus-visible {
-  color: #111;
-  background: #ffe45c;
-  filter: saturate(1.06) brightness(1.01);
-  transform: none;
-  box-shadow: inset 0 0 0 1px rgba(46, 42, 20, 0.15),
-    inset 0 1px 3px rgba(68, 58, 15, 0.08),
-    0 4px 8px rgba(44, 38, 5, 0.16), 0 2px 4px rgba(44, 38, 5, 0.09);
+  color: #584700;
+  background: linear-gradient(135deg, #fffce4 0%, #fff4b7 56%, #ffeda0 100%);
+  border-color: #dcc55b;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 10px 20px rgba(128, 104, 10, 0.15), 0 3px 7px rgba(128, 104, 10, 0.08);
 }
 
 .info-add-match-btn:hover .info-add-icon,
 .info-add-match-btn:focus-visible .info-add-icon {
-  background: rgba(255, 255, 255, 0.44);
+  color: #453800;
+  background: #ffe568;
+  box-shadow: 0 4px 9px rgba(121, 98, 0, 0.18);
+  transform: rotate(6deg) scale(1.08);
 }
 
 .info-add-entry:hover .info-add-arrow,
 .info-add-entry:focus-visible .info-add-arrow {
-  opacity: 0.9;
-  transform: translateX(1px);
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+.info-add-entry:hover::after,
+.info-add-entry:focus-visible::after {
+  animation: infoAddSheen 0.72s ease-out;
 }
 
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-entry:active {
-  transform: none;
-  box-shadow: inset 0 2px 4px rgba(28, 18, 20, 0.12),
-    0 1px 2px rgba(46, 30, 20, 0.08);
+  transform: translateY(0) scale(0.985);
+  box-shadow: inset 0 2px 5px rgba(28, 18, 20, 0.1),
+    0 2px 4px rgba(46, 30, 20, 0.06);
 }
 
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-season-btn:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 9px rgba(255, 104, 120, 0.14),
-    0 4px 9px rgba(67, 4, 15, 0.24), 0 2px 4px rgba(67, 4, 15, 0.14),
-    0 0 0 2px rgba(200, 16, 46, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 20px rgba(151, 28, 50, 0.14), 0 0 0 3px rgba(190, 30, 58, 0.14);
 }
 
 .dl-page .dl-toolbar .dl-toolbar-actions .info-add-match-btn:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(46, 42, 20, 0.15),
-    inset 0 1px 3px rgba(68, 58, 15, 0.08),
-    0 4px 8px rgba(44, 38, 5, 0.16), 0 2px 4px rgba(44, 38, 5, 0.09),
-    0 0 0 2px rgba(17, 17, 17, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 10px 20px rgba(128, 104, 10, 0.15), 0 0 0 3px rgba(181, 151, 20, 0.15);
 }
 
 .info-add-entry.is-disabled,
@@ -628,18 +629,22 @@ export default {
 
 .info-add-entry.is-disabled::after {
   animation: none;
-  opacity: 0.2;
+  opacity: 0;
 }
 
-@keyframes infoAddBreathing {
-
-  0%,
-  100% {
-    opacity: 0.24;
+@keyframes infoAddSheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-46%) rotate(8deg);
   }
 
-  50% {
-    opacity: 0.42;
+  24% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(46%) rotate(8deg);
   }
 }
 
@@ -653,7 +658,7 @@ export default {
 
   .info-add-entry::after {
     animation: none;
-    opacity: 0.34;
+    opacity: 0;
   }
 }
 

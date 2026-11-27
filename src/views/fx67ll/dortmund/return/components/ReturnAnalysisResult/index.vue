@@ -308,9 +308,9 @@ export default {
           return parsed.map((item) => String(item)).filter(Boolean);
         }
       } catch (error) {
-        // 兼容历史逗号分隔格式。
+        return [];
       }
-      return text.split(/[,，、;；\s]+/).map((item) => item.trim()).filter(Boolean);
+      return [];
     },
     hasEvidenceRefs(match) {
       return this.parseRefs(match.evidenceRefs).length > 0
