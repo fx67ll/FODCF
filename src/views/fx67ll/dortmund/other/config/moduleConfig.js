@@ -1,46 +1,44 @@
 // 球队地区预选选项数组
 export const TEAM_COUNTRY_OPTIONS = [
   // 五大联赛
-  { label: "德甲", value: "德甲" },
-  { label: "英超", value: "英超" },
-  { label: "西甲", value: "西甲" },
-  { label: "意甲", value: "意甲" },
-  { label: "法甲", value: "法甲" },
+  { label: "德甲", value: "德甲", matchImport: true },
+  { label: "英超", value: "英超", matchImport: true },
+  { label: "西甲", value: "西甲", matchImport: true },
+  { label: "意甲", value: "意甲", matchImport: true },
+  { label: "法甲", value: "法甲", matchImport: true },
   // 国家队
-  { label: "世界杯", value: "世界杯" },
-  { label: "欧洲杯", value: "欧洲杯" },
+  { label: "世界杯", value: "世界杯", matchImport: true },
+  { label: "欧洲杯", value: "欧洲杯", matchImport: true },
   { label: "德国", value: "德国" },
   { label: "英国", value: "英国" },
   { label: "西班牙", value: "西班牙" },
   { label: "意大利", value: "意大利" },
   { label: "法国", value: "法国" },
   // 新增：五大联赛国内杯赛
-  { label: "德国杯", value: "德国杯" },
-  { label: "英格兰足总杯", value: "英格兰足总杯" },
-  { label: "英格兰联赛杯", value: "英格兰联赛杯" },
-  { label: "西班牙国王杯", value: "西班牙国王杯" },
-  { label: "意大利杯", value: "意大利杯" },
-  { label: "法国杯", value: "法国杯" },
-  { label: "法国联赛杯", value: "法国联赛杯" },
+  { label: "德国杯", value: "德国杯", matchImport: true },
+  { label: "英格兰足总杯", value: "英格兰足总杯", matchImport: true },
+  { label: "英格兰联赛杯", value: "英格兰联赛杯", matchImport: true },
+  { label: "西班牙国王杯", value: "西班牙国王杯", matchImport: true },
+  { label: "意大利杯", value: "意大利杯", matchImport: true },
+  { label: "法国杯", value: "法国杯", matchImport: true },
+  { label: "法国联赛杯", value: "法国联赛杯", matchImport: true },
   // 新增：五大联赛关联的洲际/顶级杯赛
-  { label: "欧冠", value: "欧冠" },
-  { label: "欧联杯", value: "欧联杯" },
-  { label: "欧协联", value: "欧协联" },
-  { label: "欧洲超级杯", value: "欧洲超级杯" },
-  { label: "德国超级杯", value: "德国超级杯" },
-  { label: "社区盾杯", value: "社区盾杯" },
-  { label: "西班牙超级杯", value: "西班牙超级杯" },
-  { label: "意大利超级杯", value: "意大利超级杯" },
-  { label: "法国超级杯", value: "法国超级杯" },
+  { label: "欧冠", value: "欧冠", matchImport: true },
+  { label: "欧联杯", value: "欧联杯", matchImport: true },
+  { label: "欧协联", value: "欧协联", matchImport: true },
+  { label: "欧洲超级杯", value: "欧洲超级杯", matchImport: true },
+  { label: "德国超级杯", value: "德国超级杯", matchImport: true },
+  { label: "社区盾杯", value: "社区盾杯", matchImport: true },
+  { label: "西班牙超级杯", value: "西班牙超级杯", matchImport: true },
+  { label: "意大利超级杯", value: "意大利超级杯", matchImport: true },
+  { label: "法国超级杯", value: "法国超级杯", matchImport: true },
   // 其他，杂七杂八
-  { label: "德乙", value: "德乙" },
-  { label: "英冠", value: "英冠" },
-  { label: "荷甲", value: "荷甲" },
-  { label: "日职", value: "日职" },
-  { label: "日乙", value: "日乙" },
-  { label: "韩职", value: "韩职" },
-  { label: "中超", value: "中超" },
-  { label: "中甲", value: "中甲" },
+  { label: "德乙", value: "德乙", matchImport: true },
+  { label: "英冠", value: "英冠", matchImport: true },
+  { label: "荷甲", value: "荷甲", matchImport: true },
+  { label: "日职", value: "日职", matchImport: true },
+  { label: "日乙", value: "日乙", matchImport: true },
+  { label: "韩职", value: "韩职", matchImport: true },
   { label: "亚洲杯", value: "亚洲杯" },
 ];
 
@@ -353,28 +351,6 @@ export const DORTMUND_IMAGE_LIMITS = Object.freeze({
   maxSizeMb: 4,
 });
 
-/**
- * 比赛 JSON 导入的 AI 采集范围。
- * 仅约束外部 AI 的采集来源；最终落库仍由比赛导入服务按当前用户可见赛季、球队和全局唯一性校验。
- */
-export const DORTMUND_MATCH_IMPORT_COMPETITIONS = Object.freeze([
-  "英超",
-  "西甲",
-  "德甲",
-  "意甲",
-  "法甲",
-  "英格兰足总杯",
-  "西班牙国王杯",
-  "德国杯",
-  "意大利杯",
-  "法国杯",
-  "日职",
-  "日乙",
-  "欧冠",
-  "欧联杯",
-  "欧协联",
-]);
-
 /** 比赛 JSON 导入标准字段，模板、AI 提示词和前端格式说明共用同一来源。 */
 export const DORTMUND_MATCH_IMPORT_FIELDS = Object.freeze([
   {
@@ -451,8 +427,16 @@ export const DORTMUND_MATCH_IMPORT_FIELDS = Object.freeze([
   },
 ]);
 
-const DORTMUND_IMPORT_COMPETITION_TEXT =
-  DORTMUND_MATCH_IMPORT_COMPETITIONS.join("、");
+/**
+ * 比赛 JSON 导入的 AI 采集范围。
+ * 新增或调整采集赛事时只需同步预设标记，避免重复维护赛事清单；
+ * 仅约束外部 AI 的采集来源，最终落库仍由比赛导入服务按当前用户可见赛季、球队和全局唯一性校验。
+ */
+const DORTMUND_IMPORT_COMPETITION_TEXT = TEAM_COUNTRY_OPTIONS.filter(
+  (item) => item.matchImport
+)
+  .map((item) => item.value)
+  .join("、");
 
 function padDortmundDatePart(value) {
   return String(value).padStart(2, "0");
@@ -482,25 +466,26 @@ export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
   );
   const end = new Date(start.getTime());
   end.setDate(end.getDate() + 7);
+
   return [
-    "你是一名严谨的足球赛事数据采集助手。请独立检索公开、可核验的赛程信息，将结果整理为可直接导入 Dortmund 比赛记录的标准 JSON。",
+    "你是一名严谨的足球赛事数据采集助手，仅负责采集符合限定条件的公开赛程数据，不做任何赛果预测、投注推荐或收益承诺。请独立检索权威公开、可核验的赛程与开售信息，将结果整理为可直接导入 Dortmund 比赛记录系统的标准 JSON。",
     "",
-    `采集窗口：${formatDortmundDate(start)} 00:00:00 至 ${formatDortmundDate(
-      end
-    )} 23:59:59（Asia/Shanghai）。只采集该窗口内尚未开赛、且开赛时间已经确认的比赛。`,
-    `赛事范围：${DORTMUND_IMPORT_COMPETITION_TEXT}。只采集上述赛事，不扩展到其他联赛、青年队、预备队或女子赛事。`,
+    `采集窗口：${formatDortmundDate(start)} 00:00:00 至 ${formatDortmundDate(end)} 23:59:59（Asia/Shanghai）。只采集该窗口内尚未开赛、且开赛时间已官方确认的比赛。`,
+    `赛事范围：${DORTMUND_IMPORT_COMPETITION_TEXT}。仅采集上述赛事范畴内的正赛场次，不扩展到其他联赛、杯赛、青年队、预备队、女子赛事及非官方友谊赛。`,
+    "开售限定：仅采集中国体育彩票竞彩足球游戏正式开售的比赛场次，以中国体彩官方渠道公布的竞彩赛程为准；未纳入竞彩开售范围的比赛，即使属于上述赛事范畴也一律不得输出。",
     "",
     "执行规则：",
-    "1. 独立核对官方赛程、俱乐部公告和权威赛事页面；比赛时间、主客队和主场信息存在冲突时，以官方来源为准，无法核实时不要输出该场。",
-    "2. 每场比赛只输出一次，不重复；不得编造比赛、球队、赛季、时间、主场、编码或备注。",
-    "3. 输出必须是一个 JSON 对象，顶层仅包含 matches 数组；不得输出 Markdown 代码块、解释文字、前后缀或注释。",
-    "4. matches 中每个对象必须包含全部标准字段；未知字段使用空字符串，不得使用 null，必填字段不得留空。",
-    "5. seasonName 使用“2026-2027赛季德甲联赛”这类完整中文命名；不确定具体赛季时，使用赛事通行名称并按采集窗口所在赛季补齐，不得虚构不存在的赛季。",
-    "6. homeTeamName、awayTeamName 使用通行中文球队名；homeTeamCode、awayTeamCode 仅在你确认平台编码时填写，否则留空，由导入校验按名称匹配。",
-    '7. matchCode 一律留空，由系统生成；matchStatus 固定为字符串 "0"。',
-    "8. matchTime 统一使用 yyyy-MM-dd HH:mm:ss 格式和 Asia/Shanghai 时区；跨时区比赛先换算后再输出。",
-    "9. 未来赛程的 matchResult、oddsResult 一律留空；matchVenue 仅在确认后填写。",
-    "10. matchRemark 只写客观来源或待核验事项，不写预测、推荐、收益承诺或无法证实的判断。",
+    "1. 独立核对赛事官方赛程、俱乐部公告及权威赛事平台信息；比赛时间、主客队、主场信息存在冲突时，以赛事官方来源为准。同时核对中国体彩官方开售清单，无法确认开售状态或赛程信息存疑的场次，一律不输出。",
+    "2. 同一场比赛仅输出一次，严禁重复录入；禁止编造任何比赛、球队、赛季、时间、场馆、编码或备注信息，所有输出内容必须有可核验的公开来源。",
+    "3. 输出内容必须是纯 JSON 对象，顶层仅包含 matches 一个数组字段；严禁输出 Markdown 代码块、任何解释文字、前后缀说明、代码注释或多余标点，输出结果必须可直接被标准 JSON 解析器读取。",
+    "4. matches 数组中的每个对象必须包含全部标准字段，不得缺省；所有未知字段统一使用空字符串 '' 填充，严禁使用 null、undefined 等其他值；赛季名称、主客队名称、比赛时间、比赛状态为必填项，不得留空。",
+    "5. seasonName 使用完整中文赛季命名，格式为「XXXX-XXXX赛季」（如「2026-2027赛季」）；不确定具体赛季时，按采集窗口所属的官方赛季规范补全，严禁虚构不存在的赛季。",
+    "6. homeTeamName、awayTeamName 使用国内通行的标准中文球队名；homeTeamCode、awayTeamCode 仅在你 100% 确认 Dortmund 平台编码时填写，否则一律留空，由导入校验逻辑按名称自动匹配。",
+    '7. matchCode 一律留空，由导入系统自动生成；matchStatus 固定填写字符串 "0"，不得修改为其他值。',
+    "8. matchTime 统一使用 yyyy-MM-dd HH:mm:ss 格式，时区强制为 Asia/Shanghai；海外赛事必须先完成时区换算后再输出。",
+    "9. 未开赛的赛程，matchResult、oddsResult 一律留空；matchVenue 仅在官方信息明确可核验时填写，不确定则留空。",
+    "10. matchRemark 仅可填写客观信息来源、核验标记等中性内容，严禁出现任何赛果预测、投注推荐、收益承诺、主观判断或无法证实的表述。",
+    "11. matches 数组内的比赛按 matchTime 升序排列，开赛时间越早越靠前。",
     "",
     "标准输出结构：",
     JSON.stringify(
@@ -527,6 +512,7 @@ export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
     ),
   ].join("\n");
 }
+
 
 /**
  * 生成可直接下载的 JSON 导入模板。示例值只用于说明字段类型，不宣称对应真实赛程。
