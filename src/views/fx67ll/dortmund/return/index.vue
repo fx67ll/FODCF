@@ -14,7 +14,7 @@
         <el-button type="success" plain icon="el-icon-time" size="mini" @click="openHistoryDrawer">
           查看历史记录
         </el-button>
-        <el-button v-hasRole="['admin']" type="warning" plain icon="el-icon-monitor" size="mini"
+        <el-button v-hasPermi="['dortmund:return:monitor:query']" type="warning" plain icon="el-icon-monitor" size="mini"
           @click="openAsyncMonitor">
           异步任务监控
         </el-button>
@@ -528,7 +528,7 @@
       </div>
     </el-drawer>
 
-    <!-- 管理员异步任务监控：仅按需与抽屉打开期间轮询，关闭后立即停止额外查询。 -->
+    <!-- 异步任务监控：仅具备监控查询权限时显示，按需轮询并在抽屉关闭后立即停止额外查询。 -->
     <el-drawer :visible.sync="asyncMonitorVisible" title="异步任务监控" size="1080px" append-to-body destroy-on-close
       custom-class="return-drawer return-monitor-drawer" :wrapper-closable="false" @opened="startAsyncMonitorPolling"
       @closed="stopAsyncMonitorPolling">
@@ -544,7 +544,7 @@
             <span class="return-drawer-chip">更新于 {{ asyncMonitorRefreshLabel }}</span>
             <el-button size="mini" type="success" plain icon="el-icon-refresh" :loading="asyncMonitorLoading"
               @click="refreshAsyncMonitor(false)">刷新</el-button>
-            <el-button v-hasRole="['admin']" size="mini" type="danger" plain icon="el-icon-delete"
+            <el-button v-hasPermi="['dortmund:return:monitor:cleanup']" size="mini" type="danger" plain icon="el-icon-delete"
               :loading="asyncMonitorCleanupLoading" @click="handleAsyncMonitorCleanup">清理异常</el-button>
           </div>
         </div>
@@ -610,7 +610,7 @@
             <el-table-column label="最新备注" prop="generationRemark" min-width="190" show-overflow-tooltip />
             <el-table-column label="操作" width="128" align="center" fixed="right" class-name="dortmund-action-column">
               <template slot-scope="scope">
-                <el-button v-hasRole="['admin']" type="text" size="mini" class="async-monitor-stop"
+                <el-button v-hasPermi="['dortmund:return:monitor:stop']" type="text" size="mini" class="async-monitor-stop"
                   :loading="asyncMonitorStopLoadingId === scope.row.generationId"
                   @click="handleStopAsyncTask(scope.row)">停止</el-button>
                 <el-button type="text" size="mini" @click="handleGenerationDetail(scope.row)">详情</el-button>
