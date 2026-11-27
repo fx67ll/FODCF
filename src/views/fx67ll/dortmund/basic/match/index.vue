@@ -102,8 +102,8 @@
             <!-- 导出支持 Excel/JSON/插入 SQL；导入改为 JSON 预览勾选，模板与提示词共用模块配置。 -->
             <dortmund-export-menu title="比赛记录" permission="dortmund:match:export" endpoint="/dortmund/match/export"
               :params="matchRequestParams" file-prefix="dortmund-match" />
-            <el-button type="primary" plain icon="el-icon-upload2" size="mini" @click="matchImportVisible = true"
-              v-hasPermi="['dortmund:match:add']">导入 JSON</el-button>
+            <el-button v-if="canImportMatchRecord || canImportMatchResult" type="primary" plain size="mini"
+              icon="el-icon-upload2" @click="matchImportVisible = true">导入 JSON</el-button>
             <transition name="dl-chip">
               <span class="dl-selected-chip" v-if="ids.length > 0"><i class="el-icon-circle-check"></i>已选 {{ ids.length
               }} 项</span>
@@ -313,6 +313,7 @@ import {
 
 import { formatAuditActor } from "@/views/fx67ll/dortmund/other/utils/audit";
 import filterAutoQuery from "@/views/fx67ll/dortmund/other/utils/filterAutoQuery";
+import { checkPermi } from "@/utils/common/permission";
 export default {
   name: "Match",
   dicts: ["sys_notice_status", "fx67ll_match_result", "fx67ll_dortmund_odds_type"],
@@ -324,6 +325,12 @@ export default {
   },
   mixins: [filterAutoQuery],
   computed: {
+    canImportMatchRecord() {
+      return checkPermi(["dortmund:match:add"]);
+    },
+    canImportMatchResult() {
+      return checkPermi(["dortmund:match:edit"]);
+    },
     matchVersusFields() {
       return [
         { label: '所属赛季', value: this.matchDetailData.seasonName, emptyText: '未关联赛季' },

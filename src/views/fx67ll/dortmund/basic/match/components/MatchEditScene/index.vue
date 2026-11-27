@@ -180,7 +180,7 @@
         <div class="match-edit-card-header">
           <span class="match-edit-card-chip"><i class="el-icon-odometer"></i></span>
           <span class="match-edit-card-title">同步倍率</span>
-          <span class="match-edit-card-tip">{{ editMode === "add" ? "可随比赛同步创建首条有效 odds" : "维护当前有效 odds 版本" }}</span>
+          <span class="match-edit-card-tip">{{ editMode === "add" ? "可随比赛同步创建首条有效倍率" : "维护当前有效倍率版本" }}</span>
         </div>
         <el-row :gutter="20">
           <el-col :span="24" v-if="editMode === 'update' && editForm.matchId">
@@ -188,14 +188,14 @@
           </el-col>
 
           <el-col :span="24" v-if="editMode === 'add'">
-            <el-form-item label="同步 odds">
+            <el-form-item label="同步倍率">
               <div class="match-odds-toggle">
                 <el-tag :type="newOddsVisible ? 'success' : 'info'" size="small">
-                  {{ newOddsVisible ? "保存时同步创建有效 odds" : "关闭时不提交 odds" }}
+                  {{ newOddsVisible ? "保存时同步创建有效倍率" : "关闭时不提交倍率" }}
                 </el-tag>
                 <el-button type="text" class="dortmund-theme-text" icon="el-icon-circle-plus-outline"
                   @click="toggleNewOdds">
-                  {{ newOddsVisible ? "收起 odds 表单" : "同时创建 odds" }}
+                  {{ newOddsVisible ? "收起倍率表单" : "同时创建倍率" }}
                 </el-button>
               </div>
             </el-form-item>
@@ -383,7 +383,7 @@ export default {
       newHomeTeamVisible: false,
       // 当场新增客队面板开关
       newAwayTeamVisible: false,
-      // 当场新增首条有效 odds 面板开关
+      // 当场新增首条有效倍率面板开关
       newOddsVisible: false,
       selectedHomeTeam: this.buildSelectedTeam(this.initialForm, "home"),
       selectedAwayTeam: this.buildSelectedTeam(this.initialForm, "away"),
@@ -446,7 +446,7 @@ export default {
     removeDraftInfo(index) {
       this.newInfoPoints.splice(index, 1);
     },
-    // 展开/收起同步 odds 表单；收起时清空草稿，保证关闭后请求不带 newOdds
+    // 展开/收起同步倍率表单；收起时清空草稿，保证关闭后请求不带 newOdds
     toggleNewOdds() {
       this.newOddsVisible = !this.newOddsVisible;
       // 展开时立即带入当前来源时间和对应业务编码，减少重复录入并保持编码语义一致。

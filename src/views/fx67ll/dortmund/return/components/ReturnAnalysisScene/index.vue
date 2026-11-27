@@ -70,7 +70,7 @@
                 <span class="mode-card-icon"><i class="el-icon-user"></i></span>
                 <span class="mode-card-copy">
                   <strong>主观模式</strong>
-                  <small>使用当前有效 odds 的人工权重，不执行平台检索</small>
+                  <small>使用当前有效倍率的人工权重，不执行平台检索</small>
                 </span>
                 <i class="el-icon-success mode-card-check" v-if="generateForm.generationMode === 'S'"></i>
               </button>
@@ -143,7 +143,7 @@
               <span class="generate-step">03</span>
               <div class="generate-section-copy">
                 <strong>参与比赛</strong>
-                <small>仅展示存在有效 odds 的比赛，单次最多选择 {{ maxAnalysisMatches }} 场</small>
+                <small>仅展示存在有效倍率的比赛，单次最多选择 {{ maxAnalysisMatches }} 场</small>
               </div>
             </div>
             <el-form-item prop="matchIds">
@@ -488,7 +488,7 @@ const MAX_SUPPLEMENTARY_OBJECTIVES_TOTAL_LENGTH = DORTMUND_OBJECTIVE_LIMITS.maxT
 const ACTIVE_GENERATION_KEY = "dortmund.return.activeGenerationId";
 const PENDING_REQUEST_KEY = "dortmund.return.pendingClientRequestId";
 const POLL_INTERVAL_MS = DORTMUND_RETURN_POLLING.intervalMs;
-// 3秒轮询600次覆盖1500秒租约，并给状态写入和网络抖动留出余量。
+// 3秒轮询900次覆盖2400秒默认租约，并给终态写入和网络抖动留出余量。
 const MAX_POLL_COUNT = DORTMUND_RETURN_POLLING.maxCount;
 
 function validateBusinessAmount(rule, value, callback) {
@@ -612,7 +612,7 @@ export default {
             required: true,
             min: 1,
             max: DORTMUND_RETURN_CONFIG.maxAnalysisMatches,
-            message: `请选择 ${DORTMUND_RETURN_CONFIG.minAnalysisMatches}–${DORTMUND_RETURN_CONFIG.maxAnalysisMatches} 场存在有效 odds 的比赛`,
+            message: `请选择 ${DORTMUND_RETURN_CONFIG.minAnalysisMatches}–${DORTMUND_RETURN_CONFIG.maxAnalysisMatches} 场存在有效倍率的比赛`,
             trigger: "change",
           },
         ],
@@ -696,7 +696,7 @@ export default {
     },
     modeHint() {
       return this.generateForm.generationMode === "S"
-        ? "固定使用当前有效 odds 的手工权重，不执行平台检索；AI仍须结合标签、信息点与倍率论证"
+        ? "固定使用当前有效倍率的手工权重，不执行平台检索；AI仍须结合标签、信息点与倍率论证"
         : "AI先规划并受控检索补充信息，再自主评估权重；权重不参与金额计算";
     },
     hasRemarkQueryPermission() {
@@ -1002,7 +1002,7 @@ export default {
       this.$refs.generateForm.validate((valid) => {
         if (!valid) return;
         if (!this.generateForm.matchIds.length) {
-          this.$modal.msgError("请选择至少一场存在有效 odds 的比赛");
+          this.$modal.msgError("请选择至少一场存在有效倍率的比赛");
           return;
         }
         this.submitting = true;
@@ -1033,7 +1033,7 @@ export default {
       this.$refs.generateForm.validate((valid) => {
         if (!valid) return;
         if (!this.generateForm.matchIds.length) {
-          this.$modal.msgError("请选择至少一场存在有效 odds 的比赛");
+          this.$modal.msgError("请选择至少一场存在有效倍率的比赛");
           return;
         }
         this.manualSubmitting = true;

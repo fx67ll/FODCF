@@ -63,6 +63,35 @@ export function getGeneration(generationId, params) {
   });
 }
 
+// 查询异步分析任务监控快照；仅管理员可访问，不返回大文本业务快照。
+export function getReturnAsyncMonitor(params) {
+  return request({
+    url: "/dortmund/return/generation/async-monitor",
+    method: "get",
+    params,
+  });
+}
+
+// 管理员手动停止处理中的异步分析任务。
+export function stopReturnAsyncTask(generationId) {
+  const normalizedId = normalizePositiveId(generationId);
+  if (!normalizedId) {
+    return Promise.reject(createInvalidIdError("回报组合批次编号无效"));
+  }
+  return request({
+    url: "/dortmund/return/generation/" + normalizedId + "/stop",
+    method: "post",
+  });
+}
+
+// 管理员清理超过保留期且无组合/证据依赖的异常任务。
+export function cleanupReturnAsyncTasks() {
+  return request({
+    url: "/dortmund/return/generation/async-cleanup",
+    method: "post",
+  });
+}
+
 // 查询可人工处理批次的AI任务
 export function getManualTask(generationId) {
   return request({

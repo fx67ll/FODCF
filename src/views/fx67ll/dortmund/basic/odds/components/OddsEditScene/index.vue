@@ -8,7 +8,7 @@
         <div class="odds-edit-hero-text">
           <div class="odds-edit-hero-title-row">
             <h2>{{ heroTitle }}</h2>
-            <span class="odds-edit-hero-type">Odds · 倍率版本</span>
+            <span class="odds-edit-hero-type">倍率版本</span>
           </div>
           <p>{{ heroDescription }}</p>
         </div>

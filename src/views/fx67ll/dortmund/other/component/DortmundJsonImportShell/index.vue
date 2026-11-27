@@ -26,8 +26,10 @@
             <div class="json-import-intro-actions">
               <el-button size="mini" class="json-import-tool-btn is-template" type="primary" plain
                 icon="el-icon-download" :disabled="importing" @click="$emit('download-template')">下载 JSON 模板</el-button>
-              <el-button v-if="hasPrompt" size="mini" class="json-import-tool-btn is-prompt" type="success" plain
-                icon="el-icon-view" :disabled="importing" @click="$emit('show-prompt')">查看 AI 采集提示词</el-button>
+              <slot v-if="hasPrompt" name="prompt-action" :disabled="importing">
+                <el-button size="mini" class="json-import-tool-btn is-prompt" type="success" plain icon="el-icon-view"
+                  :disabled="importing" @click="$emit('show-prompt')">查看 AI 采集提示词</el-button>
+              </slot>
               <el-button size="mini" class="json-import-tool-btn is-format" type="warning" plain icon="el-icon-tickets"
                 :disabled="importing" @click="$emit('show-format')">字段格式说明</el-button>
             </div>

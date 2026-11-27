@@ -286,10 +286,10 @@ export const DORTMUND_RETURN_CONFIG = Object.freeze({
   maxBusinessAmount: DORTMUND_NUMERIC.maxBusinessAmount,
 });
 
-/** 回报组合页面轮询：3 秒 × 600 次覆盖 1500 秒租约，并留出网络重试余量。 */
+/** 回报组合页面轮询：3 秒 × 900 次覆盖 2400 秒默认租约，并留出终止写入与网络重试余量。 */
 export const DORTMUND_RETURN_POLLING = Object.freeze({
   intervalMs: 3000,
-  maxCount: 600,
+  maxCount: 900,
   maxConsecutiveErrors: 5,
 });
 
@@ -354,6 +354,12 @@ export const DORTMUND_IMAGE_LIMITS = Object.freeze({
 /** 比赛 JSON 导入标准字段，模板、AI 提示词和前端格式说明共用同一来源。 */
 export const DORTMUND_MATCH_IMPORT_FIELDS = Object.freeze([
   {
+    key: "type",
+    label: "导入类型",
+    required: true,
+    description: "固定填写 match，用于区分比赛记录导入与比赛结果补录",
+  },
+  {
     key: "matchCode",
     label: "比赛编码",
     required: false,
@@ -414,16 +420,59 @@ export const DORTMUND_MATCH_IMPORT_FIELDS = Object.freeze([
     description: "未来赛程留空；0=主队胜，1=平局，2=客队胜",
   },
   {
-    key: "oddsResult",
-    label: "倍率赛果",
+    key: "multiplierResult",
+    label: "倍率结果",
     required: false,
-    description: "未来赛程留空；多个值使用英文逗号分隔",
+    description:
+      "已完赛时填写；多个值使用英文逗号分隔，允许 HW、DR、AW、HH、HD、HA",
+  },
+  {
+    key: "multipliers",
+    label: "倍率记录",
+    required: false,
+    description:
+      "可选数组；仅填写可核验的完整六类倍率记录，无法确认时使用空数组",
   },
   {
     key: "matchRemark",
     label: "比赛备注",
     required: false,
     description: "可记录来源、赛程变更或待核验事项",
+  },
+]);
+
+/** 比赛结果 JSON 导入标准字段；比赛必须已存在且以 matchCode 唯一定位。 */
+export const DORTMUND_MATCH_RESULT_IMPORT_FIELDS = Object.freeze([
+  {
+    key: "type",
+    label: "导入类型",
+    required: true,
+    description: "固定填写 matchResult，用于区分比赛结果补录与比赛记录导入",
+  },
+  {
+    key: "matchCode",
+    label: "比赛编码",
+    required: true,
+    description: "填写当前账号可维护比赛的完整平台编码，不支持按名称或主键匹配",
+  },
+  {
+    key: "matchResult",
+    label: "比赛结果",
+    required: false,
+    description: "0=主队胜，1=平局，2=客队胜；未提供的字段保持原值",
+  },
+  {
+    key: "multiplierResult",
+    label: "倍率结果",
+    required: false,
+    description:
+      "多个值使用英文逗号分隔，允许 HW、DR、AW、HH、HD、HA；未提供的字段保持原值",
+  },
+  {
+    key: "multipliers",
+    label: "倍率记录",
+    required: false,
+    description: "可选数组；提供时会同步新增倍率版本并切换当前有效记录",
   },
 ]);
 
@@ -468,28 +517,34 @@ export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
   end.setDate(end.getDate() + 7);
 
   return [
-    "你是一名严谨的足球赛事数据采集助手，仅负责采集符合限定条件的公开赛程数据，不做任何赛果预测、投注推荐或收益承诺。请独立检索权威公开、可核验的赛程与开售信息，将结果整理为可直接导入 Dortmund 比赛记录系统的标准 JSON。",
+    "你是一名严谨的足球赛事数据采集助手，仅负责采集符合限定条件的公开赛程数据，不做任何赛果预测或收益承诺。请独立检索权威公开、可核验的赛程与开售信息，将结果整理为可直接导入 Dortmund 比赛记录系统的标准 JSON。",
     "",
-    `采集窗口：${formatDortmundDate(start)} 00:00:00 至 ${formatDortmundDate(end)} 23:59:59（Asia/Shanghai）。只采集该窗口内尚未开赛、且开赛时间已官方确认的比赛。`,
+    `采集窗口：${formatDortmundDate(start)} 00:00:00 至 ${formatDortmundDate(
+      end
+    )} 23:59:59（Asia/Shanghai）。只采集该窗口内尚未开赛、且开赛时间已官方确认的比赛。`,
     `赛事范围：${DORTMUND_IMPORT_COMPETITION_TEXT}。仅采集上述赛事范畴内的正赛场次，不扩展到其他联赛、杯赛、青年队、预备队、女子赛事及非官方友谊赛。`,
     "开售限定：仅采集中国体育彩票竞彩足球游戏正式开售的比赛场次，以中国体彩官方渠道公布的竞彩赛程为准；未纳入竞彩开售范围的比赛，即使属于上述赛事范畴也一律不得输出。",
     "",
     "执行规则：",
     "1. 独立核对赛事官方赛程、俱乐部公告及权威赛事平台信息；比赛时间、主客队、主场信息存在冲突时，以赛事官方来源为准。同时核对中国体彩官方开售清单，无法确认开售状态或赛程信息存疑的场次，一律不输出。",
     "2. 同一场比赛仅输出一次，严禁重复录入；禁止编造任何比赛、球队、赛季、时间、场馆、编码或备注信息，所有输出内容必须有可核验的公开来源。",
-    "3. 输出内容必须是纯 JSON 对象，顶层仅包含 matches 一个数组字段；严禁输出 Markdown 代码块、任何解释文字、前后缀说明、代码注释或多余标点，输出结果必须可直接被标准 JSON 解析器读取。",
+    '3. 输出内容必须是纯 JSON 对象，顶层必须填写 "type": "match"，并仅包含 type 与 matches 两个字段；严禁输出 Markdown 代码块、任何解释文字、前后缀说明、代码注释或多余标点，输出结果必须可直接被标准 JSON 解析器读取。',
     "4. matches 数组中的每个对象必须包含全部标准字段，不得缺省；所有未知字段统一使用空字符串 '' 填充，严禁使用 null、undefined 等其他值；赛季名称、主客队名称、比赛时间、比赛状态为必填项，不得留空。",
     "5. seasonName 使用完整中文赛季命名，格式为「XXXX-XXXX赛季」（如「2026-2027赛季」）；不确定具体赛季时，按采集窗口所属的官方赛季规范补全，严禁虚构不存在的赛季。",
     "6. homeTeamName、awayTeamName 使用国内通行的标准中文球队名；homeTeamCode、awayTeamCode 仅在你 100% 确认 Dortmund 平台编码时填写，否则一律留空，由导入校验逻辑按名称自动匹配。",
     '7. matchCode 一律留空，由导入系统自动生成；matchStatus 固定填写字符串 "0"，不得修改为其他值。',
     "8. matchTime 统一使用 yyyy-MM-dd HH:mm:ss 格式，时区强制为 Asia/Shanghai；海外赛事必须先完成时区换算后再输出。",
-    "9. 未开赛的赛程，matchResult、oddsResult 一律留空；matchVenue 仅在官方信息明确可核验时填写，不确定则留空。",
-    "10. matchRemark 仅可填写客观信息来源、核验标记等中性内容，严禁出现任何赛果预测、投注推荐、收益承诺、主观判断或无法证实的表述。",
-    "11. matches 数组内的比赛按 matchTime 升序排列，开赛时间越早越靠前。",
+    "9. 未开赛的赛程，matchResult、multiplierResult 一律留空；matchVenue 仅在官方信息明确可核验时填写，不确定则留空。",
+    "10. multipliers 为可选数组，用于同步导入可核验的倍率版本。只有六类倍率、让分值、来源时间和对应比赛均来自权威公开来源且完整一致时才填写；否则必须输出空数组，不得编造、补零或用近似值代替。",
+    "11. 每条倍率记录必须完整填写 handicapValue、homeWinMultiplier、drawMultiplier、awayWinMultiplier、handicapHomeWinMultiplier、handicapDrawMultiplier、handicapAwayWinMultiplier，六个倍率均必须大于 0；权重要么省略，要么填写 0.0000-1.0000 的数字。",
+    '12. multiplierCode 留空，由导入系统生成；activeFlag 填写字符串 "Y" 表示当前有效版本，同一场比赛只应指定一条有效记录。multiplierRemark 仅填写客观来源或核验说明。',
+    "13. matchRemark 仅可填写客观信息来源、核验标记等中性内容，严禁出现任何赛果预测、推荐、收益承诺、主观判断或无法证实的表述。",
+    "14. matches 数组内的比赛按 matchTime 升序排列，开赛时间越早越靠前。",
     "",
     "标准输出结构：",
     JSON.stringify(
       {
+        type: "match",
         matches: [
           {
             matchCode: "",
@@ -502,7 +557,28 @@ export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
             matchVenue: "示例主场",
             matchStatus: "0",
             matchResult: "",
-            oddsResult: "",
+            multiplierResult: "",
+            multipliers: [
+              {
+                multiplierCode: "",
+                sourceTime: formatDortmundDateTime(start, 18, 0, 0),
+                handicapValue: "-1",
+                homeWinMultiplier: "2.10",
+                homeWinWeight: "1.0000",
+                drawMultiplier: "3.40",
+                drawWeight: "1.0000",
+                awayWinMultiplier: "3.80",
+                awayWinWeight: "1.0000",
+                handicapHomeWinMultiplier: "3.20",
+                handicapHomeWinWeight: "1.0000",
+                handicapDrawMultiplier: "3.75",
+                handicapDrawWeight: "1.0000",
+                handicapAwayWinMultiplier: "2.05",
+                handicapAwayWinWeight: "1.0000",
+                activeFlag: "Y",
+                multiplierRemark: "示例倍率数据，无法核验时必须输出空数组",
+              },
+            ],
             matchRemark: "示例数据，导入前请替换为已核验比赛",
           },
         ],
@@ -512,7 +588,6 @@ export function buildDortmundMatchImportPrompt(baseDate = new Date()) {
     ),
   ].join("\n");
 }
-
 
 /**
  * 生成可直接下载的 JSON 导入模板。示例值只用于说明字段类型，不宣称对应真实赛程。
@@ -525,6 +600,7 @@ export function buildDortmundMatchImportTemplate(baseDate = new Date()) {
   );
   return JSON.stringify(
     {
+      type: "match",
       matches: [
         {
           matchCode: "",
@@ -537,8 +613,168 @@ export function buildDortmundMatchImportTemplate(baseDate = new Date()) {
           matchVenue: "示例主场",
           matchStatus: "0",
           matchResult: "",
-          oddsResult: "",
+          multiplierResult: "",
+          multipliers: [
+            {
+              multiplierCode: "",
+              sourceTime: formatDortmundDateTime(start, 18, 0, 0),
+              handicapValue: "-1",
+              homeWinMultiplier: "2.10",
+              homeWinWeight: "1.0000",
+              drawMultiplier: "3.40",
+              drawWeight: "1.0000",
+              awayWinMultiplier: "3.80",
+              awayWinWeight: "1.0000",
+              handicapHomeWinMultiplier: "3.20",
+              handicapHomeWinWeight: "1.0000",
+              handicapDrawMultiplier: "3.75",
+              handicapDrawWeight: "1.0000",
+              handicapAwayWinMultiplier: "2.05",
+              handicapAwayWinWeight: "1.0000",
+              activeFlag: "Y",
+              multiplierRemark: "示例数据，导入前请替换或删除",
+            },
+          ],
           matchRemark: "示例数据，导入前请替换为已核验比赛",
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
+/**
+ * 生成既有比赛赛果与倍率记录的 AI 采集提示词。
+ * 比赛编码必须由用户提供，第三方 AI 不得根据对阵名称或时间自行猜测平台编码。
+ */
+export function buildDortmundMatchResultImportPrompt(
+  baseDate = new Date(),
+  target = null
+) {
+  const end = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
+    23,
+    59,
+    59
+  );
+  const start = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate() - 7,
+    0,
+    0,
+    0
+  );
+  const matches =
+    target && Array.isArray(target.matches)
+      ? target.matches.filter((match) => match && match.matchCode)
+      : [];
+  const targetSection = matches.length
+    ? [
+        "本次比赛范围（由系统选择器确定，禁止扩展、替换或遗漏）：",
+        `- 平台比赛编码 matchCode（只能使用下列编码，逐条原样填写）：${matches
+          .map((match) => String(match.matchCode || "").trim())
+          .join(",")}`,
+        `- 比赛对照（编码 - 对阵与时间，仅用于确认对象，不得据此改写编码）：${matches
+          .map(
+            (match) =>
+              `${String(match.matchCode || "").trim()} - ${[
+                match.homeTeamName,
+                match.awayTeamName,
+              ]
+                .filter(Boolean)
+                .join(" vs ")}${
+                match.matchTime ? `（${match.matchTime}）` : ""
+              }`
+          )
+          .join("；")}`,
+        "- 只为上述比赛输出结果记录，不得添加未选择的比赛，也不得要求用户再次手工输入编码。",
+        "",
+      ]
+    : [
+        "本次未绑定系统比赛范围。平台比赛编码无法从公开资料推断，禁止自行生成、猜测、翻译或用对阵名称代替；缺少编码时应请用户先完成比赛选择。",
+        "",
+      ];
+  return [
+    "你是一名严谨的足球赛果与倍率资料整理助手。请为用户指定的既有比赛补录已确认的常规赛果和倍率结果，并按 Dortmund 标准 JSON 返回。不得预测、推测或承诺任何结果。",
+    "",
+    `默认核对窗口：${formatDortmundDate(
+      start
+    )} 00:00:00 至 ${formatDortmundDate(
+      end
+    )} 23:59:59（Asia/Shanghai）。用户另有指定时以用户范围为准。`,
+    "",
+    ...targetSection,
+    "执行前必须确认：",
+    "1. 平台比赛编码只使用本次选择范围中由系统注入的清单，不得要求用户手工输入、猜测、翻译或用对阵名称代替。",
+    "2. 只补录已经完赛且赛果已由赛事官方或权威公开来源确认的比赛；未完赛、延期、取消或结果存在冲突的比赛不得输出。",
+    "3. 只处理已选定的比赛编码，不得扩展其他比赛，不得修改比赛时间、球队、赛季、场馆等编排字段。",
+    "",
+    "字段规则：",
+    '1. type 固定填写字符串 "matchResult"，用于区分比赛结果补录与比赛记录导入。',
+    "2. matchCode 必须逐条原样复制本次选择范围中的平台编码。",
+    "3. matchResult 填写 0、1、2 的字符串：0=主队胜，1=平局，2=客队胜；无法确认时省略该字段，不得猜测。",
+    "4. multiplierResult 填写已经确认命中的倍率类型，多个值使用英文逗号分隔，允许 HW、DR、AW、HH、HD、HA；无法确认时省略该字段。",
+    "5. multipliers 为可选数组，仅同步可核验的倍率版本。只有六类倍率、让分值、来源时间和对应比赛均来自权威公开来源且完整一致时才填写；否则必须输出空数组，不得编造、补零或用近似值代替。",
+    "6. 每条倍率记录必须完整填写 handicapValue、homeWinMultiplier、drawMultiplier、awayWinMultiplier、handicapHomeWinMultiplier、handicapDrawMultiplier、handicapAwayWinMultiplier，六个倍率均必须大于 0；权重要么省略，要么填写 0.0000-1.0000 的数字。",
+    '7. multiplierCode 留空，由导入系统生成；activeFlag 填写字符串 "Y" 表示当前有效版本；multiplierRemark 仅填写客观来源或核验说明。',
+    "8. 输出必须是纯 JSON 对象，顶层包含 type 与 matchResults；所有时间使用 yyyy-MM-dd HH:mm:ss 格式和 Asia/Shanghai 时区。不得输出 Markdown 代码块、解释文字、注释或多个 JSON 片段。",
+    "",
+    "标准输出结构（示例值只说明字段，不得当作真实结果）：",
+    JSON.stringify(
+      {
+        type: "matchResult",
+        matchResults: [
+          {
+            matchCode: "【系统选择器提供的平台比赛编码】",
+            matchResult: "0",
+            multiplierResult: "HW,HH",
+            multipliers: [
+              {
+                multiplierCode: "",
+                sourceTime: formatDortmundDateTime(end, 12, 0, 0),
+                handicapValue: "-1",
+                homeWinMultiplier: "2.10",
+                homeWinWeight: "1.0000",
+                drawMultiplier: "3.40",
+                drawWeight: "1.0000",
+                awayWinMultiplier: "3.80",
+                awayWinWeight: "1.0000",
+                handicapHomeWinMultiplier: "3.20",
+                handicapHomeWinWeight: "1.0000",
+                handicapDrawMultiplier: "3.75",
+                handicapDrawWeight: "1.0000",
+                handicapAwayWinMultiplier: "2.05",
+                handicapAwayWinWeight: "1.0000",
+                activeFlag: "Y",
+                multiplierRemark: "示例倍率数据，无法核验时必须输出空数组",
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2
+    ),
+  ].join("\n");
+}
+
+/**
+ * 生成既有比赛赛果与倍率记录的 JSON 导入模板。
+ */
+export function buildDortmundMatchResultImportTemplate(baseDate = new Date()) {
+  return JSON.stringify(
+    {
+      type: "matchResult",
+      matchResults: [
+        {
+          matchCode: "【请替换为平台比赛编码】",
+          matchResult: "0",
+          multiplierResult: "HW,HH",
+          multipliers: [],
         },
       ],
     },
@@ -677,12 +913,66 @@ export function buildDortmundInfoPointImportTemplate() {
  * 信息点引用平台内部赛季、球队和比赛编码，第三方 AI 无法从公开资料可靠推断，因此提示词必须
  * 明确要求使用用户提供的编码；提示词只允许整理可核验事实，不输出预测、推断或虚构来源。
  */
-export function buildDortmundInfoPointImportPrompt(baseDate = new Date()) {
+export function buildDortmundInfoPointImportPrompt(
+  baseDate = new Date(),
+  target = null
+) {
   const currentDate = formatDortmundDate(baseDate);
+  const targetSection = [];
+  if (target && target.collectionType === "team") {
+    const teams = Array.isArray(target.teams) ? target.teams : [];
+    targetSection.push(
+      "本次采集目标（由系统选择器确定，禁止扩展范围）：",
+      `- 采集类型：T，只输出 T 类型信息点。`,
+      `- 赛季名称 seasonName（必须原样填写）：${String(
+        target.seasonName || ""
+      ).trim()}`,
+      `- 球队编码 teamCodes（只能用下列平台编码，多个用英文逗号分隔）：${teams
+        .map((team) => String(team.teamCode || "").trim())
+        .filter(Boolean)
+        .join(",")}`,
+      `- 球队对照（编码 - 名称，仅用于确认对象，不得据此改写编码）：${teams
+        .map(
+          (team) =>
+            `${String(team.teamCode || "").trim()} - ${String(
+              team.teamName || ""
+            ).trim()}`
+        )
+        .join("；")}`,
+      "- 每条的 matchCode 必须为空字符串；不得输出 M 类型，不得添加未选球队或未指定赛季。",
+      ""
+    );
+  } else if (target && target.collectionType === "match") {
+    const matches = Array.isArray(target.matches) ? target.matches : [];
+    targetSection.push(
+      "本次采集目标（由系统选择器确定，禁止扩展范围）：",
+      `- 采集类型：M，只输出 M 类型信息点。`,
+      `- 比赛编码 matchCode（必须逐条原样填写）：${matches
+        .map((match) => String(match.matchCode || "").trim())
+        .filter(Boolean)
+        .join(",")}`,
+      `- 比赛对照（编码 - 对阵与时间，仅用于确认对象，不得据此改写编码）：${matches
+        .map(
+          (match) =>
+            `${String(match.matchCode || "").trim()} - ${[
+              match.homeTeamName,
+              match.awayTeamName,
+            ]
+              .filter(Boolean)
+              .join(" vs ")}${match.matchTime ? `（${match.matchTime}）` : ""}`
+        )
+        .join("；")}`,
+      "- 每条的 seasonName 和 teamCodes 必须为空字符串；不得输出 T 类型，不得添加未选比赛。",
+      ""
+    );
+  }
   return [
     "你是一名严谨的足球资料整理助手。请根据用户在本次对话中指定的赛季、球队、比赛和信息点主题，独立检索公开且可核验的材料，整理成可直接导入 Dortmund 信息点模块的标准 JSON。",
     "",
     `当前日期：${currentDate}（Asia/Shanghai）。只整理已经发生、已经官宣或有明确公开来源支持的事实；不得把预测、传闻、推测或未来判断作为信息点。`,
+    "",
+    ...targetSection,
+    "必填输出字段：infoPointType、seasonName、matchCode、teamCodes、pointTitle、pointContent、sourceName。T 类型必须原样使用上面给出的 seasonName 和 teamCode 编码；M 类型必须原样使用上面给出的 matchCode 编码。编码字段不得留空、缩写、翻译或自行生成。",
     "",
     "使用前必须确认：",
     "1. 用户已提供平台内部编码：T 类型需要完整的赛季名称和球队编码，M 类型需要比赛编码。平台内部编码无法从公开资料推断，禁止自行生成、猜测或用名称代替。",

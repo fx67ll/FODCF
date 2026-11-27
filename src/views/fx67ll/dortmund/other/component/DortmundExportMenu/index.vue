@@ -1,5 +1,5 @@
 <template>
-  <el-popover v-if="permitted" v-model="visible" placement="bottom-end" width="330" trigger="click"
+  <el-popover v-if="permitted" v-model="visible" placement="bottom-start" width="330" trigger="click"
     popper-class="dortmund-export-menu-popper">
     <div class="export-menu-panel">
       <div class="export-menu-head">
@@ -20,7 +20,8 @@
       </button>
       <p class="export-menu-tip"><i class="el-icon-info"></i>JSON 与 SQL 不会截断分页，导出范围为筛选结果全量。</p>
     </div>
-    <el-button slot="reference" type="warning" plain size="mini" icon="el-icon-download" :loading="loading">
+    <el-button slot="reference" type="warning" plain size="mini" icon="el-icon-download" :loading="loading"
+      :class="buttonClass">
       {{ buttonLabel }}
     </el-button>
   </el-popover>
@@ -57,6 +58,10 @@ export default {
       type: String,
       default: "导出",
     },
+    buttonClass: {
+      type: [String, Array, Object],
+      default: "",
+    },
   },
   data() {
     return {
@@ -79,7 +84,9 @@ export default {
   methods: {
     resolveParams() {
       const params = typeof this.params === "function" ? this.params() : this.params;
-      return { ...(params || {}) };
+      const { pageNum, pageSize, ...exportParams } = params || {};
+      // 导出始终使用当前筛选条件的全量结果；分页参数只服务于列表查询，不能带入导出接口。
+      return exportParams;
     },
     handleExport(type) {
       if (this.loading) return;

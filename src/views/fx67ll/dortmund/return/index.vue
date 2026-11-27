@@ -14,8 +14,10 @@
         <el-button type="success" plain icon="el-icon-time" size="mini" @click="openHistoryDrawer">
           查看历史记录
         </el-button>
-        <dortmund-export-menu title="回报组合" endpoint="/dortmund/return/export" :params="buildCombinationExportParams"
-          permission="dortmund:return:export" file-prefix="dortmund-return-combination" button-label="导出组合记录" />
+        <el-button v-hasRole="['admin']" type="warning" plain icon="el-icon-monitor" size="mini"
+          @click="openAsyncMonitor">
+          异步任务监控
+        </el-button>
         <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="openOrphanImageDrawer"
           v-hasPermi="['dortmund:return:image:query']">孤儿图片清理</el-button>
       </div>
@@ -118,6 +120,8 @@
             </el-select>
           </div>
           <div class="combination-batch-actions">
+            <dortmund-export-menu title="回报组合" endpoint="/dortmund/return/export" :params="buildCombinationExportParams"
+              permission="dortmund:return:export" file-prefix="dortmund-return-combination" button-label="导出" />
             <el-button type="success" plain size="mini" icon="el-icon-check" :loading="batchAdoptLoading"
               :disabled="!selectedCombinationIds.length" @click="handleBatchAdopt"
               v-hasPermi="['dortmund:return:review']">
@@ -524,6 +528,133 @@
       </div>
     </el-drawer>
 
+    <!-- 管理员异步任务监控：仅按需与抽屉打开期间轮询，关闭后立即停止额外查询。 -->
+    <el-drawer :visible.sync="asyncMonitorVisible" title="异步任务监控" size="1080px" append-to-body destroy-on-close
+      custom-class="return-drawer return-monitor-drawer" :wrapper-closable="false" @opened="startAsyncMonitorPolling"
+      @closed="stopAsyncMonitorPolling">
+      <template slot="title">
+        <div class="return-drawer-heading">
+          <div class="return-drawer-heading-icon"><i class="el-icon-monitor"></i></div>
+          <div class="return-drawer-heading-copy">
+            <strong>异步分析任务监控</strong>
+            <span>观察处理中任务、重试窗口与异常批次；运行数据不包含业务大文本快照</span>
+          </div>
+          <div class="return-drawer-heading-tools">
+            <span class="return-drawer-chip">运行中 <b>{{ asyncMonitorCount("runningCount") }}</b></span>
+            <span class="return-drawer-chip">更新于 {{ asyncMonitorRefreshLabel }}</span>
+            <el-button size="mini" type="success" plain icon="el-icon-refresh" :loading="asyncMonitorLoading"
+              @click="refreshAsyncMonitor(false)">刷新</el-button>
+            <el-button v-hasRole="['admin']" size="mini" type="danger" plain icon="el-icon-delete"
+              :loading="asyncMonitorCleanupLoading" @click="handleAsyncMonitorCleanup">清理异常</el-button>
+          </div>
+        </div>
+      </template>
+      <div class="return-drawer-body dl-page async-monitor-body">
+        <el-alert v-if="asyncMonitorCount('staleRunningCount') > 0" class="async-monitor-alert" type="warning" show-icon
+          :closable="false" :title="`${asyncMonitorCount('staleRunningCount')} 条处理中任务的租约已过期，请检查节点状态或清理异常任务。`" />
+
+        <div class="async-monitor-stats">
+          <div v-for="card in asyncMonitorStats" :key="card.key" :class="['async-monitor-stat', `is-${card.tone}`]">
+            <span class="async-monitor-stat-icon"><i :class="card.icon"></i></span>
+            <div>
+              <span>{{ card.label }}</span>
+              <strong>{{ card.value }}</strong>
+              <small>{{ card.hint }}</small>
+            </div>
+          </div>
+        </div>
+
+        <el-alert v-if="asyncMonitorCleanupResult" class="async-monitor-alert" type="success" show-icon
+          @close="asyncMonitorCleanupResult = null">
+          <template slot="title">
+            清理完成：回收过期任务 {{ asyncMonitorCleanupResult.staleMarkedFailedCount || 0 }} 条，
+            删除失败任务 {{ asyncMonitorCleanupResult.deletedCount || 0 }} 条，
+            仍在保留期或本次转失败 {{ asyncMonitorCleanupResult.retainedCount || 0 }} 条，
+            超期但因依赖或单次上限保留 {{ asyncMonitorCleanupResult.skippedDependencyCount || 0 }} 条。
+          </template>
+        </el-alert>
+
+        <section class="async-monitor-section">
+          <header class="async-monitor-section-heading">
+            <div>
+              <i class="el-icon-video-play"></i>
+              <strong>运行中任务</strong>
+              <span>按租约到期时间排序，最长串行链路约 30 分钟</span>
+            </div>
+            <el-tag size="mini" type="success" effect="plain">{{ runningTasks.length }} 条</el-tag>
+          </header>
+          <el-table :data="runningTasks" size="mini" border class="async-monitor-table" empty-text="当前没有运行中的异步分析任务">
+            <el-table-column label="批次编码" prop="generationCode" min-width="180" show-overflow-tooltip />
+            <el-table-column label="模式" width="82" align="center">
+              <template slot-scope="scope">{{ formatGenerationMode(scope.row.generationMode) }}</template>
+            </el-table-column>
+            <el-table-column label="状态" width="90" align="center">
+              <template slot-scope="scope">{{ formatGenerationStatus(scope.row.generationStatus) }}</template>
+            </el-table-column>
+            <el-table-column label="尝试" width="70" align="center">
+              <template slot-scope="scope">{{ formatAsyncAttempt(scope.row) }}</template>
+            </el-table-column>
+            <el-table-column label="租约剩余" width="112" align="center">
+              <template slot-scope="scope">
+                <el-tag size="mini" :type="isAsyncTaskStale(scope.row) ? 'danger' : 'success'" effect="plain">
+                  {{ formatAsyncLease(scope.row) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="证据流程" width="100" align="center">
+              <template slot-scope="scope">{{ formatEvidenceStatus(scope.row.aiEvidenceStatus) }}</template>
+            </el-table-column>
+            <el-table-column label="受理时间" width="150" align="center">
+              <template slot-scope="scope">{{ formatDateTime(scope.row.startedTime) }}</template>
+            </el-table-column>
+            <el-table-column label="最新备注" prop="generationRemark" min-width="190" show-overflow-tooltip />
+            <el-table-column label="操作" width="128" align="center" fixed="right" class-name="dortmund-action-column">
+              <template slot-scope="scope">
+                <el-button v-hasRole="['admin']" type="text" size="mini" class="async-monitor-stop"
+                  :loading="asyncMonitorStopLoadingId === scope.row.generationId"
+                  @click="handleStopAsyncTask(scope.row)">停止</el-button>
+                <el-button type="text" size="mini" @click="handleGenerationDetail(scope.row)">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section class="async-monitor-section">
+          <header class="async-monitor-section-heading">
+            <div>
+              <i class="el-icon-warning-outline"></i>
+              <strong>异常任务</strong>
+              <span>失败任务保留 24 小时供人工回填；有组合或证据依赖时不会删除</span>
+            </div>
+            <el-tag size="mini" type="danger" effect="plain">{{ abnormalTasks.length }} 条</el-tag>
+          </header>
+          <el-table :data="abnormalTasks" size="mini" border class="async-monitor-table" empty-text="当前没有失败或租约异常的异步任务">
+            <el-table-column label="批次编码" prop="generationCode" min-width="180" show-overflow-tooltip />
+            <el-table-column label="状态" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag size="mini" :type="isAsyncTaskStale(scope.row) ? 'warning' : 'danger'" effect="plain">
+                  {{ isAsyncTaskStale(scope.row) ? "租约异常" : formatGenerationStatus(scope.row.generationStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="尝试" width="70" align="center">
+              <template slot-scope="scope">{{ formatAsyncAttempt(scope.row) }}</template>
+            </el-table-column>
+            <el-table-column label="结束/到期时间" width="154" align="center">
+              <template slot-scope="scope">{{ formatDateTime(scope.row.finishedTime || scope.row.leaseExpireTime)
+              }}</template>
+            </el-table-column>
+            <el-table-column label="异常备注" prop="generationRemark" min-width="280" show-overflow-tooltip />
+            <el-table-column label="操作" width="84" align="center" fixed="right" class-name="dortmund-action-column">
+              <template slot-scope="scope">
+                <el-button type="text" size="mini" @click="handleGenerationDetail(scope.row)">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+      </div>
+    </el-drawer>
+
     <dortmund-detail-drawer :visible.sync="combinationVisible" title="回报组合详情"
       :subtitle="combinationDetail.combinationCode ? `组合编码 · ${combinationDetail.combinationCode}` : (combinationIsManual ? '查看组合指标、第三方AI分析与逐场理由' : '查看组合指标、证据链、图片与逐场明细')"
       icon="el-icon-connection" tone="green" size="780px" :loading="combinationLoading" feature="return">
@@ -557,14 +688,17 @@ import {
   adoptCombination,
   batchAdoptCombinations,
   batchVerifyCombinations,
+  cleanupReturnAsyncTasks,
   deleteOrphanReturnImages,
   getCombination,
   getGeneration,
   getManualTask,
+  getReturnAsyncMonitor,
   listCombination,
   listGeneration,
   listOrphanReturnImages,
   rejectCombination,
+  stopReturnAsyncTask,
   verifyCombination,
 } from "@/api/fx67ll/dortmund/returnCombination";
 import DortmundMatchSelectorModal from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
@@ -664,11 +798,55 @@ export default {
       orphanSearchLoading: false,
       orphanDeleteLoading: false,
       orphanCleanupResult: null,
+      asyncMonitorVisible: false,
+      asyncMonitorLoading: false,
+      asyncMonitorPollingTimer: null,
+      asyncMonitor: {},
+      asyncMonitorCleanupLoading: false,
+      asyncMonitorCleanupResult: null,
+      asyncMonitorStopLoadingId: null,
     };
   },
   computed: {
     hasImageQueryPermission() {
       return checkPermi(["dortmund:return:image:query"]);
+    },
+    runningTasks() {
+      return (this.asyncMonitor && this.asyncMonitor.runningTasks) || [];
+    },
+    abnormalTasks() {
+      return (this.asyncMonitor && this.asyncMonitor.abnormalTasks) || [];
+    },
+    asyncMonitorRefreshLabel() {
+      return this.parseTime(this.asyncMonitor.generatedAt, "{h}:{i}:{s}") || "尚未刷新";
+    },
+    asyncMonitorStats() {
+      return [
+        {
+          key: "running", label: "处理中", value: this.asyncMonitorCount("runningCount"),
+          hint: "已领取任务", icon: "el-icon-video-play", tone: "green"
+        },
+        {
+          key: "stale", label: "租约异常", value: this.asyncMonitorCount("staleRunningCount"),
+          hint: "需检查节点", icon: "el-icon-warning-outline", tone: "orange"
+        },
+        {
+          key: "retry", label: "等待重试", value: this.asyncMonitorCount("retryWaitingCount"),
+          hint: "重试窗口内", icon: "el-icon-refresh", tone: "blue"
+        },
+        {
+          key: "failed", label: "失败任务", value: this.asyncMonitorCount("failedCount"),
+          hint: "24小时内可回填", icon: "el-icon-circle-close", tone: "red"
+        },
+        {
+          key: "recent", label: "近24小时", value: this.asyncMonitorCount("recent24hCount"),
+          hint: "受理批次", icon: "el-icon-date", tone: "gray"
+        },
+        {
+          key: "duration", label: "平均耗时", value: this.formatAsyncDuration(this.asyncMonitor.averageDurationSeconds),
+          hint: `最大 ${this.formatAsyncDuration(this.asyncMonitor.maxDurationSeconds)}`, icon: "el-icon-timer", tone: "green"
+        },
+      ];
     },
     generationMetricItems() {
       return [
@@ -763,6 +941,7 @@ export default {
       clearTimeout(this.combinationFilterTimer);
       this.combinationFilterTimer = null;
     }
+    this.stopAsyncMonitorPolling();
   },
   methods: {
     // 空用户名来自第三方导入或历史数据，统一标注来源，避免列表审计列为空。
@@ -771,6 +950,116 @@ export default {
     },
     formatMoneyDisplay(value) {
       return formatMoneyDisplay(value);
+    },
+    formatDateTime(value) {
+      return this.parseTime(value, "{y}-{m}-{d} {h}:{i}:{s}") || "-";
+    },
+    formatAsyncDuration(value) {
+      const seconds = Number(value);
+      if (!Number.isFinite(seconds) || seconds < 0) {
+        return "-";
+      }
+      if (seconds < 60) {
+        return `${Math.round(seconds)}秒`;
+      }
+      const minutes = Math.floor(seconds / 60);
+      const remainSeconds = Math.round(seconds % 60);
+      return remainSeconds ? `${minutes}分${remainSeconds}秒` : `${minutes}分钟`;
+    },
+    asyncMonitorCount(key) {
+      const value = Number(this.asyncMonitor && this.asyncMonitor[key]);
+      return Number.isFinite(value) ? value : 0;
+    },
+    formatAsyncAttempt(row) {
+      const attempt = Number(row && row.attemptCount) || 0;
+      const maximum = Number(row && row.maxAttempts) || 0;
+      return maximum ? `${attempt}/${maximum}` : String(attempt);
+    },
+    isAsyncTaskStale(row) {
+      const rawLease = row && row.leaseExpireTime;
+      const leaseTime = this.parseTime(rawLease, "{y}-{m}-{d} {h}:{i}:{s}");
+      if (!leaseTime) {
+        return false;
+      }
+      const timestamp = new Date(leaseTime.replace(/-/g, "/")).getTime();
+      return Number.isFinite(timestamp) && timestamp < Date.now();
+    },
+    formatAsyncLease(row) {
+      const rawLease = row && row.leaseExpireTime;
+      const leaseTime = this.parseTime(rawLease, "{y}-{m}-{d} {h}:{i}:{s}");
+      if (!leaseTime) {
+        return "未设置";
+      }
+      const timestamp = new Date(leaseTime.replace(/-/g, "/")).getTime();
+      if (!Number.isFinite(timestamp)) {
+        return "时间无效";
+      }
+      const remainSeconds = Math.floor((timestamp - Date.now()) / 1000);
+      if (remainSeconds <= 0) {
+        return "已过期";
+      }
+      if (remainSeconds < 60) {
+        return `${remainSeconds}秒`;
+      }
+      return `${Math.floor(remainSeconds / 60)}分${remainSeconds % 60}秒`;
+    },
+    // 轮询只在监控抽屉打开时运行，静默刷新失败时保留上一次快照。
+    refreshAsyncMonitor(showLoading = true) {
+      if (this.asyncMonitorLoading) {
+        return Promise.resolve();
+      }
+      this.asyncMonitorLoading = showLoading;
+      const snapshot = this.asyncMonitor || {};
+      return getReturnAsyncMonitor({ limit: 50 }).then((response) => {
+        this.asyncMonitor = { ...snapshot, ...((response && response.data) || {}) };
+      }).catch(() => {
+      }).finally(() => {
+        this.asyncMonitorLoading = false;
+      });
+    },
+    startAsyncMonitorPolling() {
+      this.refreshAsyncMonitor(false);
+      this.stopAsyncMonitorPolling();
+      this.asyncMonitorPollingTimer = setInterval(() => {
+        if (!document.hidden) {
+          this.refreshAsyncMonitor(false);
+        }
+      }, 20000);
+    },
+    stopAsyncMonitorPolling() {
+      if (this.asyncMonitorPollingTimer) {
+        clearInterval(this.asyncMonitorPollingTimer);
+        this.asyncMonitorPollingTimer = null;
+      }
+    },
+    handleStopAsyncTask(row) {
+      if (!row || !row.generationId) {
+        return;
+      }
+      const code = row.generationCode || row.generationId;
+      this.$modal.confirm(`确认停止异步任务「${code}」？停止后本次AI调用产生的后续结果不会落库。`).then(() => {
+        this.asyncMonitorStopLoadingId = row.generationId;
+        return stopReturnAsyncTask(row.generationId);
+      }).then(() => {
+        this.$modal.msgSuccess("异步任务已停止");
+        return this.refreshAsyncMonitor(false);
+      }).catch(() => {
+      }).finally(() => {
+        this.asyncMonitorStopLoadingId = null;
+      });
+    },
+    handleAsyncMonitorCleanup() {
+      this.$modal.confirm("确认清理异常任务？仅删除24小时前结束且没有组合或证据依赖的失败任务；其他异常会保留并返回跳过数量。").then(() => {
+        this.asyncMonitorCleanupLoading = true;
+        return cleanupReturnAsyncTasks();
+      }).then((response) => {
+        this.asyncMonitorCleanupResult = (response && response.data) || {};
+        this.$modal.msgSuccess("异常任务清理完成");
+        return this.refreshAsyncMonitor(false);
+      }).catch(() => {
+      }).finally(() => {
+        this.asyncMonitorCleanupLoading = false;
+      });
     },
     formatEvidenceStatus(value) {
       const labels = { N: "不适用", P: "规划/检索中", R: "检索完成", S: "证据已固化", F: "失败" };
@@ -1188,19 +1477,30 @@ export default {
       this.generationVisible = false;
       this.combinationVisible = false;
       this.orphanImageVisible = false;
+      this.asyncMonitorVisible = false;
     },
     openHistoryDrawer() {
       this.generationVisible = false;
       this.combinationVisible = false;
       this.orphanImageVisible = false;
+      this.asyncMonitorVisible = false;
       this.historyVisible = true;
     },
     openOrphanImageDrawer() {
       this.historyVisible = false;
       this.generationVisible = false;
       this.combinationVisible = false;
+      this.asyncMonitorVisible = false;
       this.orphanCleanupResult = null;
       this.orphanImageVisible = true;
+    },
+    openAsyncMonitor() {
+      this.historyVisible = false;
+      this.generationVisible = false;
+      this.combinationVisible = false;
+      this.orphanImageVisible = false;
+      this.asyncMonitorCleanupResult = null;
+      this.asyncMonitorVisible = true;
     },
     initializeOrphanQuery() {
       if (!this.orphanDateRange || this.orphanDateRange.length !== 2) {
@@ -1488,6 +1788,7 @@ export default {
   align-items: center;
   justify-content: flex-end;
   flex-shrink: 0;
+  flex-wrap: wrap;
   gap: 10px;
 
   .el-button+.el-button {
@@ -2341,12 +2642,202 @@ export default {
   }
 
 }
+
+.async-monitor-body {
+  display: grid;
+  gap: 16px;
+}
+
+.async-monitor-alert {
+  border-radius: 12px;
+}
+
+.async-monitor-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.async-monitor-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 14px;
+  background: #fff;
+  border: 1px solid #e4eee8;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.06);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+
+  &:hover {
+    border-color: #cde9d8;
+    box-shadow: 0 10px 24px rgba(46, 204, 113, 0.12);
+    transform: translateY(-2px);
+  }
+
+  >div {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  span:not(.async-monitor-stat-icon) {
+    font-size: 11px;
+    color: #85968e;
+  }
+
+  strong {
+    overflow: hidden;
+    font-size: 20px;
+    line-height: 1.15;
+    color: #2c3d35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    overflow: hidden;
+    font-size: 10px;
+    color: #a0aca6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &.is-orange .async-monitor-stat-icon {
+    color: #d98920;
+    background: #fff5e7;
+  }
+
+  &.is-blue .async-monitor-stat-icon {
+    color: #3478b8;
+    background: #edf6ff;
+  }
+
+  &.is-red .async-monitor-stat-icon {
+    color: #d84e44;
+    background: #fff0ee;
+  }
+
+  &.is-gray .async-monitor-stat-icon {
+    color: #718078;
+    background: #f1f5f3;
+  }
+}
+
+.async-monitor-stat-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  color: #269d5c;
+  background: #eaf8f0;
+  border-radius: 10px;
+}
+
+.async-monitor-section {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e4eee8;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.05);
+}
+
+.async-monitor-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #fbfefc, #f3faf6);
+  border-bottom: 1px solid #e8f2ec;
+
+  >div {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  i {
+    color: #2ecc71;
+  }
+
+  strong {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #2b3a36;
+  }
+
+  span {
+    overflow: hidden;
+    font-size: 11px;
+    color: #91a098;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.async-monitor-table {
+  width: 100%;
+
+  &::before {
+    display: none;
+  }
+
+  ::v-deep th {
+    font-weight: 600;
+    color: #486057;
+    background: #f5faf7;
+  }
+}
+
+.async-monitor-stop {
+  color: #d84e44;
+
+  &:hover,
+  &:focus {
+    color: #b7352c;
+  }
+}
+
+@media (max-width: 1200px) {
+  .async-monitor-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .return-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .async-monitor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .async-monitor-section-heading {
+    align-items: flex-start;
+
+    >div {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    span {
+      white-space: normal;
+    }
+  }
+}
 </style>
 
 <!-- 抽屉挂载到 body，标题栏样式不能 scoped；仅作用于两个 return 抽屉 -->
 <style lang="scss">
 .return-history-drawer.el-drawer,
-.return-orphan-drawer.el-drawer {
+.return-orphan-drawer.el-drawer,
+.return-monitor-drawer.el-drawer {
   background: #f6faf8;
 
   .el-drawer__header {
@@ -2483,7 +2974,8 @@ export default {
 @media (max-width: 768px) {
 
   .return-history-drawer.el-drawer,
-  .return-orphan-drawer.el-drawer {
+  .return-orphan-drawer.el-drawer,
+  .return-monitor-drawer.el-drawer {
     .el-drawer__header {
       padding-right: 56px;
     }
@@ -2500,7 +2992,8 @@ export default {
 @media (prefers-reduced-motion: reduce) {
 
   .return-history-drawer.el-drawer,
-  .return-orphan-drawer.el-drawer {
+  .return-orphan-drawer.el-drawer,
+  .return-monitor-drawer.el-drawer {
     .el-drawer__close-btn {
       transition: none;
 

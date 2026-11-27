@@ -53,3 +53,14 @@ export function importMatchJson(matches) {
     repeatSubmit: false,
   });
 }
+
+// 导入既有比赛的赛果与倍率记录；matchCode 唯一定位当前账号可维护的比赛，后端整批事务校验。
+export function importMatchResultJson(rows) {
+  return request({
+    url: "/dortmund/match/importResultJson",
+    method: "post",
+    data: rows,
+    timeout: 120000,
+    repeatSubmit: false,
+  });
+}

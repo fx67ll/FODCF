@@ -12,8 +12,12 @@
       :invalid-count="invalidCount" :selected-count="selectedCount" has-prompt @raw-input="markDirty"
       @source-type-change="handleSourceTypeChange" @file-change="handleFileChange" @clear="clearSource"
       @parse="parseJson" @select-all="selectAllValid" @clear-selection="clearSelection" @import="submitImport"
-      @download-template="downloadTemplate" @show-prompt="promptVisible = true" @show-format="formatVisible = true"
+      @download-template="downloadTemplate" @show-prompt="handleShowPromptFallback" @show-format="formatVisible = true"
       @closed="resetDrawer">
+      <template slot="prompt-action">
+        <dortmund-prompt-type-menu title="选择信息点采集范围" subtitle="按球队生成 T 类型，或按比赛生成 M 类型" tip="提示词会写入所选对象的平台编码，未选目标不会生成。"
+          :options="promptTypeOptions" :disabled="importing" @select="handlePromptCollectionType" />
+      </template>
       <template slot="preview">
         <el-table ref="previewTable" :data="parsedRows" size="mini" border max-height="430" row-key="rowKey"
           class="json-import-table json-import-info-table" :row-class-name="rowClassName"
@@ -51,22 +55,58 @@
       </template>
     </dortmund-json-import-shell>
 
-    <el-dialog title="AI 采集提示词" :visible.sync="promptVisible" width="min(860px, 92vw)" append-to-body
-      custom-class="dortmund-json-import-dialog dortmund-info-import-prompt-dialog" :close-on-click-modal="false">
+    <dortmund-import-auxiliary-drawer :visible.sync="teamPromptDialogVisible" title="选择球队采集范围"
+      subtitle="先确定赛季与目标球队，再生成 T 类型采集提示词" icon="el-icon-user" size="760px"
+      footer-tip="提示词会原样写入平台球队编码，第三方 AI 不得猜测或扩展目标范围。" @closed="resetTeamPromptDraft">
+      <div class="json-import-dialog-intro">
+        <span class="json-import-dialog-intro-mark"><i class="el-icon-user"></i></span>
+        <p>先选择赛季和目标球队，再生成只包含 T 类型信息的采集提示词；球队编码会原样写入提示词，第三方 AI 不得猜测。</p>
+      </div>
+      <el-form class="info-prompt-target-form" label-width="88px" size="small">
+        <el-form-item label="所属赛季" required>
+          <dortmund-season-select v-model="promptSeasonId" width="100%" @loaded="handlePromptSeasonLoaded" />
+        </el-form-item>
+        <el-form-item label="目标球队" required>
+          <div class="info-prompt-target-picker">
+            <el-button type="success" plain icon="el-icon-plus" size="small" @click="openPromptTeamSelector">
+              选择球队
+            </el-button>
+            <span class="info-prompt-target-count">已选 {{ selectedPromptTeams.length }} 支</span>
+          </div>
+          <div v-if="selectedPromptTeams.length" class="info-prompt-target-tags">
+            <el-tag v-for="(team, index) in selectedPromptTeams" :key="team.teamId || team.teamCode" size="small"
+              closable effect="plain" @close="removePromptTeam(index)">
+              {{ team.teamName || team.teamCode }} <em>{{ team.teamCode }}</em>
+            </el-tag>
+          </div>
+          <p v-else class="info-prompt-target-empty">尚未选择球队。提示词不会在缺少目标编码时生成。</p>
+        </el-form-item>
+      </el-form>
+      <template slot="footer-actions">
+        <el-button size="small" type="success" icon="el-icon-s-promotion" :disabled="!canGenerateTeamPrompt"
+          @click="showTeamPrompt">生成提示词</el-button>
+      </template>
+    </dortmund-import-auxiliary-drawer>
+
+    <dortmund-import-auxiliary-drawer :visible.sync="promptVisible" title="AI 采集提示词" subtitle="提示词已绑定当前采集范围与平台编码"
+      icon="el-icon-s-promotion" size="880px" footer-tip="复制后请连同采集范围一并交给第三方 AI，系统仍会在写入前执行完整校验。">
       <div class="json-import-dialog-intro">
         <span class="json-import-dialog-intro-mark"><i class="el-icon-s-promotion"></i></span>
-        <p>将下方提示词完整交给具备公开足球资料检索能力的第三方 AI。T/M 类型引用的平台内部编码必须由你另行提供，AI 不得猜测。</p>
+        <p>将下方提示词完整交给具备公开足球资料检索能力的第三方 AI。提示词已绑定你选择的采集范围与平台编码，AI 不得扩展或猜测。</p>
+      </div>
+      <div class="info-prompt-scope">
+        <span class="info-prompt-scope-label"><i class="el-icon-aim"></i>采集范围</span>
+        <p>{{ promptScopeSummary }}</p>
       </div>
       <pre class="json-import-code">{{ aiPrompt }}</pre>
-      <span slot="footer" class="dialog-footer">
-        <el-button size="small" @click="promptVisible = false">关闭</el-button>
-        <el-button size="small" type="success" icon="el-icon-copy-document"
+      <template slot="footer-actions">
+        <el-button size="small" type="success" icon="el-icon-copy-document" :disabled="!aiPrompt"
           @click="copyText(aiPrompt, 'AI 采集提示词已复制')">复制提示词</el-button>
-      </span>
-    </el-dialog>
+      </template>
+    </dortmund-import-auxiliary-drawer>
 
-    <el-dialog title="信息点 JSON 字段格式说明" :visible.sync="formatVisible" width="min(820px, 92vw)" append-to-body
-      custom-class="dortmund-json-import-dialog dortmund-info-import-format-dialog" :close-on-click-modal="false">
+    <dortmund-import-auxiliary-drawer :visible.sync="formatVisible" title="信息点 JSON 字段格式说明" subtitle="标准字段、必填状态与填写约束"
+      icon="el-icon-tickets" size="960px">
       <div class="json-import-dialog-intro">
         <span class="json-import-dialog-intro-mark"><i class="el-icon-document"></i></span>
         <p>字段名保持英文 camelCase。T 类型填写赛季名称和球队编码；M 类型填写比赛编码，两类归属字段不可混用。</p>
@@ -83,10 +123,12 @@
         </el-table-column>
         <el-table-column prop="description" label="说明" min-width="300" />
       </el-table>
-      <span slot="footer" class="dialog-footer">
-        <el-button size="small" @click="formatVisible = false">关闭</el-button>
-      </span>
-    </el-dialog>
+    </dortmund-import-auxiliary-drawer>
+
+    <dortmund-team-selector-modal :visible.sync="teamSelectorVisible" multiple :selected-items="selectedPromptTeams"
+      @confirm="handlePromptTeamConfirm" />
+    <dortmund-match-selector-modal :visible.sync="matchSelectorVisible" multiple allow-all-match-statuses
+      :selected-items="selectedPromptMatches" @confirm="handlePromptMatchConfirm" />
   </div>
 </template>
 
@@ -98,6 +140,15 @@ import {
   buildDortmundInfoPointImportTemplate,
 } from "@/views/fx67ll/dortmund/other/config/moduleConfig";
 import DortmundJsonImportShell from "@/views/fx67ll/dortmund/other/component/DortmundJsonImportShell/index";
+import DortmundImportAuxiliaryDrawer
+  from "@/views/fx67ll/dortmund/other/component/DortmundImportAuxiliaryDrawer/index";
+import DortmundPromptTypeMenu
+  from "@/views/fx67ll/dortmund/other/component/DortmundPromptTypeMenu/index";
+import DortmundSeasonSelect from "@/views/fx67ll/dortmund/other/component/DortmundSeasonSelect/index";
+import DortmundTeamSelectorModal
+  from "@/views/fx67ll/dortmund/other/component/DortmundTeamSelectorModal/index";
+import DortmundMatchSelectorModal
+  from "@/views/fx67ll/dortmund/other/component/DortmundMatchSelectorModal/index";
 
 const MAX_IMPORT_ROWS = 1000;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -133,7 +184,14 @@ function textValue(value) {
 
 export default {
   name: "DortmundInfoPointImportDrawer",
-  components: { DortmundJsonImportShell },
+  components: {
+    DortmundJsonImportShell,
+    DortmundImportAuxiliaryDrawer,
+    DortmundPromptTypeMenu,
+    DortmundSeasonSelect,
+    DortmundTeamSelectorModal,
+    DortmundMatchSelectorModal,
+  },
   props: {
     visible: {
       type: Boolean,
@@ -152,9 +210,34 @@ export default {
       parsedRows: [],
       selectedRows: [],
       promptVisible: false,
+      promptCollectionType: "",
+      promptTarget: null,
+      promptSeasonId: null,
+      promptSeasonOptions: [],
+      selectedPromptTeams: [],
+      selectedPromptMatches: [],
+      teamPromptDialogVisible: false,
+      teamSelectorVisible: false,
+      matchSelectorVisible: false,
       formatVisible: false,
       fieldDescriptions: DORTMUND_INFO_POINT_IMPORT_FIELDS,
-      aiPrompt: buildDortmundInfoPointImportPrompt(),
+      aiPrompt: "",
+      promptTypeOptions: [
+        {
+          command: "team",
+          label: "按球队采集（T 类型）",
+          description: "先选赛季与目标球队，再采集球队背景信息点",
+          icon: "el-icon-user",
+          tone: "green",
+        },
+        {
+          command: "match",
+          label: "按比赛采集（M 类型）",
+          description: "先选目标比赛，再采集比赛临时信息点",
+          icon: "el-icon-football",
+          tone: "orange",
+        },
+      ],
     };
   },
   computed: {
@@ -175,8 +258,124 @@ export default {
     selectedCount() {
       return this.selectedRows.length;
     },
+    selectedPromptSeasonName() {
+      const matched = this.promptSeasonOptions.find((season) =>
+        String(season.seasonId) === String(this.promptSeasonId));
+      return matched ? matched.seasonName : "";
+    },
+    canGenerateTeamPrompt() {
+      return Boolean(this.selectedPromptSeasonName)
+        && this.selectedPromptTeams.length > 0
+        && this.selectedPromptTeams.every((team) => Boolean(team.teamCode));
+    },
+    promptScopeSummary() {
+      const target = this.promptTarget;
+      if (!target) return "尚未选择采集范围";
+      if (target.collectionType === "team") {
+        const codes = target.teams.map((team) => team.teamCode).filter(Boolean).join(",");
+        return `${target.seasonName} · ${target.teams.length} 支球队 · ${codes}`;
+      }
+      if (target.collectionType === "match") {
+        const codes = target.matches.map((match) => match.matchCode).filter(Boolean).join(",");
+        return `${target.matches.length} 场比赛 · ${codes}`;
+      }
+      return "尚未选择采集范围";
+    },
   },
   methods: {
+    // 提示词必须先绑定球队或比赛范围，避免第三方 AI 在没有平台编码时自行猜测引用对象。
+    handlePromptCollectionType(type) {
+      if (this.importing) return;
+      if (type === "team") {
+        this.promptCollectionType = "team";
+        this.teamPromptDialogVisible = true;
+        return;
+      }
+      if (type === "match") {
+        this.promptCollectionType = "match";
+        this.selectedPromptMatches = [];
+        this.matchSelectorVisible = true;
+      }
+    },
+    handleShowPromptFallback() {
+      this.$modal.msgInfo("请先从提示词按钮的下拉菜单选择按球队或按比赛采集");
+    },
+    handlePromptSeasonLoaded(options) {
+      this.promptSeasonOptions = Array.isArray(options) ? options : [];
+    },
+    openPromptTeamSelector() {
+      if (!this.promptSeasonId) {
+        this.$modal.msgWarning("请先选择所属赛季");
+        return;
+      }
+      this.teamSelectorVisible = true;
+    },
+    handlePromptTeamConfirm(rows) {
+      const selected = Array.isArray(rows) ? rows : [];
+      const validTeams = selected.filter((team) => Boolean(team && team.teamCode));
+      if (validTeams.length < selected.length) {
+        this.$modal.msgWarning("已忽略缺少平台球队编码的记录，请先补齐球队编码");
+      }
+      this.selectedPromptTeams = validTeams;
+      this.teamSelectorVisible = false;
+    },
+    handlePromptMatchConfirm(rows) {
+      const selected = Array.isArray(rows) ? rows : [];
+      const validMatches = selected.filter((match) => Boolean(match && match.matchCode));
+      this.matchSelectorVisible = false;
+      if (!validMatches.length) {
+        this.$modal.msgWarning("请选择至少一场带比赛编码的比赛");
+        return;
+      }
+      if (validMatches.length < selected.length) {
+        this.$modal.msgWarning("已忽略缺少平台比赛编码的记录，请先补齐比赛编码");
+      }
+      this.selectedPromptMatches = validMatches;
+      this.showMatchPrompt();
+    },
+    removePromptTeam(index) {
+      this.selectedPromptTeams.splice(index, 1);
+    },
+    showTeamPrompt() {
+      if (!this.canGenerateTeamPrompt) {
+        this.$modal.msgWarning("请选择赛季和至少一支带编码的目标球队");
+        return;
+      }
+      this.promptTarget = {
+        collectionType: "team",
+        seasonName: this.selectedPromptSeasonName,
+        teams: this.selectedPromptTeams.map((team) => ({
+          teamCode: team.teamCode,
+          teamName: team.teamName,
+        })),
+      };
+      this.aiPrompt = buildDortmundInfoPointImportPrompt(new Date(), this.promptTarget);
+      this.teamPromptDialogVisible = false;
+      this.promptVisible = true;
+    },
+    showMatchPrompt() {
+      const matches = this.selectedPromptMatches.filter((match) => Boolean(match.matchCode));
+      if (!matches.length) {
+        this.$modal.msgWarning("请选择至少一场带编码的目标比赛");
+        return;
+      }
+      this.promptTarget = {
+        collectionType: "match",
+        matches: matches.map((match) => ({
+          matchCode: match.matchCode,
+          homeTeamName: match.homeTeamName,
+          awayTeamName: match.awayTeamName,
+          matchTime: this.parseTime(match.matchTime, "{y}-{m}-{d} {h}:{i}:{s}") || "",
+        })),
+      };
+      this.aiPrompt = buildDortmundInfoPointImportPrompt(new Date(), this.promptTarget);
+      this.promptVisible = true;
+    },
+    resetTeamPromptDraft() {
+      this.promptSeasonId = null;
+      this.promptSeasonOptions = [];
+      this.selectedPromptTeams = [];
+    },
     // JSON 内容变化后旧预览立即失效，防止用户把修改前的数据提交到后端。
     markDirty() {
       this.parseMessage = "";
@@ -467,10 +666,19 @@ export default {
       this.parsedRows = [];
       this.selectedRows = [];
       this.promptVisible = false;
+      this.promptCollectionType = "";
+      this.promptTarget = null;
+      this.promptSeasonId = null;
+      this.promptSeasonOptions = [];
+      this.selectedPromptTeams = [];
+      this.selectedPromptMatches = [];
+      this.teamPromptDialogVisible = false;
+      this.teamSelectorVisible = false;
+      this.matchSelectorVisible = false;
       this.formatVisible = false;
       this.rawJson = "";
       this.fileName = "";
-      this.aiPrompt = buildDortmundInfoPointImportPrompt();
+      this.aiPrompt = "";
     },
   },
 };
@@ -495,18 +703,74 @@ export default {
   background: #fff4f0;
 }
 
-.json-import-code {
-  max-height: 52vh;
-  padding: 14px 16px;
-  margin: 0;
-  overflow: auto;
-  font-family: Consolas, Monaco, "Courier New", monospace;
+.info-prompt-target-form {
+  padding: 2px 2px 0;
+}
+
+.info-prompt-target-picker {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 32px;
+}
+
+.info-prompt-target-count {
   font-size: 12px;
-  line-height: 1.7;
-  color: #d8eee1;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: #183226;
-  border-radius: 10px;
+  color: #7b9183;
+}
+
+.info-prompt-target-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-top: 3px;
+
+  .el-tag {
+    max-width: 100%;
+    height: auto;
+    padding: 4px 8px;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  em {
+    margin-left: 5px;
+    font-style: normal;
+    opacity: 0.72;
+  }
+}
+
+.info-prompt-target-empty {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #98a89e;
+}
+
+.info-prompt-scope {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: #f5fbf7;
+  border: 1px solid #dcece2;
+  border-radius: 9px;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.65;
+    color: #4b6b58;
+    overflow-wrap: anywhere;
+  }
+}
+
+.info-prompt-scope-label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.65;
+  color: #268c55;
 }
 </style>

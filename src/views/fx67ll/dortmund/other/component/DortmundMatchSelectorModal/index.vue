@@ -75,6 +75,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    // 信息点等历史业务场景需要选择任意状态的比赛；默认仍只展示未开赛赛程。
+    allowAllMatchStatuses: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -136,7 +141,7 @@ export default {
     },
     selectorQueryParams() {
       return {
-        matchStatus: "0",
+        ...(this.allowAllMatchStatuses ? {} : { matchStatus: "0" }),
         ...(this.requireActiveOdds ? { hasActiveOdds: "Y" } : {}),
         ...this.queryParams,
       };
